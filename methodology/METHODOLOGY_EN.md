@@ -23,44 +23,63 @@ This methodology formalizes an end-to-end engineering lifecycle that unifies str
 - **Cross-Domain Reasoning**: Dynamic decomposition and sequential chaining between domain business logic and engineering infrastructure tools.
 - **Strict 5-Stage Phase-Gate Control**: Distinct milestone inputs, outputs, and quality acceptance criteria capped at 5 stages.
 
+### 1.3 The Evolutionary Architecture Journey
+The core of this methodology lies in a deliberate **4-Track Evolutionary Journey** that progresses from rapid unstructured knowledge prototyping to enterprise-grade physical graphs and agent abstraction layers:
+
+1. **Track A (Unstructured First & GCS Prototyping)**:
+   - Unstructured manuals (MHTML/PDF) are parsed into visual semantic chunks, converted to OKF (Open Knowledge Format v0.2), organized into Andrej Karpathy's 3-Layer LLM-Wiki structure (`summary.md`, `entities.md`, `concepts.md`, `rules.md`), and prototyped rapidly on Google Cloud Storage (`gs://<bucket>/ontology/prototype/`) for early feasibility validation.
+2. **Track B (Structured DW Ledger Profiling)**:
+   - In parallel, enterprise master ledger tables (device catalog, tariff plans, official subsidies, contracts) in BigQuery DW are independently profiled for schemas, row volumes, and primary/foreign key constraints.
+3. **Track C (BigQuery Property Graph Integration & Anti-Redundancy Pruning)**:
+   - When fusing the two knowledge streams into BigQuery Property Graph (SQL:2023), strict **Anti-Redundancy Pruning** is executed.
+   - Structured DW tables are **promoted directly to physical graph nodes** (`DeviceNode`, `PlanNode`, `SubsidyNode`), rather than recreating duplicate nodes from text.
+   - Redundant entity mentions in unstructured text are aggressively pruned, leaving **only Source Documents (`SourceDoc`), Original Chunks (`DocChunk`), and Business Rules/Formulas (`DomainRule`/`Policy`)** as nodes.
+   - These are then bridged to DW nodes via semantic edges (`APPLIES_TO`, `CALCULATES`, `GROUNDED_IN`).
+4. **Track D (Domain Ontology MCP Abstraction Layer for Agents)**:
+   - To shield AI agents from the raw complexity of multi-table joins and graph traversal syntax (GQL), the graph and DW capabilities are encapsulated into a high-level **Domain Ontology MCP Suite (11 tools: 5 Business + 6 Engineering)**.
+   - Agents perform dynamic sub-goal decomposition, sequential cross-domain chaining, and intermediate observations at the business concept level.
+
 ---
 
-## 2. End-to-End 5-Stage Lifecycle Architecture
+## 2. Evolutionary End-to-End Lifecycle Architecture
 
 ```mermaid
 flowchart TD
-    subgraph STAGE1 ["Stage 1: Asset Discovery, Scoping & Governance Ingestion"]
-        S1_Input["Source Data: Unstructured Guides (MHTML/PDF) & Structured DW Ledgers"] --> S1_Scope["Define Domain Scope & Noise Pruning Charter"]
-        S1_Scope --> S1_CQ["Formulate 20 Golden Competency Questions (CQs)"]
-        S1_CQ --> S1_KC["Ingest Metadata into Dataplex Knowledge Catalog"]
+    subgraph TRACK_A ["Track A: Unstructured Knowledge & GCS Prototyping (Unstructured First)"]
+        S1_Doc["Unstructured Policy Guides & SOPs (MHTML/PDF)"] --> S2_Chunk["Lossless Visual Chunking & Hash Anchoring (DocChunk)"]
+        S2_Chunk --> S2_OKF["OKF v0.2 Knowledge Modeling"]
+        S2_OKF --> S2_Wiki["Karpathy 3-Layer LLM-Wiki Generation<br/>(summary / entities / concepts / rules)"]
+        S2_Wiki --> S2_GCS["GCS Ontology Prototype Registry"]
     end
 
-    subgraph STAGE2 ["Stage 2: Semantic Modeling, Open Knowledge Formalization & Grounding"]
-        S1_KC --> S2_Chunk["Lossless Visual Chunking & Hash Anchoring (DocChunk)"]
-        S2_Chunk --> S2_OKF["Model Karpathy 3-Layer OKF v0.2 Wiki Ontology"]
-        S2_OKF --> S2_Bridge["Apply 2-Layer Anti-Redundancy & Semantic Bridge (APPLIES_TO)"]
+    subgraph TRACK_B ["Track B: Structured DW Ledger Profiling (Structured DW)"]
+        S1_DW["BigQuery DW 7 Master Ledger Tables"] --> S1_Profile["Schema / Volume / PK·FK Integrity Profiling"]
+        S1_Profile --> S1_KC["Dataplex Knowledge Catalog Metadata Ingestion"]
     end
 
-    subgraph STAGE3 ["Stage 3: BigQuery Property Graph Engineering & GQL Compilation"]
-        S2_Bridge --> S3_DDL["Declare BigQuery SQL:2023 Property Graph DDL"]
-        S3_DDL --> S3_Topology["Project 7 Node Tables & 5 Edge Tables (Zero Duplication)"]
-        S3_Topology --> S3_GQL["Engineer GQL Template Engine & Benchmark SQL vs GQL"]
+    subgraph TRACK_C ["Track C: BQG Integration & Anti-Redundancy Pruning (BQG & Pruning)"]
+        S2_GCS & S1_KC --> S3_Prune{"Anti-Redundancy Pruning"}
+        S3_Prune -->|Structured DW| S3_DWNodes["Direct DW Node Promotion<br/>(Device, Plan, SubsidyLedger)"]
+        S3_Prune -->|Prune Duplicate Entities| S3_DocNodes["Retained Unstructured Nodes<br/>(DocChunk, SourceDoc, Policy/Rule)"]
+        S3_DWNodes <--->|Semantic Bridge Edges<br/>APPLIES_TO / CALCULATES / GROUNDED_IN| S3_DocNodes
+        S3_DWNodes & S3_DocNodes --> S3_DDL["BigQuery SQL:2023 Property Graph DDL"]
     end
 
-    subgraph STAGE4 ["Stage 4: Multi-Domain MCP Suite Packaging & Agentic Orchestration"]
-        S3_GQL --> S4_MCP["11-Tool MCP Suite (5 Business + 6 Engineering/Infra)"]
-        S4_MCP --> S4_Router["Implement Dynamic Sub-Goal Routing & Sequential Chaining"]
-        S4_Router --> S4_Handoff["Visualize Intermediate Observations & Data Hand-off"]
+    subgraph TRACK_D ["Track D: Domain Ontology MCP Abstraction Layer (Domain MCP)"]
+        S3_DDL --> S4_MCP["11-Tool Domain Ontology MCP Suite<br/>(5 Business + 6 Engineering/Infra)"]
+        S4_MCP --> S4_Agent["AI FDE Agent Orchestration<br/>(Dynamic Sub-Goals & Sequential Chaining)"]
     end
 
-    subgraph STAGE5 ["Stage 5: Enterprise Studio Integration, Automated Evaluation & Deployment"]
-        S4_Handoff --> S5_Studio["Deploy 5 Enterprise Web Studios (05_DESIGN.md Standard)"]
-        S5_Studio --> S5_Lineage["Visualize 4-Tier End-to-End Data Lineage"]
-        S5_Lineage --> S5_Eval["Automate 20 Golden CQ Evaluation & Audit (0% Hallucination)"]
-        S5_Eval --> S5_Deploy["Cloud Run Container Deployment & Least-Privilege IAM Governance"]
+    subgraph TRACK_E ["Track E: Multi-View Enterprise Studio & Production Deployment"]
+        S4_Agent --> S5_Studio["Multi-View Studio (4 Views)<br/>(Asset Management / Graph View / FDE Console / CQ Benchmark)"]
+        S5_Studio --> S5_Eval["Automated 20 Golden CQ Evaluation (0% Hallucination)"]
+        S5_Eval --> S5_Deploy["Cloud Run Zero-Downtime Container Deployment"]
     end
 
-    STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5
+    TRACK_A --> TRACK_C
+    TRACK_B --> TRACK_C
+    TRACK_C --> TRACK_D
+    TRACK_D --> TRACK_E
 ```
 
 ---
@@ -132,14 +151,19 @@ Stage 2 decomposes unstructured manuals into deterministic visual chunks with im
 #### 2. Detailed Work Items
 1. **Lossless Visual Parsing & Deterministic Hash Anchoring (`DocChunk`)**:
    - Segment policy tables, text blocks, and contractual conditions into visual semantic units.
-   - Assign deterministic, immutable hash anchors (e.g., `DOC_CHUNK_001` through `023`) for permanent auditability.
-2. **OKF v0.2 Wiki Ontology Modeling**:
-   - Structure domain knowledge across Karpathy 3-Layer taxonomy: Summary, Entities, and Concepts.
-   - Codify 78 distinct conceptual classes covering terminal devices, plans, commitment options, and legal provisions.
-3. **2-Layer Anti-Redundancy Refinement**:
+   - Assign deterministic, immutable SHA-256 hash anchors (e.g., `DOC_CHUNK_001` through `023`) for permanent auditability.
+2. **OKF v0.2 Wiki Ontology Modeling & Karpathy 3-Layer LLM-Wiki**:
+   - Structure domain knowledge across Andrej Karpathy's 3-Layer Wiki taxonomy:
+     - `summary.md`: Global domain overview and operational principles.
+     - `entities.md`: Candidate entity registry parsed from text.
+     - `concepts.md`: 78 distinct conceptual classes covering terminal devices, plans, commitment options, and legal provisions.
+     - `rules.md`: 180-day commitment policy, penalty formulas, and exemption predicates.
+3. **GCS-Based Ontology Prototyping (GCS Prototyping)**:
+   - Deploy generated LLM-Wiki and JSON-LD ontologies to Google Cloud Storage (`gs://<bucket>/ontology/prototype/`) for rapid feasibility and knowledge traversal PoC.
+4. **2-Layer Anti-Redundancy Refinement**:
    - Eliminate duplicate entity storage: Existing DW tables (devices, monthly fees, basic subsidies) are directly promoted to graph nodes.
-   - Limit unstructured knowledge ingestion to **Source Evidence (`DocChunk`)** and **Business Rules (`DomainRule`)**.
-4. **Semantic Bridging**:
+   - Limit unstructured knowledge ingestion to **Source Evidence (`DocChunk`)**, **Source Documents (`SourceDoc`)**, and **Business Rules (`DomainRule`)**.
+5. **Semantic Bridging**:
    - Establish typed relationships (`APPLIES_TO`, `CALCULATES`, `CONSTRAINS`) connecting rules directly to physical DW ledger entities.
 
 ```mermaid
@@ -186,9 +210,11 @@ classDiagram
 | Deliverable ID | Deliverable Title | Format | Contents & Purpose | Lead Role |
 | :--- | :--- | :--- | :--- | :--- |
 | `D2.1` | OKF v0.2 Domain Ontology Specification | JSON-LD / YAML (`ontology.jsonld`) | 78 concepts/entities taxonomy, relationship schemas, namespaces | Knowledge Engineer |
-| `D2.2` | Text Chunk & Immutable Hash Anchor Manifest | JSONL (`doc_chunks.jsonl`) | Chunk bodies, hierarchical headers, cryptographic anchors | Data Engineer |
-| `D2.3` | Deterministic Business Rule Registry | JSON / SQL (`domain_rules.json`) | 180-day plan rule, penalty math formulas, exemption criteria | Domain Engineer |
-| `D2.4` | 2-Layer Semantic Bridge Mapping Matrix | Markdown (`SEMANTIC_BRIDGE_MATRIX.md`) | Specifications for edges linking unstructured rules to DW ledgers | Solution Architect |
+| `D2.2` | Karpathy 3-Layer LLM-Wiki Directory | Markdown (`data/llm_wiki/*.md`) | `summary.md`, `entities.md`, `concepts.md`, `rules.md` wiki | Knowledge Engineer |
+| `D2.3` | GCS Ontology Prototype Registry | GCS URI / JSON (`gcs_prototype_manifest.json`) | Metadata & sync state of GCS bucket ontology prototype | Data Engineer |
+| `D2.4` | Text Chunk & Immutable Hash Anchor Manifest | JSONL (`doc_chunks.jsonl`) | Chunk bodies, hierarchical headers, cryptographic anchors | Data Engineer |
+| `D2.5` | Deterministic Business Rule Registry | JSON / SQL (`domain_rules.json`) | 180-day plan rule, penalty math formulas, exemption criteria | Domain Engineer |
+| `D2.6` | 2-Layer Semantic Bridge Mapping Matrix | Markdown (`SEMANTIC_BRIDGE_MATRIX.md`) | Specifications for edges linking unstructured rules to DW ledgers | Solution Architect |
 
 ---
 
@@ -196,43 +222,41 @@ classDiagram
 > 📘 **Detailed Execution Guide**: [03_property_graph_and_gql_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/03_property_graph_and_gql_en.md)
 
 #### 1. Objective & Scope
-Stage 3 implements the hybrid ontology into physical infrastructure using the Google Cloud BigQuery SQL:2023 Property Graph standard, enabling multi-hop declarative knowledge traversals via Graph Query Language (GQL) without physical data duplication.
+Stage 3 implements the hybrid ontology into physical infrastructure using the Google Cloud BigQuery SQL:2023 Property Graph standard, executing strict anti-redundancy pruning and enabling multi-hop declarative knowledge traversals via Graph Query Language (GQL) without physical data duplication.
 
 #### 2. Detailed Work Items
-1. **Declarative Property Graph DDL Authoring (`CREATE PROPERTY GRAPH`)**:
-   - Formulate declarative DDL referencing existing BigQuery ledger tables as node tables and edge tables.
-   - Configure 7 Node Tables and 5 Edge Tables.
-2. **Physical Node & Edge Table Projection**:
-   - Nodes: `PlanNode`, `DeviceNode`, `SubsidyNode`, `DocChunkNode`, `DomainRuleNode`, `PenaltyFormulaNode`, `ExemptionNode`.
-   - Edges: `COVERS_DEVICE`, `REQUIRES_PLAN`, `APPLIES_RULE`, `CALCULATES_PENALTY`, `GROUNDED_IN`.
-3. **GQL Template Engine Construction**:
-   - Define declarative graph query patterns for 1-hop (device subsidy lookup), 2-hop (plan downgrade penalty traversal), and multi-hop (device-plan-subsidy-penalty-exemption) paths.
-4. **SQL vs GQL Performance & Cost Benchmarking**:
-   - Empirically compare execution latency, slot seconds, byte scanning, and query expressiveness against multi-join relational SQL.
+1. **Anti-Redundancy Refinement & Direct DW Node Promotion**:
+   - Structured DW tables are promoted directly to graph nodes (`DeviceNode`, `PlanNode`, `SubsidyNode`).
+   - Redundant entity definitions in unstructured text are pruned away, leaving only **DocChunks, SourceDocs, and DomainRules/Policies**.
+2. **Declarative Property Graph DDL Formulation (`CREATE PROPERTY GRAPH`)**:
+   - SQL:2023 DDL referencing BigQuery tables as 7 node types and 5 edge types without data duplication.
+   - Project semantic edges (`COVERS_DEVICE`, `REQUIRES_PLAN`, `APPLIES_TO`, `CALCULATES`, `GROUNDED_IN`).
+3. **GQL Template Engine Design**:
+   - 1-hop (subsidy by plan), 2-hop (commitment constraints upon plan downgrade), and multi-hop (full penalty & exemption evaluation) query templates.
+4. **SQL vs GQL Performance & Cost Benchmark**:
+   - Measure query brevity, readability, execution latency, and slot time against conventional multi-join SQL.
 
 ```mermaid
 flowchart TD
+    subgraph AntiRedundancy ["Anti-Redundancy Refinement"]
+        RawDW["Structured DW Ledger Tables"] -->|Direct Promotion| DWNodes["Physical DW Nodes (Device, Plan, Subsidy)"]
+        RawDoc["Unstructured Wiki & Parser"] -->|Prune Duplicate Entities| DocNodes["Retained Unstructured Nodes (DocChunk, Rule)"]
+    end
+
     subgraph DDLCompilation ["BigQuery SQL:2023 Property Graph Engine"]
-        DDL["CREATE OR REPLACE PROPERTY GRAPH<br/>LGUPLUS_SUBSIDY_GRAPH"]
-        Nodes["NODE TABLES (<br/>Plan, Device, Subsidy,<br/>DocChunk, DomainRule)"]
-        Edges["EDGE TABLES (<br/>APPLIES_RULE, REQUIRES_PLAN,<br/>COVERS_DEVICE, GROUNDED_IN)"]
-        DDL --> Nodes & Edges
+        DDL["CREATE OR REPLACE PROPERTY GRAPH<br/>ENTERPRISE_ONTOLOGY_GRAPH"]
+        DWNodes & DocNodes --> DDL
+        Edges["Semantic Bridge Edges (<br/>APPLIES_TO, CALCULATES, GROUNDED_IN)"] --> DDL
     end
 
-    subgraph GQLTraverse ["GQL Query Pattern System"]
+    subgraph GQLTraverse ["Declarative GQL Patterns"]
         Q1["1-Hop: Device ➔ Subsidy Matching"]
-        Q2["2-Hop: Plan Downgrade ➔ Commitment Rule"]
-        Q3["Multi-Hop: Device ➔ Plan ➔ Subsidy ➔ Penalty ➔ Exemption"]
+        Q2["2-Hop: Plan Downgrade ➔ Commitment Traversal"]
+        Q3["Multi-Hop: Device ➔ Plan ➔ Subsidy ➔ Penalty Calculation"]
+        DDL --> Q1 & Q2 & Q3
     end
 
-    subgraph BenchmarkLoop ["Benchmark & Optimization"]
-        SQL_Exec["Relational Multi-JOIN SQL"]
-        GQL_Exec["BigQuery Native GQL Execution"]
-        Compare{"Compare Latency, Slot Time,<br/>Byte Scan & Code Maintainability"}
-        SQL_Exec & GQL_Exec --> Compare
-    end
-
-    DDLCompilation --> GQLTraverse --> BenchmarkLoop
+    AntiRedundancy --> DDLCompilation
 ```
 
 #### 3. Stage 3 Deliverable Matrix
@@ -249,10 +273,11 @@ flowchart TD
 > 📘 **Detailed Execution Guide**: [04_multi_domain_mcp_and_agent_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/04_multi_domain_mcp_and_agent_en.md)
 
 #### 1. Objective & Scope
-Stage 4 packages the ontology and graph traversal capabilities into standardized Model Context Protocol (MCP) tool interfaces, enabling an autonomous AI Forward Deployed Engineer (FDE) agent to dynamically decompose multi-part user prompts and execute cross-domain sequential chaining.
+Stage 4 packages the domain ontology and graph traversal capabilities into a high-level **Domain Ontology MCP Abstraction Layer**, shielding AI agents from raw database schemas and direct GQL traversal syntax. This enables an autonomous AI Forward Deployed Engineer (FDE) agent to dynamically decompose multi-part user prompts and execute cross-domain sequential chaining at the business semantic level.
 
 #### 2. Detailed Work Items
-1. **11-Tool Domain Ontology MCP Suite Development**:
+1. **Domain Ontology MCP Abstraction Layer (11-Tool MCP Suite)**:
+   - Shield agent logic from underlying table schemas and raw graph traversals.
    - **5 Business Tools**: Device list price (`mcp_get_device_factory_price`), subsidy lookup (`mcp_get_device_subsidy_by_plan`), penalty calculation (`mcp_calculate_plan_change_penalty`), contract plan comparison (`mcp_compare_contract_plans`), grounding chunk retrieval (`mcp_get_policy_anchor_grounding`).
    - **6 Engineering/Infra Tools**: Property graph GQL traversal (`mcp_explore_property_graph`), DW schema inspection (`mcp_inspect_dw_table_schema`), Dataplex catalog search (`mcp_search_dataplex_catalog`), lineage trace (`mcp_get_lineage_trace`), DDL export (`mcp_export_graph_ddl`), CQ benchmark execution (`mcp_run_cq_benchmark`).
 2. **AI FDE Dynamic Multi-Goal Decomposition Engine**:

@@ -52,18 +52,25 @@ flowchart TD
    - 각 청크 본문과 상위 헤더 경로를 기반으로 고유 식별자(`DOC_CHUNK_XXX`)를 부여합니다.
    - LLM이 답변을 생성할 때 반드시 해당 청크의 해시 식별자를 증거로 인용하도록 강제하여 0% 환각 및 완벽한 감사 추적성을 확보합니다.
 
-### 2.2 Karpathy 스타일 Open Knowledge Format (OKF v0.2)
-Google Cloud OKF v0.2 표준에 따라 도메인 지식을 3개 레이어로 체계화합니다:
-- **Layer 1 [요약 계층 (Summary)]**: 도메인 핵심 취지, 주요 법적 근거, 변경 이력.
-- **Layer 2 [엔티티 사전 (Entities)]**: 단말기 제품군, 요금제 분류, 지원금 정책 식별자.
-- **Layer 3 [개념 및 제약 규칙 (Concepts & Rules)]**: 180일 식스플랜 의무 기간, 위약금 차액 계산식, 복구 유예기간(18개월).
+### 2.2 Karpathy 스타일 Open Knowledge Format (OKF v0.2) 및 LLM-Wiki 구조
+Google Cloud OKF v0.2 표준과 Andrej Karpathy의 3-Layer Wiki 아키텍처를 결합하여 도메인 지식을 체계화합니다:
+- **`summary.md` [요약 계층 (Summary)]**: 도메인 핵심 취지, 주요 법적 근거, 변경 이력 및 총괄 거버넌스.
+- **`entities.md` [엔티티 사전 (Entities)]**: 비정형 문서에서 인출된 단말기 제품군, 요금제 분류, 지원금 정책 후보군.
+- **`concepts.md` [시맨틱 개념 (Concepts)]**: 78종 도메인 비즈니스 개념 및 온톨로지 클래스 분류 체계.
+- **`rules.md` [제약 및 계산 규칙 (Rules)]**: 180일 식스플랜 의무 기간, 위약금 차액 계산식, 복구 유예기간(18개월).
 
-### 2.3 2-Layer 안티 리던던시 원칙 (Anti-Redundancy Refinement)
+### 2.3 GCS 기반 온톨로지 프로토타이핑 (GCS Prototyping)
+1. **신속한 지식 PoC 검증**:
+   - 추출된 OKF JSON-LD(`ontology.jsonld`)와 LLM-Wiki 마크다운 파일들을 Google Cloud Storage 버킷(`gs://<project>-ontology/prototype/`)에 업로드하여 초기 시맨틱 검색 및 질의 응답 적합성을 빠르게 검증(Rapid Prototyping)합니다.
+2. **지식 버전 관리 및 감사 레지스트리**:
+   - GCS 상에 버전별 디렉토리(`v0.1`, `v0.2`)를 격리하여 비정형 규정 개정 시 변경 사항을 추적합니다.
+
+### 2.4 2-Layer 안티 리던던시 원칙 (Anti-Redundancy Refinement)
 1. **정형 DW 테이블 노드 직접 승격**:
    - 단말기 출고가, 요금제 월정액 등 이미 BigQuery DW 원장에 적재된 수치는 온톨로지 파일에 중복 복제하지 않습니다.
    - 정형 테이블 자체를 물리 노드로 지정하여, 데이터 정합성 충돌을 원천 차단합니다.
-2. **비정형 영역의 2계층 집중**:
-   - 비정형 문서는 **원천 증거(`DocChunk`)**와 **비즈니스 규칙(`DomainRule`)**의 2-Layer로만 정제하여 정형 원장에 결합합니다.
+2. **비정형 영역의 중복 엔티티 Pruning**:
+   - 정형 테이블과 중복되는 비정형 엔티티를 전량 제거(Pruning)하고, 비정형 문서는 **원천 증거(`DocChunk`)**, **원본 문서(`SourceDoc`)**, **비즈니스 규칙(`DomainRule`/`Policy`)**의 레이어로만 정제하여 정형 원장에 시맨틱 브릿지로 결합합니다.
 
 ```mermaid
 classDiagram

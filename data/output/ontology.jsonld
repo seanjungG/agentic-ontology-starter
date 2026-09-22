@@ -5,8 +5,9 @@
       "@id": "domain:TelecomSubsidyManagement",
       "@type": "DomainOntology",
       "label": "Enterprise Subsidy & Contract Management",
-      "summary": "Hybrid ontology unifying structured pricing tables and unstructured penalty rules.",
-      "totalChunks": 3
+      "summary": "Hybrid ontology unifying structured DW tables and unstructured policy manuals.",
+      "totalChunks": 3,
+      "evolutionTrack": "Track A (Unstructured Wiki & GCS Proto) -> Track C (BQG Anti-Redundancy Integration)"
     },
     {
       "@id": "chunk:DOC_CHUNK_001",

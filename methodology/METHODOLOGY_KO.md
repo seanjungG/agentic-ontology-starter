@@ -23,44 +23,62 @@
 - **크로스도메인 투명성 (Cross-Domain Reasoning)**: 비즈니스 정책과 엔지니어링 인프라 도구의 동적 분해 및 체이닝.
 - **5단계 수명주기 통제 (Strict 5-Stage Gate)**: 단계별 명확한 입출력 산출물과 검수 기준 수립.
 
+### 1.3 온톨로지의 진화적 발전 여정 (Evolutionary Journey)
+본 온톨로지 방법론의 핵심은 초기 비정형 문서 프로토타이핑에서 시작하여 엔터프라이즈 프로덕션 수준의 물리 그래프와 에이전트 추상화 계층으로 도약하는 **4대 진화 축(Evolutionary Tracks)**에 있습니다:
+
+1. **Track A (비정형 지식 체계화 & GCS 프로토타이핑 - Unstructured First)**:
+   - 비정형 업무 매뉴얼(MHTML/PDF)을 무손실 시각 청킹하여 OKF(Open Knowledge Format v0.2)로 변환하고, Andrej Karpathy의 3-Layer LLM-Wiki 구조(`summary.md`, `entities.md`, `concepts.md`, `rules.md`)로 체계화하여 Google Cloud Storage(GCS) 기반 온톨로지 레지스트리로 1차 프로토타이핑을 신속히 완성했습니다.
+2. **Track B (정형 DW 원장 테이블 독립 프로파일링 - Structured DW)**:
+   - 비정형 가이드와는 별개로, 데이터웨어하우스 내에 축적된 단말기 출고가, 요금제 테이블, 공시지원금 원장 등 정형 마스터 테이블의 스키마, 볼륨, PK/FK 제약 조건을 독립적으로 프로파일링했습니다.
+3. **Track C (BigQuery Property Graph 결합 및 안티 리던던시 통합 - Anti-Redundancy Pruning)**:
+   - 두 지식 체계를 BigQuery Property Graph(SQL:2023)로 통합할 때, **중복 제거(Anti-Redundancy)**를 엄격히 단행했습니다.
+   - 정형 테이블에 이미 존재하는 실체(단말기, 요금제)를 비정형에서 중복 생성하지 않고 **DW 테이블을 물리 그래프 노드로 직접 승격**시켰습니다.
+   - 비정형 영역에서는 엔티티 중복을 전량 쳐내고, **원문 청크(`DocChunk`), 원본 문서(`SourceDoc`), 순수 비즈니스 정책/규정(`DomainRule`/`Policy`)**만을 노드로 남겨 정형 노드와 시맨틱 브릿지 엣지(`APPLIES_TO`, `CALCULATES`, `GROUNDED_IN`)로 결합했습니다.
+4. **Track D (에이전트를 위한 도메인 온톨로지 MCP 추상화 계층 - Domain Ontology Layer)**:
+   - 복잡한 원천 테이블 조인이나 원시 그래프 DDL/GQL 쿼리를 AI 에이전트가 직접 다루지 않도록, 비즈니스 도메인 수준으로 정의된 고수준 MCP 도구(비즈니스 5종 + 엔지니어링 6종)로 캡슐화했습니다.
+   - 이를 통해 에이전트는 도메인 레이어에서 동적 다중 목표 분해, 시퀀셜 체이닝, 중간 관측(Observation)을 수행하여 0% 환각의 결정론적 결론을 도출합니다.
+
 ---
 
-## 2. 5단계 엔드투엔드 라이프사이클 흐름도 (End-to-End Lifecycle Architecture)
+## 2. 진화적 엔드투엔드 라이프사이클 아키텍처 (End-to-End Lifecycle Architecture)
 
 ```mermaid
 flowchart TD
-    subgraph STAGE1 ["Stage 1: 자산 탐색, 스코핑 및 거버넌스 수집 (Asset Discovery & Scoping)"]
-        S1_Input["원천 데이터: 비정형 문서 (MHTML/PDF) & 정형 DW 테이블"] --> S1_Scope["도메인 스코핑 & 노이즈 Pruning 정의"]
-        S1_Scope --> S1_CQ["20대 핵심 역량 질문(Golden CQs) 도출"]
-        S1_CQ --> S1_KC["Dataplex Knowledge Catalog 메타데이터 인제스트"]
+    subgraph TRACK_A ["Track A: 비정형 지식 체계화 & GCS 프로토타이핑 (Unstructured First)"]
+        S1_Doc["비정형 정책 가이드 & SOP (MHTML/PDF)"] --> S2_Chunk["무손실 청킹 & 해시 앵커링 (DocChunk)"]
+        S2_Chunk --> S2_OKF["OKF v0.2 지식 온톨로지 모델링"]
+        S2_OKF --> S2_Wiki["Karpathy 3-Layer LLM-Wiki 생성<br/>(summary / entities / concepts / rules)"]
+        S2_Wiki --> S2_GCS["GCS 온톨로지 프로토타입 레지스트리"]
     end
 
-    subgraph STAGE2 ["Stage 2: 시맨틱 지식 온톨로지 모델링 및 정형화 (Semantic Modeling & OKF)"]
-        S1_KC --> S2_Chunk["비정형 무손실 청킹 & 해시 앵커링 (DocChunk)"]
-        S2_Chunk --> S2_OKF["OKF v0.2 위키 온톨로지 모델링 (개념/규칙)"]
-        S2_OKF --> S2_Bridge["2-Layer 안티 리던던시 & 시맨틱 브릿지 (APPLIES_TO)"]
+    subgraph TRACK_B ["Track B: 정형 DW 원장 프로파일링 (Structured DW)"]
+        S1_DW["BigQuery DW 7대 마스터 원장 테이블"] --> S1_Profile["스키마 / 볼륨 / PK·FK 무결성 분석"]
+        S1_Profile --> S1_KC["Dataplex Knowledge Catalog 메타데이터 인제스트"]
     end
 
-    subgraph STAGE3 ["Stage 3: BigQuery Property Graph 엔지니어링 및 GQL 질의 체계 (Property Graph & GQL)"]
-        S2_Bridge --> S3_DDL["BigQuery SQL:2023 Property Graph DDL 선언"]
-        S3_DDL --> S3_Topology["노드(7종) & 엣지(5종) 무복제 프로젝션"]
-        S3_Topology --> S3_GQL["GQL 템플릿 엔진 구축 & SQL vs GQL 벤치마크"]
+    subgraph TRACK_C ["Track C: BQG 결합 및 안티 리던던시 통합 (BQG & Anti-Redundancy)"]
+        S2_GCS & S1_KC --> S3_Prune{"중복 제거 (Anti-Redundancy Pruning)"}
+        S3_Prune -->|정형 원장| S3_DWNodes["물리 DW 노드 직접 승격<br/>(Device, Plan, SubsidyLedger)"]
+        S3_Prune -->|비정형 중복 엔티티 Pruning| S3_DocNodes["비정형 잔존 필수 노드<br/>(DocChunk, SourceDoc, Policy/Rule)"]
+        S3_DWNodes <--->|시맨틱 브릿지 엣지<br/>APPLIES_TO / CALCULATES / GROUNDED_IN| S3_DocNodes
+        S3_DWNodes & S3_DocNodes --> S3_DDL["BigQuery SQL:2023 Property Graph DDL 구축"]
     end
 
-    subgraph STAGE4 ["Stage 4: 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 (MCP Suite & Agent)"]
-        S3_GQL --> S4_MCP["11종 MCP 도구 스위트 (비즈니스 5종 + 엔지니어링 6종)"]
-        S4_MCP --> S4_Router["동적 다중 목표 분해 & 크로스도메인 체이닝"]
-        S4_Router --> S4_Handoff["중간 관측(Observation) & 컨텍스트 전달 타임라인"]
+    subgraph TRACK_D ["Track D: 에이전트를 위한 MCP 추상화 계층 (Domain Ontology MCP)"]
+        S3_DDL --> S4_MCP["11종 도메인 온톨로지 MCP 스위트<br/>(비즈니스 5종 + 엔지니어링 6종)"]
+        S4_MCP --> S4_Agent["AI FDE 에이전트 오케스트레이션<br/>(동적 다중 목표 분해 & 시퀀셜 체이닝 & 중간 관측)"]
     end
 
-    subgraph STAGE5 ["Stage 5: 엔터프라이즈 스튜디오 구축, 자동화 검증 및 프로덕션 배포 (Studio & Deployment)"]
-        S4_Handoff --> S5_Studio["엔터프라이즈 웹 스튜디오 5종 (05_DESIGN.md 준수)"]
-        S5_Studio --> S5_Lineage["4-Tier 엔드투엔드 데이터 리니지 시각화"]
-        S5_Lineage --> S5_Eval["20대 CQ 자동화 평가 & 사실 일관성 검증 (0% 환각)"]
-        S5_Eval --> S5_Deploy["Cloud Run 컨테이너 무중단 배포 & IAM 최소 권한 거버넌스"]
+    subgraph TRACK_E ["Track E: 멀티뷰 엔터프라이즈 스튜디오 & 프로덕션 배포"]
+        S4_Agent --> S5_Studio["멀티뷰 스튜디오 4대 뷰<br/>(에셋 관리 / 그래프 시각화 / FDE 콘솔 / CQ 벤치마크)"]
+        S5_Studio --> S5_Eval["20대 CQ 자동화 평가 & 사실 일관성 100% 검증"]
+        S5_Eval --> S5_Deploy["Cloud Run 무중단 컨테이너 배포 & 거버넌스"]
     end
 
-    STAGE1 --> STAGE2 --> STAGE3 --> STAGE4 --> STAGE5
+    TRACK_A --> TRACK_C
+    TRACK_B --> TRACK_C
+    TRACK_C --> TRACK_D
+    TRACK_D --> TRACK_E
 ```
 
 ---
@@ -132,14 +150,19 @@ flowchart LR
 #### 2. 핵심 작업 항목 (Work Items)
 1. **무손실 구조 파싱 및 결정론적 시각 청킹 (`DocChunk`)**:
    - 표, 제목 계층, 목록, 텍스트 단락을 시각적 의미 단위로 청킹.
-   - 각 청크마다 불변의 고유 해시 식별자(예: `DOC_CHUNK_001` ~ `023`) 부여.
-2. **OKF v0.2 지식 온톨로지 모델링**:
-   - Karpathy 3-Layer(Summary / Entities / Concepts) 구조에 기반한 온톨로지 모델링.
-   - 단말기, 요금제, 약정상품, 지원금 정책 등 78종 개념 모델링.
-3. **2-Layer 안티 리던던시 정제 (Anti-Redundancy Refinement)**:
+   - 각 청크마다 불변의 고유 해시 식별자(예: `DOC_CHUNK_001` ~ `023`, SHA-256 기반) 부여.
+2. **OKF v0.2 지식 온톨로지 모델링 및 Karpathy 3-Layer LLM-Wiki 구축**:
+   - Andrej Karpathy의 3-Layer Wiki 아키텍처에 기반한 지식 구조화:
+     - `summary.md`: 도메인 전체 요약 및 핵심 운영 철학
+     - `entities.md`: 비정형 문서에서 인출된 초기 엔티티 레지스트리
+     - `concepts.md`: 78종 시맨틱 비즈니스 개념 및 분류 체계
+     - `rules.md`: 180일 식스플랜, 위약금 산정 로직, 면제 조건식
+3. **GCS 기반 온톨로지 프로토타이핑 (GCS Prototyping)**:
+   - 생성된 LLM-Wiki 및 JSON-LD 온톨로지를 Google Cloud Storage(`gs://<bucket>/ontology/prototype/`)에 탑재하여 초기 지식 검색 및 모델링 적합성 검증(PoC) 신속 완결.
+4. **2-Layer 안티 리던던시 정제 사전작업 (Anti-Redundancy Refinement)**:
    - 정형 DB에 이미 존재하는 데이터(단말기 가격, 요금제 월정액 등)를 온톨로지 노드로 중복 생성하지 않음.
    - **정형 DW 원장 테이블 자체를 노드로 승격**시키고, 비정형 문서는 **원천 증거(`DocChunk`)**와 **비즈니스 판정 규칙(`DomainRule`)**의 2계층으로만 정제.
-4. **시맨틱 관계망 연결 (Semantic Bridging)**:
+5. **시맨틱 관계망 연결 (Semantic Bridging)**:
    - 규칙과 정형 테이블 간 `APPLIES_TO`, `CALCULATES`, `CONSTRAINS` 시맨틱 엣지 정의.
 
 ```mermaid
@@ -186,9 +209,11 @@ classDiagram
 | 산출물 ID | 산출물 명칭 | 파일 형식 | 주요 내용 및 목적 | 담당 R&R |
 | :--- | :--- | :--- | :--- | :--- |
 | `D2.1` | OKF v0.2 도메인 온톨로지 명세서 | JSON-LD / YAML (`ontology.jsonld`) | 78종 개념/엔티티 분류 체계, 관계 정의, 네임스페이스 | Knowledge Engineer |
-| `D2.2` | 비정형 텍스트 청크 및 해시 앵커 매니페스트 | JSONL (`doc_chunks.jsonl`) | 청크 원문, 계층 헤더, 불변 해시 앵커, 위치 매핑 | Data Engineer |
-| `D2.3` | 결정론적 비즈니스 규칙 레지스트리 | JSON / SQL (`domain_rules.json`) | 180일 식스플랜, 위약금 산식, 특화 면제 조건식 명세 | Domain Engineer |
-| `D2.4` | 2-Layer 시맨틱 브릿지 맵핑 매트릭스 | Markdown (`SEMANTIC_BRIDGE_MATRIX.md`) | 비정형 규칙 ➔ 정형 DW 원장 간 엣지 연결 스펙 | Solution Architect |
+| `D2.2` | Karpathy 3-Layer LLM-Wiki 디렉토리 | Markdown (`data/llm_wiki/*.md`) | `summary.md`, `entities.md`, `concepts.md`, `rules.md` 지식 위키 | Knowledge Engineer |
+| `D2.3` | GCS 온톨로지 프로토타입 레지스트리 | GCS URI / JSON (`gcs_prototype_manifest.json`) | GCS 버킷 상의 온톨로지 프로토타입 메타데이터 및 동기화 상태 | Data Engineer |
+| `D2.4` | 비정형 텍스트 청크 및 해시 앵커 매니페스트 | JSONL (`doc_chunks.jsonl`) | 청크 원문, 계층 헤더, 불변 해시 앵커, 위치 매핑 | Data Engineer |
+| `D2.5` | 결정론적 비즈니스 규칙 레지스트리 | JSON / SQL (`domain_rules.json`) | 180일 식스플랜, 위약금 산식, 특화 면제 조건식 명세 | Domain Engineer |
+| `D2.6` | 2-Layer 시맨틱 브릿지 맵핑 매트릭스 | Markdown (`SEMANTIC_BRIDGE_MATRIX.md`) | 비정형 규칙 ➔ 정형 DW 원장 간 엣지 연결 스펙 | Solution Architect |
 
 ---
 
@@ -199,12 +224,12 @@ classDiagram
 Stage 2에서 설계된 하이브리드 온톨로지를 실제 Google Cloud BigQuery SQL:2023 Property Graph 표준으로 물리 구현하고, 다중 홉(Multi-Hop) 지식 탐색을 수행하는 선언적 GQL(Graph Query Language) 쿼리 엔진을 엔지니어링하는 단계입니다.
 
 #### 2. 핵심 작업 항목 (Work Items)
-1. **선언적 Property Graph DDL 작성 (`CREATE PROPERTY GRAPH`)**:
-   - 물리적 데이터 복제 없이 기존 BigQuery 테이블을 노드와 엣지로 참조하는 DDL 선언.
-   - 노드 테이블 7종 및 엣지 테이블 5종 정의.
-2. **물리 노드/엣지 프로젝션**:
-   - 노드: `PlanNode`, `DeviceNode`, `SubsidyNode`, `DocChunkNode`, `DomainRuleNode`, `PenaltyFormulaNode`, `ExemptionNode`.
-   - 엣지: `COVERS_DEVICE`, `REQUIRES_PLAN`, `APPLIES_RULE`, `CALCULATES_PENALTY`, `GROUNDED_IN`.
+1. **안티 리던던시(Anti-Redundancy) 정제 및 노드 승격**:
+   - 정형 테이블에 이미 존재하는 실체(단말기, 요금제 등)를 비정형에서 중복 생성하지 않고, **물리 DW 원장 테이블을 그래프 노드로 직접 승격**.
+   - 비정형 영역에서는 엔티티 중복을 전량 제거(Pruning)하여 **원문 청크(`DocChunk`), 원본 문서(`SourceDoc`), 순수 도메인 정책/규칙(`DomainRule`)**만을 노드로 남김.
+2. **선언적 Property Graph DDL 작성 (`CREATE PROPERTY GRAPH`)**:
+   - 물리적 데이터 복제 없이 기존 BigQuery 테이블을 노드와 엣지로 참조하는 SQL:2023 DDL 선언.
+   - 노드 테이블 7종 및 엣지 테이블 5종 정의 (시맨틱 브릿지 `APPLIES_TO`, `CALCULATES`, `GROUNDED_IN`).
 3. **GQL 템플릿 엔진 설계**:
    - 1-홉(단말기 지원금 조회), 2-홉(요금제 변경 시 위약금 규칙 횡단), 다중 홉(요금제-지원금-약정-위약금-면제 판정) 쿼리 템플릿 정립.
 4. **SQL vs GQL 성능 및 비용 벤치마크**:
@@ -212,27 +237,25 @@ Stage 2에서 설계된 하이브리드 온톨로지를 실제 Google Cloud BigQ
 
 ```mermaid
 flowchart TD
+    subgraph AntiRedundancy ["안티 리던던시 (Anti-Redundancy) 정제"]
+        RawDW["정형 DW 원장 테이블"] -->|직접 승격| DWNodes["물리 DW 노드 (Device, Plan, Subsidy)"]
+        RawDoc["비정형 파싱 & Wiki"] -->|중복 엔티티 전량 Pruning| DocNodes["비정형 잔존 노드 (DocChunk, Policy/Rule)"]
+    end
+
     subgraph DDLCompilation ["BigQuery SQL:2023 Property Graph Engine"]
-        DDL["CREATE OR REPLACE PROPERTY GRAPH<br/>LGUPLUS_SUBSIDY_GRAPH"]
-        Nodes["NODE TABLES (<br/>Plan, Device, Subsidy,<br/>DocChunk, DomainRule)"]
-        Edges["EDGE TABLES (<br/>APPLIES_RULE, REQUIRES_PLAN,<br/>COVERS_DEVICE, GROUNDED_IN)"]
-        DDL --> Nodes & Edges
+        DDL["CREATE OR REPLACE PROPERTY GRAPH<br/>ENTERPRISE_ONTOLOGY_GRAPH"]
+        DWNodes & DocNodes --> DDL
+        Edges["시맨틱 브릿지 엣지 (<br/>APPLIES_TO, CALCULATES, GROUNDED_IN)"] --> DDL
     end
 
     subgraph GQLTraverse ["GQL 질의 패턴 체계"]
         Q1["1-Hop: 단말기 ➔ 지원금 정책 매칭"]
         Q2["2-Hop: 요금제 변경 ➔ 식스플랜 제약 횡단"]
         Q3["Multi-Hop: 단말 ➔ 요금 ➔ 약정 ➔ 위약금 ➔ 면제 판정"]
+        DDL --> Q1 & Q2 & Q3
     end
 
-    subgraph BenchmarkLoop ["벤치마크 & 최적화"]
-        SQL_Exec["기존 RDBMS 다중 JOIN SQL"]
-        GQL_Exec["BigQuery Native GQL Execution"]
-        Compare{"실행 속도, 슬롯 비용,<br/>코드 가독성 비교 검증"}
-        SQL_Exec & GQL_Exec --> Compare
-    end
-
-    DDLCompilation --> GQLTraverse --> BenchmarkLoop
+    AntiRedundancy --> DDLCompilation
 ```
 
 #### 3. Stage 3 산출물 매트릭스
@@ -249,10 +272,11 @@ flowchart TD
 > 📘 **하부 세부 실행 명세서**: [04_multi_domain_mcp_and_agent_ko.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/04_multi_domain_mcp_and_agent_ko.md)
 
 #### 1. 개요 및 목적
-온톨로지와 그래프 엔진을 에이전트가 직접 호출할 수 있도록 Model Context Protocol (MCP) 표준 인터페이스로 패키징하고, 복합 질의를 하위 목표로 동적 분해하여 크로스도메인 체이닝을 실행하는 지능형 오케스트레이터를 구축하는 단계입니다.
+AI 에이전트가 복잡한 물리 데이터베이스 스키마나 원시 GQL/SQL 조인 쿼리를 직접 작성하지 않도록, 도메인 온톨로지의 비즈니스 개념과 엔지니어링 역량을 **도메인 온톨로지 MCP 추상화 계층(Domain Ontology MCP Layer)**으로 캡슐화합니다. 에이전트는 이 고수준 인터페이스를 통해 복합 질의를 하위 목표로 동적 분해하고, 도메인 도구와 엔지니어링 도구를 상호 체이닝하여 0% 환각의 결정론적 결론을 도출합니다.
 
 #### 2. 핵심 작업 항목 (Work Items)
-1. **11종 도메인 온톨로지 MCP 스위트 개발**:
+1. **도메인 온톨로지 추상화 계층 구축 (11종 MCP 도구 스위트)**:
+   - 물리 원장 테이블 조인이나 복잡한 그래프 순회 로직을 에이전트로부터 완전히 은닉(Shielding).
    - **비즈니스 도구 5종**: 단말기 출고가(`mcp_get_device_factory_price`), 지원금(`mcp_get_device_subsidy_by_plan`), 위약금 계산(`mcp_calculate_plan_change_penalty`), 약정 계약비교(`mcp_compare_contract_plans`), 근거 청크(`mcp_get_policy_anchor_grounding`).
    - **엔지니어링/인프라 도구 6종**: BigQuery GQL 탐색(`mcp_explore_property_graph`), DW 볼륨/통계(`mcp_inspect_dw_table_schema`), Dataplex 카탈로그(`mcp_search_dataplex_catalog`), 리니지 조회(`mcp_get_lineage_trace`), DDL 내보내기(`mcp_export_graph_ddl`), 벤치마크(`mcp_run_cq_benchmark`).
 2. **AI FDE 에이전트 동적 다중 목표 분해 (`Sub-Goals`) 엔진 구현**:

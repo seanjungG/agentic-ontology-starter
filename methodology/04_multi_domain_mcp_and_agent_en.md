@@ -54,9 +54,13 @@ sequenceDiagram
 
 ## 2. Detailed Methodology & Technology Standards
 
-### 2.1 11-Tool Domain Ontology MCP Suite
-- **5 Business Tools**: Device list price, subsidy policies, penalty formulas, 24-month contract comparisons, policy chunk grounding.
-- **6 Engineering/Infra Tools**: Property graph GQL traversal, DW table schema/volume inspection, Dataplex catalog search, 4-tier lineage tracing, graph DDL export, CQ benchmark runner.
+### 2.1 MCP as the Domain Ontology Abstraction Layer
+Rather than burdening LLMs with writing fragile raw SQL joins or raw GQL graph traversals, the Model Context Protocol (MCP) functions as the **Domain Ontology Abstraction Layer**:
+- **Agent Shielding**: Encapsulates table schemas, partitioning keys, and multi-hop graph traversals behind intuitive business domain tool signatures.
+- **Deterministic Reliability**: Blends deterministic relational ledger lookups, GQL traversals, and Python math calculations within tool boundaries, returning 0% hallucination facts.
+- **Categorized Suite (11 Tools)**:
+  - **5 Business Tools**: Device list price, subsidy policies, penalty formulas, 24-month contract comparisons, policy chunk grounding.
+  - **6 Engineering/Infra Tools**: Property graph GQL traversal, DW table schema/volume inspection, Dataplex catalog search, 4-tier lineage tracing, graph DDL export, CQ benchmark runner.
 
 ### 2.2 Dynamic Sub-Goal Decomposition & Sequential Chaining
 - Eliminates fragile hardcoded `if-elif` logic by parsing complex user intents into an array of sub-goals.
