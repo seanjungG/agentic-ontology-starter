@@ -356,10 +356,79 @@ HTML_PAGE = """<!DOCTYPE html>
       <span class="badge badge-purple">[2-Layer Anti-Redundancy]</span>
     </div>
     <div class="topbar-right">
+      <button class="lang-toggle" onclick="toggleIndustryModal()" style="border-color:rgba(191,90,242,0.4); color:var(--accent-purple);">Industry Cases (8)</button>
       <button class="lang-toggle" onclick="toggleArchModal()" style="border-color:rgba(48,209,88,0.4); color:var(--accent-green);">GCP Native Spec & Repos</button>
       <span>BigQuery SQL:2023 Property Graph & OKF v0.2</span>
       <span class="badge badge-green">Engine Live</span>
       <button class="lang-toggle" onclick="toggleLang()" id="lang-btn">KO / EN</button>
+    </div>
+  </div>
+
+  <!-- Industry Cases Modal -->
+  <div id="industry-modal" style="display:none; position:fixed; top:50px; right:18px; width:780px; max-height:85vh; background:var(--surface-2); border:1px solid var(--card-border); border-radius:8px; z-index:1000; box-shadow:0 16px 40px rgba(0,0,0,0.85); overflow-y:auto; padding:22px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--card-border-subtle); padding-bottom:10px;">
+      <div>
+        <span class="badge badge-purple" style="margin-right:6px;">Cross-Industry Templates</span>
+        <span style="font-size:14px; font-weight:700; color:var(--text-primary);">4대 산업군 8대 엔터프라이즈 온톨로지 케이스 템플릿</span>
+      </div>
+      <button onclick="toggleIndustryModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px;">✕</button>
+    </div>
+    <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-bottom:14px;">
+      국내 대표 4대 산업군(제조, 금융, 유통, 통신) 8대 엔터프라이즈의 실제 비즈니스 요건을 추상화하여, 즉시 프로젝트 현장에 복제·적용할 수 있는 DDL, 샘플 데이터, 비정형 SOP 규정 및 CQ 가이드라인을 제공합니다.
+    </p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color:var(--text-primary); font-size:12px;">1. 스마트 제조 (Manufacturing)</strong>
+          <span class="badge">2 Cases</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
+          • <strong>포스코:</strong> 제철 연속 공정 품질 불량 인과, 설비 진동/온도 예방보전(PdM), 비상 정지(Interlock) SOP<br/>
+          • <strong>현대자동차:</strong> SDV 전장 제어기(ECU) 펌웨어 호환성, 글로벌 SCM 납기 지연 <em>(HD현대 비교 포함)</em>
+        </div>
+        <div style="margin-top:8px; font-size:10.5px;">
+          <code style="color:var(--accent);">industry_cases/01_manufacturing/</code>
+        </div>
+      </div>
+      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color:var(--text-primary); font-size:12px;">2. 핀테크 & 뱅킹 (Finance)</strong>
+          <span class="badge">2 Cases</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
+          • <strong>카카오뱅크:</strong> 비대면 주담대 심사, 수도권 스트레스 DSR 40% 산정, 생애최초 LTV 80% 특례<br/>
+          • <strong>토스:</strong> 50개 제휴사 대출 비교 중개, 마이데이터 자산 진단, 토스페이 가맹점 여전법 우대수수료
+        </div>
+        <div style="margin-top:8px; font-size:10.5px;">
+          <code style="color:var(--accent);">industry_cases/02_finance/</code>
+        </div>
+      </div>
+      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color:var(--text-primary); font-size:12px;">3. 유통 & 이커머스 (Retail)</strong>
+          <span class="badge">2 Cases</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
+          • <strong>GS리테일:</strong> GS25 가맹계약(GS1/GS2) 상생 정산, 신선식품 폐기 지원금(40%), 퀵커머스 매장 재고 밸런싱<br/>
+          • <strong>CJ대한통운/올리브영:</strong> 오늘드림(3시간) 풀필먼트 SLA 지연 배상, K-뷰티 수수료 및 대규모유통업법 정산
+        </div>
+        <div style="margin-top:8px; font-size:10.5px;">
+          <code style="color:var(--accent);">industry_cases/03_retail_commerce/</code>
+        </div>
+      </div>
+      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="color:var(--text-primary); font-size:12px;">4. 통신 & 미디어 (Telecom)</strong>
+          <span class="badge">2 Cases</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
+          • <strong>SK텔레콤:</strong> 5G-T우주 구독 결합 상품, 180일 식스플랜 공시지원금 위약금 일할 산식, 시니어 특례<br/>
+          • <strong>KT:</strong> 유무선 총액 결합 해지 방어 시뮬레이션, 엔터프라이즈 B2B 전용회선 월 99.9% SLA 3배 배상
+        </div>
+        <div style="margin-top:8px; font-size:10.5px;">
+          <code style="color:var(--accent);">industry_cases/04_telecommunications/</code>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -678,6 +747,11 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       if (tabId === 'assets' && !globalAssets.chunks) loadAssets();
       if (tabId === 'graph') loadGraph();
       if (tabId === 'cq') loadCq();
+    }
+
+    function toggleIndustryModal() {
+      const m = document.getElementById('industry-modal');
+      m.style.display = m.style.display === 'none' ? 'block' : 'none';
     }
 
     function toggleArchModal() {
@@ -1046,6 +1120,44 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
             self.wfile.write(json.dumps(cq, ensure_ascii=False).encode("utf-8"))
+
+        elif parsed.path == "/api/industry_cases":
+            cases_data = {
+                "segments": [
+                    {
+                        "id": "manufacturing", "name": "스마트 제조 (Manufacturing)",
+                        "cases": [
+                            {"client": "포스코 (POSCO)", "status": "고객 요건 진행 중", "title": "스마트 제철 연속 공정 품질 & 설비 예방보전(PdM) 온톨로지", "file": "industry_cases/01_manufacturing/case_posco_smart_steel_mill.md"},
+                            {"client": "현대자동차 (Hyundai Motor)", "status": "고객 요건 진행 중", "title": "SDV 부품 BOM & 글로벌 공급망(SCM) 온톨로지 (HD현대 비교)", "file": "industry_cases/01_manufacturing/case_hyundai_motor_sdv_supply_chain.md"}
+                        ]
+                    },
+                    {
+                        "id": "finance", "name": "핀테크 & 뱅킹 (Fintech & Banking)",
+                        "cases": [
+                            {"client": "카카오뱅크 (KakaoBank)", "status": "고객 요건 진행 중", "title": "비대면 여신 심사 & DSR 40% 온톨로지", "file": "industry_cases/02_finance/case_kakaobank_unattended_loan_dsr.md"},
+                            {"client": "토스 (TOSS)", "status": "추천 요건", "title": "원앱 멀티금융 중개 & 마이데이터 온톨로지", "file": "industry_cases/02_finance/case_toss_oneapp_fintech_mydata.md"}
+                        ]
+                    },
+                    {
+                        "id": "retail", "name": "유통 & 이커머스 (Retail & Commerce)",
+                        "cases": [
+                            {"client": "GS리테일 (GS Retail)", "status": "고객 요건 진행 중", "title": "가맹계약 상생 정산 & 옴니채널 재고 온톨로지", "file": "industry_cases/03_retail_commerce/case_gs_retail_franchise_omnichannel.md"},
+                            {"client": "CJ대한통운 / 올리브영", "status": "고객 요건 진행 중", "title": "풀필먼트 SLA & 브랜드 정산 온톨로지", "file": "industry_cases/03_retail_commerce/case_cj_logistics_oliveyoung_sla.md"}
+                        ]
+                    },
+                    {
+                        "id": "telecom", "name": "통신 & 미디어 (Telecommunications)",
+                        "cases": [
+                            {"client": "SK텔레콤 (SK Telecom)", "status": "추천 요건", "title": "T우주 구독 결합 & 멤버십 위약금 온톨로지", "file": "industry_cases/04_telecommunications/case_skt_subscription_membership.md"},
+                            {"client": "KT (KT Corporation)", "status": "추천 요건", "title": "유무선 결합 해지 방어 & B2B 회선 SLA 온톨로지", "file": "industry_cases/04_telecommunications/case_kt_wired_wireless_bundle_sla.md"}
+                        ]
+                    }
+                ]
+            }
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(cases_data, ensure_ascii=False).encode("utf-8"))
         else:
             self.send_response(404)
             self.end_headers()

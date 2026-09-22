@@ -115,3 +115,4 @@ flowchart TD
 3. **물리 그래프 결합 및 안티 리던던시**: [Stage 3 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/03_property_graph_and_gql_ko.md)에 따라 BigQuery Property Graph DDL을 정의하고, DW 테이블을 물리 노드로 승격하며 비정형은 청크/규칙만 결합합니다.
 4. **도메인 MCP 추상화 및 에이전트 오케스트레이션**: [Stage 4 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/04_multi_domain_mcp_and_agent_ko.md)를 기반으로 에이전트가 호출할 11종 도메인 MCP 도구 및 동적 체이닝을 구성합니다.
 5. **멀티뷰 스튜디오 검증 및 프로덕션 릴리스**: [Stage 5 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/05_enterprise_studio_and_deployment_ko.md)에 따라 멀티뷰 스튜디오에서 20대 CQ 0% 환각 검증을 마치고 배포합니다.
+6. **4대 산업군 실무 케이스 템플릿 참조**: [인더스트리 케이스 템플릿](../industry_cases/README.md)에 수록된 스마트 제조(포스코, 현대차), 핀테크·금융(카카오뱅크, 토스), 유통·이커머스(GS리테일, CJ대한통운/올리브영), 통신·미디어(SKT, KT) 8대 엔터프라이즈 템플릿 및 DDL/샘플 데이터/SOP 문서를 즉시 복제·활용합니다.
