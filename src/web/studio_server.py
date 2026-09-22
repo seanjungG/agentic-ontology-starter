@@ -13,10 +13,14 @@ Features 4 Interactive Studios:
 """
 import http.server, socketserver, json, sys, os, csv
 from urllib.parse import urlparse, parse_qs
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from src.agent.reasoning_engine import AiFdeAgentEngine
 
 PORT = int(os.environ.get("PORT", 8088))
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 engine = AiFdeAgentEngine()
 
 def load_text_file(rel_path, default=""):
@@ -493,16 +497,184 @@ HTML_PAGE = """<!DOCTYPE html>
     </table>
   </div>
 
-  <!-- Subbar 52px -->
+  <!-- Subbar 52px: 5-Stage E2E Data Lifecycle -->
   <div class="subbar">
-    <button class="nav-btn active" onclick="switchTab('fde')">AI FDE Studio</button>
-    <button class="nav-btn" onclick="switchTab('assets')">Asset Management Studio</button>
-    <button class="nav-btn" onclick="switchTab('graph')">Property Graph Visualizer</button>
-    <button class="nav-btn" onclick="switchTab('cq')">CQ Benchmark Studio</button>
+    <button class="nav-btn active" onclick="switchTab('overview')">0. Overview (개요 &amp; 플로우)</button>
+    <button class="nav-btn" onclick="switchTab('assets')">1. 자산 레지스트리 (Asset Registry)</button>
+    <button class="nav-btn" onclick="switchTab('okf')">2. OKF 변환 레이어 (OKF Layer)</button>
+    <button class="nav-btn" onclick="switchTab('structured')">3. 정형 그래프 구조화 (Structured)</button>
+    <button class="nav-btn" onclick="switchTab('graph')">4. 하이브리드 BQG 통합 (Hybrid BQG)</button>
+    <button class="nav-btn" onclick="switchTab('fde')">5. AI 에이전트 (AI FDE)</button>
+    <button class="nav-btn" onclick="switchTab('cq')">CQ 벤치마크 (CQ Studio)</button>
+  </div>
+
+  <!-- VIEW 0: OVERVIEW & 5-STAGE LIFECYCLE -->
+  <div class="tab-panel active" id="panel-overview" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 20px;">
+    <!-- Hero Banner -->
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 24px 28px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <span class="badge badge-green" style="font-size: 11px; padding: 4px 10px;">Enterprise E2E Data Lifecycle Starter Pack</span>
+        <span style="font-size: 11.5px; color: var(--text-secondary); font-family: monospace;">Standard: OKF v0.2 | ISO SQL:2023 GQL | Vertex AI Gemini</span>
+      </div>
+      <h1 style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+        Enterprise Agentic Ontology Starter Pack
+      </h1>
+      <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 900px;">
+        정형 DW 원장과 비정형 규정 문서를 무손실 청킹, SHA-256 불변 해시 앵커링, Zero-Copy 그래프 승격을 통해 단일 지식 체계로 통합하고, BigQuery Property Graph 및 AI FDE 에이전트로 0% 환각 실행을 보장하는 5단계 엔드투엔드 온톨로지 플랫폼입니다.
+      </p>
+    </div>
+
+    <!-- 5-Stage Bento Cards -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge" style="background: rgba(41, 151, 255, 0.2);">STAGE 0</span>
+            <span style="font-size: 10px; color: var(--accent); font-weight: 600;">ACTIVE</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Overview (개요 &amp; 플로우)</div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+            전체 5단계 데이터 변환·통합·활용 아키텍처 및 정형/비정형 융합 경로를 한눈에 조망합니다.
+          </div>
+        </div>
+        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px;" disabled>현재 화면</button>
+      </div>
+
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge">STAGE 1</span>
+            <span style="font-size: 10px; color: var(--text-secondary);">RAW MASTER</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">자산 레지스트리 (Asset Registry)</div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+            원천 BigQuery DW 마스터 테이블과 비정형 문서의 통합 메타데이터 카탈로그를 관리합니다.
+          </div>
+        </div>
+        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('assets')">1. 레지스트리 이동 &rarr;</button>
+      </div>
+
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge badge-green">STAGE 2</span>
+            <span style="font-size: 10px; color: var(--accent-green); font-weight: 600;">2-WEEK SPRINT</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">OKF 변환 레이어 (OKF Layer)</div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+            비정형 GCS 문서를 무손실 청킹, SHA-256 해시 앵커링, OKF v0.2 및 Karpathy 3-Layer Wiki로 변환합니다.
+          </div>
+        </div>
+        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('okf')">2. OKF 레이어 이동 &rarr;</button>
+      </div>
+
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge">STAGE 3</span>
+            <span style="font-size: 10px; color: var(--text-secondary);">STRUCTURED</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">정형 그래프 구조화 (Structured)</div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+            별도 복제 없이 DW 원장을 그래프 노드로 직접 가상화(Zero-Copy). 선언적 SQL:2023 DDL을 검수합니다.
+          </div>
+        </div>
+        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('structured')">3. 정형 구조화 이동 &rarr;</button>
+      </div>
+
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge">STAGE 4</span>
+            <span style="font-size: 10px; color: var(--text-secondary);">HYBRID GRAPH</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">하이브리드 BQG 통합 (Hybrid BQG)</div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+            정형-비정형 시맨틱 브릿지(APPLIES_RULE)와 2D/3D 그래프 토폴로지 시각화 및 GQL 탐색을 지원합니다.
+          </div>
+        </div>
+        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('graph')">4. BQG 그래프 이동 &rarr;</button>
+      </div>
+
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge badge-purple">STAGE 5</span>
+            <span style="font-size: 10px; color: var(--accent-purple); font-weight: 600;">AI REASONING</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">AI 에이전트 (AI FDE Studio)</div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
+            Vertex AI Gemini와 11종 MCP 도구를 바인딩하여 동적 하위 목표 분해 및 0% 환각 위약금 연산을 수행합니다.
+          </div>
+        </div>
+        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('fde')">5. AI 에이전트 이동 &rarr;</button>
+      </div>
+    </div>
+
+    <!-- SVG Architecture Diagram Card -->
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 24px;">
+      <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">5단계 E2E 데이터 라이프사이클 아키텍처 다이어그램</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">원천 DW와 GCS 문서의 변환 &middot; 통합 &middot; AI 추론 흐름</div>
+      <div style="background: #0b1120; border-radius: 8px; padding: 16px; border: 1px solid rgba(255,255,255,0.08); overflow-x: auto;">
+        <svg viewBox="0 0 1060 280" width="100%" height="280" style="display: block; margin: 0 auto; font-family: sans-serif;">
+          <defs>
+            <marker id="s-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"/>
+            </marker>
+          </defs>
+          <rect x="20" y="20" width="180" height="90" rx="8" fill="#1e293b" stroke="#334155"/>
+          <text x="35" y="45" fill="#94a3b8" font-size="10" font-weight="700">STAGE 1: DW MASTER</text>
+          <text x="35" y="65" fill="#f8fafc" font-size="12" font-weight="700">BigQuery Tables</text>
+          <text x="35" y="82" fill="#64748b" font-size="10">&bull; dw_devices, dw_plans</text>
+          <text x="35" y="96" fill="#64748b" font-size="10">&bull; dw_subsidies, dim_stores</text>
+
+          <rect x="20" y="150" width="180" height="90" rx="8" fill="#1e293b" stroke="#334155"/>
+          <text x="35" y="175" fill="#94a3b8" font-size="10" font-weight="700">STAGE 1: UNSTRUCTURED</text>
+          <text x="35" y="195" fill="#f8fafc" font-size="12" font-weight="700">GCS Policy Docs</text>
+          <text x="35" y="212" fill="#64748b" font-size="10">&bull; 상담가이드 2.0 (PDF)</text>
+          <text x="35" y="226" fill="#64748b" font-size="10">&bull; 단통법 개정안 (MD)</text>
+
+          <path d="M 200 65 L 270 65" stroke="#38bdf8" stroke-width="2" marker-end="url(#s-arrow)"/>
+          <path d="M 200 195 L 270 195" stroke="#4ade80" stroke-width="2" marker-end="url(#s-arrow)"/>
+
+          <rect x="270" y="20" width="200" height="90" rx="8" fill="#0f172a" stroke="#38bdf8"/>
+          <text x="285" y="45" fill="#38bdf8" font-size="10" font-weight="700">STAGE 3: STRUCTURED</text>
+          <text x="285" y="65" fill="#f8fafc" font-size="12" font-weight="700">Zero-Copy DW Promotion</text>
+          <text x="285" y="82" fill="#94a3b8" font-size="10">&bull; 2-Layer Anti-Redundancy</text>
+          <text x="285" y="96" fill="#94a3b8" font-size="10">&bull; SQL:2023 DDL Schema</text>
+
+          <rect x="270" y="150" width="200" height="90" rx="8" fill="#052e16" stroke="#4ade80"/>
+          <text x="285" y="175" fill="#4ade80" font-size="10" font-weight="700">STAGE 2: OKF LAYER</text>
+          <text x="285" y="195" fill="#f8fafc" font-size="12" font-weight="700">Lossless Chunks &amp; Wiki</text>
+          <text x="285" y="212" fill="#86efac" font-size="10">&bull; 11 Chunks &amp; SHA-256 Hashes</text>
+          <text x="285" y="226" fill="#86efac" font-size="10">&bull; Karpathy 3-Layer LLM-Wiki</text>
+
+          <path d="M 470 65 L 510 65 L 510 120 L 540 120" stroke="#38bdf8" stroke-width="2" marker-end="url(#s-arrow)"/>
+          <path d="M 470 195 L 510 195 L 510 145 L 540 145" stroke="#4ade80" stroke-width="2" marker-end="url(#s-arrow)"/>
+
+          <rect x="540" y="80" width="220" height="110" rx="8" fill="#172554" stroke="#60a5fa"/>
+          <text x="555" y="105" fill="#60a5fa" font-size="10" font-weight="700">STAGE 4: HYBRID BQG</text>
+          <text x="555" y="125" fill="#f8fafc" font-size="13" font-weight="700">Hybrid Property Graph</text>
+          <text x="555" y="145" fill="#93c5fd" font-size="10">&bull; Bridge: APPLIES_RULE</text>
+          <text x="555" y="160" fill="#93c5fd" font-size="10">&bull; BigQuery GQL GRAPH_TABLE()</text>
+          <text x="555" y="175" fill="#93c5fd" font-size="10">&bull; 2D / 3D Interactive Topology</text>
+
+          <path d="M 760 135 L 820 135" stroke="#c084fc" stroke-width="2" marker-end="url(#s-arrow)"/>
+
+          <rect x="820" y="70" width="210" height="130" rx="8" fill="#3b0764" stroke="#c084fc"/>
+          <text x="835" y="95" fill="#c084fc" font-size="10" font-weight="700">STAGE 5: AI FDE STUDIO</text>
+          <text x="835" y="115" fill="#f8fafc" font-size="13" font-weight="700">Deterministic Agent</text>
+          <text x="835" y="135" fill="#e9d5ff" font-size="10">&bull; Vertex AI Gemini 3.8 Flash</text>
+          <text x="835" y="150" fill="#e9d5ff" font-size="10">&bull; 11 Multi-Domain MCP Tools</text>
+          <text x="835" y="165" fill="#e9d5ff" font-size="10">&bull; Sub-Goals &amp; Chaining</text>
+          <text x="835" y="180" fill="#4ade80" font-size="10" font-weight="700">&bull; 0.0% Hallucination Proof</text>
+        </svg>
+      </div>
+    </div>
   </div>
 
   <!-- VIEW 1: AI FDE STUDIO -->
-  <div class="tab-panel active" id="panel-fde">
+  <div class="tab-panel" id="panel-fde">
     <div class="fde-layout">
       <div class="fde-sidebar">
         <div class="fde-filter-bar" style="display:flex; flex-wrap:wrap; gap:4px;">
@@ -584,6 +756,99 @@ HTML_PAGE = """<!DOCTYPE html>
           <!-- Populated via JS -->
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: OKF TRANSFORMATION LAYER -->
+  <div class="tab-panel" id="panel-okf" style="flex-direction: column; overflow: hidden; height: 100%;">
+    <div style="padding: 12px 20px; background: var(--surface-1); border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="badge badge-green">STAGE 2 ACTIVE</span>
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">2-Week Sprint Unstructured GCS Transformation Layer</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span class="badge">[GCP: OKF v0.2 Standard]</span>
+        <span class="badge badge-purple">[Karpathy 3-Layer Wiki]</span>
+        <span class="badge badge-green">[100% SHA-256 Anchored]</span>
+      </div>
+    </div>
+    <div class="asset-layout" style="flex: 1; overflow: hidden;">
+      <!-- Left: Unstructured Chunks & Wiki -->
+      <div class="asset-half" style="flex: 1.2;">
+        <div class="pane-header">
+          <span>Unstructured Policy Chunks &amp; Karpathy Wiki</span>
+        </div>
+        <div class="subtabs-bar">
+          <button class="subtab-btn active" onclick="showUnstructuredTab('chunks')">Policy Chunks</button>
+          <button class="subtab-btn" onclick="showUnstructuredTab('wiki_summary')">summary.md</button>
+          <button class="subtab-btn" onclick="showUnstructuredTab('wiki_entities')">entities.md</button>
+          <button class="subtab-btn" onclick="showUnstructuredTab('wiki_concepts')">concepts.md</button>
+          <button class="subtab-btn" onclick="showUnstructuredTab('wiki_rules')">rules.md</button>
+          <button class="subtab-btn" onclick="showUnstructuredTab('gcs')">GCS Manifest</button>
+        </div>
+        <div class="asset-scroll-content" id="unstructured-content-okf" style="flex: 1; overflow-y: auto; padding: 14px;">
+          <!-- Dynamically loaded -->
+        </div>
+      </div>
+      <!-- Right: Trust Signals & Grounding Inspector -->
+      <div class="asset-half" style="flex: 0.8; padding: 18px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
+          트러스트 시그널 &amp; 감사 원장
+        </div>
+        <div style="background: var(--surface-2); padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);">
+          <div style="font-weight: 700; font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">SHA-256 불변성 보증</div>
+          <div style="color: var(--text-secondary); font-size: 11px; line-height: 1.5;">
+            비정형 원문 MHTML/PDF에서 청크 분할 즉시 SHA-256 해시를 산출하여 감사 원장에 기록, 환각 및 위변조를 원천 차단합니다.
+          </div>
+        </div>
+        <div style="background: var(--surface-2); padding: 12px; border-radius: 8px; border: 1px solid var(--card-border);">
+          <div style="font-weight: 700; font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">Karpathy 3-Layer 계층 구조</div>
+          <div style="color: var(--text-secondary); font-size: 11px; line-height: 1.5;">
+            &bull; Layer 1: DocChunk &amp; Anchor (원문 1:1)<br>
+            &bull; Layer 2: Entities &amp; Concepts (도메인 추상화)<br>
+            &bull; Layer 3: Constraint Rules (결정론적 산식)
+          </div>
+        </div>
+        <button class="nav-btn" style="width: 100%; text-align: center; background: var(--accent); color: #fff; padding: 8px;" onclick="switchTab('structured')">
+          3. 정형 그래프 구조화 보기 &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 3: STRUCTURED GRAPH & DDL -->
+  <div class="tab-panel" id="panel-structured" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 20px;">
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 4px;">STAGE 3: STRUCTURED GRAPH &amp; ZERO-COPY DDL</div>
+        <h2 style="font-size: 18px; font-weight: 700; color: var(--text-primary);">DW Direct Promotion &amp; 2-Layer Anti-Redundancy</h2>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="nav-btn" style="padding: 6px 12px; font-size: 11.5px; background: var(--surface-2);" onclick="copyStarterDdl()">DDL 복사 (Copy SQL)</button>
+        <button class="nav-btn" style="padding: 6px 12px; font-size: 11.5px; background: var(--accent); color: #fff;" onclick="switchTab('graph')">4. 하이브리드 BQG 탐색 &rarr;</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px;">
+        <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Zero-Copy 가상화 원리</div>
+        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+          별도 그래프 전용 DB 인프라 및 중복 복제 파이프라인을 제거하고, BigQuery DW 물리 테이블을 ISO SQL:2023 Property Graph의 노드와 에지로 직접 승격하여 스토리지 비용을 80% 절감합니다.
+        </div>
+      </div>
+      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px;">
+        <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">2-Layer 안티 리던던시 보증</div>
+        <div style="font-size: 12px; line-height: 1.6; color: var(--text-secondary);">
+          비정형 문서에서 추출된 엔티티 중 DW 정형 테이블과 중복되는 엔티티는 빌드 타임에 전량 제거(Pruning)하고, 오직 순수 룰 및 청크 노드만 잔존시켜 데이터 충돌을 0건으로 차단합니다.
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; overflow: hidden;">
+      <div style="padding: 12px 18px; background: var(--surface-2); border-bottom: 1px solid var(--card-border); font-size: 12px; font-weight: 700; color: var(--text-primary);">
+        ISO SQL:2023 Property Graph DDL (create_property_graph.sql)
+      </div>
+      <pre id="starter-structured-ddl" style="padding: 16px; font-family: monospace; font-size: 11.5px; line-height: 1.5; color: #93c5fd; background: #0b1120; overflow-x: auto; margin: 0;">Loading DDL...</pre>
     </div>
   </div>
 
@@ -736,17 +1001,40 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
 
     // Switch Top Tabs
     function switchTab(tabId) {
-      document.querySelectorAll('.nav-btn').forEach((b, idx) => {
-        const ids = ['fde', 'assets', 'graph', 'cq'];
+      const ids = ['overview', 'assets', 'okf', 'structured', 'graph', 'fde', 'cq'];
+      document.querySelectorAll('.subbar .nav-btn').forEach((b, idx) => {
         b.classList.toggle('active', ids[idx] === tabId);
       });
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       const activePanel = document.getElementById('panel-' + tabId);
       if (activePanel) activePanel.classList.add('active');
 
-      if (tabId === 'assets' && !globalAssets.chunks) loadAssets();
+      if ((tabId === 'assets' || tabId === 'okf') && !globalAssets.chunks) loadAssets();
+      if (tabId === 'structured') loadStructuredDdl();
       if (tabId === 'graph') loadGraph();
       if (tabId === 'cq') loadCq();
+    }
+
+    async function loadStructuredDdl() {
+      const codeEl = document.getElementById('starter-structured-ddl');
+      if (codeEl && (!codeEl.textContent || codeEl.textContent.includes('Loading'))) {
+        try {
+          const res = await fetch('/api/graph');
+          const data = await res.json();
+          codeEl.textContent = data.ddl || '-- DDL not generated';
+        } catch (e) {
+          codeEl.textContent = '-- Failed to load DDL';
+        }
+      }
+    }
+
+    function copyStarterDdl() {
+      const codeEl = document.getElementById('starter-structured-ddl');
+      if (codeEl) {
+        navigator.clipboard.writeText(codeEl.textContent).then(() => {
+          alert('Property Graph DDL이 클립보드에 복사되었습니다.');
+        });
+      }
     }
 
     function toggleIndustryModal() {
@@ -896,7 +1184,8 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       document.querySelectorAll('#panel-assets .subtabs-bar:first-of-type .subtab-btn').forEach(b => {
         b.classList.toggle('active', b.getAttribute('onclick').includes(tabKey));
       });
-      const container = document.getElementById('unstructured-content');
+      const container = document.getElementById('unstructured-content') || document.getElementById('unstructured-content-okf');
+      const containerOkf = document.getElementById('unstructured-content-okf');
       container.innerHTML = '';
 
       if (tabKey === 'chunks') {
