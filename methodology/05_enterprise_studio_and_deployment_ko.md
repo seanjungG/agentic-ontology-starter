@@ -43,6 +43,13 @@ flowchart TD
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
+### 1.1 GCP Native 기반 스펙 및 독자 개발 영역 (GCP Native vs Custom Extension)
+
+| 구분 | 적용 기술 및 사양 | 공식 오픈소스 / 문서 레퍼런스 | 핵심 역할 및 기술적 의의 |
+| :--- | :--- | :--- | :--- |
+| **GCP Native 기반** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging & Monitoring<br>• Google ADK Web UI (Angular) | • [Cloud Run Documentation](https://cloud.google.com/run)<br>• [ADK Web GitHub](https://github.com/google/adk-web) | 글로벌 HTTPS 트래픽 서빙, 무중단 자동 스케일링, 엔터프라이즈 IAM 런타임 서비스 계정 격리, 표준 ADK 대화형 인터페이스 호환 |
+| **독자 개발 커스텀 영역** | • 4대 멀티뷰 엔터프라이즈 스타터 스튜디오 (`src/web/studio_server.py`)<br>• 2D SVG 인터랙티브 토폴로지 맵<br>• 20대 Golden CQ 결정론적 평가 하네스 (`pipeline/validator.py`)<br>• 4-Tier 데이터 리니지 시각화 | 스타터팩 웹 스튜디오 (`src/web/`) | 외부 종속성 0개의 경량 단일 포트(8088)에서 온톨로지 에셋, 물리 그래프 DDL, AI FDE 추론 타임라인, CQ 벤치마크를 통합 검증 |
+
 ---
 
 ## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)

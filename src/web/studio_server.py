@@ -356,10 +356,72 @@ HTML_PAGE = """<!DOCTYPE html>
       <span class="badge badge-purple">[2-Layer Anti-Redundancy]</span>
     </div>
     <div class="topbar-right">
+      <button class="lang-toggle" onclick="toggleArchModal()" style="border-color:rgba(48,209,88,0.4); color:var(--accent-green);">GCP Native Spec & Repos</button>
       <span>BigQuery SQL:2023 Property Graph & OKF v0.2</span>
       <span class="badge badge-green">Engine Live</span>
       <button class="lang-toggle" onclick="toggleLang()" id="lang-btn">KO / EN</button>
     </div>
+  </div>
+
+  <!-- GCP Native First & Architecture Modal -->
+  <div id="arch-modal" style="display:none; position:fixed; top:50px; right:18px; width:720px; max-height:85vh; background:var(--surface-2); border:1px solid var(--card-border); border-radius:8px; z-index:1000; box-shadow:0 16px 40px rgba(0,0,0,0.85); overflow-y:auto; padding:22px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--card-border-subtle); padding-bottom:10px;">
+      <div>
+        <span class="badge badge-green" style="margin-right:6px;">GCP Native First</span>
+        <span style="font-size:14px; font-weight:700; color:var(--text-primary);">Google Cloud Native Spec & Custom Extension Delineation</span>
+      </div>
+      <button onclick="toggleArchModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px;">✕</button>
+    </div>
+    <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-bottom:14px;">
+      본 플랫폼은 <strong>Google Cloud Native First</strong> 원칙에 따라 GCP 관리형 인프라(BigQuery, Dataplex, Cloud Storage, Cloud Run)와 오픈소스 표준(OKF v0.2, ADK 2.0, Remote MCP)을 최우선 채택합니다. 도메인 수식 및 그래프 안티 리던던시(중복 제거) 영역에 한해서만 커스텀 확장을 적용합니다.
+    </p>
+    <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px; margin-bottom:16px;">
+      <div style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:8px;">공식 Google 오픈소스 레퍼런스 저장소 (Reference Repositories)</div>
+      <div style="font-size:11.5px; line-height:1.8; color:var(--text-secondary);">
+        • <strong>Knowledge Catalog (OKF Spec):</strong> <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog" target="_blank" style="color:var(--accent); text-decoration:none;">github.com/GoogleCloudPlatform/knowledge-catalog</a><br/>
+        • <strong>Agent Development Kit (ADK Python):</strong> <a href="https://github.com/google/adk-python" target="_blank" style="color:var(--accent); text-decoration:none;">github.com/google/adk-python</a><br/>
+        • <strong>ADK Web UI (Angular):</strong> <a href="https://github.com/google/adk-web" target="_blank" style="color:var(--accent); text-decoration:none;">github.com/google/adk-web</a><br/>
+        • <strong>Dataplex KC Remote MCP:</strong> <code style="background:var(--surface-3); padding:2px 5px; border-radius:3px;">https://dataplex.googleapis.com/mcp</code><br/>
+        • <strong>BigQuery Remote MCP:</strong> <code style="background:var(--surface-3); padding:2px 5px; border-radius:3px;">https://bigquery.googleapis.com/mcp</code> <span style="color:var(--accent-orange); font-size:10.5px;">(※ GQL 미지원 ➔ 커스텀 실행기 탑재)</span>
+      </div>
+    </div>
+    <div style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">계층별 네이티브 스펙 vs 커스텀 확장 비교</div>
+    <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--card-border); color:var(--text-secondary);">
+          <th style="padding:6px;">계층 (Layer)</th>
+          <th style="padding:6px;">Google Cloud Native 기반</th>
+          <th style="padding:6px;">독자 개발 커스텀 확장</th>
+        </tr>
+      </thead>
+      <tbody style="color:var(--text-secondary); line-height:1.4;">
+        <tr style="border-bottom:1px solid var(--card-border-subtle);">
+          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Data DW</td>
+          <td style="padding:6px;"><span class="badge badge-green">Native</span> BigQuery Managed Tables, SQL:2023 Property Graph</td>
+          <td style="padding:6px;"><span class="badge">Custom</span> 2-Layer 안티 리던던시 컴파일러, 시맨틱 브릿지</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--card-border-subtle);">
+          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Catalog</td>
+          <td style="padding:6px;"><span class="badge badge-green">Native</span> Dataplex Knowledge Catalog, OKF v0.2</td>
+          <td style="padding:6px;"><span class="badge">Custom</span> 무손실 시각 청킹, Karpathy 3-Layer LLM-Wiki</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--card-border-subtle);">
+          <td style="padding:6px; font-weight:600; color:var(--text-primary);">MCP Tools</td>
+          <td style="padding:6px;"><span class="badge badge-green">Native</span> BigQuery Remote MCP, Dataplex KC Remote MCP</td>
+          <td style="padding:6px;"><span class="badge">Custom</span> Tier 3 Domain MCP (비즈니스 5종), GQL 전용 러너</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--card-border-subtle);">
+          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Agent</td>
+          <td style="padding:6px;"><span class="badge badge-green">Native</span> Google ADK 2.0 Runtime, Gemini 3.8 Flash</td>
+          <td style="padding:6px;"><span class="badge">Custom</span> AI FDE 동적 하위 목표 분해 및 크로스도메인 체이닝</td>
+        </tr>
+        <tr>
+          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Studio</td>
+          <td style="padding:6px;"><span class="badge badge-green">Native</span> Google Cloud Run 호스팅, ADK Web 호환</td>
+          <td style="padding:6px;"><span class="badge">Custom</span> 4대 멀티뷰 스튜디오, 2D SVG 토폴로지, CQ 벤치마크</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- Subbar 52px -->
@@ -374,8 +436,10 @@ HTML_PAGE = """<!DOCTYPE html>
   <div class="tab-panel active" id="panel-fde">
     <div class="fde-layout">
       <div class="fde-sidebar">
-        <div class="fde-filter-bar">
+        <div class="fde-filter-bar" style="display:flex; flex-wrap:wrap; gap:4px;">
           <span class="filter-chip active" onclick="filterTools('all')">All (11)</span>
+          <span class="filter-chip" onclick="filterTools('gcp_native')">GCP Native (2)</span>
+          <span class="filter-chip" onclick="filterTools('custom')">Custom (9)</span>
           <span class="filter-chip" onclick="filterTools('business')">Business (5)</span>
           <span class="filter-chip" onclick="filterTools('engineer')">Engineering (6)</span>
         </div>
@@ -416,7 +480,10 @@ HTML_PAGE = """<!DOCTYPE html>
       <div class="asset-half">
         <div class="pane-header">
           <span>Unstructured Knowledge & Karpathy 3-Layer Wiki</span>
-          <span class="badge badge-purple">[OKF v0.2 Grounding]</span>
+          <div style="display:flex; gap:4px;">
+            <span class="badge badge-green">[GCP: OKF v0.2]</span>
+            <span class="badge badge-purple">[Custom: Karpathy Wiki]</span>
+          </div>
         </div>
         <div class="subtabs-bar">
           <button class="subtab-btn active" onclick="showUnstructuredTab('chunks')">Policy Chunks</button>
@@ -434,7 +501,10 @@ HTML_PAGE = """<!DOCTYPE html>
       <div class="asset-half">
         <div class="pane-header">
           <span>Structured DW Master Ledgers (BigQuery)</span>
-          <span class="badge">[Direct Node Promotion]</span>
+          <div style="display:flex; gap:4px;">
+            <span class="badge badge-green">[GCP Native DW Table]</span>
+            <span class="badge">[Direct Node Promotion]</span>
+          </div>
         </div>
         <div class="subtabs-bar">
           <button class="subtab-btn active" onclick="showTable('devices')">dw_device_master</button>
@@ -454,8 +524,9 @@ HTML_PAGE = """<!DOCTYPE html>
       <div class="stats-kpi-bar">
         <div class="kpi-item"><span>Total Nodes:</span> <span class="kpi-val" id="graph-node-count">5</span></div>
         <div class="kpi-item"><span>Total Edges:</span> <span class="kpi-val" id="graph-edge-count">4</span></div>
+        <div class="kpi-item"><span>Engine:</span> <span class="kpi-val" style="color:var(--accent-green);">GCP Native SQL:2023</span></div>
+        <div class="kpi-item"><span>Compiler:</span> <span class="kpi-val" style="color:var(--accent-purple);">Custom Anti-Redundancy</span></div>
         <div class="kpi-item"><span>Anti-Redundancy:</span> <span class="kpi-val" style="color:var(--accent-green);">100% (Zero Duplicates)</span></div>
-        <div class="kpi-item"><span>Standard:</span> <span class="kpi-val">BigQuery SQL:2023 GQL</span></div>
       </div>
       <div class="graph-main-split">
         <div class="graph-canvas-box" id="graph-canvas">
@@ -609,6 +680,11 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       if (tabId === 'cq') loadCq();
     }
 
+    function toggleArchModal() {
+      const m = document.getElementById('arch-modal');
+      m.style.display = m.style.display === 'none' ? 'block' : 'none';
+    }
+
     // Load Tool Catalog
     async function loadCatalog() {
       const resp = await fetch('/api/catalog');
@@ -620,15 +696,26 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       const container = document.getElementById('tool-catalog-list');
       container.innerHTML = '';
       tools.forEach(t => {
-        if (currentToolFilter !== 'all' && t.category !== currentToolFilter) return;
+        if (currentToolFilter === 'business' && t.category !== 'business') return;
+        if (currentToolFilter === 'engineer' && t.category !== 'engineer') return;
+        if (currentToolFilter === 'gcp_native' && t.spec_origin !== 'GCP_NATIVE') return;
+        if (currentToolFilter === 'custom' && t.spec_origin !== 'CUSTOM_EXTENSION') return;
+
         const isBiz = t.category === 'business';
+        const isNative = t.spec_origin === 'GCP_NATIVE';
         container.innerHTML += `
           <div class="tool-card">
             <div class="tool-card-head">
               <span class="tool-name">${t.name}</span>
-              <span class="badge ${isBiz ? '' : 'badge-purple'}">${isBiz ? 'BIZ' : 'ENG'}</span>
+              <div style="display:flex; gap:4px;">
+                <span class="badge ${isNative ? 'badge-green' : ''}">${isNative ? 'GCP Native' : 'Custom'}</span>
+                <span class="badge ${isBiz ? '' : 'badge-purple'}">${isBiz ? 'BIZ' : 'ENG'}</span>
+              </div>
             </div>
             <div class="tool-desc">${t.description}</div>
+            <div style="margin-top:6px; font-size:10px; color:var(--text-muted); line-height:1.3;">
+              <span style="color:${isNative ? 'var(--accent-green)' : 'var(--accent)'}; font-weight:600;">[Spec]</span> ${t.spec_source || 'Domain MCP'}
+            </div>
           </div>
         `;
       });
@@ -637,7 +724,12 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     function filterTools(cat) {
       currentToolFilter = cat;
       document.querySelectorAll('.filter-chip').forEach(c => {
-        c.classList.toggle('active', c.innerText.toLowerCase().includes(cat));
+        c.classList.remove('active');
+        if (cat === 'all' && c.innerText.startsWith('All')) c.classList.add('active');
+        else if (cat === 'gcp_native' && c.innerText.includes('GCP Native')) c.classList.add('active');
+        else if (cat === 'custom' && c.innerText.includes('Custom')) c.classList.add('active');
+        else if (cat === 'business' && c.innerText.includes('Business')) c.classList.add('active');
+        else if (cat === 'engineer' && c.innerText.includes('Engineering')) c.classList.add('active');
       });
       loadCatalog();
     }

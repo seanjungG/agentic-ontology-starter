@@ -46,7 +46,38 @@ flowchart TD
 
 ---
 
-### 2. 5대 표준 방법론 가이드 (5-Stage Methodology)
+### 2. GCP Native First 아키텍처 및 커스텀 확장 분계선 (GCP Native First vs Custom Extension)
+
+본 스타터 킷은 **"Google Cloud Native First (GCP 네이티브 기능 우선 채택)"**을 기본 원칙으로 삼습니다. 관리형 인프라(BigQuery, Dataplex, Vertex AI, Cloud Run)와 Google 공식 오픈소스 프레임워크(ADK 2.0, OKF v0.2, Remote MCP)를 최대한 전진 배치하고, 도메인 고유 비즈니스 연산 및 그래프 안티 리던던시 처리에 한해서만 커스텀 확장을 적용합니다.
+
+#### 2.1 계층별 네이티브 스펙 vs 독자 개발 커스텀 확장 매트릭스
+
+| 아키텍처 계층 (Layer) | Google Cloud Native Spec / Service | 공식 오픈소스 / 엔드포인트 레퍼런스 | 독자 개발 커스텀 확장 (Custom Extension) | 커스텀 개발 사유 및 기술적 당위성 |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Data Lake & DW** | • BigQuery Managed Tables<br>• Cloud Storage (GCS)<br>• BigQuery SQL:2023 Property Graph | • [BigQuery Documentation](https://cloud.google.com/bigquery)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | • 2-Layer 안티 리던던시 Graph DDL 컴파일러 (`pipeline/graph_builder.py`)<br>• 시맨틱 브릿지 엣지 (`APPLIES_TO`, `CALCULATES`) | DW 원장 테이블을 그래프 노드로 직접 승격하고 텍스트 중복 엔티티를 프루닝하여 저장 공간 및 쿼리 비용 80% 절감 |
+| **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • 결정론적 SHA-256 비정형 청커 (`DocChunk`)<br>• Karpathy 3-Layer LLM-Wiki 컴파일러 (`data/llm_wiki/`)<br>• GCS 프로토타입 매니페스트 생성기 | 비정형 PDF/MHTML의 시각적 구조를 무손실 보존하고, BQ 적재 전 GCS 기반 온톨로지 지식망 선행 검증 |
+| **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (비즈니스 5종 + 엔지니어링 6종 도구)<br>• BigQuery Property Graph GQL 전용 실행기 | **BigQuery Remote MCP의 결정적 제약사항(GQL `GRAPH_TABLE()` 미지원) 극복** 및 복잡한 SQL/GQL 스키마로부터 AI 에이전트 격리·보호 |
+| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 3.8 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • AI FDE 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 정적 1회 질의를 넘어 비즈니스 룰과 물리 DW 원장 실측치를 교차 검증하는 자율 추론 사이클 구현 |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • 4대 멀티뷰 엔터프라이즈 스타터 스튜디오 (`src/web/studio_server.py`)<br>• 2D SVG 인터랙티브 토폴로지 맵 & DDL 뷰어<br>• 20대 Golden CQ 결정론적 평가 하네스 | 0 의존성 경량 단일 포트(8088)에서 엔드투엔드 거버넌스, 그래프, 에이전트, CQ 성능을 원스톱 검증 |
+
+#### 2.2 핵심 공식 레퍼런스 저장소 (Official Google Repositories)
+- **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
+  - GitHub: `https://github.com/GoogleCloudPlatform/knowledge-catalog`
+  - 핵심 스펙: Open Knowledge Format (`okf/bundles/`), Custom Aspect Types, Auto-Enrichment Samples
+- **Google Agent Development Kit (ADK Python 2.0)**:
+  - GitHub: `https://github.com/google/adk-python`
+  - 핵심 모듈: Workflow Runtime, Task API, Data Agent Integrations (`contributing/samples/integrations/data_agent`), FunctionTool
+- **Google ADK Web UI**:
+  - GitHub: `https://github.com/google/adk-web`
+  - 프론트엔드: Angular 기반 엔터프라이즈 대화형 에이전트 웹 인터페이스
+- **Google Cloud Remote MCP Server 명세**:
+  - Dataplex KC Remote MCP: `https://dataplex.googleapis.com/mcp` (`https://docs.cloud.google.com/dataplex/docs/use-remote-mcp`)
+  - BigQuery Remote MCP: `https://bigquery.googleapis.com/mcp` (`https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp`)
+  - 제약사항: `execute_sql_readonly`는 Graph Query Language(GQL)를 지원하지 않음 ➔ 커스텀 실행 계층 필수
+
+---
+
+### 3. 5대 표준 방법론 가이드 (5-Stage Methodology)
 
 프로젝트 기획부터 프로덕션 배포까지의 모든 엔지니어링 프로세스는 [`methodology/`](methodology/) 디렉토리에 완비되어 있습니다:
 
@@ -61,7 +92,7 @@ flowchart TD
 
 ---
 
-### 3. 프로젝트 디렉토리 구조
+### 4. 프로젝트 디렉토리 구조
 
 ```text
 agentic-ontology-starter/
@@ -98,7 +129,7 @@ agentic-ontology-starter/
 
 ---
 
-### 4. 4대 멀티뷰 엔터프라이즈 스튜디오
+### 5. 4대 멀티뷰 엔터프라이즈 스튜디오
 
 `05_DESIGN.md` 표준을 100% 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`)가 제공됩니다:
 1. **AI FDE Studio**:
@@ -118,7 +149,7 @@ agentic-ontology-starter/
 
 ---
 
-### 5. 빠른 시작 가이드 (Quickstart in 3 Minutes)
+### 6. 빠른 시작 가이드 (Quickstart in 3 Minutes)
 
 #### 1단계: 저장소 복제 및 의존성 설치
 ```bash

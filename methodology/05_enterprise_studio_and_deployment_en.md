@@ -43,6 +43,13 @@ flowchart TD
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
+### 1.1 GCP Native Foundations & Custom Extensions
+
+| Dimension | Technologies & Specifications | Official Documentation / Spec Reference | Key Role & Engineering Rationale |
+| :--- | :--- | :--- | :--- |
+| **GCP Native Foundation** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging & Monitoring<br>• Google ADK Web UI (Angular) | • [Cloud Run Documentation](https://cloud.google.com/run)<br>• [ADK Web GitHub](https://github.com/google/adk-web) | Global HTTPS traffic serving, zero-maintenance auto-scaling, least-privilege IAM service account isolation, and standard ADK conversational interface compatibility. |
+| **Custom Extensions** | • 4-View Enterprise Starter Studio (`src/web/studio_server.py`)<br>• 2D Interactive SVG Topology Map<br>• 20 Golden CQ Evaluation Harness (`pipeline/validator.py`)<br>• 4-Tier Data Lineage Visualizer | Starter Pack Web Studio (`src/web/`) | Lightweight zero-dependency server running on a single port (8088) providing integrated verification of assets, DDL, reasoning chains, and CQ performance. |
+
 ---
 
 ## 2. Detailed Methodology & Technology Standards

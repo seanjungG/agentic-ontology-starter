@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Pipeline Graph Builder:
-Synthesizes declarative BigQuery SQL:2023 Property Graph DDL and exports
-graph topology metadata with strict 2-Layer Anti-Redundancy enforcement:
-- Direct DW Node Promotion (DeviceNode, PlanNode, SubsidyNode)
-- Unstructured Node Pruning (DocChunkNode, DomainRuleNode only)
-- Semantic Bridges (APPLIES_RULE, CALCULATES_PENALTY, GROUNDED_IN, COVERS_DEVICE, REQUIRES_PLAN)
+- GCP Native Foundation:
+    * Google Cloud BigQuery ISO SQL:2023 Property Graph DDL specification
+    * BigQuery GRAPH_TABLE() and GQL (Graph Query Language) syntax
+- Custom Extensions:
+    * 2-Layer Anti-Redundancy graph synthesis (Zero duplicate entity storage)
+    * Direct Promotion of BigQuery DW master tables to physical graph nodes
+    * Aggressive pruning of redundant unstructured text entities
+    * Semantic Bridges (APPLIES_RULE, CALCULATES_PENALTY, GROUNDED_IN, COVERS_DEVICE, REQUIRES_PLAN)
 """
 import os, json
 

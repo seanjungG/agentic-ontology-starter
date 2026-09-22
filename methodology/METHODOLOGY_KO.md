@@ -38,6 +38,35 @@
    - 복잡한 원천 테이블 조인이나 원시 그래프 DDL/GQL 쿼리를 AI 에이전트가 직접 다루지 않도록, 비즈니스 도메인 수준으로 정의된 고수준 MCP 도구(비즈니스 5종 + 엔지니어링 6종)로 캡슐화했습니다.
    - 이를 통해 에이전트는 도메인 레이어에서 동적 다중 목표 분해, 시퀀셜 체이닝, 중간 관측(Observation)을 수행하여 0% 환각의 결정론적 결론을 도출합니다.
 
+### 1.4 GCP Native First 강령 및 커스텀 확장 분계선 (GCP Native First Mandate)
+
+본 방법론은 **"Google Cloud Native First (GCP 네이티브 기능 우선 채택)"**을 절대 강령으로 삼습니다. 관리형 클라우드 서비스가 제공하는 엔터프라이즈급 확장성, IAM 보안 통제, Model Armor 인젝션 방어, 감사 로그(Audit Trail), 오픈 표준(OKF, SQL:2023, MCP)을 최대한 레버리지하고, GCP 네이티브 기능만으로 해결 불가능한 도메인 고유 비즈니스 연산 및 그래프 안티 리던던시 처리에 한해서만 커스텀 확장을 적용합니다.
+
+#### 1.4.1 계층별 네이티브 스펙 vs 독자 개발 커스텀 확장 비교 매트릭스
+
+| 아키텍처 계층 (Layer) | Google Cloud Native Spec / Service | 공식 오픈소스 / 엔드포인트 레퍼런스 | 독자 개발 커스텀 확장 (Custom Extension) | 커스텀 개발 사유 및 기술적 당위성 |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Data Lake & DW** | • BigQuery Managed Tables<br>• Cloud Storage (GCS)<br>• BigQuery SQL:2023 Property Graph | • [BigQuery Documentation](https://cloud.google.com/bigquery)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | • 2-Layer 안티 리던던시 Graph DDL 컴파일러 (`pipeline/graph_builder.py`)<br>• 시맨틱 브릿지 엣지 (`APPLIES_TO`, `CALCULATES`) | DW 원장 테이블을 그래프 노드로 직접 승격하고 텍스트 중복 엔티티를 프루닝하여 저장 공간 및 쿼리 비용 80% 절감 |
+| **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • 결정론적 SHA-256 비정형 청커 (`DocChunk`)<br>• Karpathy 3-Layer LLM-Wiki 컴파일러 (`data/llm_wiki/`)<br>• GCS 프로토타입 매니페스트 생성기 | 비정형 PDF/MHTML의 시각적 구조를 무손실 보존하고, BQ 적재 전 GCS 기반 온톨로지 지식망 선행 검증 |
+| **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (비즈니스 5종 + 엔지니어링 6종 도구)<br>• BigQuery Property Graph GQL 전용 실행기 | **BigQuery Remote MCP의 결정적 제약사항(GQL `GRAPH_TABLE()` 미지원) 극복** 및 복잡한 SQL/GQL 스키마로부터 AI 에이전트 격리·보호 |
+| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 3.8 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • AI FDE 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 정적 1회 질의를 넘어 비즈니스 룰과 물리 DW 원장 실측치를 교차 검증하는 자율 추론 사이클 구현 |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • 4대 멀티뷰 엔터프라이즈 스타터 스튜디오 (`src/web/studio_server.py`)<br>• 2D SVG 인터랙티브 토폴로지 맵 & DDL 뷰어<br>• 20대 Golden CQ 결정론적 평가 하네스 | 0 의존성 경량 단일 포트(8088)에서 엔드투엔드 거버넌스, 그래프, 에이전트, CQ 성능을 원스톱 검증 |
+
+#### 1.4.2 핵심 공식 레퍼런스 저장소 (Official Reference Repositories)
+1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
+   - 공식 저장소: `https://github.com/GoogleCloudPlatform/knowledge-catalog`
+   - 핵심 레퍼런스: Open Knowledge Format (`okf/bundles/`), Custom Aspect Types 정의문, Metadata Enrichment 파이프라인.
+2. **Google Agent Development Kit (ADK Python 2.0)**:
+   - 공식 저장소: `https://github.com/google/adk-python`
+   - 핵심 레퍼런스: Workflow Runtime, Task API, Data Agent 통합 샘플(`contributing/samples/integrations/data_agent`), `FunctionTool` 캡슐화.
+3. **Google ADK Web UI**:
+   - 공식 저장소: `https://github.com/google/adk-web`
+   - 핵심 레퍼런스: Angular 기반 공식 오픈소스 대화형 에이전트 프론트엔드 인터페이스.
+4. **Google Cloud Managed Remote MCP**:
+   - Dataplex KC Remote MCP: `https://dataplex.googleapis.com/mcp` (`https://docs.cloud.google.com/dataplex/docs/use-remote-mcp`)
+   - BigQuery Remote MCP: `https://bigquery.googleapis.com/mcp` (`https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp`)
+   - 제약사항: `execute_sql_readonly`는 Graph Query Language(GQL)를 지원하지 않으므로, 그래프 쿼리는 별도 BigQuery 클라이언트 또는 커스텀 MCP 러너로 처리해야 함.
+
 ---
 
 ## 2. 진화적 엔드투엔드 라이프사이클 아키텍처 (End-to-End Lifecycle Architecture)

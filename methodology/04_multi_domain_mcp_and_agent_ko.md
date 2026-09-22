@@ -50,6 +50,13 @@ sequenceDiagram
     end
 ```
 
+### 1.1 GCP Native 기반 스펙 및 독자 개발 영역 (GCP Native vs Custom Extension)
+
+| 구분 | 적용 기술 및 사양 | 공식 오픈소스 / 엔드포인트 레퍼런스 | 핵심 역할 및 기술적 의의 |
+| :--- | :--- | :--- | :--- |
+| **GCP Native 기반** | • Google Agent Development Kit (ADK Python 2.0)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Dataplex & BigQuery Remote MCP<br>• Vertex AI Gemini 3.8 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview)<br>• [GCP Remote MCP 명세](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | 에이전트 런타임(Workflow Runtime, Task API), 엔터프라이즈 IAM 인증 기반 Remote MCP 연결, 자연어 추론 파운데이션 모델 제공 |
+| **독자 개발 커스텀 영역** | • Tier 3 Domain Ontology MCP Server (11종 도구)<br>• AI FDE 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 스타터팩 에이전트 엔진 (`src/agent/`) | 원천 스키마의 인지적 복잡성으로부터 LLM을 보호하고, 비즈니스 판정과 물리 인프라 실측치를 상호 교차 검증하는 자율 추론 파이프라인 구현 |
+
 ---
 
 ## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)

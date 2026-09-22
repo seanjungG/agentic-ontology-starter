@@ -40,6 +40,13 @@ flowchart TD
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
+### 1.1 GCP Native Foundations & Custom Extensions
+
+| Dimension | Technologies & Specifications | Official Open-Source / Endpoint Reference | Key Role & Engineering Rationale |
+| :--- | :--- | :--- | :--- |
+| **GCP Native Foundation** | • Google Cloud Open Knowledge Format (OKF v0.2)<br>• Dataplex Knowledge Catalog Custom Aspect Types<br>• Google Cloud Storage (GCS) Ontology Bucket | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`okf/bundles/` Standard Spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | Adheres to enterprise OKF v0.2 specification, standard semantic bundles, and cloud storage immutability/lifecycle rules. |
+| **Custom Extensions** | • Lossless Visual Chunker & SHA-256 Hash Anchorer (`pipeline/ingest.py`)<br>• Karpathy 3-Layer LLM-Wiki Compiler (`data/llm_wiki/`)<br>• GCS Prototype Manifest Generator<br>• 2-Layer Anti-Redundancy Modeling | Starter Pack Pipeline Engine (`pipeline/ingest.py`) | Preserves full visual layout of policy manuals, provides immutable citation anchors, and prunes redundant text entities before BigQuery graph ingestion. |
+
 ---
 
 ## 2. Detailed Methodology & Technology Standards
