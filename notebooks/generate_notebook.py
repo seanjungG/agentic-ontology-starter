@@ -6,6 +6,7 @@ and executes all python cells to capture actual, verified stdout outputs.
 """
 import os
 import sys
+import base64
 import json
 import io
 import contextlib
@@ -19,12 +20,25 @@ def create_notebook():
 
     cells = []
 
-    def add_md(source_text):
-        cells.append({
+    def get_image_attachment(png_filename):
+        png_path = os.path.join(notebook_dir, "assets", png_filename)
+        with open(png_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+        return {
+            png_filename: {
+                "image/png": b64
+            }
+        }
+
+    def add_md(source_text, attachments=None):
+        cell = {
             "cell_type": "markdown",
             "metadata": {},
             "source": [line + "\n" for line in source_text.strip().split("\n")]
-        })
+        }
+        if attachments:
+            cell["attachments"] = attachments
+        cells.append(cell)
 
     def add_code(source_code, execution_count=1):
         # Execute cell and capture output
@@ -89,7 +103,7 @@ def create_notebook():
 
 ### 3-Step Hands-on Architecture Journey
 
-![Evolutionary Journey Overview](assets/evolutionary_overview_flow.svg)
+![Evolutionary Journey Overview](attachment:evolutionary_overview_flow.png)
 
 1. **Step 1: 비정형 지식 체계화 및 OKF 에이전트 맛보기 (OKF & Unstructured Agent Preview)**
    - 비정형 가이드 문서 로드, 무손실 청킹 및 결정론적 SHA-256 해시 앵커링 (`DocChunk`)
@@ -105,7 +119,7 @@ def create_notebook():
    - AI FDE 추론 엔진: 복합 질문 인입 ➔ 동적 다중 하위 목표 분해(`Sub-Goals`) ➔ 시퀀셜 체이닝 실행
    - 180일 식스플랜 차액 위약금 일할 계산 및 만 65세 시니어 면제 검증 (수학적 0% 환각)
    - 20대 Golden Competency Questions(CQs) 자동 벤치마크 및 검증 리포트 분석
-""")
+""", attachments=get_image_attachment("evolutionary_overview_flow.png"))
 
     cell_counter = 1
 
@@ -114,6 +128,7 @@ def create_notebook():
 
     add_code("""import os
 import sys
+import base64
 import json
 import hashlib
 
@@ -135,7 +150,7 @@ print(f"[OK] Input Data Directory: {os.path.join(starter_root, 'data', 'input')}
 ## Step 1: 비정형 지식 체계화 및 OKF 에이전트 맛보기
 ### (OKF & Unstructured Agent Preview)
 
-![Step 1 Architecture Flow](assets/step1_architecture_flow.svg)
+![Step 1 Architecture Flow](attachment:step1_architecture_flow.png)
 
 #### 배경: 왜 단순 벡터 RAG는 복합 규정에서 100% 환각을 유발하는가?
 기업의 업무 규정집(SOP)이나 상담 가이드는 조건문, 단서 조항, 예외 규정(시니어 특례, 유통망 지원금 차등 등)이 복잡하게 얽혀 있습니다.
@@ -147,7 +162,7 @@ print(f"[OK] Input Data Directory: {os.path.join(starter_root, 'data', 'input')}
 **해결책**:
 - Google Cloud **Open Knowledge Format (OKF v0.2)** 규격을 기반으로 문서를 시각 청크 단위로 분할.
 - 각 청크에 **결정론적 SHA-256 해시 앵커(`anchor_{hash}`)**를 부여하여 원천 텍스트를 1:1 불변 바인딩.
-- Andrej Karpathy의 **3-Layer LLM-Wiki** 구조로 비정형 지식을 계층화(Summary, Entities, Concepts, Rules).""")
+- Andrej Karpathy의 **3-Layer LLM-Wiki** 구조로 비정형 지식을 계층화(Summary, Entities, Concepts, Rules).""", attachments=get_image_attachment("step1_architecture_flow.png"))
 
     add_md("""#### [실습 1.1] 비정형 가이드 문서 로드 및 SHA-256 해시 앵커링
 `data/input/01_guides/sample_policy_guide.md`에서 규정 문서를 읽고, `<!-- DOC_CHUNK_xxx -->` 마커 기반으로 무손실 청킹을 수행합니다.""")
@@ -246,7 +261,7 @@ for item in retrieved:
 ## Step 2: BigQuery Property Graph 설계 및 GQL 질의 체계
 ### (Property Graph & GQL)
 
-![Step 2 Property Graph Flow](assets/step2_property_graph_flow.svg)
+![Step 2 Property Graph Flow](attachment:step2_property_graph_flow.png)
 
 #### 배경: 관계형 DW 테이블을 복제하지 않고 그래프로 직접 승격하는 2-Layer 안티 리던던시 원리
 기존 지식 그래프(Knowledge Graph)의 치명적 병폐는 이미 빅쿼리(BigQuery) DW에 정제되어 존재하는 수천만 행의 정형 마스터 테이블(`Device`, `Plan`, `Subsidy`)을 별도의 그래프 DB(Neo4j, RDF 등)나 트리플(`Subject-Predicate-Object`)로 중복 복제하여 저장하는 것이었습니다.
@@ -261,7 +276,7 @@ for item in retrieved:
   - `COVERS_DEVICE`: 지원금 정책 ➔ 단말기 마스터
   - `REQUIRES_PLAN`: 지원금 정책 ➔ 요금제 마스터
   - `APPLIES_RULE`: 업무 규정(`DomainRuleNode`) ➔ 적용 대상 요금제(`PlanNode`)
-  - `GROUNDED_IN`: 비즈니스 룰 ➔ OKF 원천 텍스트 청크(`DocChunkNode`)""")
+  - `GROUNDED_IN`: 비즈니스 룰 ➔ OKF 원천 텍스트 청크(`DocChunkNode`)""", attachments=get_image_attachment("step2_property_graph_flow.png"))
 
     add_md("""#### [실습 2.1] 빅쿼리 정형 DW 원장 테이블 프로파일링
 `data/input/03_tables/` 디렉토리의 원장 테이블 CSV 파일들을 스캔하여 스키마와 데이터 볼륨을 확인합니다.""")
@@ -349,7 +364,7 @@ print(sample_gql_query.strip())
 ## Step 3: 하이브리드 온톨로지 통합, Tier 3 MCP 도구 및 AI FDE 에이전트
 ### (Integration, MCP & Agent)
 
-![Step 3 AI FDE Orchestration Flow](assets/step3_fde_orchestration_flow.svg)
+![Step 3 AI FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)
 
 #### 배경: AI 에이전트에게 원시 SQL/GQL 작성을 강요하면 왜 실패하는가? (인지 부하 격리)
 LLM 에이전트에게 수십 개의 빅쿼리 테이블 스키마와 외래키 조인, 복잡한 GQL 구문을 직접 작성하게 시키면:
@@ -360,7 +375,7 @@ LLM 에이전트에게 수십 개의 빅쿼리 테이블 스키마와 외래키 
 **아키텍처 해법: Tier 3 Domain MCP Server**:
 - 엔터프라이즈 비즈니스 로직(출고가, 지원금, 일할 위약금, 24개월 TCO)을 **결정론적 고수준 도구(5종)**로 캡슐화.
 - 엔지니어링 거버넌스(GQL 탐색, DW 물리 스키마 검증, 리니지, CQ 벤치마크)를 **엔지니어링 도구(6종)**로 분리.
-- **GCP Native First**: 빅쿼리/Dataplex 원천 연동은 GCP 네이티브 스펙을 기반으로 하되, GQL 및 복합 연산만 커스텀 확장.""")
+- **GCP Native First**: 빅쿼리/Dataplex 원천 연동은 GCP 네이티브 스펙을 기반으로 하되, GQL 및 복합 연산만 커스텀 확장.""", attachments=get_image_attachment("step3_fde_orchestration_flow.png"))
 
     add_md("""#### [실습 3.1] 11종 멀티도메인 MCP 카탈로그 및 GCP Native 분계선 점검
 `src/agent/mcp_server.DomainMcpServer`의 도구 카탈로그를 조회하여 네이티브와 커스텀의 분계선을 확인합니다.""")
