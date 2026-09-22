@@ -120,6 +120,12 @@ agentic-ontology-starter/
 │   │   └── reasoning_engine.py # 동적 다중 목표 분해 & 크로스도메인 체이닝 엔진
 │   └── web/                 # 05_DESIGN.md 준수 4대 멀티뷰 엔터프라이즈 스튜디오
 │       └── studio_server.py # 단일 포트 경량 웹 서버 (외부 종속성 0개)
+├── industry_cases/          # 4대 산업군 8대 엔터프라이즈 케이스 템플릿 패키지
+│   ├── README.md            # 산업군 총괄 가이드 & 8개사 선정 비교표
+│   ├── 01_manufacturing/    # 1. 스마트 제조 (포스코, 현대자동차, HD현대 비교)
+│   ├── 02_finance/          # 2. 핀테크 & 뱅킹 (카카오뱅크, 토스)
+│   ├── 03_retail_commerce/  # 3. 유통 & 이커머스 (GS리테일, CJ대한통운/올리브영)
+│   └── 04_telecommunications/# 4. 통신 & 미디어 (SK텔레콤, KT)
 ├── methodology/             # 5단계 방법론 명세서 및 10개 하부 가이드
 ├── run_pipeline.py          # 원클릭 파이프라인 실행 진입점
 ├── requirements.txt         # 필수 파이썬 라이브러리
@@ -129,7 +135,24 @@ agentic-ontology-starter/
 
 ---
 
-### 5. 4대 멀티뷰 엔터프라이즈 스튜디오
+### 5. 4대 산업군 8대 엔터프라이즈 케이스 템플릿 (`industry_cases/`)
+
+실무 프로젝트 딜리버리 팀(기획자, 데이터 엔지니어, AI 개발자)이 현장에서 즉시 참조·활용할 수 있도록 국내 대표 4대 핵심 산업군, 8대 엔터프라이즈의 실제 비즈니스 요건을 추상화한 실무 템플릿 패키지를 제공합니다 ([총괄 가이드](industry_cases/README.md)):
+
+| 산업군 (Segment) | 엔터프라이즈 케이스 | 요건 현황 | 핵심 해결 과제 (Core Business Problem) | 바로가기 링크 |
+| :--- | :--- | :---: | :--- | :--- |
+| **1. 스마트 제조** | **포스코 (POSCO)** | `고객 요건 진행 중` | 제철 연속 공정 품질 불량 인과 추적, 설비 진동/온도 예방보전(PdM), 비상 정지(Interlock) SOP 및 예비 베어링 재고 인출 | [`case_posco_smart_steel_mill.md`](industry_cases/01_manufacturing/case_posco_smart_steel_mill.md) |
+| | **현대자동차** | `고객 요건 진행 중` | 완성차/SDV 전장 제어기(ECU/DCU) 펌웨어 호환성, 글로벌 공급망(SCM) 리드타임 지연 및 대체 부품 승인 *(HD현대 비교 포함)* | [`case_hyundai_motor_sdv_supply_chain.md`](industry_cases/01_manufacturing/case_hyundai_motor_sdv_supply_chain.md) |
+| **2. 핀테크 & 뱅킹** | **카카오뱅크** | `고객 요건 진행 중` | 비대면 주택담보대출 심사, 금융위 수도권 스트레스 DSR 40% 산정, 생애최초 LTV 80% 특례 및 금소법 설명의무 준수 | [`case_kakaobank_unattended_loan_dsr.md`](industry_cases/02_finance/case_kakaobank_unattended_loan_dsr.md) |
+| | **토스 (TOSS)** | `추천 요건` | 원앱(One-App) 50개 제휴 금융사 대출 비교 중개, 마이데이터 자산/보험 진단, 토스페이 가맹점 여전법 우대 수수료율 정산 | [`case_toss_oneapp_fintech_mydata.md`](industry_cases/02_finance/case_toss_oneapp_fintech_mydata.md) |
+| **3. 유통 & 이커머스** | **GS리테일** | `고객 요건 진행 중` | GS25 편의점 가맹계약(GS1/GS2) 상생 정산, 신선식품(FF) 폐기 지원금(40%), 우리동네GS 퀵커머스 실시간 매장 재고 밸런싱 | [`case_gs_retail_franchise_omnichannel.md`](industry_cases/03_retail_commerce/case_gs_retail_franchise_omnichannel.md) |
+| | **CJ대한통운 / 올리브영**| `고객 요건 진행 중` | 올리브영 '오늘드림(3시간)' 풀필먼트 배송 SLA 지연 배상, K-뷰티 입점 브랜드 수수료 및 대규모유통업법(판촉비 50%) 정산 | [`case_cj_logistics_oliveyoung_sla.md`](industry_cases/03_retail_commerce/case_cj_logistics_oliveyoung_sla.md) |
+| **4. 통신 & 미디어** | **SK텔레콤** | `추천 요건` | 5G 요금제-T우주(우주패스) 구독 혜택 결합, 180일 식스플랜 공시지원금 차액 위약금 일할 계산 및 시니어 특례 면제 | [`case_skt_subscription_membership.md`](industry_cases/04_telecommunications/case_skt_subscription_membership.md) |
+| | **KT** | `추천 요건` | 기가인터넷+TV+모바일 유무선 총액 결합 해지 방어 시뮬레이션, 엔터프라이즈 B2B 전용회선 월 가용률 99.9% SLA 3배 배상 | [`case_kt_wired_wireless_bundle_sla.md`](industry_cases/04_telecommunications/case_kt_wired_wireless_bundle_sla.md) |
+
+---
+
+### 6. 4대 멀티뷰 엔터프라이즈 스튜디오
 
 `05_DESIGN.md` 표준을 100% 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`)가 제공됩니다:
 1. **AI FDE Studio**:
