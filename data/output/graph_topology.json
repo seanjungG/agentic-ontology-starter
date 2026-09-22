@@ -1,5 +1,5 @@
 {
-  "graph_name": "my-project.my_dataset.ENTERPRISE_SUBSIDY_GRAPH",
+  "graph_name": "my-gcp-project.telecom_ontology.ENTERPRISE_SUBSIDY_GRAPH",
   "architecture_principle": "2-Layer Anti-Redundancy Refinement",
   "structured_dw_nodes": [
     "DeviceNode",
