@@ -40,6 +40,13 @@ flowchart TD
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
+### 1.1 GCP Native 기반 스펙 및 독자 개발 영역 (GCP Native vs Custom Extension)
+
+| 구분 | 적용 기술 및 사양 | 공식 오픈소스 / 엔드포인트 레퍼런스 | 핵심 역할 및 기술적 의의 |
+| :--- | :--- | :--- | :--- |
+| **GCP Native 기반** | • Google Cloud Open Knowledge Format (OKF v0.2)<br>• Dataplex Knowledge Catalog Custom Aspect Types<br>• Google Cloud Storage (GCS) 온톨로지 버킷 | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`okf/bundles/` 표준 규격](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | 엔터프라이즈 표준 지식 정형화 포맷(OKF v0.2) 준수, 시맨틱 번들 정의, GCS 기반 객체 스토리지 생명주기 및 불변성 보장 |
+| **독자 개발 커스텀 영역** | • 무손실 시각 청커 & SHA-256 불변 해시 앵커러 (`pipeline/ingest.py`)<br>• Karpathy 3-Layer LLM-Wiki 컴파일러 (`data/llm_wiki/`)<br>• GCS 프로토타입 매니페스트 생성기<br>• 2-Layer 안티 리던던시 모델링 | 스타터팩 파이프라인 엔진 (`pipeline/ingest.py`) | 비정형 PDF/MHTML의 시각 구조를 유지하면서 불변 앵커를 부여하고, DW 정형 원장과 중복되는 텍스트 엔티티를 사전에 프루닝하여 BQG 적재 최적화 |
+
 ---
 
 ## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)

@@ -50,6 +50,13 @@ sequenceDiagram
     end
 ```
 
+### 1.1 GCP Native Foundations & Custom Extensions
+
+| Dimension | Technologies & Specifications | Official Open-Source / Endpoint Reference | Key Role & Engineering Rationale |
+| :--- | :--- | :--- | :--- |
+| **GCP Native Foundation** | • Google Agent Development Kit (ADK Python 2.0)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Dataplex & BigQuery Remote MCP<br>• Vertex AI Gemini 3.8 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview)<br>• [GCP Remote MCP Specification](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | Provides enterprise agent execution runtime (Workflow Runtime, Task API), IAM-governed Remote MCP connections, and foundational multimodal inference. |
+| **Custom Extensions** | • Tier 3 Domain Ontology MCP Server (11 tools)<br>• AI FDE Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Starter Pack Agent Engine (`src/agent/`) | Shields LLM agents from cognitive table schemas and orchestrates deterministic reasoning loops across business rules and physical DW table states. |
+
 ---
 
 ## 2. Detailed Methodology & Technology Standards

@@ -41,6 +41,13 @@ flowchart TD
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
+### 1.1 GCP Native 기반 스펙 및 독자 개발 영역 (GCP Native vs Custom Extension)
+
+| 구분 | 적용 기술 및 사양 | 공식 오픈소스 / 문서 레퍼런스 | 핵심 역할 및 기술적 의의 |
+| :--- | :--- | :--- | :--- |
+| **GCP Native 기반** | • BigQuery SQL:2023 Property Graph 확장<br>• `GRAPH_TABLE()` 인라인 연산자<br>• GQL (Graph Query Language) 쿼리 엔진 | • [BigQuery Property Graph Docs](https://cloud.google.com/bigquery/docs/property-graphs)<br>• [BigQuery Remote MCP 명세](https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp) | 별도 외부 그래프 DB(Neo4j 등) 도입 없이, 기존 BigQuery DW 페타바이트 엔진 내부에서 제로 카피(Zero-Copy) 그래프 노드/엣지 가상화 및 초고속 다중 홉 순회 지원 |
+| **독자 개발 커스텀 영역** | • 2-Layer 안티 리던던시 DDL 합성기 (`pipeline/graph_builder.py`)<br>• GQL 쿼리 전용 실행 러너 (`src/agent/mcp_server.py`)<br>• 다중 홉 GQL 템플릿 엔진 | 스타터팩 고유 엔진 | **[핵심 제약 극복]** 공식 BigQuery Remote MCP의 `execute_sql_readonly`는 GQL 쿼리를 지원하지 않는 한계가 존재함. 본 스타터팩은 독자 GQL 실행 러너와 2-Layer 안티 리던던시 컴파일러를 구축하여 DW 원장 직접 승격과 제로 복제 횡단 추론을 실현함 |
+
 ---
 
 ## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)

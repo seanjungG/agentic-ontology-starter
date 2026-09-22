@@ -48,6 +48,13 @@ flowchart TD
     GateCheck -- "Approved" --> GatePass
 ```
 
+### 1.1 GCP Native Foundations & Custom Extensions
+
+| Dimension | Technologies & Specifications | Official Open-Source / Endpoint Reference | Key Role & Engineering Rationale |
+| :--- | :--- | :--- | :--- |
+| **GCP Native Foundation** | • Google Cloud Dataplex Knowledge Catalog<br>• Knowledge Catalog Remote MCP (`search_entries`, `lookup_entry`)<br>• BigQuery `INFORMATION_SCHEMA` | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [KC Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp)<br>• Endpoint: `https://dataplex.googleapis.com/mcp` | Enterprise metadata discovery, schema profiling, automated business tag sync, and PII protection governance. |
+| **Custom Extensions** | • Noise Pruning Charter<br>• 20 Golden Competency Questions (CQs)<br>• Abstracted Asset Blueprint Mapping | Starter Pack Architecture Specification | Eliminates irrelevant plan specs upfront to prevent model hallucinations and establishes deterministic ground truth baselines. |
+
 ---
 
 ## 2. Detailed Methodology & Technology Standards

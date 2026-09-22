@@ -48,6 +48,13 @@ flowchart TD
     GateCheck -- "완결" --> GatePass
 ```
 
+### 1.1 GCP Native 기반 스펙 및 독자 개발 영역 (GCP Native vs Custom Extension)
+
+| 구분 | 적용 기술 및 사양 | 공식 오픈소스 / 엔드포인트 레퍼런스 | 핵심 역할 및 기술적 의의 |
+| :--- | :--- | :--- | :--- |
+| **GCP Native 기반** | • Google Cloud Dataplex Knowledge Catalog<br>• Knowledge Catalog Remote MCP (`search_entries`, `lookup_entry`)<br>• BigQuery `INFORMATION_SCHEMA` | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [KC Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp)<br>• Endpoint: `https://dataplex.googleapis.com/mcp` | 전사 메타데이터 검색, 컬럼 스키마 및 데이터 프로파일링, 비즈니스 태그 및 PII 거버넌스 자동 연계 |
+| **독자 개발 커스텀 영역** | • 노이즈 필터링 헌장 (Noise Pruning Charter)<br>• 20대 핵심 역량 질문(Golden CQs) 수립 체계<br>• 원천 자산 추상화 블루프린트 매핑 | 스타터팩 고유 아키텍처 명세 | 지원금/약정과 무관한 부가스펙 노이즈를 사전에 제거하여 모델의 환각 유발 요소를 원천 차단하고 정량 검증 기준선 확립 |
+
 ---
 
 ## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)

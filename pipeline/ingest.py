@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Pipeline Ingest Engine:
-Parses unstructured policy guides, generates deterministic SHA-256 hash anchors,
-compiles Karpathy 3-Layer LLM-Wiki (summary, entities, concepts, rules),
-simulates GCS-based ontology prototyping, and exports OKF v0.2 artifacts.
+- GCP Native Foundation:
+    * Google Cloud Open Knowledge Format (OKF v0.2) specification
+    * Google Cloud Knowledge Catalog Bundle standards (https://github.com/GoogleCloudPlatform/knowledge-catalog)
+    * Google Cloud Storage (GCS) object storage manifest
+- Custom Extensions:
+    * Lossless visual chunk parser with deterministic SHA-256 hash anchors
+    * Andrej Karpathy 3-Layer LLM-Wiki compiler (summary, entities, concepts, rules)
+    * GCS-based ontology prototyping simulator
 """
 import os, re, json, hashlib
 

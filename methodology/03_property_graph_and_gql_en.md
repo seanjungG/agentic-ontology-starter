@@ -41,6 +41,13 @@ flowchart TD
     Step1 --> Step2 --> Step3 --> Step4
 ```
 
+### 1.1 GCP Native Foundations & Custom Extensions
+
+| Dimension | Technologies & Specifications | Official Documentation / Spec Reference | Key Role & Engineering Rationale |
+| :--- | :--- | :--- | :--- |
+| **GCP Native Foundation** | • BigQuery SQL:2023 Property Graph<br>• `GRAPH_TABLE()` Inline Operator<br>• Native GQL (Graph Query Language) Engine | • [BigQuery Property Graph Docs](https://cloud.google.com/bigquery/docs/property-graphs)<br>• [BigQuery Remote MCP Specification](https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp) | Enables zero-copy graph traversal and multi-hop pattern matching directly inside the petabyte-scale BigQuery engine without requiring external graph databases (Neo4j, TigerGraph). |
+| **Custom Extensions** | • 2-Layer Anti-Redundancy DDL Synthesizer (`pipeline/graph_builder.py`)<br>• Dedicated GQL Execution Runner (`src/agent/mcp_server.py`)<br>• Multi-Hop GQL Template Engine | Starter Pack Core Engine | **[Overcoming Critical Platform Limitation]** BigQuery Remote MCP's `execute_sql_readonly` explicitly does NOT support GQL queries. The starter pack introduces a dedicated GQL runner and an anti-redundancy synthesizer to promote DW tables to nodes with zero data duplication. |
+
 ---
 
 ## 2. Detailed Methodology & Technology Standards

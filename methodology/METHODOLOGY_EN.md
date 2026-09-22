@@ -39,6 +39,35 @@ The core of this methodology lies in a deliberate **4-Track Evolutionary Journey
    - To shield AI agents from the raw complexity of multi-table joins and graph traversal syntax (GQL), the graph and DW capabilities are encapsulated into a high-level **Domain Ontology MCP Suite (11 tools: 5 Business + 6 Engineering)**.
    - Agents perform dynamic sub-goal decomposition, sequential cross-domain chaining, and intermediate observations at the business concept level.
 
+### 1.4 GCP Native First Mandate & Custom Extension Delineation
+
+This methodology strictly adheres to the **"Google Cloud Native First"** paradigm. It maximizes the leverage of Google Cloud managed services, IAM security, Model Armor injection protection, enterprise audit logs, and open specifications (OKF, SQL:2023, MCP). Custom extensions are engineered strictly for domain-specific business mathematics, graph anti-redundancy compilation, and bridging native platform limitations (such as GQL execution).
+
+#### 1.4.1 Architectural Layer Comparison Matrix: Native vs. Custom
+
+| Architecture Layer | Google Cloud Native Spec / Service | Official Open-Source / Endpoint Reference | Custom Extension Engineered | Engineering Rationale & Justification |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Data Lake & DW** | • BigQuery Managed Tables<br>• Cloud Storage (GCS)<br>• BigQuery SQL:2023 Property Graph | • [BigQuery Documentation](https://cloud.google.com/bigquery)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | • 2-Layer Anti-Redundancy Graph DDL Compiler (`pipeline/graph_builder.py`)<br>• Semantic Bridge Edges (`APPLIES_TO`, `CALCULATES`) | Directly promotes DW tables to graph nodes and prunes redundant text entities, saving 80% storage and query costs. |
+| **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • Deterministic SHA-256 Unstructured Chunker (`DocChunk`)<br>• Karpathy 3-Layer LLM-Wiki Compiler (`data/llm_wiki/`)<br>• GCS Prototype Manifest Generator | Preserves visual manual structures and allows rapid GCS-based knowledge validation before BigQuery loading. |
+| **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (5 Business + 6 Engineering Tools)<br>• BigQuery Property Graph GQL Runner | **Overcomes the limitation where BigQuery Remote MCP cannot execute GQL (`GRAPH_TABLE()`)**, shielding LLM agents from schema complexity. |
+| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 3.8 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • AI FDE Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Enables autonomous multi-turn reasoning cycles that cross-verify policy rules against physical DW ledgers. |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • 4-View Enterprise Starter Studio (`src/web/studio_server.py`)<br>• 2D Interactive SVG Topology Map & DDL Viewer<br>• 20 Golden CQ Deterministic Evaluation Harness | One-stop verification of governance, topology, reasoning, and CQ accuracy on a zero-dependency lightweight server (port 8088). |
+
+#### 1.4.2 Official Reference Repositories
+1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
+   - Official Repository: `https://github.com/GoogleCloudPlatform/knowledge-catalog`
+   - Key References: Open Knowledge Format (`okf/bundles/`), Custom Aspect Types, Metadata Enrichment Samples.
+2. **Google Agent Development Kit (ADK Python 2.0)**:
+   - Official Repository: `https://github.com/google/adk-python`
+   - Key References: Workflow Runtime, Task API, Data Agent integration samples (`contributing/samples/integrations/data_agent`), `FunctionTool` encapsulation.
+3. **Google ADK Web UI**:
+   - Official Repository: `https://github.com/google/adk-web`
+   - Key References: Official Angular-based open-source interactive agent web interface.
+4. **Google Cloud Managed Remote MCP**:
+   - Dataplex KC Remote MCP: `https://dataplex.googleapis.com/mcp` (`https://docs.cloud.google.com/dataplex/docs/use-remote-mcp`)
+   - BigQuery Remote MCP: `https://bigquery.googleapis.com/mcp` (`https://docs.cloud.google.com/bigquery/docs/use-bigquery-mcp`)
+   - Critical Limitation: `execute_sql_readonly` does not support Graph Query Language (GQL), requiring a dedicated client execution layer.
+
 ---
 
 ## 2. Evolutionary End-to-End Lifecycle Architecture
