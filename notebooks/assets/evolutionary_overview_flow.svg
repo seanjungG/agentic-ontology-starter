@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 380" width="100%" height="100%">
+  <defs>
+    <style>
+      .main-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 16px; font-weight: 800; fill: #202124; }
+      .header-desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 11.5px; fill: #5f6368; }
+      .step-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 13px; font-weight: 700; fill: #ffffff; }
+      .box-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 11px; font-weight: 700; fill: #202124; }
+      .box-desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 10.5px; fill: #3c4043; line-height: 1.4; }
+      .code-pill { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 10px; fill: #1a73e8; }
+      .badge-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 9.5px; font-weight: 700; fill: #ffffff; }
+      .card-bg { rx: 8px; stroke-width: 1px; }
+      .sub-card { rx: 6px; fill: #ffffff; stroke: #dadce0; stroke-width: 1px; }
+    </style>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.08"/>
+    </filter>
+    <marker id="arrow-flow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#1a73e8"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1020" height="380" fill="#f8f9fa" rx="12" stroke="#dadce0" stroke-width="1"/>
+
+  <!-- Top Title Header -->
+  <rect x="0" y="0" width="1020" height="50" fill="#ffffff" rx="12" stroke="#dadce0" stroke-width="1"/>
+  <rect x="20" y="14" width="130" height="22" rx="4" fill="#1a73e8"/>
+  <text x="85" y="29" text-anchor="middle" class="step-title" font-size="11px">END-TO-END JOURNEY</text>
+  <text x="165" y="30" class="main-title">엔터프라이즈 에이전틱 온톨로지 3단계 진화 아키텍처 (Evolutionary Architecture)</text>
+  <text x="855" y="30" class="header-desc">Google Cloud CE Hands-on Series</text>
+
+  <!-- Step 1 Container -->
+  <g transform="translate(20, 68)">
+    <rect width="300" height="292" fill="#ffffff" stroke="#dadce0" class="card-bg" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="300" height="36" rx="8" fill="#1a73e8"/>
+    <text x="150" y="23" text-anchor="middle" class="step-title">Step 1. 비정형 지식 체계화 &amp; OKF</text>
+
+    <!-- Content 1 -->
+    <rect x="14" y="48" width="272" height="64" class="sub-card"/>
+    <text x="24" y="68" class="box-title">원천 규정 ➔ 무손실 청킹 &amp; 불변 앵커</text>
+    <text x="24" y="85" class="box-desc">• 단서 조항/표 보존 구조화 파싱</text>
+    <text x="24" y="100" class="box-desc">• <tspan class="code-pill">SHA-256 (anchor_{hash})</tspan> 1:1 불변 앵커링</text>
+
+    <!-- Content 2 -->
+    <rect x="14" y="120" width="272" height="74" class="sub-card"/>
+    <text x="24" y="140" class="box-title">Google OKF v0.2 &amp; Karpathy 3-Layer Wiki</text>
+    <text x="24" y="157" class="box-desc">• <tspan class="code-pill">ontology.jsonld</tspan> (OKF v0.2 번들 표준)</text>
+    <text x="24" y="172" class="box-desc">• <tspan class="code-pill">summary / entities / concepts / rules</tspan></text>
+    <text x="24" y="186" class="box-desc" fill="#137333">✔ 계층적 탐색으로 LLM 토큰 85% 절약</text>
+
+    <!-- Content 3 -->
+    <rect x="14" y="202" width="272" height="74" class="sub-card" fill="#e8f0fe" stroke="#aecbfa"/>
+    <text x="24" y="222" class="box-title" fill="#1a73e8">1:1 감사 추적 인출 에이전트</text>
+    <text x="24" y="240" class="box-desc">• 불변 해시 기반 원천 규정 1:1 그라운딩</text>
+    <text x="24" y="256" class="box-desc">• 단순 벡터 RAG의 100% 환각 인용 원천 박멸</text>
+    <text x="24" y="269" class="box-desc" font-weight="bold" fill="#1a73e8">➔ 0% 환각 법적 근거 확보</text>
+  </g>
+
+  <!-- Big Forward Arrow 1 -> 2 -->
+  <path d="M 324 214 L 356 214" stroke="#1a73e8" stroke-width="3" fill="none" marker-end="url(#arrow-flow)"/>
+
+  <!-- Step 2 Container -->
+  <g transform="translate(360, 68)">
+    <rect width="300" height="292" fill="#ffffff" stroke="#dadce0" class="card-bg" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="300" height="36" rx="8" fill="#9334e8"/>
+    <text x="150" y="23" text-anchor="middle" class="step-title">Step 2. BigQuery Property Graph &amp; GQL</text>
+
+    <!-- Content 1 -->
+    <rect x="14" y="48" width="272" height="64" class="sub-card"/>
+    <text x="24" y="68" class="box-title">BigQuery DW 원장 직접 승격 (Zero-Copy)</text>
+    <text x="24" y="85" class="box-desc">• <tspan class="code-pill">dw_device / dw_plan / dw_subsidy</tspan></text>
+    <text x="24" y="100" class="box-desc">• 외부 그래프 DB 복제 제거 (비용 80% 절감)</text>
+
+    <!-- Content 2 -->
+    <rect x="14" y="120" width="272" height="74" class="sub-card"/>
+    <text x="24" y="140" class="box-title">2-Layer 안티 리던던시 &amp; 시맨틱 브릿지</text>
+    <text x="24" y="157" class="box-desc">• 텍스트 중복 엔티티 Pruning (중복 노드 0건)</text>
+    <text x="24" y="172" class="box-desc">• <tspan class="code-pill">APPLIES_RULE</tspan>, <tspan class="code-pill">GROUNDED_IN</tspan> 시맨틱 연결</text>
+    <text x="24" y="186" class="box-desc" fill="#137333">✔ 원장과 규정 간 1:1 완벽 정합성 유지</text>
+
+    <!-- Content 3 -->
+    <rect x="14" y="202" width="272" height="74" class="sub-card" fill="#f3e8fd" stroke="#d7aefb"/>
+    <text x="24" y="222" class="box-title" fill="#9334e8">SQL:2023 DDL &amp; GQL 4-Hop Traversal</text>
+    <text x="24" y="240" class="box-desc">• <tspan class="code-pill">GRAPH_TABLE()</tspan> 단일 쿼리 4-Hop 순회</text>
+    <text x="24" y="256" class="box-desc">• <tspan fill="#d93025">The Remote MCP Gap</tspan>: 공식 BQ MCP 한계 극복</text>
+    <text x="24" y="269" class="box-desc" font-weight="bold" fill="#9334e8">➔ Tier 3 Domain MCP 계층 필수 입증</text>
+  </g>
+
+  <!-- Big Forward Arrow 2 -> 3 -->
+  <path d="M 664 214 L 696 214" stroke="#1a73e8" stroke-width="3" fill="none" marker-end="url(#arrow-flow)"/>
+
+  <!-- Step 3 Container -->
+  <g transform="translate(700, 68)">
+    <rect width="300" height="292" fill="#ffffff" stroke="#dadce0" class="card-bg" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="300" height="36" rx="8" fill="#137333"/>
+    <text x="150" y="23" text-anchor="middle" class="step-title">Step 3. Tier 3 MCP &amp; AI FDE 에이전트</text>
+
+    <!-- Content 1 -->
+    <rect x="14" y="48" width="272" height="64" class="sub-card"/>
+    <text x="24" y="68" class="box-title">11종 멀티도메인 MCP 스위트 구축</text>
+    <text x="24" y="85" class="box-desc">• 비즈니스 도구 5종 (계산·지원금 결정론성)</text>
+    <text x="24" y="100" class="box-desc">• 엔지니어링 도구 6종 (GQL·DW 스키마 실측)</text>
+
+    <!-- Content 2 -->
+    <rect x="14" y="120" width="272" height="74" class="sub-card"/>
+    <text x="24" y="140" class="box-title">AI FDE 자율 추론 &amp; 시퀀셜 체이닝</text>
+    <text x="24" y="157" class="box-desc">• 동적 다중 하위 목표 분해 (<tspan class="code-pill">Sub-Goals</tspan>)</text>
+    <text x="24" y="172" class="box-desc">• 비즈니스 ➔ 엔지니어링 도구 크로스 연쇄 호출</text>
+    <text x="24" y="186" class="box-desc" fill="#137333">✔ 원시 SQL 작성 인지 과부하 완벽 차단</text>
+
+    <!-- Content 3 -->
+    <rect x="14" y="202" width="272" height="74" class="sub-card" fill="#e6f4ea" stroke="#ceead6"/>
+    <text x="24" y="222" class="box-title" fill="#137333">결정론적 연산 &amp; Golden CQ 100%</text>
+    <text x="24" y="240" class="box-desc">• 180일 식스플랜 일할 위약금: 100,000원</text>
+    <text x="24" y="256" class="box-desc">• 만 65세 시니어 특례 면제: 0원 전액 감면</text>
+    <text x="24" y="269" class="box-desc" font-weight="bold" fill="#137333">➔ 20대 CQ 100% Pass / 0% 환각 검증</text>
+  </g>
+</svg>

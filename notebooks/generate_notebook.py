@@ -88,6 +88,9 @@ def create_notebook():
 ---
 
 ### 3-Step Hands-on Architecture Journey
+
+![Evolutionary Journey Overview](assets/evolutionary_overview_flow.svg)
+
 1. **Step 1: 비정형 지식 체계화 및 OKF 에이전트 맛보기 (OKF & Unstructured Agent Preview)**
    - 비정형 가이드 문서 로드, 무손실 청킹 및 결정론적 SHA-256 해시 앵커링 (`DocChunk`)
    - Google Cloud OKF v0.2 (`ontology.jsonld`) 및 Karpathy 3-Layer LLM-Wiki 컴파일
@@ -131,6 +134,8 @@ print(f"[OK] Input Data Directory: {os.path.join(starter_root, 'data', 'input')}
     add_md("""---
 ## Step 1: 비정형 지식 체계화 및 OKF 에이전트 맛보기
 ### (OKF & Unstructured Agent Preview)
+
+![Step 1 Architecture Flow](assets/step1_architecture_flow.svg)
 
 #### 배경: 왜 단순 벡터 RAG는 복합 규정에서 100% 환각을 유발하는가?
 기업의 업무 규정집(SOP)이나 상담 가이드는 조건문, 단서 조항, 예외 규정(시니어 특례, 유통망 지원금 차등 등)이 복잡하게 얽혀 있습니다.
@@ -241,6 +246,8 @@ for item in retrieved:
 ## Step 2: BigQuery Property Graph 설계 및 GQL 질의 체계
 ### (Property Graph & GQL)
 
+![Step 2 Property Graph Flow](assets/step2_property_graph_flow.svg)
+
 #### 배경: 관계형 DW 테이블을 복제하지 않고 그래프로 직접 승격하는 2-Layer 안티 리던던시 원리
 기존 지식 그래프(Knowledge Graph)의 치명적 병폐는 이미 빅쿼리(BigQuery) DW에 정제되어 존재하는 수천만 행의 정형 마스터 테이블(`Device`, `Plan`, `Subsidy`)을 별도의 그래프 DB(Neo4j, RDF 등)나 트리플(`Subject-Predicate-Object`)로 중복 복제하여 저장하는 것이었습니다.
 이는 다음의 부작용을 낳습니다:
@@ -341,6 +348,8 @@ print(sample_gql_query.strip())
     add_md("""---
 ## Step 3: 하이브리드 온톨로지 통합, Tier 3 MCP 도구 및 AI FDE 에이전트
 ### (Integration, MCP & Agent)
+
+![Step 3 AI FDE Orchestration Flow](assets/step3_fde_orchestration_flow.svg)
 
 #### 배경: AI 에이전트에게 원시 SQL/GQL 작성을 강요하면 왜 실패하는가? (인지 부하 격리)
 LLM 에이전트에게 수십 개의 빅쿼리 테이블 스키마와 외래키 조인, 복잡한 GQL 구문을 직접 작성하게 시키면:
