@@ -120,9 +120,16 @@ agentic-ontology-starter/
 │   │   └── reasoning_engine.py # 동적 다중 목표 분해 & 크로스도메인 체이닝 엔진
 │   └── web/                 # 05_DESIGN.md 준수 4대 멀티뷰 엔터프라이즈 스튜디오
 │       └── studio_server.py # 단일 포트 경량 웹 서버 (외부 종속성 0개)
-├── notebooks/               # Google Cloud CE를 위한 3단계 대화식 핸즈온 노트북
-│   ├── agentic_ontology_ce_walkthrough.ipynb # 3단계 완결형 실습 주피터 노트북
-│   └── generate_notebook.py # 노트북 자동 빌더 및 셀 코드 무결성 검증기
+├── notebooks/               # Google Cloud CE를 위한 단계별 모듈형(Step 1~3) 한/영 노트북 패키지
+│   ├── README.md            # 노트북 총괄 학습 가이드 (KO/EN)
+│   ├── 01_okf_unstructured_agent_ko.ipynb  # Step 1: OKF & 비정형 에이전트 맛보기 (국문)
+│   ├── 01_okf_unstructured_agent_en.ipynb  # Step 1: OKF & Unstructured Agent Preview (영문)
+│   ├── 02_property_graph_and_gql_ko.ipynb  # Step 2: BigQuery Property Graph & GQL (국문)
+│   ├── 02_property_graph_and_gql_en.ipynb  # Step 2: BigQuery Property Graph & GQL (영문)
+│   ├── 03_graph_integration_mcp_agent_ko.ipynb # Step 3: 온톨로지 통합, Tier 3 MCP & AI FDE (국문)
+│   ├── 03_graph_integration_mcp_agent_en.ipynb # Step 3: Graph Integration, Tier 3 MCP & AI FDE (영문)
+│   ├── agentic_ontology_ce_walkthrough.ipynb # Step 1~3 올인원 통합 워크스루
+│   └── generate_modular_notebooks.py # 6종 노트북 자동 빌더 및 셀 코드 무결성 검증기
 ├── industry_cases/          # 4대 산업군 8대 엔터프라이즈 케이스 템플릿 패키지
 │   ├── README.md            # 산업군 총괄 가이드 & 8개사 선정 비교표
 │   ├── 01_manufacturing/    # 1. 스마트 제조 (포스코, 현대자동차, HD현대 비교)
@@ -155,35 +162,27 @@ agentic-ontology-starter/
 
 ---
 
-### 6. Google Cloud CE 핸즈온 워크스루 노트북 (`notebooks/`)
+### 6. Google Cloud CE 핸즈온 워크스루 노트북 패키지 (`notebooks/`)
 
-Google Cloud Customer Engineer(CE), Data Architect, AI Specialist가 Google Colab, Vertex AI Workbench 또는 로컬 Jupyter 환경에서 스타터팩의 전 과정을 직접 셀 단위로 실행하며 체감할 수 있는 인터랙티브 워크스루 노트북을 제공합니다:
+Google Cloud Customer Engineer(CE), Data Architect, AI Specialist가 Google Colab, Vertex AI Workbench 또는 로컬 Jupyter 환경에서 스타터팩의 전 과정을 직접 셀 단위로 실행하며 체감할 수 있는 **3단계 모듈형 한/영 주피터 노트북 시리즈**를 제공합니다 ([노트북 종합 포털 가이드](notebooks/README.md)):
 
-- **노트북 경로**: [`notebooks/agentic_ontology_ce_walkthrough.ipynb`](notebooks/agentic_ontology_ce_walkthrough.ipynb)
-- **외부 종속성**: **0개 (Pure Python Standard Library 완결)** - 별도의 무거운 패키지 설치 없이 즉시 실행 가능.
-- **3단계 핸즈온 실습 여정**:
-  1. **Step 1: 비정형 지식 체계화 및 OKF 에이전트 맛보기**:
-     - 비정형 규정 문서 로드 및 결정론적 SHA-256 해시 앵커링 (`DocChunk`)
-     - Google Cloud OKF v0.2 (`ontology.jsonld`) 및 Karpathy 3-Layer LLM-Wiki 컴파일
-     - 불변 해시 앵커 기반 원천 증거 인출(Grounding)과 1:1 감사 추적 에이전트 체험
-  2. **Step 2: BigQuery Property Graph 설계 및 GQL 질의 체계**:
-     - 정형 DW 3대 마스터 테이블(`devices`, `plans`, `subsidies`) 프로파일링
-     - 2-Layer 안티 리던던시: DW 원장 테이블을 물리 그래프 노드로 직접 승격 (저장소/비용 80% 절감)
-     - ISO SQL:2023 Property Graph DDL 자동 합성 및 BigQuery GQL `GRAPH_TABLE()` 다중 홉 탐색
-     - BigQuery Remote MCP의 결정적 제약(GQL 미지원)과 Tier 3 Domain MCP의 아키텍처적 당위성 학습
-  3. **Step 3: 하이브리드 온톨로지 통합, Tier 3 MCP 도구 및 AI FDE 에이전트**:
-     - 11종 멀티도메인 MCP 카탈로그 점검 (GCP Native First vs Custom Extension 분계선)
-     - AI FDE 추론 엔진: 복합 질문 인입 ➔ 동적 다중 하위 목표 분해(`Sub-Goals`) ➔ 시퀀셜 체이닝 실행
-     - 180일 식스플랜 차액 위약금 일할 계산 및 만 65세 시니어 면제 검증 (수학적 0% 환각)
-     - 20대 Golden Competency Questions(CQs) 자동 벤치마크 실행 및 검증 리포트 분석
+- **외부 종속성**: **0개 (Pure Python Standard Library 완결)** - 별도의 무거운 외부 패키지 설치 없이 즉시 실행 가능.
+- **모듈형 한/영 노트북 카탈로그**:
+
+| 단계 (Step) | 국문 실습 노트북 (KO) | 영문 실습 노트북 (EN) | 연계 5대 표준 방법론 | 핵심 실습 내용 및 아키텍처 다이어그램 |
+| :---: | :--- | :--- | :--- | :--- |
+| **Step 1** | [`01_okf_unstructured_agent_ko.ipynb`](notebooks/01_okf_unstructured_agent_ko.ipynb) | [`01_okf_unstructured_agent_en.ipynb`](notebooks/01_okf_unstructured_agent_en.ipynb) | [`Stage 2: 시맨틱 모델링 & OKF`](methodology/02_semantic_modeling_and_okf_ko.md) | • 단순 RAG의 100% 환각 결함 분석<br>• 무손실 시각 청킹 & SHA-256 해시 앵커링<br>• Google OKF v0.2 (`ontology.jsonld`) 컴파일<br>• Karpathy 3-Layer LLM-Wiki 생성<br>• 1:1 감사 추적 출처 인출 에이전트 |
+| **Step 2** | [`02_property_graph_and_gql_ko.ipynb`](notebooks/02_property_graph_and_gql_ko.ipynb) | [`02_property_graph_and_gql_en.ipynb`](notebooks/02_property_graph_and_gql_en.ipynb) | [`Stage 3: BQG 엔지니어링 & GQL`](methodology/03_property_graph_and_gql_ko.md) | • 기존 DW 복제 지식그래프의 80% 비용 낭비 분석<br>• BigQuery 원장 테이블 물리 노드 직접 승격<br>• 2-Layer 안티 리던던시 (중복 엔티티 0건)<br>• ISO SQL:2023 Property Graph DDL 자동 합성<br>• BigQuery GQL `GRAPH_TABLE()` 다중 홉 탐색<br>• **BigQuery Remote MCP GQL 제약 극복** |
+| **Step 3** | [`03_graph_integration_mcp_agent_ko.ipynb`](notebooks/03_graph_integration_mcp_agent_ko.ipynb) | [`03_graph_integration_mcp_agent_en.ipynb`](notebooks/03_graph_integration_mcp_agent_en.ipynb) | [`Stage 4: 멀티도메인 MCP & 에이전트`](methodology/04_multi_domain_mcp_and_agent_ko.md) | • AI 에이전트 원시 SQL 작성 시 인지 과부하 격리<br>• 11종 멀티도메인 MCP 도구 (비즈니스 5 + 엔지니어링 6)<br>• GCP Native vs Custom Extension 분계선<br>• 동적 하위 목표 분해 (`Sub-Goals`) & 시퀀셜 체이닝<br>• 180일 식스플랜 일할 위약금 & 시니어 특례 면제<br>• 20대 Golden CQ 100% Pass / 0% 환각 검증 |
+| **통합본** | [`agentic_ontology_ce_walkthrough.ipynb`](notebooks/agentic_ontology_ce_walkthrough.ipynb) | - | 종합 방법론 전체 | Step 1 ~ Step 3를 하나의 연속된 흐름으로 실행하는 29개 셀 올인원 워크스루 |
 
 #### 노트북 실행 방법:
 ```bash
-# 로컬 주피터 또는 VS Code / Cursor에서 열기
-jupyter notebook notebooks/agentic_ontology_ce_walkthrough.ipynb
+# 1) 로컬 주피터 또는 VS Code / Cursor에서 원하는 단계 노트북 열기
+jupyter notebook notebooks/01_okf_unstructured_agent_ko.ipynb
 
-# 또는 파이썬 빌더를 통한 원클릭 무결성 검증
-python3 notebooks/generate_notebook.py
+# 2) 파이썬 빌더를 통한 전 모듈 일괄 무결성 검증 (0 에러 보증)
+python3 notebooks/generate_modular_notebooks.py
 ```
 
 ---
