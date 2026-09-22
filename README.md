@@ -187,23 +187,31 @@ python3 notebooks/generate_modular_notebooks.py
 
 ---
 
-### 7. 4대 멀티뷰 엔터프라이즈 스튜디오
+### 7. 5단계 E2E 데이터 라이프사이클 엔터프라이즈 스튜디오
 
-`05_DESIGN.md` 표준을 100% 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`)가 제공됩니다:
-1. **AI FDE Studio**:
-   - 11종 도메인 MCP 도구 카탈로그 (비즈니스 5종 vs 엔지니어링 6종 필터).
+`DESIGN.md` 표준을 100% 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`)가 제공되며, 데이터 인입부터 AI 에이전트 활용까지 5단계 순차 라이프사이클을 제공합니다:
+0. **Overview (개요 & 플로우)**:
+   - 플랫폼 첫 진입 기본 랜딩 화면.
+   - 엔터프라이즈 온톨로지 비전, ROI 및 5단계 데이터 라이프사이클 인터랙티브 벤토 카드.
+   - 정형 DW 및 비정형 문서의 융합 아키텍처 다이어그램 및 단계별 원클릭 점프.
+1. **자산 레지스트리 (Asset Registry)**:
+   - BigQuery DW 마스터 원장 테이블(`dw_device_master`, `dw_plan_master`, `dw_subsidy_policy_master`) 스키마 및 레코드 카탈로그 뷰어 (`[Direct Node Promotion]` 무복제 원칙).
+2. **OKF 변환 레이어 (OKF Layer)**:
+   - 2주 스프린트 비정형 GCS 파이프라인 전용 탭.
+   - 비정형 정책 가이드 무손실 청킹, SHA-256 불변 해시 앵커 청크(`DocChunk`), Google Cloud OKF v0.2 `ontology.jsonld` 및 Karpathy 3-Layer LLM-Wiki(`summary`, `entities`, `concepts`, `rules`) 뷰어.
+3. **정형 그래프 구조화 (Structured Graph)**:
+   - Zero-Copy DW 직접 승격 원리 및 2-Layer 안티 리던던시 보증.
+   - 선언적 ISO SQL:2023 Property Graph DDL(`create_property_graph.sql`) 신택스 하이라이팅 및 원클릭 복사.
+4. **하이브리드 BQG 통합 (Hybrid BQG)**:
+   - 2-Layer 안티 리던던시 2D/3D 인터랙티브 토폴로지 맵 (정형 노드: 파랑, 비정형 노드: 보라, 시맨틱 브릿지: 초록 점선 `APPLIES_RULE`).
+   - 노드 클릭 시 속성/스키마 인스펙터 및 BigQuery GQL `GRAPH_TABLE()` 다중 홉 쿼리 테스트 러너.
+5. **AI 에이전트 (AI FDE Studio)**:
+   - 11종 도메인 MCP 도구 카탈로그 (비즈니스 5종 + 엔지니어링 6종).
    - 동적 다중 하위 목표 분해(`Sub-Goals`) 및 시퀀셜 체이닝(`SEQUENTIAL_CHAIN`) 타임라인.
-   - 중간 관측(`Intermediate Observation`) 및 크로스도메인 통합 리포트.
-2. **Asset Management Studio**:
-   - 좌측: 비정형 정책 가이드, SHA-256 불변 해시 앵커 청크(`DocChunk`), Karpathy 3-Layer LLM-Wiki 뷰어.
-   - 우측: BigQuery DW 마스터 원장 테이블(`dw_device_master`, `dw_plan_master`, `dw_subsidy_policy_master`) 스키마 및 레코드 뷰어 (`[Direct Node Promotion]` 노복제 원칙).
-3. **Property Graph Visualizer**:
-   - 2-Layer 안티 리던던시 2D 인터랙티브 토폴로지 맵 (정형 노드: 파랑, 비정형 노드: 보라, 시맨틱 브릿지: 초록 점선).
-   - 노드 클릭 시 속성/스키마 인스펙터.
-   - 선언적 SQL:2023 Property Graph DDL 및 GQL 쿼리 테스트 러너.
-4. **CQ Benchmark Studio**:
+   - 중간 관측(`Intermediate Observation`) 및 0% 환각 결정론적 위약금 연산 리포트.
+- **CQ 벤치마크 (CQ Benchmark Studio)**:
    - 20대 Golden CQ 평가 매트릭스, 기대 정답값, 실제 FDE 출력값, 법적 해시 앵커.
-   - 100% 일치율, 0.0% 환각률 실측 KPI 카드 및 원클릭 자동화 검증 버튼.
+   - 100% 일치율, 0.0% 환각률 실측 KPI 카드 및 원클릭 자동화 검증.
 
 ---
 
