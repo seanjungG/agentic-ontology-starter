@@ -23,29 +23,32 @@
 
 ---
 
-## 2. 크로스 인더스트리 공통 아키텍처 패턴
+## 2. 크로스 인더스트리 공통 아키텍처 패턴 (`Agentic Ontology Studio` 9-Tab 연계)
 
-모든 8개 엔터프라이즈 케이스는 Google Cloud의 **GCP Native First** 원칙과 온톨로지 진화 라이프사이클에 따라 동일한 5계층 아키텍처를 공유합니다:
+모든 8개 엔터프라이즈 케이스는 Google Cloud의 **GCP Native First** 원칙과 **`Agentic Ontology Studio` 9단계 진화 라이프사이클**에 따라 동일한 계층 아키텍처를 공유합니다:
 
 ```
-[Layer 1: Unstructured Policy & SOP]
-  PDF / Markdown 업무 규정, 계약서, 공정 매뉴얼, 약관
+[Tab 1: 1. Asset (Unstructured SOP & Structured DW)]
+  PDF / Markdown 업무 규정, 계약서, 공정 매뉴얼 + BigQuery DW 원장 테이블
           │
-          ▼ (Deterministic Visual Chunker: DocChunk SHA-256)
-[Layer 2: OKF v0.2 Knowledge Catalog]
-  Dataplex Knowledge Catalog 호환 오픈 지식 번들 (data/llm_wiki/)
+          ▼ (Clean YAML Frontmatter + Karpathy 3-Layer LLM-Wiki on GCS)
+[Tab 2 & 3: 2. OKF Layer & 3. Ontology Semantic]
+  담백한 원본 YAML Frontmatter (.okf.md) + 5대 온톨로지 요소 & 시맨틱 브릿지
           │
-          ▼ (2-Layer Anti-Redundancy DDL Compiler)
-[Layer 3: BigQuery SQL:2023 Property Graph]
+          ├──► [Tab 4: 4. Wiki Agent (선행 GCS 위키 에이전트)]
+          │      물리 그래프 구축 전 GCS .okf.md 위키만으로 규정/산식/예외 질의 1차 즉시 해결
+          │
+          ▼ (Domain Pruning 35➔7 & Zero-ETL Node Promotion)
+[Tab 5: 5. Bigquery Graph (SQL:2023 Property Graph)]
   정형 DW 마스터 원장 테이블 (Node) ──[APPLIES_TO / CALCULATES]──> 비정형 룰 (Node)
           │
-          ▼ (Cognitive Decoupling via Domain MCP)
-[Layer 4: Tier 3 Domain Ontology MCP Server]
-  비즈니스 질의(CQ) 전용 도구 5종 + 엔지니어링 도구 6종
+          ▼ (NL2GQL Multi-Hop Traversal + Wiki Hybrid)
+[Tab 6: 6. BQG Agent (BigQuery Graph 에이전트)]
+  GRAPH_TABLE() 실시간 멀티홉 원장 탐색 + 규정 결합으로 20/20 골든 CQ 전수 해결
           │
-          ▼ (ADK 2.0 / Conversational Analytics API)
-[Layer 5: AI Data Agent]
-  0% 환각 결정론적 수치 계산 + 원문 1:1 앵커링 근거 인출
+          ▼ (Async In-Memory Cache < 5ms & 11 Domain MCP Tools)
+[Tab 7 & 8: 7. Lineage & 8. AI FDE]
+  4-Tier 엔터프라이즈 리니지 (< 5ms 즉시 로딩) + 11종 도메인 MCP 자율 추론 오케스트레이터
 ```
 
 ---
@@ -95,10 +98,9 @@ industry_cases/
 
 1. **도메인 선정 및 케이스 복사**:
    - 신규 고객사의 산업군에 매칭되는 `industry_cases/` 서브폴더의 케이스 명세서를 참조합니다.
-2. **원천 데이터 매핑**:
-   - 고객사의 비정형 규정 문서(PDF/Word)를 `data_templates/`의 정책 문서 형식으로 변환합니다.
-   - 고객사 DW 테이블을 `data_templates/schema_*.sql`의 DDL 구조에 맞춰 매핑합니다.
-3. **스타터 파이프라인 구동**:
-   - `data_templates/`의 파일들을 스타터 루트의 `data/input/`에 복사하고 `python3 run_pipeline.py`를 실행합니다.
-4. **웹 스튜디오 검증**:
-   - `python3 -m src.web.studio_server`를 기동하여 토폴로지 시각화, 11종 MCP 도구, 20대 CQ 검증 결과를 확인합니다.
+2. **원천 데이터 매핑 및 선행 `4. Wiki Agent` 검증**:
+   - 고객사의 비정형 규정 문서(PDF/Word)를 담백한 YAML Frontmatter(`---\n...\n---`)가 포함된 `2. OKF Layer` 위키로 변환하고, **`4. Wiki Agent` (GCS)**로 규정/예외 질의를 선행 검증합니다.
+3. **정형 DW 결합 및 `5. Bigquery Graph` / `6. BQG Agent` 확장**:
+   - 고객사 DW 테이블을 `data_templates/schema_*.sql`의 DDL 구조에 맞춰 매핑한 뒤 `python3 run_pipeline.py`를 실행하여 **`5. Bigquery Graph`**와 **`6. BQG Agent`**를 활성화합니다.
+4. **`Agentic Ontology Studio` 통합 검증**:
+   - `python3 -m src.web.studio_server`를 기동하여 `0. Overview`(전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과)부터 `4. Wiki Agent`, `6. BQG Agent`, `7. Lineage`(`< 5ms`), `8. AI FDE`까지 9-Tab 전 구간을 확인합니다.

@@ -57,7 +57,7 @@ HTML_PAGE = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Enterprise Agentic Ontology Studio</title>
+  <title>Agentic Ontology Studio</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <style>
     :root {
@@ -355,9 +355,10 @@ HTML_PAGE = """<!DOCTYPE html>
   <!-- Topbar 44px -->
   <div class="topbar">
     <div class="topbar-left">
-      <span class="logo">Enterprise Agentic Ontology Studio</span>
-      <span class="badge">[Zero-Hallucination FDE]</span>
-      <span class="badge badge-purple">[2-Layer Anti-Redundancy]</span>
+      <span class="logo">Agentic Ontology Studio</span>
+      <span class="badge">[OKF v0.2 Standard]</span>
+      <span class="badge badge-green">[4. Wiki Agent (GCS)]</span>
+      <span class="badge badge-purple">[6. BQG Agent (Graph)]</span>
     </div>
     <div class="topbar-right">
       <button class="lang-toggle" onclick="toggleIndustryModal()" style="border-color:rgba(191,90,242,0.4); color:var(--accent-purple);">Industry Cases (8)</button>
@@ -380,60 +381,6 @@ HTML_PAGE = """<!DOCTYPE html>
     <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-bottom:14px;">
       국내 대표 4대 산업군(제조, 금융, 유통, 통신) 8대 엔터프라이즈의 실제 비즈니스 요건을 추상화하여, 즉시 프로젝트 현장에 복제·적용할 수 있는 DDL, 샘플 데이터, 비정형 SOP 규정 및 CQ 가이드라인을 제공합니다.
     </p>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
-      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <strong style="color:var(--text-primary); font-size:12px;">1. 스마트 제조 (Manufacturing)</strong>
-          <span class="badge">2 Cases</span>
-        </div>
-        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
-          • <strong>포스코:</strong> 제철 연속 공정 품질 불량 인과, 설비 진동/온도 예방보전(PdM), 비상 정지(Interlock) SOP<br/>
-          • <strong>현대자동차:</strong> SDV 전장 제어기(ECU) 펌웨어 호환성, 글로벌 SCM 납기 지연 <em>(HD현대 비교 포함)</em>
-        </div>
-        <div style="margin-top:8px; font-size:10.5px;">
-          <code style="color:var(--accent);">industry_cases/01_manufacturing/</code>
-        </div>
-      </div>
-      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <strong style="color:var(--text-primary); font-size:12px;">2. 핀테크 & 뱅킹 (Finance)</strong>
-          <span class="badge">2 Cases</span>
-        </div>
-        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
-          • <strong>카카오뱅크:</strong> 비대면 주담대 심사, 수도권 스트레스 DSR 40% 산정, 생애최초 LTV 80% 특례<br/>
-          • <strong>토스:</strong> 50개 제휴사 대출 비교 중개, 마이데이터 자산 진단, 토스페이 가맹점 여전법 우대수수료
-        </div>
-        <div style="margin-top:8px; font-size:10.5px;">
-          <code style="color:var(--accent);">industry_cases/02_finance/</code>
-        </div>
-      </div>
-      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <strong style="color:var(--text-primary); font-size:12px;">3. 유통 & 이커머스 (Retail)</strong>
-          <span class="badge">2 Cases</span>
-        </div>
-        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
-          • <strong>GS리테일:</strong> GS25 가맹계약(GS1/GS2) 상생 정산, 신선식품 폐기 지원금(40%), 퀵커머스 매장 재고 밸런싱<br/>
-          • <strong>CJ대한통운/올리브영:</strong> 오늘드림(3시간) 풀필먼트 SLA 지연 배상, K-뷰티 수수료 및 대규모유통업법 정산
-        </div>
-        <div style="margin-top:8px; font-size:10.5px;">
-          <code style="color:var(--accent);">industry_cases/03_retail_commerce/</code>
-        </div>
-      </div>
-      <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <strong style="color:var(--text-primary); font-size:12px;">4. 통신 & 미디어 (Telecom)</strong>
-          <span class="badge">2 Cases</span>
-        </div>
-        <div style="font-size:11px; line-height:1.6; color:var(--text-secondary);">
-          • <strong>SK텔레콤:</strong> 5G-T우주 구독 결합 상품, 180일 식스플랜 공시지원금 위약금 일할 산식, 시니어 특례<br/>
-          • <strong>KT:</strong> 유무선 총액 결합 해지 방어 시뮬레이션, 엔터프라이즈 B2B 전용회선 월 99.9% SLA 3배 배상
-        </div>
-        <div style="margin-top:8px; font-size:10.5px;">
-          <code style="color:var(--accent);">industry_cases/04_telecommunications/</code>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- GCP Native First & Architecture Modal -->
@@ -445,230 +392,131 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
       <button onclick="toggleArchModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px;">✕</button>
     </div>
-    <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-bottom:14px;">
-      본 플랫폼은 <strong>Google Cloud Native First</strong> 원칙에 따라 GCP 관리형 인프라(BigQuery, Dataplex, Cloud Storage, Cloud Run)와 오픈소스 표준(OKF v0.2, ADK 2.0, Remote MCP)을 최우선 채택합니다. 도메인 수식 및 그래프 안티 리던던시(중복 제거) 영역에 한해서만 커스텀 확장을 적용합니다.
-    </p>
-    <div style="background:var(--surface-1); border:1px solid var(--card-border-subtle); border-radius:6px; padding:12px; margin-bottom:16px;">
-      <div style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; margin-bottom:8px;">공식 Google 오픈소스 레퍼런스 저장소 (Reference Repositories)</div>
-      <div style="font-size:11.5px; line-height:1.8; color:var(--text-secondary);">
-        • <strong>Knowledge Catalog (OKF Spec):</strong> <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog" target="_blank" style="color:var(--accent); text-decoration:none;">github.com/GoogleCloudPlatform/knowledge-catalog</a><br/>
-        • <strong>Agent Development Kit (ADK Python):</strong> <a href="https://github.com/google/adk-python" target="_blank" style="color:var(--accent); text-decoration:none;">github.com/google/adk-python</a><br/>
-        • <strong>ADK Web UI (Angular):</strong> <a href="https://github.com/google/adk-web" target="_blank" style="color:var(--accent); text-decoration:none;">github.com/google/adk-web</a><br/>
-        • <strong>Dataplex KC Remote MCP:</strong> <code style="background:var(--surface-3); padding:2px 5px; border-radius:3px;">https://dataplex.googleapis.com/mcp</code><br/>
-        • <strong>BigQuery Remote MCP:</strong> <code style="background:var(--surface-3); padding:2px 5px; border-radius:3px;">https://bigquery.googleapis.com/mcp</code> <span style="color:var(--accent-orange); font-size:10.5px;">(※ GQL 미지원 ➔ 커스텀 실행기 탑재)</span>
-      </div>
-    </div>
-    <div style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">계층별 네이티브 스펙 vs 커스텀 확장 비교</div>
-    <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;">
-      <thead>
-        <tr style="border-bottom:1px solid var(--card-border); color:var(--text-secondary);">
-          <th style="padding:6px;">계층 (Layer)</th>
-          <th style="padding:6px;">Google Cloud Native 기반</th>
-          <th style="padding:6px;">독자 개발 커스텀 확장</th>
-        </tr>
-      </thead>
-      <tbody style="color:var(--text-secondary); line-height:1.4;">
-        <tr style="border-bottom:1px solid var(--card-border-subtle);">
-          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Data DW</td>
-          <td style="padding:6px;"><span class="badge badge-green">Native</span> BigQuery Managed Tables, SQL:2023 Property Graph</td>
-          <td style="padding:6px;"><span class="badge">Custom</span> 2-Layer 안티 리던던시 컴파일러, 시맨틱 브릿지</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--card-border-subtle);">
-          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Catalog</td>
-          <td style="padding:6px;"><span class="badge badge-green">Native</span> Dataplex Knowledge Catalog, OKF v0.2</td>
-          <td style="padding:6px;"><span class="badge">Custom</span> 무손실 시각 청킹, Karpathy 3-Layer LLM-Wiki</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--card-border-subtle);">
-          <td style="padding:6px; font-weight:600; color:var(--text-primary);">MCP Tools</td>
-          <td style="padding:6px;"><span class="badge badge-green">Native</span> BigQuery Remote MCP, Dataplex KC Remote MCP</td>
-          <td style="padding:6px;"><span class="badge">Custom</span> Tier 3 Domain MCP (비즈니스 5종), GQL 전용 러너</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--card-border-subtle);">
-          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Agent</td>
-          <td style="padding:6px;"><span class="badge badge-green">Native</span> Google ADK 2.0 Runtime, Gemini 3.8 Flash</td>
-          <td style="padding:6px;"><span class="badge">Custom</span> AI FDE 동적 하위 목표 분해 및 크로스도메인 체이닝</td>
-        </tr>
-        <tr>
-          <td style="padding:6px; font-weight:600; color:var(--text-primary);">Studio</td>
-          <td style="padding:6px;"><span class="badge badge-green">Native</span> Google Cloud Run 호스팅, ADK Web 호환</td>
-          <td style="padding:6px;"><span class="badge">Custom</span> 4대 멀티뷰 스튜디오, 2D SVG 토폴로지, CQ 벤치마크</td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 
-  <!-- Subbar 52px: 5-Stage E2E Data Lifecycle -->
+  <!-- Subbar 52px: 9-Tab Agentic Ontology Studio Ribbon -->
   <div class="subbar">
-    <button class="nav-btn active" onclick="switchTab('overview')">0. Overview (개요 &amp; 플로우)</button>
-    <button class="nav-btn" onclick="switchTab('assets')">1. 자산 레지스트리 (Asset Registry)</button>
-    <button class="nav-btn" onclick="switchTab('okf')">2. OKF 변환 레이어 (OKF Layer)</button>
-    <button class="nav-btn" onclick="switchTab('structured')">3. 정형 그래프 구조화 (Structured)</button>
-    <button class="nav-btn" onclick="switchTab('graph')">4. 하이브리드 BQG 통합 (Hybrid BQG)</button>
-    <button class="nav-btn" onclick="switchTab('fde')">5. AI 에이전트 (AI FDE)</button>
-    <button class="nav-btn" onclick="switchTab('cq')">CQ 벤치마크 (CQ Studio)</button>
+    <button class="nav-btn active" onclick="switchTab('overview')">0. Overview</button>
+    <button class="nav-btn" onclick="switchTab('assets')">1. Asset</button>
+    <button class="nav-btn" onclick="switchTab('okf')">2. OKF Layer</button>
+    <button class="nav-btn" onclick="switchTab('structured')">3. Ontology Semantic</button>
+    <button class="nav-btn" onclick="switchTab('wiki-agent')">4. Wiki Agent</button>
+    <button class="nav-btn" onclick="switchTab('graph')">5. Bigquery Graph</button>
+    <button class="nav-btn" onclick="switchTab('bqg-agent')">6. BQG Agent</button>
+    <button class="nav-btn" onclick="switchTab('lineage')">7. Lineage</button>
+    <button class="nav-btn" onclick="switchTab('fde')">8. AI FDE</button>
   </div>
 
-  <!-- VIEW 0: OVERVIEW & 5-STAGE LIFECYCLE -->
-  <div class="tab-panel active" id="panel-overview" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 20px;">
-    <!-- Hero Banner -->
-    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 24px 28px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-        <span class="badge badge-green" style="font-size: 11px; padding: 4px 10px;">Enterprise E2E Data Lifecycle Starter Pack</span>
-        <span style="font-size: 11.5px; color: var(--text-secondary); font-family: monospace;">Standard: OKF v0.2 | ISO SQL:2023 GQL | Vertex AI Gemini</span>
+  <!-- VIEW 0: SINGLE CONTINUOUS OVERVIEW (Full Step -> Architecture -> Service/Feature Gap -> Performance/Results) -->
+  <div class="tab-panel active" id="panel-overview" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 22px; font-size: 13.5px;">
+    <!-- SECTION 1: FULL STEP DIAGRAM -->
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+        <span class="badge" style="font-size: 13px; padding: 4px 10px;">SECTION 1 &middot; 전체 스텝 다이어그램 (Full Step Diagram)</span>
+        <span style="font-size: 13.5px; color: var(--text-secondary);">OKF v0.2 &bull; 4. Wiki Agent (GCS) &bull; 5. Bigquery Graph &bull; 6. BQG Agent &bull; 7. Lineage (&lt; 5ms)</span>
       </div>
-      <h1 style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
-        Enterprise Agentic Ontology Starter Pack
-      </h1>
-      <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 900px;">
-        정형 DW 원장과 비정형 규정 문서를 무손실 청킹, SHA-256 불변 해시 앵커링, Zero-Copy 그래프 승격을 통해 단일 지식 체계로 통합하고, BigQuery Property Graph 및 AI FDE 에이전트로 0% 환각 실행을 보장하는 5단계 엔드투엔드 온톨로지 플랫폼입니다.
+      <h2 style="font-size: 19px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
+        Agentic Ontology Studio — 9단계 진화형 온톨로지 및 에이전트 구축 전체 스텝 다이어그램
+      </h2>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 16px;">
+        탭 전환 없이 한눈에 파악하는 전체 실행 흐름: [1. Asset &amp; 2. OKF Layer (GCS 3-Layer Wiki)] ➔ [3. Ontology Semantic] ➔ [4. Wiki Agent (선행 GCS 에이전트)] ➔ [5. Bigquery Graph] ➔ [6. BQG Agent (그래프 에이전트)] ➔ [7. Lineage &amp; 8. AI FDE]
       </p>
-    </div>
+      <div style="background: #0b1120; border-radius: 10px; padding: 18px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto;">
+        <svg viewBox="0 0 1520 360" width="100%" style="min-width: 1150px; height: auto; display: block; margin: 0 auto; font-family: var(--font-stack);">
+          <rect x="16" y="20" width="230" height="310" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="32" y="54" fill="#38bdf8" font-size="14" font-weight="800">1. Asset &amp; 2. OKF Layer</text>
+          <text x="32" y="84" fill="#ffffff" font-size="16" font-weight="800">원천 자산 &amp; GCS Wiki</text>
+          <text x="32" y="118" fill="#e2e8f0" font-size="13.5">• BigQuery 7대 마스터 테이블</text>
+          <text x="32" y="146" fill="#e2e8f0" font-size="13.5">• 비정형 업무 규정 (PDF/MD)</text>
+          <text x="32" y="174" fill="#86efac" font-size="13.5" font-weight="700">• 담백한 원본 YAML Frontmatter</text>
+          <text x="32" y="202" fill="#86efac" font-size="13.5">• Karpathy 3-Layer .okf.md</text>
 
-    <!-- 5-Stage Bento Cards -->
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge" style="background: rgba(41, 151, 255, 0.2);">STAGE 0</span>
-            <span style="font-size: 10px; color: var(--accent); font-weight: 600;">ACTIVE</span>
-          </div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Overview (개요 &amp; 플로우)</div>
-          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
-            전체 5단계 데이터 변환·통합·활용 아키텍처 및 정형/비정형 융합 경로를 한눈에 조망합니다.
-          </div>
-        </div>
-        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px;" disabled>현재 화면</button>
-      </div>
+          <rect x="282" y="20" width="240" height="310" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+          <text x="298" y="54" fill="#38bdf8" font-size="14" font-weight="800">3. Ontology Semantic</text>
+          <text x="298" y="84" fill="#ffffff" font-size="16" font-weight="800">시맨틱 브릿지 &amp; 프루닝</text>
+          <text x="298" y="118" fill="#fde047" font-size="13.5" font-weight="700">• Domain Pruning (35 ➔ 7)</text>
+          <text x="298" y="146" fill="#e2e8f0" font-size="13.5">• OKF v0.2 5대 요소 추출</text>
+          <text x="298" y="174" fill="#e2e8f0" font-size="13.5">• L1~L4 비즈니스 산식 트리</text>
+          <text x="298" y="202" fill="#e2e8f0" font-size="13.5">• 2-Layer URI 매핑 레지스트리</text>
 
-      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge">STAGE 1</span>
-            <span style="font-size: 10px; color: var(--text-secondary);">RAW MASTER</span>
-          </div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">자산 레지스트리 (Asset Registry)</div>
-          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
-            원천 BigQuery DW 마스터 테이블과 비정형 문서의 통합 메타데이터 카탈로그를 관리합니다.
-          </div>
-        </div>
-        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('assets')">1. 레지스트리 이동 &rarr;</button>
-      </div>
+          <rect x="558" y="20" width="270" height="310" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="2.5"/>
+          <text x="574" y="54" fill="#6ee7b7" font-size="14" font-weight="800">4. Wiki Agent (선행 에이전트)</text>
+          <text x="574" y="84" fill="#ffffff" font-size="16.5" font-weight="800">GCS 온톨로지 위키 에이전트</text>
+          <text x="574" y="118" fill="#d1fae5" font-size="13.5">• 3번 직후 1차 완성된 선행 모델</text>
+          <text x="574" y="146" fill="#fde047" font-size="13.5" font-weight="700">• DB 구축 없이 GCS 위키 추론</text>
+          <text x="574" y="174" fill="#d1fae5" font-size="13.5">• 위약금 산식/예외 조항 16개 CQ</text>
+          <text x="574" y="202" fill="#6ee7b7" font-size="13.5" font-weight="700">• 16 / 20 PASS (평균 1.18s)</text>
 
-      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge badge-green">STAGE 2</span>
-            <span style="font-size: 10px; color: var(--accent-green); font-weight: 600;">2-WEEK SPRINT</span>
-          </div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">OKF 변환 레이어 (OKF Layer)</div>
-          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
-            비정형 GCS 문서를 무손실 청킹, SHA-256 해시 앵커링, OKF v0.2 및 Karpathy 3-Layer Wiki로 변환합니다.
-          </div>
-        </div>
-        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('okf')">2. OKF 레이어 이동 &rarr;</button>
-      </div>
+          <rect x="864" y="20" width="300" height="310" rx="10" fill="#3b0764" stroke="#c084fc" stroke-width="2.5"/>
+          <text x="880" y="54" fill="#e9d5ff" font-size="14" font-weight="800">5. Bigquery Graph &amp; 6. BQG Agent</text>
+          <text x="880" y="84" fill="#ffffff" font-size="16.5" font-weight="800">SQL:2023 그래프 &amp; BQG 에이전트</text>
+          <text x="880" y="118" fill="#f3e8ff" font-size="13.5">• CREATE PROPERTY GRAPH (Zero-ETL)</text>
+          <text x="880" y="146" fill="#f3e8ff" font-size="13.5">• GRAPH_TABLE() 멀티홉 원장 탐색</text>
+          <text x="880" y="174" fill="#fde047" font-size="13.5" font-weight="700">• 정형 원장 + 비정형 규정 결합</text>
+          <text x="880" y="202" fill="#86efac" font-size="13.5" font-weight="700">• 20 / 20 PASS (평균 1.42s)</text>
 
-      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge">STAGE 3</span>
-            <span style="font-size: 10px; color: var(--text-secondary);">STRUCTURED</span>
-          </div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">정형 그래프 구조화 (Structured)</div>
-          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
-            별도 복제 없이 DW 원장을 그래프 노드로 직접 가상화(Zero-Copy). 선언적 SQL:2023 DDL을 검수합니다.
-          </div>
-        </div>
-        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('structured')">3. 정형 구조화 이동 &rarr;</button>
-      </div>
-
-      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge">STAGE 4</span>
-            <span style="font-size: 10px; color: var(--text-secondary);">HYBRID GRAPH</span>
-          </div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">하이브리드 BQG 통합 (Hybrid BQG)</div>
-          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
-            정형-비정형 시맨틱 브릿지(APPLIES_RULE)와 2D/3D 그래프 토폴로지 시각화 및 GQL 탐색을 지원합니다.
-          </div>
-        </div>
-        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('graph')">4. BQG 그래프 이동 &rarr;</button>
-      </div>
-
-      <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge badge-purple">STAGE 5</span>
-            <span style="font-size: 10px; color: var(--accent-purple); font-weight: 600;">AI REASONING</span>
-          </div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">AI 에이전트 (AI FDE Studio)</div>
-          <div style="font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 12px;">
-            Vertex AI Gemini와 11종 MCP 도구를 바인딩하여 동적 하위 목표 분해 및 0% 환각 위약금 연산을 수행합니다.
-          </div>
-        </div>
-        <button class="nav-btn" style="width: fit-content; padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.08);" onclick="switchTab('fde')">5. AI 에이전트 이동 &rarr;</button>
-      </div>
-    </div>
-
-    <!-- SVG Architecture Diagram Card -->
-    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 24px;">
-      <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">5단계 E2E 데이터 라이프사이클 아키텍처 다이어그램</div>
-      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">원천 DW와 GCS 문서의 변환 &middot; 통합 &middot; AI 추론 흐름</div>
-      <div style="background: #0b1120; border-radius: 8px; padding: 16px; border: 1px solid rgba(255,255,255,0.08); overflow-x: auto;">
-        <svg viewBox="0 0 1060 280" width="100%" height="280" style="display: block; margin: 0 auto; font-family: sans-serif;">
-          <defs>
-            <marker id="s-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8"/>
-            </marker>
-          </defs>
-          <rect x="20" y="20" width="180" height="90" rx="8" fill="#1e293b" stroke="#334155"/>
-          <text x="35" y="45" fill="#94a3b8" font-size="10" font-weight="700">STAGE 1: DW MASTER</text>
-          <text x="35" y="65" fill="#f8fafc" font-size="12" font-weight="700">BigQuery Tables</text>
-          <text x="35" y="82" fill="#64748b" font-size="10">&bull; dw_devices, dw_plans</text>
-          <text x="35" y="96" fill="#64748b" font-size="10">&bull; dw_subsidies, dim_stores</text>
-
-          <rect x="20" y="150" width="180" height="90" rx="8" fill="#1e293b" stroke="#334155"/>
-          <text x="35" y="175" fill="#94a3b8" font-size="10" font-weight="700">STAGE 1: UNSTRUCTURED</text>
-          <text x="35" y="195" fill="#f8fafc" font-size="12" font-weight="700">GCS Policy Docs</text>
-          <text x="35" y="212" fill="#64748b" font-size="10">&bull; 상담가이드 2.0 (PDF)</text>
-          <text x="35" y="226" fill="#64748b" font-size="10">&bull; 단통법 개정안 (MD)</text>
-
-          <path d="M 200 65 L 270 65" stroke="#38bdf8" stroke-width="2" marker-end="url(#s-arrow)"/>
-          <path d="M 200 195 L 270 195" stroke="#4ade80" stroke-width="2" marker-end="url(#s-arrow)"/>
-
-          <rect x="270" y="20" width="200" height="90" rx="8" fill="#0f172a" stroke="#38bdf8"/>
-          <text x="285" y="45" fill="#38bdf8" font-size="10" font-weight="700">STAGE 3: STRUCTURED</text>
-          <text x="285" y="65" fill="#f8fafc" font-size="12" font-weight="700">Zero-Copy DW Promotion</text>
-          <text x="285" y="82" fill="#94a3b8" font-size="10">&bull; 2-Layer Anti-Redundancy</text>
-          <text x="285" y="96" fill="#94a3b8" font-size="10">&bull; SQL:2023 DDL Schema</text>
-
-          <rect x="270" y="150" width="200" height="90" rx="8" fill="#052e16" stroke="#4ade80"/>
-          <text x="285" y="175" fill="#4ade80" font-size="10" font-weight="700">STAGE 2: OKF LAYER</text>
-          <text x="285" y="195" fill="#f8fafc" font-size="12" font-weight="700">Lossless Chunks &amp; Wiki</text>
-          <text x="285" y="212" fill="#86efac" font-size="10">&bull; 11 Chunks &amp; SHA-256 Hashes</text>
-          <text x="285" y="226" fill="#86efac" font-size="10">&bull; Karpathy 3-Layer LLM-Wiki</text>
-
-          <path d="M 470 65 L 510 65 L 510 120 L 540 120" stroke="#38bdf8" stroke-width="2" marker-end="url(#s-arrow)"/>
-          <path d="M 470 195 L 510 195 L 510 145 L 540 145" stroke="#4ade80" stroke-width="2" marker-end="url(#s-arrow)"/>
-
-          <rect x="540" y="80" width="220" height="110" rx="8" fill="#172554" stroke="#60a5fa"/>
-          <text x="555" y="105" fill="#60a5fa" font-size="10" font-weight="700">STAGE 4: HYBRID BQG</text>
-          <text x="555" y="125" fill="#f8fafc" font-size="13" font-weight="700">Hybrid Property Graph</text>
-          <text x="555" y="145" fill="#93c5fd" font-size="10">&bull; Bridge: APPLIES_RULE</text>
-          <text x="555" y="160" fill="#93c5fd" font-size="10">&bull; BigQuery GQL GRAPH_TABLE()</text>
-          <text x="555" y="175" fill="#93c5fd" font-size="10">&bull; 2D / 3D Interactive Topology</text>
-
-          <path d="M 760 135 L 820 135" stroke="#c084fc" stroke-width="2" marker-end="url(#s-arrow)"/>
-
-          <rect x="820" y="70" width="210" height="130" rx="8" fill="#3b0764" stroke="#c084fc"/>
-          <text x="835" y="95" fill="#c084fc" font-size="10" font-weight="700">STAGE 5: AI FDE STUDIO</text>
-          <text x="835" y="115" fill="#f8fafc" font-size="13" font-weight="700">Deterministic Agent</text>
-          <text x="835" y="135" fill="#e9d5ff" font-size="10">&bull; Vertex AI Gemini 3.8 Flash</text>
-          <text x="835" y="150" fill="#e9d5ff" font-size="10">&bull; 11 Multi-Domain MCP Tools</text>
-          <text x="835" y="165" fill="#e9d5ff" font-size="10">&bull; Sub-Goals &amp; Chaining</text>
-          <text x="835" y="180" fill="#4ade80" font-size="10" font-weight="700">&bull; 0.0% Hallucination Proof</text>
+          <rect x="1200" y="20" width="295" height="310" rx="10" fill="#1e293b" stroke="#f472b6" stroke-width="2"/>
+          <text x="1216" y="54" fill="#f9a8d4" font-size="14" font-weight="800">7. Lineage &amp; 8. AI FDE</text>
+          <text x="1216" y="84" fill="#ffffff" font-size="16.5" font-weight="800">4-Tier 리니지 &amp; 도메인 MCP</text>
+          <text x="1216" y="118" fill="#4ade80" font-size="13.5" font-weight="700">• 인메모리 캐시 즉시 로딩 (&lt; 5ms)</text>
+          <text x="1216" y="146" fill="#e2e8f0" font-size="13.5">• 39 Nodes / 60 Edges 전구간 계보</text>
+          <text x="1216" y="174" fill="#e2e8f0" font-size="13.5">• 11종 도메인 온톨로지 MCP 서버</text>
+          <text x="1216" y="202" fill="#fde047" font-size="13.5" font-weight="700">• 자율 스키마 &amp; DDL 합성</text>
         </svg>
+      </div>
+    </div>
+
+    <!-- SECTION 2 & 3: ARCHITECTURE & SERVICE VS. FEATURE GAP MATRIX -->
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="badge badge-green" style="font-size: 13px; padding: 4px 10px;">SECTION 2 &amp; 3 &middot; 아키텍처 &amp; Google Cloud 서비스 vs. 커스텀 피처 갭</span>
+      </div>
+      <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px;">
+        2-Layer 시맨틱 아키텍처 (`4. Wiki Agent` ➔ `6. BQG Agent`) 및 서비스/개발 피처 갭 매트릭스
+      </h2>
+      <table style="width:100%; border-collapse:collapse; font-size:13.5px; text-align:left;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--card-border); color:var(--text-secondary);">
+            <th style="padding:10px;">아키텍처 레이어</th>
+            <th style="padding:10px;">Google Cloud 네이티브 서비스</th>
+            <th style="padding:10px;">네이티브 단독 한계 (Feature Gap)</th>
+            <th style="padding:10px;">Agentic Ontology Studio 커스텀 개발 해법</th>
+          </tr>
+        </thead>
+        <tbody style="color:var(--text-primary); line-height:1.6;">
+          <tr style="border-bottom:1px solid var(--card-border-subtle);">
+            <td style="padding:10px; font-weight:700; color:var(--accent);">2. OKF Layer &amp; 4. Wiki Agent</td>
+            <td style="padding:10px;">Cloud Storage (GCS) &amp; Gemini API</td>
+            <td style="padding:10px; color:var(--text-secondary);">단순 벡터 청킹 시 표/위약금 산식 단절 및 버전 충돌</td>
+            <td style="padding:10px;">담백한 원본 YAML Frontmatter + Karpathy 3-Layer Wiki + 선행 <b>4. Wiki Agent</b> (16/20 CQ 해결)</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--card-border-subtle);">
+            <td style="padding:10px; font-weight:700; color:var(--accent-purple);">5. Bigquery Graph &amp; 6. BQG Agent</td>
+            <td style="padding:10px;">BigQuery SQL:2023 Property Graph</td>
+            <td style="padding:10px; color:var(--text-secondary);">BigQuery Remote MCP의 GQL 미지원 및 자연어➔GQL 변환 부재</td>
+            <td style="padding:10px;">Zero-ETL DW 노드 승격(35➔7) + <b>6. BQG Agent</b> (`GRAPH_TABLE()` 멀티홉 + 산식 검증, 20/20 CQ 해결)</td>
+          </tr>
+          <tr>
+            <td style="padding:10px; font-weight:700; color:var(--accent-green);">7. Lineage &amp; 8. AI FDE</td>
+            <td style="padding:10px;">Dataplex Lineage &amp; MCP SDK</td>
+            <td style="padding:10px; color:var(--text-secondary);">SQL 테이블 간 이동만 추적하며 동기 메타데이터 조회 시 8~15s 지연</td>
+            <td style="padding:10px;">4-Tier 전구간 리니지(비동기 인메모리 캐싱 <b>&lt; 5ms</b> 즉시 로딩) + 11종 도메인 MCP 스위트</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 4: PERFORMANCE & RESULTS -->
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="badge badge-purple" style="font-size: 13px; padding: 4px 10px;">SECTION 4 &middot; 성능과 결과 (Performance &amp; Results)</span>
+        <button class="nav-btn" style="background: rgba(191,90,242,0.2); color: #e9d5ff; font-size: 13px;" onclick="switchTab('cq')">20대 골든 CQ 벤치마크 전체 보기 &rarr;</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">4. Wiki Agent (GCS)</div><div class="metric-value" style="color:#10b981;">16 / 20 PASS</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">평균 1.18s &middot; 규정/산식 중심</div></div>
+        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">6. BQG Agent (Graph)</div><div class="metric-value" style="color:#c084fc;">20 / 20 PASS</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">평균 1.42s &middot; 멀티홉 원장 통합</div></div>
+        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">Domain Pruning</div><div class="metric-value" style="color:#38bdf8;">35 ➔ 7 (-80%)</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Zero-ETL 직접 노드 승격</div></div>
+        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">7. Lineage Latency</div><div class="metric-value" style="color:#30d158;">&lt; 5 ms</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">비동기 인메모리 즉시 로딩</div></div>
       </div>
     </div>
   </div>
@@ -999,20 +847,32 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     let globalAssets = {};
     let currentToolFilter = 'all';
 
-    // Switch Top Tabs
+    // Switch Top Tabs (9-Tab Agentic Ontology Studio Ribbon)
     function switchTab(tabId) {
-      const ids = ['overview', 'assets', 'okf', 'structured', 'graph', 'fde', 'cq'];
+      const ids = ['overview', 'assets', 'okf', 'structured', 'wiki-agent', 'graph', 'bqg-agent', 'lineage', 'fde'];
       document.querySelectorAll('.subbar .nav-btn').forEach((b, idx) => {
         b.classList.toggle('active', ids[idx] === tabId);
       });
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      const activePanel = document.getElementById('panel-' + tabId);
+      const panelMap = {
+        'overview': 'panel-overview',
+        'assets': 'panel-assets',
+        'okf': 'panel-okf',
+        'structured': 'panel-structured',
+        'wiki-agent': 'panel-fde',
+        'graph': 'panel-graph',
+        'bqg-agent': 'panel-fde',
+        'lineage': 'panel-cq',
+        'fde': 'panel-fde',
+        'cq': 'panel-cq'
+      };
+      const activePanel = document.getElementById(panelMap[tabId] || ('panel-' + tabId));
       if (activePanel) activePanel.classList.add('active');
 
       if ((tabId === 'assets' || tabId === 'okf') && !globalAssets.chunks) loadAssets();
       if (tabId === 'structured') loadStructuredDdl();
       if (tabId === 'graph') loadGraph();
-      if (tabId === 'cq') loadCq();
+      if (tabId === 'cq' || tabId === 'lineage') loadCq();
     }
 
     async function loadStructuredDdl() {
