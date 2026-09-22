@@ -24,7 +24,7 @@
   <rect x="0" y="0" width="1020" height="42" fill="#ffffff" rx="10" stroke="#dadce0" stroke-width="1"/>
   <rect x="20" y="11" width="76" height="20" rx="4" fill="#1a73e8"/>
   <text x="58" y="25" text-anchor="middle" class="badge-text">STEP 1</text>
-  <text x="108" y="26" class="title">비정형 지식 체계화 및 OKF 에이전트 아키텍처 (Unstructured Knowledge & OKF Grounding)</text>
+  <text x="108" y="26" class="title">비정형 지식 체계화 및 OKF 에이전트 아키텍처 (Unstructured Knowledge &amp; OKF Grounding)</text>
   <text x="890" y="26" class="subtitle">0% Hallucination · Pure Python</text>
 
   <!-- Stage 1: Input -->
@@ -56,7 +56,7 @@
   <g transform="translate(270, 60)">
     <rect width="225" height="255" fill="#e8f0fe" stroke="#aecbfa" class="card-bg" filter="url(#card-shadow)"/>
     <rect x="12" y="12" width="201" height="26" rx="4" fill="#1a73e8"/>
-    <text x="112" y="29" text-anchor="middle" class="badge-text">2. 무손실 청킹 & 해시 앵커링</text>
+    <text x="112" y="29" text-anchor="middle" class="badge-text">2. 무손실 청킹 &amp; 해시 앵커링</text>
 
     <rect x="12" y="48" width="201" height="60" class="sub-card"/>
     <text x="22" y="68" class="subtitle">구조화 파서 (Structural Parser)</text>
@@ -80,7 +80,7 @@
   <g transform="translate(530, 60)">
     <rect width="225" height="255" fill="#f3e8fd" stroke="#d7aefb" class="card-bg" filter="url(#card-shadow)"/>
     <rect x="12" y="12" width="201" height="26" rx="4" fill="#9334e8"/>
-    <text x="112" y="29" text-anchor="middle" class="badge-text">3. Google OKF v0.2 & 3-Layer Wiki</text>
+    <text x="112" y="29" text-anchor="middle" class="badge-text">3. Google OKF v0.2 &amp; 3-Layer Wiki</text>
 
     <rect x="12" y="48" width="201" height="65" class="sub-card"/>
     <text x="22" y="68" class="subtitle">OKF v0.2 지식 번들</text>

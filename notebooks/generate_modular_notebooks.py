@@ -6,6 +6,7 @@ methodology explanations, Mermaid diagrams, and executed standard-library code c
 """
 import os
 import sys
+import base64
 import json
 import io
 import contextlib
@@ -65,12 +66,25 @@ def build_all_modular_notebooks():
             "source": [l + "\n" for l in code_str.strip().split("\n")]
         }
 
-    def make_md_cell(md_str):
+    def get_image_attachment(png_filename):
+        png_path = os.path.join(notebooks_dir, "assets", png_filename)
+        with open(png_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
         return {
+            png_filename: {
+                "image/png": b64
+            }
+        }
+
+    def make_md_cell(md_str, attachments=None):
+        cell = {
             "cell_type": "markdown",
             "metadata": {},
             "source": [l + "\n" for l in md_str.strip().split("\n")]
         }
+        if attachments:
+            cell["attachments"] = attachments
+        return cell
 
     def save_notebook(cells, filename):
         nb_obj = {
@@ -134,41 +148,7 @@ def build_all_modular_notebooks():
 
     cells1_ko.append(make_md_cell("""### 2. Step 1 엔드투엔드 처리 플로우 (Flow Architecture)
 
-![Step 1 Architecture Flow](assets/step1_architecture_flow.svg)
-
-<details>
-<summary>다이어그램 Mermaid 소스 코드 펼쳐보기 (Click to expand Mermaid source)</summary>
-
-```mermaid
-flowchart TD
-    subgraph Input ["1. 원천 비정형 가이드"]
-        RawDoc["sample_policy_guide.md<br/>(단말 지원금 및 180일 약정 규정)"]
-    end
-
-    subgraph Process ["2. 무손실 청킹 & 해시 앵커링"]
-        Parser["구조화 파서 (헤더, 표, 단서조항 보존)"]
-        Hasher["SHA-256 불변 해시 생성기"]
-        Parser --> Hasher
-        Hasher --> Chunks["DocChunk (DOC_CHUNK_001 ~ 003)<br/>고유 해시 앵커 부여"]
-    end
-
-    subgraph Output ["3. 표준 OKF v0.2 및 3-Layer 위키"]
-        OKF["ontology.jsonld (OKF v0.2 번들)"]
-        Wiki["Karpathy 3-Layer LLM-Wiki<br/>- summary.md (개요)<br/>- entities.md (엔티티)<br/>- concepts.md (개념)<br/>- rules.md (수학적 룰)"]
-        Chunks --> OKF & Wiki
-    end
-
-    subgraph Agent ["4. 감사 가능한 해시 그라운딩 에이전트"]
-        Query["사용자 질문 ('180일 식스플랜 규정')"]
-        Query --> Search["해시 앵커 1:1 증거 검색"]
-        Search --> Answer["0% 환각 확정 답변 + SHA-256 원천 증거 인출"]
-    end
-
-    Input ==> Process ==> Output ==> Agent
-```
-
-</details>
-"""))
+![Step 1 Architecture Flow](attachment:step1_architecture_flow.png)""", attachments=get_image_attachment("step1_architecture_flow.png")))
 
     cells1_ko.append(make_md_cell("### [실습 1.1] 환경 준비 및 원천 비정형 가이드 로드"))
     cells1_ko.append(run_code_cell("""import os, sys, json, hashlib
@@ -294,41 +274,7 @@ Enterprise policies contain intricate caveats, conditional exemptions (e.g., sen
 
     cells1_en.append(make_md_cell("""### 2. Step 1 Architecture & Execution Flow (Flow Diagram)
 
-![Step 1 Architecture Flow](assets/step1_architecture_flow.svg)
-
-<details>
-<summary>Click to expand Mermaid source code</summary>
-
-```mermaid
-flowchart TD
-    subgraph Input ["1. Raw Policy Manual"]
-        RawDoc["sample_policy_guide.md<br/>(Terminal Subsidy & 180-Day Rule)"]
-    end
-
-    subgraph Process ["2. Lossless Chunking & Hashing"]
-        Parser["Structural Parser (Preserves tables & caveats)"]
-        Hasher["SHA-256 Deterministic Hasher"]
-        Parser --> Hasher
-        Hasher --> Chunks["DocChunk (DOC_CHUNK_001 ~ 003)<br/>Immutable Hash Anchors"]
-    end
-
-    subgraph Output ["3. Standard OKF v0.2 & 3-Layer Wiki"]
-        OKF["ontology.jsonld (OKF v0.2 Bundle)"]
-        Wiki["Karpathy 3-Layer LLM-Wiki<br/>- summary.md (Overview)<br/>- entities.md (Entities)<br/>- concepts.md (Concepts)<br/>- rules.md (Mathematical Rules)"]
-        Chunks --> OKF & Wiki
-    end
-
-    subgraph Agent ["4. Auditable Hash-Grounded Agent"]
-        Query["User Query ('180-day baseline plan rule')"]
-        Query --> Search["Hash Anchor 1:1 Retrieval"]
-        Search --> Answer["Zero-Hallucination Answer + SHA-256 Evidence"]
-    end
-
-    Input ==> Process ==> Output ==> Agent
-```
-
-</details>
-"""))
+![Step 1 Architecture Flow](attachment:step1_architecture_flow.png)""", attachments=get_image_attachment("step1_architecture_flow.png")))
 
     cells1_en.append(make_md_cell("### [Exercise 1.1] Environment Setup & Loading Raw Policy Manual"))
     cells1_en.append(run_code_cell("""import os, sys, json, hashlib
@@ -451,41 +397,7 @@ for item in results:
 
     cells2_ko.append(make_md_cell("""### 2. Step 2 그래프 토폴로지 및 GQL 순회 플로우 (Flow Architecture)
 
-![Step 2 Property Graph Flow](assets/step2_property_graph_flow.svg)
-
-<details>
-<summary>다이어그램 Mermaid 소스 코드 펼쳐보기 (Click to expand Mermaid source)</summary>
-
-```mermaid
-flowchart LR
-    subgraph DW ["정형 DW 마스터 테이블 (Direct Promotion)"]
-        D["DeviceNode<br/>(dw_device_master)"]
-        P["PlanNode<br/>(dw_plan_master)"]
-        S["SubsidyNode<br/>(dw_subsidy_policy_master)"]
-        S -->|COVERS_DEVICE| D
-        S -->|REQUIRES_PLAN| P
-    end
-
-    subgraph Unstructured ["비정형 지식 잔존 노드 (Pruned & Grounded)"]
-        R["DomainRuleNode<br/>(180일 식스플랜 규칙)"]
-        C["DocChunkNode<br/>(DOC_CHUNK_002 원천 증거)"]
-        R -->|GROUNDED_IN| C
-    end
-
-    subgraph SemanticBridge ["시맨틱 크로스도메인 브릿지"]
-        R -.->|APPLIES_RULE| P
-    end
-
-    classDef dw fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px;
-    classDef un fill:#f3e8fd,stroke:#9334e8,stroke-width:2px;
-    classDef br fill:#e6f4ea,stroke:#137333,stroke-width:2px;
-
-    class D,P,S dw;
-    class R,C un;
-```
-
-</details>
-"""))
+![Step 2 Property Graph Flow](attachment:step2_property_graph_flow.png)""", attachments=get_image_attachment("step2_property_graph_flow.png")))
 
     cells2_ko.append(make_md_cell("### [실습 2.1] 빅쿼리 정형 DW 원장 테이블 프로파일링"))
     cells2_ko.append(run_code_cell("""import os, sys, csv
@@ -601,40 +513,7 @@ Traditional projects duplicate millions of rows from existing BigQuery master ta
 
     cells2_en.append(make_md_cell("""### 2. Step 2 Graph Topology & GQL Traversal Flow (Flow Architecture)
 
-![Step 2 Property Graph Flow](assets/step2_property_graph_flow.svg)
-
-<details>
-<summary>Click to expand Mermaid source code</summary>
-
-```mermaid
-flowchart LR
-    subgraph DW ["Structured DW Master Tables (Direct Promotion)"]
-        D["DeviceNode<br/>(dw_device_master)"]
-        P["PlanNode<br/>(dw_plan_master)"]
-        S["SubsidyNode<br/>(dw_subsidy_policy_master)"]
-        S -->|COVERS_DEVICE| D
-        S -->|REQUIRES_PLAN| P
-    end
-
-    subgraph Unstructured ["Unstructured Grounded Nodes (Pruned)"]
-        R["DomainRuleNode<br/>(180-Day Rule)"]
-        C["DocChunkNode<br/>(DOC_CHUNK_002 Evidence)"]
-        R -->|GROUNDED_IN| C
-    end
-
-    subgraph SemanticBridge ["Semantic Cross-Domain Bridges"]
-        R -.->|APPLIES_RULE| P
-    end
-
-    classDef dw fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px;
-    classDef un fill:#f3e8fd,stroke:#9334e8,stroke-width:2px;
-
-    class D,P,S dw;
-    class R,C un;
-```
-
-</details>
-"""))
+![Step 2 Property Graph Flow](attachment:step2_property_graph_flow.png)""", attachments=get_image_attachment("step2_property_graph_flow.png")))
 
     cells2_en.append(make_md_cell("### [Exercise 2.1] Profiling Structured BigQuery DW Master Tables"))
     cells2_en.append(run_code_cell("""import os, sys, csv
@@ -749,50 +628,7 @@ LLM에게 수십 개 테이블의 물리 스키마와 외래키 조인을 프롬
 
     cells3_ko.append(make_md_cell("""### 2. Step 3 AI FDE 오케스트레이션 시퀀스 플로우 (Flow Architecture)
 
-![Step 3 AI FDE Orchestration Flow](assets/step3_fde_orchestration_flow.svg)
-
-<details>
-<summary>다이어그램 Mermaid 소스 코드 펼쳐보기 (Click to expand Mermaid source)</summary>
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as 사용자 (GCP CE / 고객사)
-    participant Agent as AI FDE 추론 엔진
-    participant BizMCP as [비즈니스 MCP: mcp_get_device_subsidy_by_plan]
-    participant EngMCP as [엔지니어링 MCP: mcp_inspect_dw_table_schema]
-    participant DW as [BigQuery DW & Property Graph]
-
-    User->>Agent: "Galaxy S26 Ultra 지원금과 관련 원천 DW 테이블 스키마·볼륨 확인해줘"
-    
-    rect rgb(245, 245, 255)
-        Note over Agent: Phase 1: 동적 다중 하위 목표 분해 (Sub-Goals)
-        Agent->>Agent: [G-BIZ-01] 공시지원금 산출<br/>[G-ENG-01] DW 테이블 메타데이터 실측
-    end
-
-    rect rgb(240, 248, 255)
-        Note over Agent,BizMCP: Phase 2: 비즈니스 도구 디스패치
-        Agent->>BizMCP: execute_tool(device="Galaxy S26 Ultra", plan="5G Premier")
-        BizMCP->>DW: dw_subsidy_policy_master 조회
-        DW-->>BizMCP: 지원금 517,500원, 의무 180일 반환
-        BizMCP-->>Agent: Intermediate Observation 1 (원천 테이블명 dw_subsidy_policy_master 핸드오프)
-    end
-
-    rect rgb(255, 245, 245)
-        Note over Agent,EngMCP: Phase 3: 엔지니어링 도구 크로스 체이닝
-        Agent->>EngMCP: execute_tool(table_name="dw_subsidy_policy_master")
-        EngMCP->>DW: 스키마 및 행수(1,240건) 실측
-        EngMCP-->>Agent: Intermediate Observation 2
-    end
-
-    rect rgb(245, 255, 245)
-        Note over Agent: Phase 4: 종합 리포트 합성 (수학적 0% 환각)
-        Agent-->>User: 비즈니스 수치 + 원천 DW 인프라 무결성 교차 검증 리포트
-    end
-```
-
-</details>
-"""))
+![Step 3 AI FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)""", attachments=get_image_attachment("step3_fde_orchestration_flow.png")))
 
     cells3_ko.append(make_md_cell("### [실습 3.1] 11종 멀티도메인 MCP 카탈로그 및 GCP Native 분계선 점검"))
     cells3_ko.append(run_code_cell("""import os, sys
@@ -912,50 +748,7 @@ Placing dozens of database schemas and foreign keys directly into the LLM prompt
 
     cells3_en.append(make_md_cell("""### 2. Step 3 AI FDE Orchestration Sequence Flow (Flow Architecture)
 
-![Step 3 AI FDE Orchestration Flow](assets/step3_fde_orchestration_flow.svg)
-
-<details>
-<summary>Click to expand Mermaid source code</summary>
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as User (Google Cloud CE / Enterprise Client)
-    participant Agent as AI FDE Reasoning Engine
-    participant BizMCP as [Business MCP: mcp_get_device_subsidy_by_plan]
-    participant EngMCP as [Engineering MCP: mcp_inspect_dw_table_schema]
-    participant DW as [BigQuery DW & Property Graph]
-
-    User->>Agent: "Check Galaxy S26 Ultra subsidy policy and inspect underlying DW table schema & volume"
-    
-    rect rgb(245, 245, 255)
-        Note over Agent: Phase 1: Dynamic Sub-Goal Decomposition
-        Agent->>Agent: [G-BIZ-01] Calculate Subsidy<br/>[G-ENG-01] Verify DW Physical Metadata
-    end
-
-    rect rgb(240, 248, 255)
-        Note over Agent,BizMCP: Phase 2: Business Tool Execution
-        Agent->>BizMCP: execute_tool(device="Galaxy S26 Ultra", plan="5G Premier")
-        BizMCP->>DW: Query dw_subsidy_policy_master
-        DW-->>BizMCP: Returns 517,500 KRW, 180-day commitment
-        BizMCP-->>Agent: Intermediate Observation 1 (Hands off target table name)
-    end
-
-    rect rgb(255, 245, 245)
-        Note over Agent,EngMCP: Phase 3: Engineering Cross-Domain Chaining
-        Agent->>EngMCP: execute_tool(table_name="dw_subsidy_policy_master")
-        EngMCP->>DW: Inspect INFORMATION_SCHEMA & 1,240 rows
-        EngMCP-->>Agent: Intermediate Observation 2
-    end
-
-    rect rgb(245, 255, 245)
-        Note over Agent: Phase 4: Synthesis Report (Zero Hallucination)
-        Agent-->>User: Cross-verified decision report (Business Math + Physical Audit)
-    end
-```
-
-</details>
-"""))
+![Step 3 AI FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)""", attachments=get_image_attachment("step3_fde_orchestration_flow.png")))
 
     cells3_en.append(make_md_cell("### [Exercise 3.1] Inspecting 11 Domain MCP Tools Catalog & GCP Native Taxonomy"))
     cells3_en.append(run_code_cell("""import os, sys
