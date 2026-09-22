@@ -45,10 +45,10 @@ flowchart TD
 
 ## 2. Detailed Methodology & Technology Standards
 
-### 2.1 BigQuery SQL:2023 Property Graph Standard
-- Utilizes native ISO SQL:2023 Property Graph extensions.
-- Projects relational DW tables directly into graph nodes (`DeviceNode`, `PlanNode`, `SubsidyNode`) without moving bytes.
-- Maps relationship tables as typed edges (`APPLIES_RULE`, `REQUIRES_PLAN`, `GROUNDED_IN`).
+### 2.1 Anti-Redundancy Architecture & BigQuery SQL:2023 Property Graph
+- **Direct Promotion of DW Tables**: Projects relational DW master tables directly into graph nodes (`DeviceNode`, `PlanNode`, `SubsidyNode`) without moving or duplicating bytes.
+- **Anti-Redundancy Pruning**: Duplicate entities mentioned in unstructured text are pruned away; only source evidence (`DocChunkNode`), source documents (`SourceDocNode`), and codified rules (`DomainRuleNode`) are projected.
+- **Semantic Edge Projections**: Maps relationship tables as typed edges (`APPLIES_RULE`, `REQUIRES_PLAN`, `GROUNDED_IN`).
 
 ### 2.2 Multi-Hop GQL Traversal Patterns
 - **1-Hop Matching**: Direct device-to-subsidy policy lookup.

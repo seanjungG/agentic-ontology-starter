@@ -45,9 +45,12 @@ flowchart TD
 
 ## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)
 
-### 2.1 BigQuery SQL:2023 Property Graph 선언 문법
+### 2.1 안티 리던던시(Anti-Redundancy)와 BigQuery SQL:2023 Property Graph 선언
 BigQuery는 2023년 ISO 표준으로 제정된 SQL:2023 Property Graph 확장을 완벽 지원합니다.
-기존 관계형 테이블을 복제하지 않고, 메타데이터 수준에서 그래프 노드와 엣지로 선언합니다.
+본 아키텍처는 데이터 중복 저장을 원천 차단하는 **안티 리던던시(Anti-Redundancy)** 원칙을 따릅니다:
+- **정형 DW 마스터 테이블**: 단말기, 요금제, 공시지원금 테이블은 별도의 온톨로지 저장소로 복제하지 않고, BigQuery DDL 상에서 물리 노드(`DeviceNode`, `PlanNode`, `SubsidyNode`)로 직접 승격합니다.
+- **비정형 지식 엔티티 Pruning**: 비정형 텍스트에서 단말기나 요금제를 중복 노드로 생성하지 않고 전량 제거(Pruning)하며, 오직 증거 청크(`DocChunkNode`), 원본 문서(`SourceDocNode`), 비즈니스 규칙(`DomainRuleNode`)만을 노드로 선언합니다.
+- **시맨틱 브릿지**: 두 영역을 `REQUIRES_PLAN`, `COVERS_DEVICE`, `APPLIES_RULE`, `GROUNDED_IN` 등의 엣지로 결합합니다.
 
 ```sql
 -- 추상화된 BigQuery Property Graph DDL 예시

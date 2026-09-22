@@ -1,0 +1,18 @@
+{
+  "gcs_uri": "gs://enterprise-ontology-vault/prototype/v0.2/",
+  "status": "PROTOTYPE_STAGED",
+  "artifacts": [
+    "summary.md",
+    "entities.md",
+    "concepts.md",
+    "rules.md",
+    "ontology.jsonld",
+    "doc_chunks.jsonl"
+  ],
+  "sync_timestamp": "2026-03-22T09:00:00Z",
+  "validation": {
+    "chunk_count": 3,
+    "zero_duplicate_entities_flag": true,
+    "anti_redundancy_ready": true
+  }
+}
