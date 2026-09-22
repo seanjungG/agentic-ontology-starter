@@ -13,51 +13,42 @@
 
 ```mermaid
 flowchart TD
-    subgraph TrackA ["Track A: 비정형 지식 체계화 & GCS 프로토타이핑 (Unstructured First)"]
-        RawDoc["비정형 업무 가이드 & SOP<br/>(MHTML / PDF)"] --> Parser["무손실 청킹 & 시각 구조 파싱"]
-        Parser --> OKF["OKF v0.2 변환<br/>(Open Knowledge Format)"]
-        OKF --> LLMWiki["Karpathy 3-Layer LLM-Wiki<br/>(summary / entities / concepts / rules)"]
-        LLMWiki --> GCSProto["GCS 기반 온톨로지 프로토타입<br/>(JSON-LD & Markdown Registry)"]
+    subgraph TrackA ["Track A: 비정형 지식 체계화 & 선행 4. Wiki Agent (Unstructured First on GCS)"]
+        RawDoc["1. Asset: 비정형 업무 가이드 & SOP<br/>(MHTML / PDF)"] --> OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki<br/>(.okf.md & 담백한 원본 YAML Frontmatter)"]
+        OKF --> Semantic["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지"]
+        Semantic --> WikiAgent["4. Wiki Agent (선행 GCS 에이전트)<br/>DB 구축 없이 GCS 위키 기반 16대 규정/산식 CQ 즉시 추론"]
     end
 
     subgraph TrackB ["Track B: 정형 원장 프로파일링 (Structured DW)"]
-        DWTable["BigQuery DW 원장 테이블<br/>(단말기, 요금제, 공시지원금, 약정 원장)"] --> SchemaProfile["스키마 / 볼륨 / PK·FK 무결성 분석"]
+        DWTable["1. Asset: BigQuery DW 원장 테이블<br/>(단말기, 요금제, 공시지원금, 약정 원장)"] --> SchemaProfile["Domain Pruning (35 ➔ 7 핵심 원장) & PK·FK 분석"]
     end
 
-    subgraph TrackC ["Track C: BQG 통합 및 안티 리던던시 (BQG Integration & Anti-Redundancy)"]
-        GCSProto & SchemaProfile --> BQGIntegration{"BigQuery Property Graph 통합<br/>(SQL:2023 GQL)"}
-        BQGIntegration -->|정형 테이블| DWNode["물리 DW 노드 직접 승격<br/>(Device, Plan, SubsidyLedger 등)"]
-        BQGIntegration -->|비정형 중복 엔티티 전량 Pruning| PrunedDoc["비정형 필수 노드만 잔존<br/>(DocChunk, SourceDoc, Policy/Rule)"]
-        DWNode <--->|시맨틱 브릿지 엣지<br/>APPLIES_TO / CALCULATES / GROUNDED_IN| PrunedDoc
+    subgraph TrackC ["Track C: 5. Bigquery Graph & 6. BQG Agent (BQG Integration & Anti-Redundancy)"]
+        WikiAgent & SchemaProfile --> BQGIntegration{"5. Bigquery Graph 통합<br/>(SQL:2023 CREATE PROPERTY GRAPH)"}
+        BQGIntegration -->|정형 테이블| DWNode["물리 DW 노드 직접 승격 (Zero-ETL)<br/>(Device, Plan, SubsidyLedger 등)"]
+        BQGIntegration -->|시맨틱 브릿지 결합| BQGAgent["6. BQG Agent (그래프 추론 에이전트)<br/>NL2GQL 멀티홉 원장 탐색 + 위키 결합 (20/20 CQ 해결)"]
     end
 
-    subgraph TrackD ["Track D: 에이전트를 위한 MCP 추상화 레이어 (Domain Ontology Layer)"]
-        DWNode & PrunedDoc --> MCPSuite["도메인 온톨로지 MCP 스위트 (11종)<br/>(비즈니스 5종 + 엔지니어링 6종)"]
-        MCPSuite --> Agent["AI FDE 에이전트 오케스트레이션<br/>(동적 다중 목표 분해 & 시퀀셜 체이닝)"]
-    end
-
-    subgraph TrackE ["Track E: 멀티뷰 엔터프라이즈 스튜디오 & 프로덕션 배포"]
-        Agent --> Studio["멀티뷰 스튜디오<br/>(에셋 관리 / 그래프 시각화 / FDE 콘솔 / CQ 벤치마크)"]
+    subgraph TrackD ["Track D & E: 7. Lineage & 8. AI FDE (Agentic Ontology Studio)"]
+        BQGAgent --> Lineage["7. Lineage: 4-Tier 엔터프라이즈 리니지<br/>(39 Nodes / 60 Edges, < 5ms 인메모리 즉시 로딩)"]
+        Lineage --> Studio["8. AI FDE & Agentic Ontology Studio<br/>(9-Tab 통합 스튜디오: 전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과)"]
     end
 
     TrackA --> TrackC
     TrackB --> TrackC
     TrackC --> TrackD
-    TrackD --> TrackE
 ```
 
-#### 4대 진화 축의 상세 원리
-1. **비정형 우선 프로토타이핑 (Unstructured First & GCS Prototyping)**:
-   - 비정형 업무 매뉴얼을 파싱하여 OKF(Open Knowledge Format v0.2)로 변환하고, Karpathy 3-Layer LLM-Wiki(`summary.md`, `entities.md`, `concepts.md`, `rules.md`) 구조로 재구성하여 GCS 버킷 상에서 신속하게 개념 검증(PoC)을 수행합니다.
-2. **정형 DW 원장과의 병렬 프로파일링 (Structured DW Profiling)**:
-   - 비정형 가이드와는 별개로, 데이터웨어하우스 내에 존재하는 마스터 원장 테이블(출고가, 공시지원금 테이블 등)의 스키마, 키 관계, 제약 조건을 독립적으로 프로파일링합니다.
-3. **BigQuery Property Graph 결합 및 안티 리던던시 (Anti-Redundancy into BQG)**:
-   - 두 영역을 통합할 때, 정형 테이블에 이미 존재하는 실체(단말기, 요금제)를 비정형에서 중복 생성하지 않고 **DW 테이블을 물리 그래프 노드로 직접 승격**시킵니다.
-   - 비정형 영역에서는 엔티티 중복을 전량 제거(Pruning)하여, 오직 **원문 텍스트 청크(`DocChunk`), 원본 문서(`SourceDoc`), 순수 비즈니스 정책/규정(`DomainRule`/`Policy`)**만을 노드로 남깁니다.
-   - 그리고 이들을 정형 노드와 시맨틱 브릿지 엣지(`APPLIES_TO`, `CALCULATES`, `GROUNDED_IN`)로 결합합니다.
-4. **에이전트를 위한 도메인 MCP 추상화 레이어 (Domain Ontology Abstraction for Agents)**:
-   - AI 에이전트가 복잡한 원천 테이블 조인이나 원시 그래프 DDL/GQL 쿼리를 직접 다루지 않고, 비즈니스 도메인 레벨로 정의된 고수준 MCP 도구 인터페이스를 호출하도록 캡슐화합니다.
-   - 이를 통해 에이전트는 질문의 의도를 분석하여 비즈니스 도메인 도구와 엔지니어링 인프라 도구를 유기적으로 체이닝하며, 0% 환각의 결정론적 답변을 생성합니다.
+#### 4대 진화 축 및 9단계 스튜디오(`Agentic Ontology Studio`) 흐름의 핵심 원리
+1. **비정형 우선 지식화 및 선행 `4. Wiki Agent` 구축 (`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`)**:
+   - 비정형 업무 매뉴얼을 파싱하여 OKF(Open Knowledge Format v0.2)로 변환하고, 담백한 원본 YAML Frontmatter(`---\n...\n---`)와 Karpathy 3-Layer LLM-Wiki 구조로 재구성하여 GCS 버킷 상에 배포합니다.
+   - 물리 그래프 DB 구축 전이라도, `3. Ontology Semantic` 정의 직후 **`4. Wiki Agent` (GCS 기반 선행 에이전트)**를 즉시 기동하여 위약금 산식·예외 조항 등 16대 규정 중심 CQ(`[GCS Preferred]`)를 1차 해결합니다.
+2. **정형 DW 원장 프루닝 및 `5. Bigquery Graph` 구축 (`Track B & C`)**:
+   - 데이터웨어하우스 내 35개 원천 테이블 중 노이즈를 80% 제거(Domain Pruning: 35 ➔ 7)하고, 핵심 마스터 테이블을 데이터 복제 없이(Zero-ETL) **`5. Bigquery Graph` (`SQL:2023 Property Graph`)** 노드로 직접 승격합니다.
+3. **`6. BQG Agent`로의 진화 (`4. Wiki Agent` ➔ `6. BQG Agent`)**:
+   - 선행 구축된 `4. Wiki Agent`의 규정 해석 능력에 `GRAPH_TABLE()` 실시간 멀티홉 원장 탐색(`NL2GQL`)을 결합한 **`6. BQG Agent`**를 통해, 대리점 정산·다회선 결합·단말 출고가 비교를 포함한 20대 골든 CQ 전수(20/20 PASS)를 해결합니다.
+4. **4-Tier 즉시 리니지(`7. Lineage`) 및 멀티도메인 `8. AI FDE` (`Agentic Ontology Studio`)**:
+   - 비동기 인메모리 캐싱으로 `< 5ms`에 즉시 로딩되는 4-Tier 데이터 리니지(`7. Lineage`)와 11종 도메인 MCP 기반 자율 온톨로지 엔지니어링(`8. AI FDE`)을 **`Agentic Ontology Studio`** 단일 화면에서 제공합니다.
 
 ---
 

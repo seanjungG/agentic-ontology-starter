@@ -9,12 +9,12 @@
 
 모든 실습은 **단계별 독립 실행형 모듈(Step 1~3)**과 **올인원 통합형(All-in-One)**으로 제공되며, 글로벌 협업을 위해 **국문(KO)과 영문(EN)** 버전이 완비되어 있습니다. 외부 서드파티 라이브러리 설치가 필요 없는 **0 외부 의존성(Pure Python Standard Library)**으로 구성되어 있어, Colab, Vertex AI Workbench, 로컬 어디서나 즉시 100% 실행됩니다.
 
-| 단계 (Step) | 실습 노트북 (Notebooks) | 연계 표준 방법론 | 핵심 실습 내용 및 산출물 (Core Hands-on & Artifacts) |
+| 단계 (Step) | 실습 노트북 (Notebooks) | 연계 스튜디오 탭 (`Agentic Ontology Studio`) | 핵심 실습 내용 및 산출물 (Core Hands-on & Artifacts) |
 | :---: | :---: | :--- | :--- |
-| **Step 1** | [국문 (KO)](01_okf_unstructured_agent_ko.ipynb)<br>[English (EN)](01_okf_unstructured_agent_en.ipynb) | [Stage 2: 시맨틱 모델링 & OKF](../methodology/02_semantic_modeling_and_okf_ko.md) | • **단순 RAG 결함 극복**: 문맥 단절 및 환각 인용 원천 차단<br>• **무손실 청킹 & SHA-256 앵커링**: `DocChunk` 1:1 불변 해시 부여<br>• **Google OKF v0.2 번들**: `ontology.jsonld` 지식 표준 컴파일<br>• **Karpathy 3-Layer Wiki**: `summary`, `entities`, `concepts`, `rules`<br>• **감사 추적 인출 에이전트**: 0% 환각 법적 원천 근거 인출 |
-| **Step 2** | [국문 (KO)](02_property_graph_and_gql_ko.ipynb)<br>[English (EN)](02_property_graph_and_gql_en.ipynb) | [Stage 3: BQG 엔지니어링 & GQL](../methodology/03_property_graph_and_gql_ko.md) | • **DW 원장 직접 승격**: `devices`, `plans`, `subsidies` 물리 노드화 (Zero-Copy)<br>• **2-Layer 안티 리던던시**: 텍스트 중복 엔티티 Pruning (중복 노드 0건)<br>• **ISO SQL:2023 DDL**: 선언적 Property Graph 스키마 자동 합성<br>• **BigQuery GQL 4-Hop**: `GRAPH_TABLE()` 초고속 다중 홉 탐색<br>• **The Remote MCP Gap**: 공식 BigQuery Remote MCP 한계 및 해법 입증 |
-| **Step 3** | [국문 (KO)](03_graph_integration_mcp_agent_ko.ipynb)<br>[English (EN)](03_graph_integration_mcp_agent_en.ipynb) | [Stage 4: 멀티도메인 MCP & 에이전트](../methodology/04_multi_domain_mcp_and_agent_ko.md) | • **AI 인지 과부하 격리**: 원시 SQL 작성 배제, Tier 3 Domain MCP로 캡슐화<br>• **11종 MCP 스위트**: 비즈니스 5종(결정론 연산) + 엔지니어링 6종(DW 실측)<br>• **GCP Native First**: Dataplex/BigQuery 원천 스펙과 커스텀 분계선 체득<br>• **동적 하위 목표 분해 (`Sub-Goals`)**: 비즈니스-엔지니어링 시퀀셜 체이닝<br>• **수학적 결정론성**: 180일 식스플랜 일할 위약금(100,000원) 및 시니어 면제(0원)<br>• **Golden CQ 벤치마크**: 20대 평가 질문 100% Pass / 0% 환각 검증 |
-| **통합본** | [올인원 (KO/EN)](agentic_ontology_ce_walkthrough.ipynb) | [종합 표준 방법론 전체](../methodology/README.md) | Step 1 ~ Step 3의 전 과정을 하나의 연속된 실행 흐름으로 체험하는 29개 셀 워크스루 |
+| **Step 1** | [국문 (KO)](01_okf_unstructured_agent_ko.ipynb)<br>[English (EN)](01_okf_unstructured_agent_en.ipynb) | **`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`**<br>([Stage 2 명세](../methodology/02_semantic_modeling_and_okf_ko.md)) | • **단순 RAG 결함 극복**: 문맥 단절 및 환각 인용 원천 차단<br>• **담백한 원본 YAML Frontmatter & Karpathy 3-Layer Wiki**: `.okf.md` 구조화<br>• **선행 `4. Wiki Agent` (GCS 에이전트)**: DB/그래프 구축 전 GCS 위키만으로 16대 규정/산식 CQ(`[GCS Preferred]`) 즉시 해결 |
+| **Step 2** | [국문 (KO)](02_property_graph_and_gql_ko.ipynb)<br>[English (EN)](02_property_graph_and_gql_en.ipynb) | **`5. Bigquery Graph` ➔ `6. BQG Agent`**<br>([Stage 3 명세](../methodology/03_property_graph_and_gql_ko.md)) | • **Domain Pruning (35➔7) & DW 직접 승격**: `devices`, `plans`, `subsidies` Zero-ETL 노드화<br>• **ISO SQL:2023 DDL (`5. Bigquery Graph`)**: `CREATE PROPERTY GRAPH` 자동 합성<br>• **`6. BQG Agent` (`NL2GQL` 멀티홉)**: `GRAPH_TABLE()` 탐색 + 위키 결합으로 20/20 골든 CQ 전수 해결 |
+| **Step 3** | [국문 (KO)](03_graph_integration_mcp_agent_ko.ipynb)<br>[English (EN)](03_graph_integration_mcp_agent_en.ipynb) | **`7. Lineage` ➔ `8. AI FDE` (`0. Overview` 종합 검증)**<br>([Stage 4~5 명세](../methodology/04_multi_domain_mcp_and_agent_ko.md)) | • **11종 도메인 MCP 스위트 (`8. AI FDE`)**: 비즈니스 5종 + 엔지니어링 6종 도구 캡슐화<br>• **4-Tier 즉시 리니지 (`7. Lineage`)**: 비동기 인메모리 캐싱 기반 `< 5ms` 계보 추적<br>• **성능과 결과 (`0. Overview` Section 4)**: `4. Wiki Agent`(16/20) vs `6. BQG Agent`(20/20) 실측 벤치마크 |
+| **통합본** | [올인원 (KO/EN)](agentic_ontology_ce_walkthrough.ipynb) | **`Agentic Ontology Studio` 전 과정 (Tab 0 ~ Tab 8)**<br>([종합 표준 방법론 전체](../methodology/README.md)) | Step 1(`4. Wiki Agent`) ➔ Step 2(`5. BQG` & `6. BQG Agent`) ➔ Step 3(`7. Lineage` & `8. AI FDE`) 전 과정을 체험하는 29개 셀 워크스루 |
 
 ---
 
@@ -27,25 +27,21 @@
 
 ```mermaid
 flowchart TD
-    subgraph Step1 ["Step 1: 비정형 지식 체계화 및 OKF 에이전트 (Track A)"]
-        Raw["비정형 정책 가이드 (sample_policy_guide.md)"] --> Chunk["무손실 청킹 & SHA-256 해시 앵커링"]
-        Chunk --> OKF["Google Cloud OKF v0.2 번들 (ontology.jsonld)"]
-        OKF --> Wiki["Karpathy 3-Layer LLM-Wiki (summary / entities / concepts / rules)"]
-        Wiki --> Grounding["불변 해시 앵커 기반 원천 증거 인출 (0% 환각)"]
+    subgraph Step1 ["Step 1: 비정형 지식화 및 선행 4. Wiki Agent (Tab 1 ~ Tab 4)"]
+        Raw["1. Asset: 비정형 정책 가이드 (sample_policy_guide.md)"] --> Wiki["2. OKF Layer: 담백한 YAML Frontmatter & Karpathy 3-Layer Wiki"]
+        Wiki --> Sem["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지"]
+        Sem --> WikiAg["4. Wiki Agent (GCS 기반 선행 에이전트): 16대 규정/산식 CQ 해결"]
     end
 
-    subgraph Step2 ["Step 2: BigQuery Property Graph 설계 및 GQL (Track B & C)"]
-        DW["BigQuery 정형 DW 원장 (devices, plans, subsidies)"] --> Profile["원장 프로파일링 & 제로 카피 가상화"]
-        Profile --> AR["2-Layer 안티 리던던시 (DW 노드 직접 승격 + 텍스트 중복 Pruning)"]
-        AR --> DDL["ISO SQL:2023 Property Graph DDL (create_property_graph.sql)"]
-        DDL --> GQL["BigQuery GQL GRAPH_TABLE() 4-Hop 탐색"]
+    subgraph Step2 ["Step 2: 5. Bigquery Graph 설계 및 6. BQG Agent (Tab 5 ~ Tab 6)"]
+        DW["1. Asset: BigQuery 정형 DW 원장 (35 ➔ 7 Domain Pruning)"] --> DDL["5. Bigquery Graph: ISO SQL:2023 Property Graph DDL (Zero-ETL)"]
+        WikiAg & DDL --> BQGAg["6. BQG Agent: GRAPH_TABLE() 멀티홉 원장 탐색 + 위키 결합 (20/20 CQ 해결)"]
     end
 
-    subgraph Step3 ["Step 3: 하이브리드 온톨로지 통합, Tier 3 MCP & AI FDE (Track D & E)"]
-        GQL & Grounding --> MCP["Tier 3 Domain MCP Server (비즈니스 5종 + 엔지니어링 6종)"]
-        MCP --> FDE["AI FDE 자율 추론 엔진 (동적 다중 하위 목표 분해 & 시퀀셜 체이닝)"]
-        FDE --> Math["180일 식스플랜 일할 위약금 (100,000원) & 만 65세 시니어 면제 (0원)"]
-        Math --> Eval["20대 Golden CQ 자동화 벤치마크 (100% 정답률, 0% 환각률)"]
+    subgraph Step3 ["Step 3: 7. Lineage & 8. AI FDE 통합 관제 (Tab 7 ~ Tab 8 & Tab 0 Overview)"]
+        BQGAg --> Lin["7. Lineage: 4-Tier 엔터프라이즈 리니지 (< 5ms 인메모리 즉시 로딩)"]
+        Lin --> FDE["8. AI FDE: 11종 도메인 온톨로지 MCP & 자율 추론 오케스트레이터"]
+        FDE --> Eval["0. Overview (Section 1~4): 전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과 검증"]
     end
 
     Step1 ==> Step2 ==> Step3

@@ -23,21 +23,19 @@ This methodology formalizes an end-to-end engineering lifecycle that unifies str
 - **Cross-Domain Reasoning**: Dynamic decomposition and sequential chaining between domain business logic and engineering infrastructure tools.
 - **Strict 5-Stage Phase-Gate Control**: Distinct milestone inputs, outputs, and quality acceptance criteria capped at 5 stages.
 
-### 1.3 The Evolutionary Architecture Journey
-The core of this methodology lies in a deliberate **4-Track Evolutionary Journey** that progresses from rapid unstructured knowledge prototyping to enterprise-grade physical graphs and agent abstraction layers:
+### 1.3 The Evolutionary Architecture Journey & 9-Tab `Agentic Ontology Studio` Flow
+The core of this methodology lies in a deliberate **4-Track Evolutionary Journey** that progresses from unstructured knowledge compilation and the **First-Generation `4. Wiki Agent` (GCS-based)** to enterprise-grade physical graphs (`5. Bigquery Graph`), the **`6. BQG Agent`**, and domain MCP orchestration (`8. AI FDE`):
 
-1. **Track A (Unstructured First & GCS Prototyping)**:
-   - Unstructured manuals (MHTML/PDF) are parsed into visual semantic chunks, converted to OKF (Open Knowledge Format v0.2), organized into Andrej Karpathy's 3-Layer LLM-Wiki structure (`summary.md`, `entities.md`, `concepts.md`, `rules.md`), and prototyped rapidly on Google Cloud Storage (`gs://<bucket>/ontology/prototype/`) for early feasibility validation.
-2. **Track B (Structured DW Ledger Profiling)**:
-   - In parallel, enterprise master ledger tables (device catalog, tariff plans, official subsidies, contracts) in BigQuery DW are independently profiled for schemas, row volumes, and primary/foreign key constraints.
-3. **Track C (BigQuery Property Graph Integration & Anti-Redundancy Pruning)**:
-   - When fusing the two knowledge streams into BigQuery Property Graph (SQL:2023), strict **Anti-Redundancy Pruning** is executed.
-   - Structured DW tables are **promoted directly to physical graph nodes** (`DeviceNode`, `PlanNode`, `SubsidyNode`), rather than recreating duplicate nodes from text.
-   - Redundant entity mentions in unstructured text are aggressively pruned, leaving **only Source Documents (`SourceDoc`), Original Chunks (`DocChunk`), and Business Rules/Formulas (`DomainRule`/`Policy`)** as nodes.
-   - These are then bridged to DW nodes via semantic edges (`APPLIES_TO`, `CALCULATES`, `GROUNDED_IN`).
-4. **Track D (Domain Ontology MCP Abstraction Layer for Agents)**:
-   - To shield AI agents from the raw complexity of multi-table joins and graph traversal syntax (GQL), the graph and DW capabilities are encapsulated into a high-level **Domain Ontology MCP Suite (11 tools: 5 Business + 6 Engineering)**.
-   - Agents perform dynamic sub-goal decomposition, sequential cross-domain chaining, and intermediate observations at the business concept level.
+1. **Track A (`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent` — Unstructured First & First-Gen GCS Wiki Agent)**:
+   - Unstructured manuals (MHTML/PDF) are parsed into visual semantic chunks, converted to OKF (Open Knowledge Format v0.2) with clean YAML frontmatter (`---\n...\n---`), organized into Andrej Karpathy's 3-Layer LLM-Wiki structure, and stored on Google Cloud Storage (`gs://<bucket>/ontology/`).
+   - Right after `3. Ontology Semantic` and before any database graph is built, **`4. Wiki Agent` (GCS LLM-Wiki Agent)** is deployed first to immediately resolve 16/20 policy, formula, and exception Golden CQs (`[GCS Preferred]`).
+2. **Track B (`1. Asset` & `3. Ontology Semantic` — Structured DW Ledger Profiling & Domain Pruning)**:
+   - In parallel, 35 raw BigQuery tables are pruned by 80% (Domain Pruning: 35 ➔ 7 core master ledgers) and profiled for primary/foreign key constraints.
+3. **Track C (`5. Bigquery Graph` & `6. BQG Agent` — SQL:2023 Property Graph Integration & Graph Agent)**:
+   - Structured DW tables are promoted directly to **`5. Bigquery Graph` (`SQL:2023 CREATE PROPERTY GRAPH`)** with Zero-ETL overhead and linked to unstructured Wiki rules via Semantic Bridge edges.
+   - **`6. BQG Agent`** combines `4. Wiki Agent` policy reasoning with live `GRAPH_TABLE()` multi-hop traversal (`NL2GQL`) to resolve all 20/20 Golden CQs (`[BQG Preferred]`).
+4. **Track D & E (`7. Lineage` & `8. AI FDE` — Unified `Agentic Ontology Studio`)**:
+   - Instant `< 5ms` in-memory 4-Tier Enterprise Lineage (`7. Lineage`) and the 11-Tool Domain Ontology MCP Suite (`8. AI FDE`) are unified inside **`Agentic Ontology Studio`** across 9 numbered tabs (`0. Overview` ~ `8. AI FDE`).
 
 ### 1.4 GCP Native First Mandate & Custom Extension Delineation
 
@@ -48,10 +46,10 @@ This methodology strictly adheres to the **"Google Cloud Native First"** paradig
 | Architecture Layer | Google Cloud Native Spec / Service | Official Open-Source / Endpoint Reference | Custom Extension Engineered | Engineering Rationale & Justification |
 | :--- | :--- | :--- | :--- | :--- |
 | **1. Data Lake & DW** | • BigQuery Managed Tables<br>• Cloud Storage (GCS)<br>• BigQuery SQL:2023 Property Graph | • [BigQuery Documentation](https://cloud.google.com/bigquery)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | • 2-Layer Anti-Redundancy Graph DDL Compiler (`pipeline/graph_builder.py`)<br>• Semantic Bridge Edges (`APPLIES_TO`, `CALCULATES`) | Directly promotes DW tables to graph nodes and prunes redundant text entities, saving 80% storage and query costs. |
-| **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • Deterministic SHA-256 Unstructured Chunker (`DocChunk`)<br>• Karpathy 3-Layer LLM-Wiki Compiler (`data/llm_wiki/`)<br>• GCS Prototype Manifest Generator | Preserves visual manual structures and allows rapid GCS-based knowledge validation before BigQuery loading. |
-| **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (5 Business + 6 Engineering Tools)<br>• BigQuery Property Graph GQL Runner | **Overcomes the limitation where BigQuery Remote MCP cannot execute GQL (`GRAPH_TABLE()`)**, shielding LLM agents from schema complexity. |
-| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 3.8 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • AI FDE Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Enables autonomous multi-turn reasoning cycles that cross-verify policy rules against physical DW ledgers. |
-| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • 4-View Enterprise Starter Studio (`src/web/studio_server.py`)<br>• 2D Interactive SVG Topology Map & DDL Viewer<br>• 20 Golden CQ Deterministic Evaluation Harness | One-stop verification of governance, topology, reasoning, and CQ accuracy on a zero-dependency lightweight server (port 8088). |
+| **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • Clean YAML Frontmatter + Karpathy 3-Layer LLM-Wiki Compiler<br>• First-Gen **`4. Wiki Agent` (GCS Wiki Reasoning Agent)** | Preserves manual structures and resolves 16/20 policy CQs directly from GCS Wiki prior to BigQuery Graph setup. |
+| **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (5 Business + 6 Engineering Tools)<br>• **`6. BQG Agent`** (`GRAPH_TABLE()` NL2GQL Runner) | **Overcomes the limitation where BigQuery Remote MCP cannot execute GQL (`GRAPH_TABLE()`)**, achieving 20/20 Golden CQ accuracy. |
+| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`8. AI FDE`** Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Enables autonomous multi-turn reasoning cycles that cross-verify policy rules against physical DW ledgers. |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio`** (`src/web/studio_server.py`)<br>• 9-Tab Unified Architecture & `< 5ms` Instant Lineage (`7. Lineage`)<br>• Single Continuous Overview (Full Step ➔ Architecture ➔ Feature Gap ➔ Results) | One-stop verification of full step flow, dual-agent evolution (`4. Wiki Agent ➔ 6. BQG Agent`), and CQ benchmarks. |
 
 #### 1.4.2 Official Reference Repositories
 1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
@@ -74,41 +72,31 @@ This methodology strictly adheres to the **"Google Cloud Native First"** paradig
 
 ```mermaid
 flowchart TD
-    subgraph TRACK_A ["Track A: Unstructured Knowledge & GCS Prototyping (Unstructured First)"]
-        S1_Doc["Unstructured Policy Guides & SOPs (MHTML/PDF)"] --> S2_Chunk["Lossless Visual Chunking & Hash Anchoring (DocChunk)"]
-        S2_Chunk --> S2_OKF["OKF v0.2 Knowledge Modeling"]
-        S2_OKF --> S2_Wiki["Karpathy 3-Layer LLM-Wiki Generation<br/>(summary / entities / concepts / rules)"]
-        S2_Wiki --> S2_GCS["GCS Ontology Prototype Registry"]
+    subgraph TRACK_A ["Track A: Unstructured Knowledge & First-Gen 4. Wiki Agent (GCS Unstructured First)"]
+        S1_Doc["1. Asset: Unstructured Policy Guides & SOPs"] --> S2_OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
+        S2_OKF --> S3_Sem["3. Ontology Semantic: 5-Element Extraction & Semantic Bridge"]
+        S3_Sem --> S4_WikiAgent["4. Wiki Agent (First-Gen GCS Agent)<br/>Resolves 16 Policy/Formula CQs ([GCS Preferred])"]
     end
 
     subgraph TRACK_B ["Track B: Structured DW Ledger Profiling (Structured DW)"]
-        S1_DW["BigQuery DW 7 Master Ledger Tables"] --> S1_Profile["Schema / Volume / PK·FK Integrity Profiling"]
-        S1_Profile --> S1_KC["Dataplex Knowledge Catalog Metadata Ingestion"]
+        S1_DW["1. Asset: BigQuery DW 7 Master Ledger Tables"] --> S1_Profile["Domain Pruning (35 ➔ 7) & PK·FK Integrity Analysis"]
     end
 
-    subgraph TRACK_C ["Track C: BQG Integration & Anti-Redundancy Pruning (BQG & Pruning)"]
-        S2_GCS & S1_KC --> S3_Prune{"Anti-Redundancy Pruning"}
-        S3_Prune -->|Structured DW| S3_DWNodes["Direct DW Node Promotion<br/>(Device, Plan, SubsidyLedger)"]
-        S3_Prune -->|Prune Duplicate Entities| S3_DocNodes["Retained Unstructured Nodes<br/>(DocChunk, SourceDoc, Policy/Rule)"]
-        S3_DWNodes <--->|Semantic Bridge Edges<br/>APPLIES_TO / CALCULATES / GROUNDED_IN| S3_DocNodes
-        S3_DWNodes & S3_DocNodes --> S3_DDL["BigQuery SQL:2023 Property Graph DDL"]
+    subgraph TRACK_C ["Track C: 5. Bigquery Graph & 6. BQG Agent (BQG & Anti-Redundancy)"]
+        S4_WikiAgent & S1_Profile --> S5_BQG{"5. Bigquery Graph (SQL:2023 Property Graph)"}
+        S5_BQG -->|Zero-ETL DW Node Promotion| S5_Nodes["6 Vertex & 5 Edge Views"]
+        S5_Nodes --> S6_BQGAgent["6. BQG Agent (Graph Reasoning Agent)<br/>NL2GQL Multi-Hop Traversal + Wiki Hybrid (20/20 CQs)"]
     end
 
-    subgraph TRACK_D ["Track D: Domain Ontology MCP Abstraction Layer (Domain MCP)"]
-        S3_DDL --> S4_MCP["11-Tool Domain Ontology MCP Suite<br/>(5 Business + 6 Engineering/Infra)"]
-        S4_MCP --> S4_Agent["AI FDE Agent Orchestration<br/>(Dynamic Sub-Goals & Sequential Chaining)"]
-    end
-
-    subgraph TRACK_E ["Track E: Multi-View Enterprise Studio & Production Deployment"]
-        S4_Agent --> S5_Studio["Multi-View Studio (4 Views)<br/>(Asset Management / Graph View / FDE Console / CQ Benchmark)"]
-        S5_Studio --> S5_Eval["Automated 20 Golden CQ Evaluation (0% Hallucination)"]
-        S5_Eval --> S5_Deploy["Cloud Run Zero-Downtime Container Deployment"]
+    subgraph TRACK_D ["Track D & E: 7. Lineage & 8. AI FDE (Agentic Ontology Studio)"]
+        S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier Enterprise Lineage (< 5ms Instant Load)"]
+        S7_Lineage --> S8_FDE["8. AI FDE: 11-Domain Ontology MCP Orchestrator"]
+        S8_FDE --> S9_Studio["Agentic Ontology Studio (9-Tab Ribbon & Continuous Overview)"]
     end
 
     TRACK_A --> TRACK_C
     TRACK_B --> TRACK_C
     TRACK_C --> TRACK_D
-    TRACK_D --> TRACK_E
 ```
 
 ---
