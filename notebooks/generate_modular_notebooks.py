@@ -134,6 +134,11 @@ def build_all_modular_notebooks():
 
     cells1_ko.append(make_md_cell("""### 2. Step 1 엔드투엔드 처리 플로우 (Flow Architecture)
 
+![Step 1 Architecture Flow](assets/step1_architecture_flow.svg)
+
+<details>
+<summary>다이어그램 Mermaid 소스 코드 펼쳐보기 (Click to expand Mermaid source)</summary>
+
 ```mermaid
 flowchart TD
     subgraph Input ["1. 원천 비정형 가이드"]
@@ -161,6 +166,8 @@ flowchart TD
 
     Input ==> Process ==> Output ==> Agent
 ```
+
+</details>
 """))
 
     cells1_ko.append(make_md_cell("### [실습 1.1] 환경 준비 및 원천 비정형 가이드 로드"))
@@ -287,6 +294,11 @@ Enterprise policies contain intricate caveats, conditional exemptions (e.g., sen
 
     cells1_en.append(make_md_cell("""### 2. Step 1 Architecture & Execution Flow (Flow Diagram)
 
+![Step 1 Architecture Flow](assets/step1_architecture_flow.svg)
+
+<details>
+<summary>Click to expand Mermaid source code</summary>
+
 ```mermaid
 flowchart TD
     subgraph Input ["1. Raw Policy Manual"]
@@ -314,6 +326,8 @@ flowchart TD
 
     Input ==> Process ==> Output ==> Agent
 ```
+
+</details>
 """))
 
     cells1_en.append(make_md_cell("### [Exercise 1.1] Environment Setup & Loading Raw Policy Manual"))
@@ -437,6 +451,11 @@ for item in results:
 
     cells2_ko.append(make_md_cell("""### 2. Step 2 그래프 토폴로지 및 GQL 순회 플로우 (Flow Architecture)
 
+![Step 2 Property Graph Flow](assets/step2_property_graph_flow.svg)
+
+<details>
+<summary>다이어그램 Mermaid 소스 코드 펼쳐보기 (Click to expand Mermaid source)</summary>
+
 ```mermaid
 flowchart LR
     subgraph DW ["정형 DW 마스터 테이블 (Direct Promotion)"]
@@ -464,6 +483,8 @@ flowchart LR
     class D,P,S dw;
     class R,C un;
 ```
+
+</details>
 """))
 
     cells2_ko.append(make_md_cell("### [실습 2.1] 빅쿼리 정형 DW 원장 테이블 프로파일링"))
@@ -580,6 +601,11 @@ Traditional projects duplicate millions of rows from existing BigQuery master ta
 
     cells2_en.append(make_md_cell("""### 2. Step 2 Graph Topology & GQL Traversal Flow (Flow Architecture)
 
+![Step 2 Property Graph Flow](assets/step2_property_graph_flow.svg)
+
+<details>
+<summary>Click to expand Mermaid source code</summary>
+
 ```mermaid
 flowchart LR
     subgraph DW ["Structured DW Master Tables (Direct Promotion)"]
@@ -606,6 +632,8 @@ flowchart LR
     class D,P,S dw;
     class R,C un;
 ```
+
+</details>
 """))
 
     cells2_en.append(make_md_cell("### [Exercise 2.1] Profiling Structured BigQuery DW Master Tables"))
@@ -721,6 +749,11 @@ LLM에게 수십 개 테이블의 물리 스키마와 외래키 조인을 프롬
 
     cells3_ko.append(make_md_cell("""### 2. Step 3 AI FDE 오케스트레이션 시퀀스 플로우 (Flow Architecture)
 
+![Step 3 AI FDE Orchestration Flow](assets/step3_fde_orchestration_flow.svg)
+
+<details>
+<summary>다이어그램 Mermaid 소스 코드 펼쳐보기 (Click to expand Mermaid source)</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -757,6 +790,8 @@ sequenceDiagram
         Agent-->>User: 비즈니스 수치 + 원천 DW 인프라 무결성 교차 검증 리포트
     end
 ```
+
+</details>
 """))
 
     cells3_ko.append(make_md_cell("### [실습 3.1] 11종 멀티도메인 MCP 카탈로그 및 GCP Native 분계선 점검"))
@@ -877,6 +912,11 @@ Placing dozens of database schemas and foreign keys directly into the LLM prompt
 
     cells3_en.append(make_md_cell("""### 2. Step 3 AI FDE Orchestration Sequence Flow (Flow Architecture)
 
+![Step 3 AI FDE Orchestration Flow](assets/step3_fde_orchestration_flow.svg)
+
+<details>
+<summary>Click to expand Mermaid source code</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -913,6 +953,8 @@ sequenceDiagram
         Agent-->>User: Cross-verified decision report (Business Math + Physical Audit)
     end
 ```
+
+</details>
 """))
 
     cells3_en.append(make_md_cell("### [Exercise 3.1] Inspecting 11 Domain MCP Tools Catalog & GCP Native Taxonomy"))

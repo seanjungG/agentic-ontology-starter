@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 340" width="100%" height="100%">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 15px; font-weight: 700; fill: #202124; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 11px; font-weight: 600; fill: #5f6368; }
+      .body-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 11px; fill: #3c4043; line-height: 1.4; }
+      .code-text { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 10.5px; fill: #1a73e8; }
+      .badge-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif; font-size: 10px; font-weight: 600; fill: #ffffff; }
+      .card-bg { rx: 8px; stroke-width: 1px; }
+      .sub-card { rx: 6px; fill: #ffffff; stroke: #dadce0; stroke-width: 1px; }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#1a73e8"/>
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1020" height="340" fill="#f8f9fa" rx="10" stroke="#dadce0" stroke-width="1"/>
+
+  <!-- Top Title Bar -->
+  <rect x="0" y="0" width="1020" height="42" fill="#ffffff" rx="10" stroke="#dadce0" stroke-width="1"/>
+  <rect x="20" y="11" width="76" height="20" rx="4" fill="#1a73e8"/>
+  <text x="58" y="25" text-anchor="middle" class="badge-text">STEP 1</text>
+  <text x="108" y="26" class="title">비정형 지식 체계화 및 OKF 에이전트 아키텍처 (Unstructured Knowledge & OKF Grounding)</text>
+  <text x="890" y="26" class="subtitle">0% Hallucination · Pure Python</text>
+
+  <!-- Stage 1: Input -->
+  <g transform="translate(20, 60)">
+    <rect width="215" height="255" fill="#f1f3f4" stroke="#dadce0" class="card-bg" filter="url(#card-shadow)"/>
+    <rect x="12" y="12" width="191" height="26" rx="4" fill="#5f6368"/>
+    <text x="107" y="29" text-anchor="middle" class="badge-text">1. 원천 비정형 가이드 (Input)</text>
+    
+    <!-- Sub-card 1 -->
+    <rect x="12" y="48" width="191" height="85" class="sub-card"/>
+    <text x="22" y="68" class="subtitle">입고 가이드 문서</text>
+    <text x="22" y="86" class="code-text">sample_policy_guide.md</text>
+    <text x="22" y="104" class="body-text">• 단말 지원금 공시 규정</text>
+    <text x="22" y="120" class="body-text">• 180일 식스플랜 약정 기준</text>
+
+    <!-- Sub-card 2 -->
+    <rect x="12" y="143" width="191" height="100" class="sub-card"/>
+    <text x="22" y="163" class="subtitle">기존 RAG 결함</text>
+    <text x="22" y="181" class="body-text" fill="#d93025">⚠ 단서 조항 문맥 단절</text>
+    <text x="22" y="199" class="body-text" fill="#d93025">⚠ 출처 페이지 환각 인용</text>
+    <text x="22" y="217" class="body-text" fill="#d93025">⚠ 법적 규정 감사 불가</text>
+    <text x="22" y="233" class="body-text" fill="#d93025">➔ 단순 RAG 100% 실패</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="237" y1="187" x2="265" y2="187" stroke="#1a73e8" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 2: Lossless Chunking & Hashing -->
+  <g transform="translate(270, 60)">
+    <rect width="225" height="255" fill="#e8f0fe" stroke="#aecbfa" class="card-bg" filter="url(#card-shadow)"/>
+    <rect x="12" y="12" width="201" height="26" rx="4" fill="#1a73e8"/>
+    <text x="112" y="29" text-anchor="middle" class="badge-text">2. 무손실 청킹 & 해시 앵커링</text>
+
+    <rect x="12" y="48" width="201" height="60" class="sub-card"/>
+    <text x="22" y="68" class="subtitle">구조화 파서 (Structural Parser)</text>
+    <text x="22" y="85" class="body-text">• Markdown 헤더 및 표 구조 보존</text>
+    <text x="22" y="99" class="body-text">• 단서 조항 및 예외 규정 원형 유지</text>
+
+    <rect x="12" y="118" width="201" height="60" class="sub-card"/>
+    <text x="22" y="138" class="subtitle">결정론적 SHA-256 해시</text>
+    <text x="22" y="155" class="code-text">anchor_a1b2c3d4... (64-hex)</text>
+    <text x="22" y="169" class="body-text">• 1글자 변경 시 즉각 감지 (위변조 방지)</text>
+
+    <rect x="12" y="188" width="201" height="55" class="sub-card"/>
+    <text x="22" y="208" class="subtitle">청크 레코드 생성 (JSONL)</text>
+    <text x="22" y="225" class="code-text">doc_chunks.jsonl (DOC_CHUNK_001~3)</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="497" y1="187" x2="525" y2="187" stroke="#1a73e8" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 3: OKF & 3-Layer Wiki -->
+  <g transform="translate(530, 60)">
+    <rect width="225" height="255" fill="#f3e8fd" stroke="#d7aefb" class="card-bg" filter="url(#card-shadow)"/>
+    <rect x="12" y="12" width="201" height="26" rx="4" fill="#9334e8"/>
+    <text x="112" y="29" text-anchor="middle" class="badge-text">3. Google OKF v0.2 & 3-Layer Wiki</text>
+
+    <rect x="12" y="48" width="201" height="65" class="sub-card"/>
+    <text x="22" y="68" class="subtitle">OKF v0.2 지식 번들</text>
+    <text x="22" y="86" class="code-text">ontology.jsonld (JSON-LD 1.1)</text>
+    <text x="22" y="102" class="body-text">• Schema.org 호환 메타데이터 체계</text>
+
+    <rect x="12" y="123" width="201" height="120" class="sub-card"/>
+    <text x="22" y="143" class="subtitle">Karpathy 3-Layer LLM-Wiki</text>
+    <text x="22" y="161" class="body-text"><tspan font-weight="bold">L1</tspan> · <tspan class="code-text">summary.md</tspan> (도메인 개요)</text>
+    <text x="22" y="179" class="body-text"><tspan font-weight="bold">L2</tspan> · <tspan class="code-text">entities.md</tspan> (엔티티 명세)</text>
+    <text x="22" y="197" class="body-text"><tspan font-weight="bold">L3</tspan> · <tspan class="code-text">concepts.md</tspan> (비즈니스 개념)</text>
+    <text x="22" y="215" class="body-text"><tspan font-weight="bold">L3</tspan> · <tspan class="code-text">rules.md</tspan> (수학적 룰·공식)</text>
+    <text x="22" y="232" class="body-text" fill="#137333">✔ LLM 계층 탐색으로 토큰 85% 절약</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="757" y1="187" x2="785" y2="187" stroke="#1a73e8" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 4: Grounded Agent -->
+  <g transform="translate(790, 60)">
+    <rect width="210" height="255" fill="#e6f4ea" stroke="#ceead6" class="card-bg" filter="url(#card-shadow)"/>
+    <rect x="12" y="12" width="186" height="26" rx="4" fill="#137333"/>
+    <text x="105" y="29" text-anchor="middle" class="badge-text">4. 감사 추적 에이전트 (Auditable)</text>
+
+    <rect x="12" y="48" width="186" height="65" class="sub-card"/>
+    <text x="22" y="68" class="subtitle">고객 질문 수신</text>
+    <text x="22" y="86" class="body-text">"180일 식스플랜 약정 기준 및"</text>
+    <text x="22" y="102" class="body-text">"위약금 면제 규정 확인해줘"</text>
+
+    <rect x="12" y="123" width="186" height="60" class="sub-card"/>
+    <text x="22" y="143" class="subtitle">불변 해시 원천 증거 인출</text>
+    <text x="22" y="160" class="code-text">DOC_CHUNK_002 / anchor_4f89...</text>
+    <text x="22" y="174" class="body-text">1:1 감사 추적 출처 자동 바인딩</text>
+
+    <rect x="12" y="193" width="186" height="50" class="sub-card"/>
+    <text x="22" y="213" class="subtitle" fill="#137333">0% 환각 법적 답변 확정</text>
+    <text x="22" y="230" class="body-text">➔ Step 2 그래프 승격 바인딩</text>
+  </g>
+</svg>
