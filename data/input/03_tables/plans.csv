@@ -1,0 +1,7 @@
+plan_id,plan_name,network_type,monthly_fee,is_baseline_tier
+PLAN-5G-130,5G Premier Super,5G,130000,true
+PLAN-5G-85,5G Premier Essential,5G,85000,true
+PLAN-5G-61,5G Direct 61,5G,61000,true
+PLAN-5G-45,5G Slim (Baseline Threshold),5G,45000,true
+PLAN-5G-37,5G Light (Below Baseline),5G,37000,false
+PLAN-LTE-33,LTE Basic (Below Baseline),LTE,33000,false

@@ -1,0 +1,93 @@
+# Stage 4: 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 세부 실행 명세서
+## Stage 4: Multi-Domain MCP Suite Packaging & Agentic Orchestration Detailed Execution Guide (KO)
+
+- **상위 방법론**: [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md)
+- **문서 버전**: `v1.0.0`
+- **목적**: 온톨로지 지식과 물리 그래프 탐색을 Model Context Protocol (MCP) 표준 도구로 패키징하고, 복합 질의를 하위 목표로 동적 분해하여 비즈니스-엔지니어링 크로스도메인 시퀀셜 체이닝을 실행하는 지능형 AI FDE 오케스트레이터 구축 표준 절차 명세
+
+---
+
+## 1. 전체 실행 프로세스 (Overall Execution Process)
+
+Stage 4는 자연어 질의를 수신한 AI 에이전트가 단일 도구 호출의 한계를 극복하고, 여러 단계의 도메인 도구를 유기적으로 엮어 신뢰성 높은 의사결정을 도출하는 오케스트레이션 단계입니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 사용자 (현업 / FDE)
+    participant Agent as AI FDE 에이전트 엔진
+    participant BizTool as [비즈니스 도메인 MCP 도구군]
+    participant EngTool as [엔지니어링 인프라 MCP 도구군]
+    participant DW_Graph as [BigQuery Property Graph]
+
+    User->>Agent: 복합 질의 입력 ("지원금 계산 및 관련 원천 DW 테이블 볼륨 검증")
+    
+    rect rgb(245, 245, 255)
+        Note over Agent: Step 4.1: 동적 다중 하위 목표 분해 (Sub-Goals)
+        Agent->>Agent: G-BIZ-01: 출고가 및 지원금 계산 의사결정<br/>G-ENG-01: 원천 DW 테이블 메타데이터 및 행수 실측
+    end
+
+    rect rgb(240, 248, 255)
+        Note over Agent,BizTool: Step 4.2: 비즈니스 도메인 실행 (Step 2-1)
+        Agent->>BizTool: mcp_get_device_subsidy_by_plan(단말기, 요금제)
+        BizTool->>DW_Graph: 지원금 정책 원장 쿼리
+        DW_Graph-->>BizTool: 지원금액(500,000원), 180일 식스플랜, 원천 테이블명 반환
+        BizTool-->>Agent: Intermediate Observation 1 생성<br/>(Data Hand-off: 원천 테이블명 전달)
+    end
+
+    rect rgb(255, 245, 245)
+        Note over Agent,EngTool: Step 4.3: 엔지니어링 크로스도메인 체이닝 (Step 2-2)
+        Agent->>EngTool: mcp_inspect_dw_table_schema(핸드오프된 테이블명)
+        EngTool->>DW_Graph: INFORMATION_SCHEMA 및 파티션 스캔
+        DW_Graph-->>EngTool: 물리 행수(1,240건), 파티션 상태 반환
+        EngTool-->>Agent: Intermediate Observation 2 생성
+    end
+
+    rect rgb(245, 255, 245)
+        Note over Agent: Step 4.4: 크로스도메인 종합 통합 및 리포트 합성
+        Agent->>Agent: 비즈니스 수치와 물리 인프라 상태 교차 검증
+        Agent-->>User: Step 4.5: 종합 AI FDE 분석 리포트 표출 (수치 + 법적규정 + 감사출처)
+    end
+```
+
+---
+
+## 2. 세부 방법론 및 기술 아키텍처 (Detailed Methodology & Technologies)
+
+### 2.1 11종 멀티도메인 MCP 스위트 분류 체계
+본 아키텍처는 모델의 도구 호출 권한과 책임을 **비즈니스 도메인 도구(5종)**와 **엔지니어링 인프라 도구(6종)**로 명확히 격리·설계합니다:
+
+| 카테고리 | MCP 도구명 | 핵심 역할 및 추상화된 기능 명세 |
+| :--- | :--- | :--- |
+| **비즈니스 (5종)** | `mcp_get_device_factory_price` | [단말기 카탈로그 마스터 BQ 테이블]에서 용량별 공식 출고가 인출 |
+| | `mcp_get_device_subsidy_by_plan` | [지원금 정책 마스터 BQ 테이블]에서 공시/유통망 지원금 및 180일 약정 인출 |
+| | `mcp_calculate_plan_change_penalty` | [비즈니스 규칙 레지스트리] 기반 요금제 하향 시 일할 차액정산금 산정 |
+| | `mcp_compare_contract_plans` | 24개월 기준 공시지원금 vs 선택약정할인 총비용 정량 비교 |
+| | `mcp_get_policy_anchor_grounding` | [고객 상담가이드 비정형 매뉴얼] 내 불변 해시 앵커 원문 증거 인출 |
+| **엔지니어링 (6종)** | `mcp_explore_property_graph` | [BigQuery Property Graph] GQL 횡단 탐색 쿼리 실행 |
+| | `mcp_inspect_dw_table_schema` | 물리 DW 테이블의 컬럼 타입, 파티션 필터, 실제 물리 행수 스캔 |
+| | `mcp_search_dataplex_catalog` | Dataplex Knowledge Catalog 거버넌스 태그 및 PII 보호 등급 검색 |
+| | `mcp_get_lineage_trace` | 원천 문서부터 에이전트까지 4-Tier 데이터 리니지 역추적 |
+| | `mcp_export_graph_ddl` | 프로퍼티 그래프 DDL 및 노드/엣지 스키마 명세서 추출 |
+| | `mcp_run_cq_benchmark` | 20대 Golden CQ 자동화 벤치마크 실행 및 지연시간/일치율 측정 |
+
+### 2.2 동적 다중 목표 분해 (`Sub-Goals`) 엔진
+- **정적 분기문의 한계 극복**: 단순 키워드 매칭 `if-else` 분기문은 복합 질문("갤럭시 지원금과 원천 DW 테이블 행수 같이 확인해줘") 처리 시 한쪽 도구만 호출하고 멈추는 결함이 발생합니다.
+- **의미적 다중 분해**: LLM 추론기가 사용자 입력을 분석하여 독립된 하위 목표 리스트(`G-BIZ-01`, `G-ENG-01` 등)를 생성하고, 각각에 최적화된 MCP 도구를 병렬 또는 순차로 매핑합니다.
+
+### 2.3 크로스도메인 시퀀셜 체이닝 (`SEQUENTIAL_CHAIN`) 및 컨텍스트 전달
+- **Data Hand-off 프로토콜**: 선행 비즈니스 도구에서 도출된 메타데이터(예: 정책 적용 테이블명, 개통일 기준 유예일수)를 메모리에 유지하고, 후속 엔지니어링 도구의 입력 인자로 자동 주입합니다.
+- **중간 관측 (Intermediate Observation)**: 각 단계별 도구 실행 결과를 사용자 채팅 타임라인에 중간 과정으로 투명하게 표출하여, 블랙박스 문제를 완전히 해소합니다.
+
+### 2.4 모호 및 권한 제한 질의 가드레일 (Safety Guardrails)
+1. **미지원 자산 (`[NOT_FOUND]`)**: 온톨로지 카탈로그에 없는 단말이나 요금제 문의 시, 임의 추측을 금지하고 근접 표준 어휘를 역제안.
+2. **권한 부족 (`[RESTRICTED]`)**: IAM 서비스 계정 권한이 없는 테이블 스캔 시도시, 에러 대신 필요한 IAM Role(`roles/bigquery.dataViewer`) 안내 가이드 제공.
+
+---
+
+## 3. Stage 4 품질 게이트 (Gate 4 Exit Checklist)
+
+- [ ] 11종 도메인 MCP 도구의 JSON Schema 인터페이스 검증이 완료되었는가?
+- [ ] 복합 질의에 대한 다중 하위 목표 분해(`Sub-Goals`)가 정상 작동하는가?
+- [ ] 선행 도구 출력 ➔ 후속 도구 입력으로 이어지는 컨텍스트 전달(Data Hand-off)이 실측 검증되었는가?
+- [ ] 미지원 및 권한 제한 질의에 대한 안전 가드레일이 정상 작동하는가?

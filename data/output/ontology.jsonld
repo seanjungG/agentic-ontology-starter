@@ -1,0 +1,30 @@
+{
+  "@context": "https://cloud.google.com/ontology/v0.2/context.jsonld",
+  "@graph": [
+    {
+      "@id": "domain:TelecomSubsidyManagement",
+      "@type": "DomainOntology",
+      "label": "Enterprise Subsidy & Contract Management",
+      "summary": "Hybrid ontology unifying structured pricing tables and unstructured penalty rules.",
+      "totalChunks": 3
+    },
+    {
+      "@id": "chunk:DOC_CHUNK_001",
+      "@type": "DocChunk",
+      "title": "Overview & Scope",
+      "hashAnchor": "anchor_a52e1a72869f"
+    },
+    {
+      "@id": "chunk:DOC_CHUNK_002",
+      "@type": "DocChunk",
+      "title": "Baseline Plan Commitment (Six-Plan Rule)",
+      "hashAnchor": "anchor_3003b683cea0"
+    },
+    {
+      "@id": "chunk:DOC_CHUNK_003",
+      "@type": "DocChunk",
+      "title": "Penalty Math Formula",
+      "hashAnchor": "anchor_47971ec8e4d8"
+    }
+  ]
+}

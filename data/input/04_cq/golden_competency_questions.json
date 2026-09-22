@@ -1,0 +1,51 @@
+[
+  {
+    "cq_id": "CQ-01",
+    "category": "Single-Hop Lookup",
+    "query": "Galaxy S26 Ultra 256GB 모델의 출고가는 얼마인가?",
+    "target_tools": [
+      "mcp_get_device_factory_price"
+    ],
+    "expected_math": 1698400,
+    "grounded_chunk": "DOC_CHUNK_001"
+  },
+  {
+    "cq_id": "CQ-02",
+    "category": "Two-Hop Policy",
+    "query": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원)으로 개통할 때 총 지원금과 실구매가는?",
+    "target_tools": [
+      "mcp_get_device_subsidy_by_plan"
+    ],
+    "expected_math": {
+      "subsidy": 517500,
+      "net_price": 1180900
+    },
+    "grounded_chunk": "DOC_CHUNK_001"
+  },
+  {
+    "cq_id": "CQ-03",
+    "category": "Multi-Hop Constraint",
+    "query": "개통 후 120일 시점에 5G Light(37,000원) 요금제로 하향 변경 시 위약금은 얼마인가?",
+    "target_tools": [
+      "mcp_calculate_plan_change_penalty"
+    ],
+    "expected_math": {
+      "penalty": 100000,
+      "formula": "(450000 - 150000) * (180 - 120) / 180"
+    },
+    "grounded_chunk": "DOC_CHUNK_003"
+  },
+  {
+    "cq_id": "CQ-04",
+    "category": "Cross-Domain Reasoning",
+    "query": "Galaxy S26 Ultra 지원금 산정 정책과 관련 원천 BigQuery 테이블의 스키마와 볼륨을 동시에 확인해줘.",
+    "target_tools": [
+      "mcp_get_device_subsidy_by_plan",
+      "mcp_inspect_dw_table_schema"
+    ],
+    "expected_math": {
+      "chaining": true
+    },
+    "grounded_chunk": "DOC_CHUNK_002"
+  }
+]
