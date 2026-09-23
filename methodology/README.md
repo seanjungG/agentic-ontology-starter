@@ -3,7 +3,7 @@
 
 > **라이브 포털**: 설치 없이 [Agentic Ontology Studio 포털](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)에서 `0. Overview` ~ `8. AI FDE` 전 구간 화면을 바로 확인할 수 있습니다.
 
-본 디렉토리는 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 가이드(MHTML/PDF)를 단일 지식 체계로 통합하여, 0% 환각(Zero-Hallucination)과 결정론적 계산 신뢰성을 보장하는 **에이전틱 지식 온톨로지(Agentic Knowledge Ontology)**를 엔드투엔드로 구축·배포하기 위한 표준 방법론과 실행 프로세스를 제공합니다.
+본 디렉토리는 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 가이드(MHTML/PDF)를 단일 지식 체계로 통합하여, 근거 출처 기반 응답(Grounded Answering)과 결정론적 계산 신뢰성을 목표로 하는 **에이전틱 지식 온톨로지(Agentic Knowledge Ontology)**를 엔드투엔드로 구축·배포하기 위한 표준 방법론과 실행 프로세스를 제공합니다.
 
 특정 고객사의 환경에 종속되지 않고 누구나 데이터만 교체하여 재구성할 수 있도록 모든 원천 자산과 테이블 명칭을 표준 비즈니스 아키텍처 수준으로 1단계 추상화(예: `[단말기 카탈로그 마스터 BQ 테이블]`, `[고객 상담가이드 비정형 매뉴얼]`)하여 수록하였습니다.
 
@@ -107,5 +107,5 @@ flowchart TD
 2. **비정형 체계화 및 LLM-Wiki 프로토타이핑**: [Stage 2 가이드](./02_semantic_modeling_and_okf_ko.md)를 통해 비정형 텍스트 청킹, OKF 변환 및 Karpathy 3-Layer LLM-Wiki를 GCS에 프로토타이핑합니다.
 3. **물리 그래프 결합 및 안티 리던던시**: [Stage 3 가이드](./03_property_graph_and_gql_ko.md)에 따라 BigQuery Property Graph DDL을 정의하고, DW 테이블을 물리 노드로 승격하며 비정형은 청크/규칙만 결합합니다.
 4. **도메인 MCP 추상화 및 에이전트 오케스트레이션**: [Stage 4 가이드](./04_multi_domain_mcp_and_agent_ko.md)를 기반으로 에이전트가 호출할 11종 도메인 MCP 도구 및 동적 체이닝을 구성합니다.
-5. **멀티뷰 스튜디오 검증 및 프로덕션 릴리스**: [Stage 5 가이드](./05_enterprise_studio_and_deployment_ko.md)에 따라 멀티뷰 스튜디오에서 20대 CQ 0% 환각 검증을 마치고 배포합니다.
+5. **멀티뷰 스튜디오 검증 및 프로덕션 릴리스**: [Stage 5 가이드](./05_enterprise_studio_and_deployment_ko.md)에 따라 멀티뷰 스튜디오에서 20대 Golden CQ 루브릭 평가와 바운더리 질의 회귀 검증(`9. Evaluation`)을 마치고 배포합니다.
 6. **4대 산업군 실무 케이스 템플릿 참조**: [인더스트리 케이스 템플릿](../industry_cases/README.md)에 수록된 스마트 제조(포스코, 현대차), 핀테크·금융(카카오뱅크, 토스), 유통·이커머스(GS리테일, CJ대한통운/올리브영), 통신·미디어(SKT, KT) 8대 엔터프라이즈 템플릿 및 DDL/샘플 데이터/SOP 문서를 즉시 복제·활용합니다.

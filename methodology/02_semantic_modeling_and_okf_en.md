@@ -20,7 +20,7 @@ flowchart TD
 
     subgraph Step2 ["Step 2.2: Immutable Cryptographic Hash Anchoring"]
         Chunks --> Hasher["SHA-256 Hash Anchor Generator"]
-        Hasher --> Anchors["Immutable Anchor Mapping (DOC_CHUNK_001 ~ 023)<br/>Guarantees 100% Provenance & Zero Hallucination"]
+        Hasher --> Anchors["Immutable Anchor Mapping (DOC_CHUNK_001 ~ 023)<br/>Enforces Source Provenance on Every Answer"]
     end
 
     subgraph Step3 ["Step 2.3: Karpathy 3-Layer OKF v0.2 Compilation"]

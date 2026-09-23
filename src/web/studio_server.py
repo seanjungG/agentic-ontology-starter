@@ -5,11 +5,13 @@ Adheres strictly to 05_DESIGN.md (Pretendard font, dark mode, Apple/Google Enter
 zero decorative cartoon emojis, responsive layout, bilingual support).
 Runs with ZERO external dependencies using Python standard library http.server.
 
-Features 4 Interactive Studios:
-1. AI FDE Studio (Dynamic Sub-Goal Decomposition & Sequential Chaining Timeline)
-2. Asset Management Studio (Unstructured Docs/Chunks/LLM-Wiki vs Structured DW Master Tables)
-3. Property Graph Visualizer (2D Interactive 2-Layer Anti-Redundancy Topology & SQL:2023 DDL)
-4. CQ Benchmark Studio (Golden Competency Questions Matrix & 0% Hallucination Scorecards)
+Studio tabs: 0. Overview / 1. Asset / 2. OKF Layer / 3. Ontology Semantic /
+4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent / 7. Lineage / 8. AI FDE / 9. Evaluation
+
+Data pluggability:
+  The `0. Overview` and `9. Evaluation` screens are rendered entirely from
+  `config/portal_profile.json` (plus `config/eval_rubric.json`). Swapping those
+  files re-skins the portal for a different domain without touching this module.
 """
 import http.server, json, sys, os, csv
 from urllib.parse import urlparse, parse_qs
@@ -21,6 +23,9 @@ if BASE_DIR not in sys.path:
 from src.agent.reasoning_engine import AiFdeAgentEngine
 
 PORT = int(os.environ.get("PORT", 8088))
+# Allow an operator to point the portal at a different profile without editing code.
+PORTAL_PROFILE_PATH = os.environ.get("PORTAL_PROFILE", "config/portal_profile.json")
+EVAL_RUBRIC_PATH = os.environ.get("EVAL_RUBRIC", "config/eval_rubric.json")
 engine = AiFdeAgentEngine()
 
 def load_text_file(rel_path, default=""):
@@ -51,6 +56,79 @@ def load_csv_table(rel_path):
         if not rows:
             return {"headers": [], "rows": []}
         return {"headers": rows[0], "rows": rows[1:]}
+
+def build_eval_summary():
+    """Aggregate whatever evaluation artifacts actually exist on disk.
+
+    Anything that is not present on disk is reported as PENDING rather than
+    being filled in with placeholder numbers.
+    """
+    profile = load_json_file(PORTAL_PROFILE_PATH, {})
+    ev_cfg = profile.get("evaluation", {})
+    rubric = load_json_file(EVAL_RUBRIC_PATH, {})
+
+    sources = []
+    for src in ev_cfg.get("sources", []):
+        rel = src.get("path", "")
+        sources.append({
+            **src,
+            "exists": os.path.exists(os.path.join(BASE_DIR, rel)) if rel else False,
+        })
+
+    cq_report = load_json_file("data/output/cq_benchmark_report.json", {})
+    raw_rows = []
+    if isinstance(cq_report, dict):
+        raw_rows = cq_report.get("evaluation_details") or cq_report.get("test_results") or []
+    # The pipeline and the bundled fixture use two different row shapes; normalize both.
+    results = []
+    for r in raw_rows:
+        status = str(r.get("status") or r.get("verification_status") or "").upper()
+        results.append({
+            "cq_id": r.get("cq_id", "-"),
+            "category": r.get("category") or (r.get("dispatched_tools") or ["-"])[0],
+            "prompt": r.get("query") or r.get("prompt", ""),
+            "expected_value": r.get("expected_value", "-"),
+            "actual_value": r.get("actual_value", "-"),
+            "legal_anchor": r.get("grounded_chunk") or r.get("legal_anchor", "-"),
+            "verification_status": status or "-",
+            "passed": status in ("PASSED", "EXACT_MATCH"),
+        })
+    matched = [r for r in results if r["passed"]]
+    golden = {
+        "status": "MEASURED" if results else "PENDING",
+        "total": len(results),
+        "passed": len(matched),
+        "pass_rate": round(len(matched) / len(results) * 100, 1) if results else None,
+        "rows": results,
+    }
+
+    boundary_raw = load_json_file("data/output/boundary_benchmark_results.json", {})
+    stats = boundary_raw.get("case_statistics", {}) if isinstance(boundary_raw, dict) else {}
+    cases = list(stats.values())
+    boundary = {
+        "status": "MEASURED" if cases else "PENDING",
+        "case_count": len(cases),
+        "avg_success_rate": round(sum(c.get("success_rate", 0) for c in cases) / len(cases), 1) if cases else None,
+        "avg_intent_stability": round(sum(c.get("intent_stability", 0) for c in cases) / len(cases), 1) if cases else None,
+        "cases": cases,
+    }
+
+    rounds = []
+    for r in ev_cfg.get("rounds", []):
+        src_id = r.get("status_source")
+        measured = golden["status"] == "MEASURED" if src_id == "cq_report" else boundary["status"] == "MEASURED"
+        rounds.append({**r, "status": "MEASURED" if measured else "PENDING"})
+
+    return {
+        "intro": ev_cfg.get("intro", ""),
+        "sources": sources,
+        "design": ev_cfg.get("design", {}),
+        "rubric": rubric,
+        "taxonomy": ev_cfg.get("root_cause_taxonomy", []),
+        "golden": golden,
+        "boundary": boundary,
+        "rounds": rounds,
+    }
 
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="ko">
@@ -359,6 +437,49 @@ HTML_PAGE = """<!DOCTYPE html>
     .metric-title { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
     .metric-value { font-size: 22px; font-weight: 700; color: var(--text-primary); }
     .cq-table-container { flex: 1; overflow-y: auto; background: var(--surface-2); border: 1px solid var(--card-border); border-radius: 8px; }
+
+    /* ==========================================================================
+       VIEW 0 / VIEW 9: PROFILE-DRIVEN OVERVIEW & EVALUATION
+       ========================================================================== */
+    .ov-card { background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px; }
+    .ov-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+    .ov-eyebrow { font-size: 12.5px; padding: 4px 10px; }
+    .ov-card-note { font-size: 13px; color: var(--text-secondary); }
+    .ov-h2 { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+    .ov-lead { font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); margin: 0 0 16px 0; }
+
+    .ov-flow-board { display: grid; grid-template-columns: repeat(5, minmax(210px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 6px; }
+    .ov-stage-col { border-top: 3px solid var(--accent); background: var(--surface-2); border-radius: 10px; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+    .ov-stage-chip { align-self: flex-start; font-size: 11.5px; font-weight: 800; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 5px; background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .ov-stage-name { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.4; }
+    .ov-step-box { background: var(--surface-3); border-radius: 8px; padding: 12px 13px; border-left: 4px solid var(--accent); }
+    .ov-step-badge { font-size: 12px; font-weight: 800; margin-bottom: 4px; }
+    .ov-step-title { font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; line-height: 1.4; }
+    .ov-step-desc { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); }
+    .ov-step-out { font-size: 12px; line-height: 1.55; color: var(--text-secondary); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--card-border-subtle); }
+    .ov-conn-v { display: flex; justify-content: center; align-items: center; height: 14px; color: var(--text-secondary); font-size: 12px; }
+
+    .ov-gap-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    .ov-gap-table th { padding: 10px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--card-border); }
+    .ov-gap-table td { padding: 10px; color: var(--text-primary); line-height: 1.6; border-bottom: 1px solid var(--card-border-subtle); vertical-align: top; }
+    .ov-gap-table td.muted { color: var(--text-secondary); }
+    .ov-gap-table td.lead-cell { font-weight: 700; }
+
+    .ov-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    .ov-metric-cap { font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; }
+
+    .ev-source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+    .ev-source { background: var(--surface-2); border: 1px solid var(--card-border); border-radius: 8px; padding: 12px 14px; }
+    .ev-source-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .ev-source-path { font-size: 12px; color: var(--text-secondary); margin-top: 4px; word-break: break-all; }
+    .ev-status { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 4px; }
+    .ev-status.measured { background: rgba(48,209,88,0.18); color: #30d158; }
+    .ev-status.pending { background: rgba(255,214,10,0.15); color: #ffd60a; }
+    .ev-rubric-wrap { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .ev-rubric-dim { background: var(--surface-2); border: 1px solid var(--card-border-subtle); border-radius: 8px; padding: 10px 12px; }
+    .ev-rubric-dim b { font-size: 13px; color: var(--text-primary); }
+    .ev-rubric-dim div { font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+    .ev-empty { font-size: 13px; color: var(--text-secondary); background: var(--surface-2); border: 1px dashed var(--card-border); border-radius: 8px; padding: 16px; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -415,123 +536,49 @@ HTML_PAGE = """<!DOCTYPE html>
     <button class="nav-btn" onclick="switchTab('bqg-agent')">6. BQG Agent</button>
     <button class="nav-btn" onclick="switchTab('lineage')">7. Lineage</button>
     <button class="nav-btn" onclick="switchTab('fde')">8. AI FDE</button>
+    <button class="nav-btn" onclick="switchTab('evaluation')">9. Evaluation</button>
   </div>
 
-  <!-- VIEW 0: SINGLE CONTINUOUS OVERVIEW (Full Step -> Architecture -> Service/Feature Gap -> Performance/Results) -->
+  <!-- VIEW 0: OVERVIEW (rendered from config/portal_profile.json) -->
   <div class="tab-panel active" id="panel-overview" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 22px; font-size: 13.5px;">
-    <!-- SECTION 1: FULL STEP DIAGRAM -->
-    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-        <span class="badge" style="font-size: 13px; padding: 4px 10px;">SECTION 1 &middot; 전체 스텝 다이어그램 (Full Step Diagram)</span>
-        <span style="font-size: 13.5px; color: var(--text-secondary);">OKF v0.2 &bull; 4. Wiki Agent (GCS) &bull; 5. Bigquery Graph &bull; 6. BQG Agent &bull; 7. Lineage (&lt; 5ms)</span>
+    <!-- SECTION 1: 5-STAGE / 9-STEP FLOW BOARD -->
+    <div class="ov-card">
+      <div class="ov-card-head">
+        <span class="badge ov-eyebrow" id="ov-s1-eyebrow">SECTION 1</span>
+        <span class="ov-card-note" id="ov-s1-note"></span>
       </div>
-      <h2 style="font-size: 19px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
-        Agentic Ontology Studio — 8단계 진화형 온톨로지 및 에이전트 구축 전체 스텝 다이어그램
-      </h2>
-      <p style="font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 16px;">
-        탭 전환 없이 한눈에 파악하는 전체 실행 흐름: [1. Asset &amp; 2. OKF Layer (GCS 3-Layer Wiki)] ➔ [3. Ontology Semantic] ➔ [4. Wiki Agent (선행 GCS 에이전트)] ➔ [5. Bigquery Graph] ➔ [6. BQG Agent (그래프 에이전트)] ➔ [7. Lineage &amp; 8. AI FDE]
-      </p>
-      <div style="background: #0b1120; border-radius: 10px; padding: 18px; border: 1px solid rgba(255,255,255,0.1); overflow-x: auto;">
-        <svg viewBox="0 0 1520 360" width="100%" style="min-width: 1150px; height: auto; display: block; margin: 0 auto; font-family: var(--font-stack);">
-          <rect x="16" y="20" width="230" height="310" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
-          <text x="32" y="54" fill="#38bdf8" font-size="14" font-weight="800">1. Asset &amp; 2. OKF Layer</text>
-          <text x="32" y="84" fill="#ffffff" font-size="16" font-weight="800">원천 자산 &amp; GCS Wiki</text>
-          <text x="32" y="118" fill="#e2e8f0" font-size="13.5">• BigQuery 7대 마스터 테이블</text>
-          <text x="32" y="146" fill="#e2e8f0" font-size="13.5">• 비정형 업무 규정 (PDF/MD)</text>
-          <text x="32" y="174" fill="#86efac" font-size="13.5" font-weight="700">• 담백한 원본 YAML Frontmatter</text>
-          <text x="32" y="202" fill="#86efac" font-size="13.5">• Karpathy 3-Layer .okf.md</text>
-
-          <rect x="282" y="20" width="240" height="310" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
-          <text x="298" y="54" fill="#38bdf8" font-size="14" font-weight="800">3. Ontology Semantic</text>
-          <text x="298" y="84" fill="#ffffff" font-size="16" font-weight="800">시맨틱 브릿지 &amp; 프루닝</text>
-          <text x="298" y="118" fill="#fde047" font-size="13.5" font-weight="700">• Domain Pruning (35 ➔ 7)</text>
-          <text x="298" y="146" fill="#e2e8f0" font-size="13.5">• OKF v0.2 5대 요소 추출</text>
-          <text x="298" y="174" fill="#e2e8f0" font-size="13.5">• L1~L4 비즈니스 산식 트리</text>
-          <text x="298" y="202" fill="#e2e8f0" font-size="13.5">• 2-Layer URI 매핑 레지스트리</text>
-
-          <rect x="558" y="20" width="270" height="310" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="2.5"/>
-          <text x="574" y="54" fill="#6ee7b7" font-size="14" font-weight="800">4. Wiki Agent (선행 에이전트)</text>
-          <text x="574" y="84" fill="#ffffff" font-size="16.5" font-weight="800">GCS 온톨로지 위키 에이전트</text>
-          <text x="574" y="118" fill="#d1fae5" font-size="13.5">• 3번 직후 1차 완성된 선행 모델</text>
-          <text x="574" y="146" fill="#fde047" font-size="13.5" font-weight="700">• DB 구축 없이 GCS 위키 추론</text>
-          <text x="574" y="174" fill="#d1fae5" font-size="13.5">• 위약금 산식/예외 조항 16개 CQ</text>
-          <text x="574" y="202" fill="#6ee7b7" font-size="13.5" font-weight="700">• 16 / 20 PASS (평균 1.18s)</text>
-
-          <rect x="864" y="20" width="300" height="310" rx="10" fill="#3b0764" stroke="#c084fc" stroke-width="2.5"/>
-          <text x="880" y="54" fill="#e9d5ff" font-size="14" font-weight="800">5. Bigquery Graph &amp; 6. BQG Agent</text>
-          <text x="880" y="84" fill="#ffffff" font-size="16.5" font-weight="800">SQL:2023 그래프 &amp; BQG 에이전트</text>
-          <text x="880" y="118" fill="#f3e8ff" font-size="13.5">• CREATE PROPERTY GRAPH (Zero-ETL)</text>
-          <text x="880" y="146" fill="#f3e8ff" font-size="13.5">• GRAPH_TABLE() 멀티홉 원장 탐색</text>
-          <text x="880" y="174" fill="#fde047" font-size="13.5" font-weight="700">• 정형 원장 + 비정형 규정 결합</text>
-          <text x="880" y="202" fill="#86efac" font-size="13.5" font-weight="700">• 20 / 20 PASS (평균 1.42s)</text>
-
-          <rect x="1200" y="20" width="295" height="310" rx="10" fill="#1e293b" stroke="#f472b6" stroke-width="2"/>
-          <text x="1216" y="54" fill="#f9a8d4" font-size="14" font-weight="800">7. Lineage &amp; 8. AI FDE</text>
-          <text x="1216" y="84" fill="#ffffff" font-size="16.5" font-weight="800">4-Tier 리니지 &amp; 도메인 MCP</text>
-          <text x="1216" y="118" fill="#4ade80" font-size="13.5" font-weight="700">• 인메모리 캐시 즉시 로딩 (&lt; 5ms)</text>
-          <text x="1216" y="146" fill="#e2e8f0" font-size="13.5">• 39 Nodes / 60 Edges 전구간 계보</text>
-          <text x="1216" y="174" fill="#e2e8f0" font-size="13.5">• 11종 도메인 온톨로지 MCP 서버</text>
-          <text x="1216" y="202" fill="#fde047" font-size="13.5" font-weight="700">• 자율 스키마 &amp; DDL 합성</text>
-        </svg>
-      </div>
+      <h2 class="ov-h2" id="ov-s1-title">-</h2>
+      <p class="ov-lead" id="ov-s1-lead"></p>
+      <div class="ov-flow-board" id="ov-flow-board"></div>
     </div>
 
-    <!-- SECTION 2 & 3: ARCHITECTURE & SERVICE VS. FEATURE GAP MATRIX -->
-    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <span class="badge badge-green" style="font-size: 13px; padding: 4px 10px;">SECTION 2 &amp; 3 &middot; 아키텍처 &amp; Google Cloud 서비스 vs. 커스텀 피처 갭</span>
+    <!-- SECTION 2 & 3: ARCHITECTURE & FEATURE GAP MATRIX -->
+    <div class="ov-card">
+      <div class="ov-card-head">
+        <span class="badge badge-green ov-eyebrow" id="ov-s2-eyebrow">SECTION 2 &amp; 3</span>
       </div>
-      <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px;">
-        2-Layer 시맨틱 아키텍처 (`4. Wiki Agent` ➔ `6. BQG Agent`) 및 서비스/개발 피처 갭 매트릭스
-      </h2>
-      <table style="width:100%; border-collapse:collapse; font-size:13.5px; text-align:left;">
+      <h2 class="ov-h2" id="ov-s2-title">-</h2>
+      <table class="ov-gap-table">
         <thead>
-          <tr style="border-bottom:1px solid var(--card-border); color:var(--text-secondary);">
-            <th style="padding:10px;">아키텍처 레이어</th>
-            <th style="padding:10px;">Google Cloud 네이티브 서비스</th>
-            <th style="padding:10px;">네이티브 단독 한계 (Feature Gap)</th>
-            <th style="padding:10px;">Agentic Ontology Studio 커스텀 개발 해법</th>
+          <tr>
+            <th>아키텍처 레이어</th>
+            <th>Google Cloud 네이티브 서비스</th>
+            <th>네이티브 단독 한계 (Feature Gap)</th>
+            <th>스튜디오 커스텀 개발 해법</th>
           </tr>
         </thead>
-        <tbody style="color:var(--text-primary); line-height:1.6;">
-          <tr style="border-bottom:1px solid var(--card-border-subtle);">
-            <td style="padding:10px; font-weight:700; color:var(--accent);">2. OKF Layer &amp; 4. Wiki Agent</td>
-            <td style="padding:10px;">Cloud Storage (GCS) &amp; Gemini API</td>
-            <td style="padding:10px; color:var(--text-secondary);">단순 벡터 청킹 시 표/위약금 산식 단절 및 버전 충돌</td>
-            <td style="padding:10px;">담백한 원본 YAML Frontmatter + Karpathy 3-Layer Wiki + 선행 <b>4. Wiki Agent</b> (16/20 CQ 해결)</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--card-border-subtle);">
-            <td style="padding:10px; font-weight:700; color:var(--accent-purple);">5. Bigquery Graph &amp; 6. BQG Agent</td>
-            <td style="padding:10px;">BigQuery SQL:2023 Property Graph</td>
-            <td style="padding:10px; color:var(--text-secondary);">BigQuery Remote MCP의 GQL 미지원 및 자연어➔GQL 변환 부재</td>
-            <td style="padding:10px;">Zero-ETL DW 노드 승격(35➔7) + <b>6. BQG Agent</b> (`GRAPH_TABLE()` 멀티홉 + 산식 검증, 20/20 CQ 해결)</td>
-          </tr>
-          <tr>
-            <td style="padding:10px; font-weight:700; color:var(--accent-green);">7. Lineage &amp; 8. AI FDE</td>
-            <td style="padding:10px;">Dataplex Lineage &amp; MCP SDK</td>
-            <td style="padding:10px; color:var(--text-secondary);">SQL 테이블 간 이동만 추적하며 동기 메타데이터 조회 시 8~15s 지연</td>
-            <td style="padding:10px;">4-Tier 전구간 리니지(비동기 인메모리 캐싱 <b>&lt; 5ms</b> 즉시 로딩) + 11종 도메인 MCP 스위트</td>
-          </tr>
-        </tbody>
+        <tbody id="ov-gap-body"></tbody>
       </table>
     </div>
 
-    <!-- SECTION 4: PERFORMANCE & RESULTS -->
-    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <span class="badge badge-purple" style="font-size: 13px; padding: 4px 10px;">SECTION 4 &middot; 성능과 결과 (Performance &amp; Results)</span>
-        <button class="nav-btn" style="background: rgba(191,90,242,0.2); color: #e9d5ff; font-size: 13px;" onclick="switchTab('cq')">동봉 샘플 CQ 벤치마크 실행 결과 보기 &rarr;</button>
+    <!-- SECTION 4: REFERENCE METRICS -->
+    <div class="ov-card">
+      <div class="ov-card-head">
+        <span class="badge badge-purple ov-eyebrow" id="ov-s4-eyebrow">SECTION 4</span>
+        <button class="nav-btn" style="background: rgba(191,90,242,0.2); color: #e9d5ff; font-size: 13px;" onclick="switchTab('evaluation')">9. Evaluation 검증 결과 보기 &rarr;</button>
       </div>
-      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 14px 0;">
-        아래 4개 지표는 <b>LG Uplus 레퍼런스 구현(20대 골든 CQ)</b>에서 측정된 값입니다.
-        본 저장소에 동봉된 샘플 데이터셋은 규모가 더 작으며, 그 실행 결과는 위 버튼에서 실제 리포트 파일 기준으로 확인할 수 있습니다.
-      </p>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
-        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">4. Wiki Agent (GCS)</div><div class="metric-value" style="color:#10b981;">16 / 20 PASS</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">평균 1.18s &middot; 규정/산식 중심</div></div>
-        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">6. BQG Agent (Graph)</div><div class="metric-value" style="color:#c084fc;">20 / 20 PASS</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">평균 1.42s &middot; 멀티홉 원장 통합</div></div>
-        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">Domain Pruning</div><div class="metric-value" style="color:#38bdf8;">35 ➔ 7 (-80%)</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Zero-ETL 직접 노드 승격</div></div>
-        <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">7. Lineage Latency</div><div class="metric-value" style="color:#30d158;">&lt; 5 ms</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">비동기 인메모리 즉시 로딩</div></div>
-      </div>
+      <p class="ov-lead" id="ov-s4-note"></p>
+      <div class="ov-metric-grid" id="ov-metric-grid"></div>
     </div>
   </div>
 
@@ -568,7 +615,7 @@ HTML_PAGE = """<!DOCTYPE html>
             <div style="margin-top:10px; color:var(--text-secondary); font-size:12px;">
               • Dynamic Sub-Goal Decomposition: Breaks complex user queries into business and infrastructure intents.<br/>
               • Context Hand-Off: Passes upstream lookup metadata directly into downstream validation tools.<br/>
-              • Zero Hallucination: Backed 100% by relational master ledgers and cryptographic hash anchors.
+              • Grounded Answering: Every figure is traced back to a relational master ledger row or a hash-anchored document chunk.
             </div>
           </div>
         </div>
@@ -852,7 +899,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       <p style="font-size:13px; color:var(--text-secondary); line-height:1.65; margin:0;">
         아래 지표는 본 저장소에 동봉된 샘플 데이터셋(<code>data/input/04_cq/golden_competency_questions.json</code>)을
         <code>run_pipeline.py</code>로 실행한 <code>data/output/cq_benchmark_report.json</code>을 그대로 읽어 표시한 값입니다.
-        LG Uplus 레퍼런스 구현의 20대 골든 CQ 실측치는 <code>0. Overview</code> Section 4에 별도로 표기되어 있습니다.
+        레퍼런스 구현의 골든 CQ 실측치는 <code>0. Overview</code> Section 4에 별도로 표기되어 있습니다.
       </p>
 
       <div class="kpi-grid">
@@ -869,7 +916,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
           <div class="metric-value" id="cq-kpi-accuracy">-</div>
         </div>
         <div class="metric-box">
-          <div class="metric-title">환각률 (Hallucination)</div>
+          <div class="metric-title">근거 미첨부 (Ungrounded)</div>
           <div class="metric-value" style="color:var(--accent);" id="cq-kpi-halluc">-</div>
         </div>
       </div>
@@ -900,13 +947,66 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     </div>
   </div>
 
+  <!-- VIEW 9: EVALUATION (rendered from /api/eval/summary) -->
+  <div class="tab-panel" id="panel-evaluation" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 20px; font-size: 13.5px;">
+    <div class="ov-card">
+      <div class="ov-card-head">
+        <span class="badge ov-eyebrow">9. EVALUATION &middot; 검증 리포트</span>
+      </div>
+      <p class="ov-lead" id="ev-intro"></p>
+      <div class="ev-source-grid" id="ev-sources"></div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-head"><span class="badge badge-green ov-eyebrow">A &middot; 검증 설계</span></div>
+      <h2 class="ov-h2" id="ev-design-title">-</h2>
+      <p class="ov-lead" id="ev-design-desc"></p>
+      <table class="ov-gap-table">
+        <thead><tr><th>질문셋</th><th>목적</th><th>구성</th><th>지표</th></tr></thead>
+        <tbody id="ev-suite-body"></tbody>
+      </table>
+      <div class="ev-rubric-wrap" id="ev-rubric"></div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-head"><span class="badge badge-purple ov-eyebrow">B &middot; 종합 KPI</span></div>
+      <div class="ov-metric-grid" id="ev-kpi-grid"></div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-head"><span class="badge ov-eyebrow">C &middot; Golden CQ 채점표</span></div>
+      <div id="ev-golden-wrap"></div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-head"><span class="badge badge-green ov-eyebrow">D &middot; 바운더리 질의 회귀</span></div>
+      <div id="ev-boundary-wrap"></div>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-head"><span class="badge badge-purple ov-eyebrow">E &middot; 실패 원인 분류</span></div>
+      <table class="ov-gap-table">
+        <thead><tr><th>코드</th><th>유형</th><th>관찰 신호</th><th>개선 조치</th></tr></thead>
+        <tbody id="ev-taxonomy-body"></tbody>
+      </table>
+    </div>
+
+    <div class="ov-card">
+      <div class="ov-card-head"><span class="badge ov-eyebrow">F &middot; 회차 비교</span></div>
+      <table class="ov-gap-table">
+        <thead><tr><th>회차</th><th>설명</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody id="ev-round-body"></tbody>
+      </table>
+    </div>
+  </div>
+
   <script>
     let globalAssets = {};
     let currentToolFilter = 'all';
 
     // Switch Top Tabs (Agentic Ontology Studio Ribbon: 0. Overview ~ 8. AI FDE)
     function switchTab(tabId) {
-      const ids = ['overview', 'assets', 'okf', 'structured', 'wiki-agent', 'graph', 'bqg-agent', 'lineage', 'fde'];
+      const ids = ['overview', 'assets', 'okf', 'structured', 'wiki-agent', 'graph', 'bqg-agent', 'lineage', 'fde', 'evaluation'];
       document.querySelectorAll('.subbar .nav-btn').forEach((b, idx) => {
         b.classList.toggle('active', ids[idx] === tabId);
       });
@@ -921,6 +1021,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
         'bqg-agent': 'panel-fde',
         'lineage': 'panel-lineage',
         'fde': 'panel-fde',
+        'evaluation': 'panel-evaluation',
         'cq': 'panel-cq'
       };
       const activePanel = document.getElementById(panelMap[tabId] || ('panel-' + tabId));
@@ -931,7 +1032,128 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       if (tabId === 'graph') loadGraph();
       if (tabId === 'lineage') loadLineage();
       if (tabId === 'cq') loadCq();
+      if (tabId === 'evaluation') loadEvaluation();
       if (panelMap[tabId] === 'panel-fde') setAgentMode(tabId);
+    }
+
+    // ---- Profile-driven Overview -------------------------------------------
+    function esc(s) { return (s === null || s === undefined) ? '' : String(s); }
+
+    async function loadPortalProfile() {
+      let p;
+      try {
+        const res = await fetch('/api/portal/profile');
+        if (!res.ok) throw new Error('profile ' + res.status);
+        p = await res.json();
+      } catch (e) {
+        document.getElementById('ov-s1-title').textContent = 'config/portal_profile.json 을 읽지 못했습니다.';
+        return;
+      }
+      const ov = p.overview || {};
+      document.getElementById('ov-s1-eyebrow').textContent = esc(ov.eyebrow);
+      document.getElementById('ov-s1-title').textContent = esc(ov.title);
+      document.getElementById('ov-s1-lead').innerHTML = esc(ov.lead);
+
+      const board = document.getElementById('ov-flow-board');
+      board.innerHTML = (ov.stages || []).map(st => {
+        const steps = (st.steps || []).map((sp, i) => `
+          ${i > 0 ? '<div class="ov-conn-v">&darr;</div>' : ''}
+          <div class="ov-step-box" style="border-left-color:${esc(st.accent)};">
+            <div class="ov-step-badge" style="color:${esc(st.accent)};">${esc(sp.badge)}</div>
+            <div class="ov-step-title">${esc(sp.title)}</div>
+            <div class="ov-step-desc">${(sp.bullets || []).map(b => '&bull; ' + b).join('<br>')}</div>
+            ${sp.deliverables ? `<div class="ov-step-out"><b>산출물</b> ${sp.deliverables}</div>` : ''}
+          </div>`).join('');
+        return `<div class="ov-stage-col" style="border-top-color:${esc(st.accent)};">
+            <span class="ov-stage-chip">${esc(st.chip)}</span>
+            <div class="ov-stage-name">${esc(st.name)}</div>
+            ${steps}
+          </div>`;
+      }).join('');
+
+      const gap = ov.feature_gap || {};
+      document.getElementById('ov-s2-eyebrow').textContent = esc(gap.eyebrow);
+      document.getElementById('ov-s2-title').textContent = esc(gap.title);
+      document.getElementById('ov-gap-body').innerHTML = (gap.rows || []).map(r => `
+        <tr>
+          <td class="lead-cell" style="color:var(--${esc(r.layer_color) || 'accent'});">${esc(r.layer)}</td>
+          <td>${esc(r.native)}</td>
+          <td class="muted">${esc(r.gap)}</td>
+          <td>${esc(r.solution)}</td>
+        </tr>`).join('');
+
+      const mt = ov.metrics || {};
+      document.getElementById('ov-s4-eyebrow').textContent = esc(mt.eyebrow);
+      document.getElementById('ov-s4-note').innerHTML = esc(mt.note);
+      document.getElementById('ov-metric-grid').innerHTML = (mt.items || []).map(m => `
+        <div class="metric-box">
+          <div class="metric-title" style="font-size:12.5px;">${esc(m.label)}</div>
+          <div class="metric-value" style="color:${esc(m.color)};">${esc(m.value)}</div>
+          <div class="ov-metric-cap">${esc(m.caption)}</div>
+        </div>`).join('');
+    }
+
+    // ---- Evaluation ---------------------------------------------------------
+    let evaluationLoaded = false;
+    async function loadEvaluation() {
+      if (evaluationLoaded) return;
+      let d;
+      try {
+        const res = await fetch('/api/eval/summary');
+        if (!res.ok) throw new Error('eval ' + res.status);
+        d = await res.json();
+      } catch (e) {
+        document.getElementById('ev-intro').textContent = '/api/eval/summary 를 읽지 못했습니다.';
+        return;
+      }
+      evaluationLoaded = true;
+      const tag = s => `<span class="ev-status ${s === 'MEASURED' ? 'measured' : 'pending'}">${s}</span>`;
+
+      document.getElementById('ev-intro').innerHTML = esc(d.intro);
+      document.getElementById('ev-sources').innerHTML = (d.sources || []).map(s => `
+        <div class="ev-source">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span class="ev-source-name">${esc(s.label)}</span>
+            ${tag(s.exists ? 'MEASURED' : 'PENDING')}
+          </div>
+          <div class="ev-source-path"><code>${esc(s.path)}</code></div>
+          <div class="ev-source-path">생성 주체 · ${esc(s.produced_by)}</div>
+        </div>`).join('');
+
+      const design = d.design || {};
+      document.getElementById('ev-design-title').textContent = esc(design.title);
+      document.getElementById('ev-design-desc').innerHTML = esc(design.description);
+      document.getElementById('ev-suite-body').innerHTML = (design.suites || []).map(s => `
+        <tr><td class="lead-cell">${esc(s.name)}</td><td class="muted">${esc(s.purpose)}</td><td>${esc(s.shape)}</td><td>${esc(s.metric)}</td></tr>`).join('');
+
+      const dims = (d.rubric || {}).dimensions || {};
+      document.getElementById('ev-rubric').innerHTML = Object.keys(dims).map(k => `
+        <div class="ev-rubric-dim"><b>${esc(k)} &middot; weight ${esc(dims[k].weight)}</b><div>${esc(dims[k].description)}</div></div>`).join('');
+
+      const g = d.golden || {}, b = d.boundary || {};
+      document.getElementById('ev-kpi-grid').innerHTML = `
+        <div class="metric-box"><div class="metric-title">Golden CQ 수</div><div class="metric-value">${g.total || 0}</div><div class="ov-metric-cap">${tag(g.status)}</div></div>
+        <div class="metric-box"><div class="metric-title">Golden CQ 통과</div><div class="metric-value" style="color:var(--accent-green);">${g.passed || 0}</div><div class="ov-metric-cap">${g.pass_rate === null || g.pass_rate === undefined ? '측정 전' : g.pass_rate + '%'}</div></div>
+        <div class="metric-box"><div class="metric-title">바운더리 질의 수</div><div class="metric-value">${b.case_count || 0}</div><div class="ov-metric-cap">${tag(b.status)}</div></div>
+        <div class="metric-box"><div class="metric-title">바운더리 평균 성공률</div><div class="metric-value" style="color:var(--accent);">${b.avg_success_rate === null || b.avg_success_rate === undefined ? '-' : b.avg_success_rate + '%'}</div><div class="ov-metric-cap">의도 안정성 ${b.avg_intent_stability === null || b.avg_intent_stability === undefined ? '-' : b.avg_intent_stability + '%'}</div></div>`;
+
+      document.getElementById('ev-golden-wrap').innerHTML = (g.rows || []).length
+        ? `<table class="ov-gap-table"><thead><tr><th>CQ ID</th><th>Category</th><th>질문</th><th>정답</th><th>응답</th><th>근거 앵커</th><th>판정</th></tr></thead><tbody>`
+          + g.rows.map(r => `<tr><td class="lead-cell">${esc(r.cq_id)}</td><td class="muted">${esc(r.category)}</td><td>${esc(r.prompt)}</td><td>${esc(r.expected_value)}</td><td>${esc(r.actual_value)}</td><td class="muted"><code>${esc(r.legal_anchor)}</code></td><td>${tag(r.passed ? 'MEASURED' : 'PENDING')} ${esc(r.verification_status)}</td></tr>`).join('')
+          + `</tbody></table>`
+        : `<div class="ev-empty">Golden CQ 실행 결과 파일이 없습니다. <code>python3 run_pipeline.py</code> 실행 후 <code>data/output/cq_benchmark_report.json</code>이 생성되면 자동으로 표시됩니다.</div>`;
+
+      document.getElementById('ev-boundary-wrap').innerHTML = (b.cases || []).length
+        ? `<table class="ov-gap-table"><thead><tr><th>Case</th><th>질문</th><th>결여 맥락</th><th>성공률</th><th>일관성</th><th>의도 안정성</th></tr></thead><tbody>`
+          + b.cases.map(c => `<tr><td class="lead-cell">${esc(c.case_id)}</td><td>${esc(c.query)}</td><td class="muted">${esc(c.missing_context)}</td><td>${esc(c.success_rate)}%</td><td>${esc(c.consistency_rate)}%</td><td>${esc(c.intent_stability)}%</td></tr>`).join('')
+          + `</tbody></table>`
+        : `<div class="ev-empty">바운더리 질의 회귀 결과 파일(<code>data/output/boundary_benchmark_results.json</code>)이 없습니다. 값을 임의로 채우지 않고 PENDING으로 유지합니다.</div>`;
+
+      document.getElementById('ev-taxonomy-body').innerHTML = (d.taxonomy || []).map(x => `
+        <tr><td class="lead-cell"><code>${esc(x.code)}</code></td><td>${esc(x.name)}</td><td class="muted">${esc(x.signal)}</td><td>${esc(x.fix)}</td></tr>`).join('');
+
+      document.getElementById('ev-round-body').innerHTML = (d.rounds || []).map(r => `
+        <tr><td class="lead-cell">Round ${esc(r.round)}</td><td>${esc(r.label)}</td><td>${tag(r.status)}</td><td class="muted">${esc(r.note)}</td></tr>`).join('');
     }
 
     async function loadStructuredDdl() {
@@ -1398,6 +1620,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     }
 
     // Init
+    loadPortalProfile();
     loadCatalog();
     setAgentMode('fde');
 
@@ -1405,8 +1628,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     // and external docs can link straight to a specific studio step.
     (function applyTabFromQuery() {
       const requested = new URLSearchParams(window.location.search).get('tab');
-      const allowed = ['overview', 'assets', 'okf', 'structured', 'wiki-agent',
-                       'graph', 'bqg-agent', 'lineage', 'fde', 'cq'];
+      const allowed = ['overview', 'assets', 'okf', 'structured', 'wiki-agent', 'graph', 'bqg-agent', 'lineage', 'fde', 'evaluation', 'cq'];
       if (requested && allowed.includes(requested)) switchTab(requested);
     })();
   </script>
@@ -1502,6 +1724,19 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
             self.wfile.write(json.dumps(cq, ensure_ascii=False).encode("utf-8"))
+
+        elif parsed.path == "/api/portal/profile":
+            profile = load_json_file(PORTAL_PROFILE_PATH, {})
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(profile, ensure_ascii=False).encode("utf-8"))
+
+        elif parsed.path == "/api/eval/summary":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(build_eval_summary(), ensure_ascii=False).encode("utf-8"))
 
         elif parsed.path == "/api/industry_cases":
             cases_data = {

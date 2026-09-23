@@ -3,19 +3,19 @@
 
 - **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
 - **문서 버전**: `v1.1.0`
-- **목적**: `05_DESIGN.md` 표준을 준수하는 **`Agentic Ontology Studio - LG Uplus` 통합 웹 스튜디오(`0. Overview` 및 `1. Asset` ~ `8. AI FDE`)**를 구축하고, 4-Tier 데이터 리니지(`7. Lineage`)를 시각화하며, 20대 Golden CQ 기반 자동화 0% 환각 평가 및 Google Cloud Run 컨테이너 무중단 배포를 완결하는 표준 절차 명세
+- **목적**: `05_DESIGN.md` 표준을 준수하는 **`Agentic Ontology Studio - LG Uplus` 통합 웹 스튜디오(`0. Overview` 및 `1. Asset` ~ `9. Evaluation`)**를 구축하고, 4-Tier 데이터 리니지(`7. Lineage`)를 시각화하며, 20대 Golden CQ 루브릭 평가와 바운더리 질의 회귀 검증(`9. Evaluation`)을 거쳐 Google Cloud Run 컨테이너 배포를 완결하는 표준 절차 명세
 
 ---
 
 ## 1. 전체 실행 프로세스 (Overall Execution Process)
 
-Stage 5는 구축된 지식 온톨로지, 물리 그래프 및 에이전트를 실사용자가 직관적으로 검증하고 운영할 수 있도록 8단계 통합 웹 스튜디오(`0. Overview` 포함 9개 탭)를 제공하고, 프로덕션 환경으로 안전하게 릴리스하는 최종 인도 단계입니다.
+Stage 5는 구축된 지식 온톨로지, 물리 그래프 및 에이전트를 실사용자가 직관적으로 검증하고 운영할 수 있도록 9단계 통합 웹 스튜디오(`0. Overview` 포함 10개 탭)를 제공하고, 프로덕션 환경으로 안전하게 릴리스하는 최종 인도 단계입니다.
 
 ```mermaid
 flowchart TD
     subgraph Step1 ["Step 5.1: 05_DESIGN.md 준수 엔터프라이즈 웹 스튜디오 구축"]
         DesignToken["디자인 표준 준수<br/>- Pretendard 타이포그래피<br/>- Apple/Google Enterprise 테마<br/>- 44px 글로벌 탑바 & 52px 서브바 통일"]
-        Studios["Agentic Ontology Studio 탭 구성<br/>- 0. Overview (비즈니스 개요 & GCP 아키텍처 & 피처갭)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE"]
+        Studios["Agentic Ontology Studio 탭 구성<br/>- 0. Overview (비즈니스 개요 & GCP 아키텍처 & 피처갭)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE / 9. Evaluation"]
         DesignToken --> Studios
     end
 
@@ -29,7 +29,7 @@ flowchart TD
 
     subgraph Step3 ["Step 5.3: 20대 Golden CQ 자동화 회귀 평가"]
         EvalEngine["자동화 평가 러너 (CQ Benchmark Runner)"]
-        Metrics{"3대 평가 축 검증<br/>- 수치 일치율 100% 달성 여부<br/>- 원천 해시 앵커 인용 정확성<br/>- 의미적 환각률 0% 확인"}
+        Metrics{"3대 평가 축 실측<br/>- 5차원 루브릭 점수 (0/1/2 척도)<br/>- 원천 해시 앵커 인용 정확성<br/>- 바운더리 질의 성공률 및 의도 안정성"}
         EvalEngine --> Metrics
     end
 
@@ -71,12 +71,18 @@ flowchart TD
 - **Tier 3 [물리 그래프 (Physical Graph)]**: BigQuery SQL:2023 `LGUPLUS_SUBSIDY_GRAPH` 노드 테이블 7종과 엣지 테이블 5종.
 - **Tier 4 [에이전트 서빙 (Agent Serving)]**: 11종 멀티도메인 MCP 도구와 AI FDE의 동적 추론 타임라인.
 
-### 2.3 20대 Golden CQ 기반 자동화 0% 환각 검증
+### 2.3 20대 Golden CQ 루브릭 검증 및 바운더리 질의 회귀
 1. **LLM-as-a-Judge 다면 평가**:
    - Gemini 3.8 Flash를 평가 모델로 투입하여 20대 Golden CQ를 전수 실행.
    - 정답 수치(출고가, 지원금, 위약금)의 정확 일치(Exact Match)를 수학적으로 판정.
-2. **환각 검출 알고리즘**:
-   - 인출된 답변에 원천 `DocChunk`의 해시 앵커가 누락되었거나, 정형 DW에 없는 가상 수치가 포함되었을 경우 즉각 실패(Fail) 플래그 부여.
+   - 정확성/그라운딩/추론/기권/인용 5차원 루브릭(척도 0·1·2)으로 채점하고 감점 사유를 명시적으로 기록.
+2. **근거 이탈 검출 알고리즘**:
+   - 인출된 답변에 원천 `DocChunk`의 해시 앵커가 누락되었거나, 정형 DW에 없는 수치가 포함되었을 경우 즉각 실패(Fail) 플래그 부여.
+3. **바운더리 질의 회귀 (Boundary Question Regression)**:
+   - 결여 맥락(누락 파라미터·별칭·예외 규칙)을 의도적으로 포함한 질의 10종을 각 10회 반복 실행하여 성공률·일관성·의도 분류 안정성·지연시간을 측정.
+   - SQL 단독 베이스라인을 대조군으로 병기하고, 실패 사례는 원인 유형(엔티티 부재 / 슬롯 필링 부재 / 예외 분기 엣지 누락 / 별칭 사전 미비)으로 분류.
+4. **결과 게시**:
+   - 위 산출물을 `9. Evaluation` 탭(`/api/eval/summary`)에서 디스크 산출물 실측값으로만 집계하여 게시하며, 미수행 회차는 `PENDING`으로 표기.
 
 ### 2.4 Google Cloud Run 프로덕션 컨테이너 배포 원칙 (Rule 15)
 - **호스팅 프로젝트 (Hosting Project)**: `seanjung-poc`, 리전 `asia-northeast3`.
@@ -87,7 +93,8 @@ flowchart TD
 
 ## 3. Stage 5 품질 게이트 (Gate 5 Exit Checklist)
 
-- [ ] 웹 스튜디오가 `05_DESIGN.md` 디자인 표준을 100% 준수하며 장식용 이모지가 배제되었는가?
+- [ ] 웹 스튜디오가 `05_DESIGN.md` 디자인 표준을 준수하며 장식용 이모지가 배제되었는가?
 - [ ] 4-Tier 데이터 리니지가 끊김 없이 역추적 가능한가?
-- [ ] 20대 Golden CQ 자동화 평가에서 수치 일치율 100% 및 0% 환각이 검증되었는가?
-- [ ] Cloud Run 컨테이너가 최소 권한 서비스 계정(SA) 환경에서 정상 배포되어 트래픽 100%를 서빙하는가?
+- [ ] 20대 Golden CQ 루브릭 평균 95점 이상이며, 모든 응답에 근거 출처가 첨부되었는가?
+- [ ] 바운더리 질의 10종 성공률과 실패 원인 분류표가 `9. Evaluation` 화면에 실측값으로 게시되었는가?
+- [ ] Cloud Run 컨테이너가 최소 권한 서비스 계정(SA) 환경에서 정상 배포되어 운영 트래픽을 서빙하는가?

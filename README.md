@@ -1,7 +1,7 @@
 # Agentic Ontology Studio — Enterprise Starter Pack
 ## 엔터프라이즈 에이전틱 온톨로지 스튜디오 스타터 팩 (`Agentic Ontology Studio`)
 
-> **0% 환각(Zero-Hallucination)과 결정론적 계산 신뢰성을 보장하는 엔터프라이즈 지식 온톨로지 & 통합 AI 스튜디오(`Agentic Ontology Studio`, `0. Overview` ~ `8. AI FDE`) 스타터 킷**
+> **근거 출처 기반 응답(Grounded Answering)과 결정론적 계산 신뢰성을 목표로 하는 엔터프라이즈 지식 온톨로지 & 통합 AI 스튜디오(`Agentic Ontology Studio`, `0. Overview` ~ `9. Evaluation`) 스타터 킷**
 
 본 저장소는 기업의 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 규정(SOP/PDF)을 통합하여, 누구나 자신의 비즈니스 데이터만 교체하면 즉시 담백한 원본 YAML Frontmatter 기반 **Karpathy 3-Layer LLM-Wiki (`2. OKF Layer`)**, 선행 **`4. Wiki Agent` (GCS 에이전트)**, **`5. Bigquery Graph` (`SQL:2023 Property Graph`)**, **`6. BQG Agent` (`NL2GQL` 그래프 에이전트)**, `< 5ms` 4-Tier 엔터프라이즈 리니지(`7. Lineage`), 그리고 11종 도메인 MCP 기반 **`8. AI FDE`**를 구동할 수 있는 완성형 스타터 패키지입니다.
 
@@ -15,8 +15,8 @@
 
 **➔ [Agentic Ontology Studio 포털 열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)**
 
-저장소를 복제하거나 설치하지 않고도 8단계 스튜디오의 실제 화면과 데이터 구조를 브라우저에서 바로 확인할 수 있습니다.
-포털은 본 저장소의 `data/` 산출물을 그대로 읽어 렌더링하므로, README에 적힌 구조와 화면이 1:1로 일치합니다.
+저장소를 복제하거나 설치하지 않고도 9단계 스튜디오의 실제 화면과 데이터 구조를 브라우저에서 바로 확인할 수 있습니다.
+포털은 본 저장소의 `data/` 산출물과 `config/portal_profile.json`을 그대로 읽어 렌더링하므로, README에 적힌 구조와 화면이 1:1로 일치합니다.
 
 | 탭 | 바로가기 | 화면에서 확인할 수 있는 것 |
 | :--- | :--- | :--- |
@@ -29,14 +29,16 @@
 | `6. BQG Agent` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=bqg-agent) | `GRAPH_TABLE()` 멀티홉 NL2GQL 추론 콘솔 |
 | `7. Lineage` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=lineage) | `data/` 산출물 기반 4-Tier 계보 및 시맨틱 브릿지 엣지 |
 | `8. AI FDE` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=fde) | 11종 도메인 MCP 오케스트레이션 및 동적 하위 목표 분해 |
+| `9. Evaluation` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=evaluation) | 검증 설계·루브릭·Golden CQ 채점표·바운더리 회귀·실패 원인 분류·회차 비교 |
 | `CQ 벤치마크` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=cq) | 동봉 샘플 데이터셋의 실제 `cq_benchmark_report.json` 실행 결과 |
 
 > 포털에 표시되는 CQ 지표는 저장소에 동봉된 **샘플 데이터셋의 실제 실행 결과**입니다.
-> `0. Overview` Section 4의 20대 골든 CQ 수치는 LG Uplus 레퍼런스 구현에서 측정된 값으로, 화면에 그 출처를 명시했습니다.
+> `0. Overview` Section 4의 수치는 통신 보조금 도메인 레퍼런스 구현에서 측정된 값이며, 고객 식별 정보는 포함하지 않습니다.
+> 산출물 파일이 없는 항목은 값을 만들어 채우지 않고 `9. Evaluation` 화면에 `PENDING`으로 표시됩니다.
 
 ---
 
-### 1. 진화적 온톨로지 통합 아키텍처 및 `Agentic Ontology Studio` (`0. Overview` ~ `8. AI FDE`) 흐름
+### 1. 진화적 온톨로지 통합 아키텍처 및 `Agentic Ontology Studio` (`0. Overview` ~ `9. Evaluation`) 흐름
 
 ```mermaid
 flowchart TD
@@ -135,7 +137,7 @@ agentic-ontology-starter/
 ├── pipeline/                # 원클릭 지식 파이프라인 엔진
 │   ├── ingest.py            # 비정형 파싱, 해시 앵커링, LLM-Wiki 생성, OKF 컴파일러
 │   ├── graph_builder.py     # 2-Layer 안티 리던던시 BigQuery Property Graph DDL 생성기
-│   └── validator.py         # 0% 환각 및 CQ 벤치마크 검증기
+│   └── validator.py         # 근거 첨부 여부 및 CQ 벤치마크 검증기
 ├── src/
 │   ├── agent/               # AI FDE 에이전트 및 MCP 도구셋
 │   │   ├── mcp_server.py    # 11종 멀티도메인 MCP 서버 (비즈니스 5 + 엔지니어링 6)
@@ -158,6 +160,9 @@ agentic-ontology-starter/
 │   ├── 02_finance/          # 2. 핀테크 & 뱅킹 (카카오뱅크, 토스)
 │   ├── 03_retail_commerce/  # 3. 유통 & 이커머스 (GS리테일, CJ대한통운/올리브영)
 │   └── 04_telecommunications/# 4. 통신 & 미디어 (SK텔레콤, KT)
+├── config/                  # 포털 화면을 구동하는 교체 가능한 프로파일
+│   ├── portal_profile.json  # 0. Overview / 9. Evaluation 화면 내용 전체 (도메인 교체 지점)
+│   └── eval_rubric.json     # 5차원 루브릭 정의 템플릿
 ├── methodology/             # 5단계 방법론 명세서 및 10개 하부 가이드
 ├── run_pipeline.py          # 원클릭 파이프라인 실행 진입점
 ├── requirements.txt         # 필수 파이썬 라이브러리
@@ -193,9 +198,9 @@ Google Cloud Customer Engineer(CE), Data Architect, AI Specialist가 Google Cola
 
 | 단계 (Step) | 실습 노트북 (Notebooks) | 연계 표준 방법론 | 핵심 실습 내용 및 산출물 (Core Hands-on & Artifacts) |
 | :---: | :---: | :--- | :--- |
-| **Step 1** | [국문 (KO)](notebooks/01_okf_unstructured_agent_ko.ipynb)<br>[English (EN)](notebooks/01_okf_unstructured_agent_en.ipynb) | [Stage 2: 시맨틱 모델링 & OKF](methodology/02_semantic_modeling_and_okf_ko.md) | • **단순 RAG 결함 극복**: 문맥 단절 및 환각 인용 원천 차단<br>• **무손실 청킹 & SHA-256 앵커링**: `DocChunk` 1:1 불변 해시 부여<br>• **Google OKF v0.2 번들**: `ontology.jsonld` 지식 표준 컴파일<br>• **Karpathy 3-Layer Wiki**: `summary`, `entities`, `concepts`, `rules`<br>• **감사 추적 인출 에이전트**: 0% 환각 법적 원천 근거 인출 |
+| **Step 1** | [국문 (KO)](notebooks/01_okf_unstructured_agent_ko.ipynb)<br>[English (EN)](notebooks/01_okf_unstructured_agent_en.ipynb) | [Stage 2: 시맨틱 모델링 & OKF](methodology/02_semantic_modeling_and_okf_ko.md) | • **단순 RAG 결함 극복**: 문맥 단절 및 환각 인용 원천 차단<br>• **무손실 청킹 & SHA-256 앵커링**: `DocChunk` 1:1 불변 해시 부여<br>• **Google OKF v0.2 번들**: `ontology.jsonld` 지식 표준 컴파일<br>• **Karpathy 3-Layer Wiki**: `summary`, `entities`, `concepts`, `rules`<br>• **감사 추적 인출 에이전트**: 원문 앵커를 첨부한 근거 인출 |
 | **Step 2** | [국문 (KO)](notebooks/02_property_graph_and_gql_ko.ipynb)<br>[English (EN)](notebooks/02_property_graph_and_gql_en.ipynb) | [Stage 3: BQG 엔지니어링 & GQL](methodology/03_property_graph_and_gql_ko.md) | • **DW 원장 직접 승격**: `devices`, `plans`, `subsidies` 물리 노드화 (Zero-Copy)<br>• **2-Layer 안티 리던던시**: 텍스트 중복 엔티티 Pruning (중복 노드 0건)<br>• **ISO SQL:2023 DDL**: 선언적 Property Graph 스키마 자동 합성<br>• **BigQuery GQL 4-Hop**: `GRAPH_TABLE()` 초고속 다중 홉 탐색<br>• **The Remote MCP Gap**: 공식 BigQuery Remote MCP 한계 및 해법 입증 |
-| **Step 3** | [국문 (KO)](notebooks/03_graph_integration_mcp_agent_ko.ipynb)<br>[English (EN)](notebooks/03_graph_integration_mcp_agent_en.ipynb) | [Stage 4: 멀티도메인 MCP & 에이전트](methodology/04_multi_domain_mcp_and_agent_ko.md) | • **AI 인지 과부하 격리**: 원시 SQL 작성 배제, Tier 3 Domain MCP로 캡슐화<br>• **11종 MCP 스위트**: 비즈니스 5종(결정론 연산) + 엔지니어링 6종(DW 실측)<br>• **GCP Native First**: Dataplex/BigQuery 원천 스펙과 커스텀 분계선 체득<br>• **동적 하위 목표 분해 (`Sub-Goals`)**: 비즈니스-엔지니어링 시퀀셜 체이닝<br>• **수학적 결정론성**: 180일 식스플랜 일할 위약금(100,000원) 및 시니어 면제(0원)<br>• **Golden CQ 벤치마크**: 20대 평가 질문 100% Pass / 0% 환각 검증 |
+| **Step 3** | [국문 (KO)](notebooks/03_graph_integration_mcp_agent_ko.ipynb)<br>[English (EN)](notebooks/03_graph_integration_mcp_agent_en.ipynb) | [Stage 4: 멀티도메인 MCP & 에이전트](methodology/04_multi_domain_mcp_and_agent_ko.md) | • **AI 인지 과부하 격리**: 원시 SQL 작성 배제, Tier 3 Domain MCP로 캡슐화<br>• **11종 MCP 스위트**: 비즈니스 5종(결정론 연산) + 엔지니어링 6종(DW 실측)<br>• **GCP Native First**: Dataplex/BigQuery 원천 스펙과 커스텀 분계선 체득<br>• **동적 하위 목표 분해 (`Sub-Goals`)**: 비즈니스-엔지니어링 시퀀셜 체이닝<br>• **수학적 결정론성**: 180일 식스플랜 일할 위약금(100,000원) 및 시니어 면제(0원)<br>• **Golden CQ 벤치마크**: 평가 질문 전수 실행 및 근거 앵커 첨부 검증 |
 | **통합본** | [올인원 (KO/EN)](notebooks/agentic_ontology_ce_walkthrough.ipynb) | [종합 표준 방법론 전체](methodology/README.md) | Step 1 ~ Step 3의 전 과정을 하나의 연속된 실행 흐름으로 체험하는 29개 셀 워크스루 |
 
 #### 노트북 실행 방법:
@@ -209,7 +214,7 @@ python3 notebooks/generate_modular_notebooks.py
 
 ---
 
-### 7. Agentic Ontology Studio 화면 구성 (`0. Overview` ~ `8. AI FDE`)
+### 7. Agentic Ontology Studio 화면 구성 (`0. Overview` ~ `9. Evaluation`)
 
 `DESIGN.md` 표준을 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`, 외부 종속성 0개)가 제공됩니다.
 아래 구성은 [라이브 포털](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)에서 그대로 확인할 수 있습니다.
@@ -225,6 +230,7 @@ python3 notebooks/generate_modular_notebooks.py
 | **`6. BQG Agent`** | `GRAPH_TABLE()` 멀티홉 NL2GQL 추론 콘솔 — 정형 원장과 비정형 규정을 실시간 교차 검증 |
 | **`7. Lineage`** | `data/` 산출물을 직접 읽어 계산한 4-Tier 계보(Raw ➔ OKF ➔ Property Graph ➔ Agent)와 시맨틱 브릿지 엣지 테이블 |
 | **`8. AI FDE`** | 11종 도메인 MCP 도구 카탈로그(비즈니스 5 · 엔지니어링 6), 동적 하위 목표 분해 및 시퀀셜 체이닝 타임라인 |
+| **`9. Evaluation`** | 검증 설계(질문셋 3종 · 루브릭 5차원), 종합 KPI, Golden CQ 채점표, 바운더리 질의 회귀, 실패 원인 분류, 회차 비교. 디스크 산출물만 집계하며 없는 항목은 `PENDING` |
 | **`CQ 벤치마크`** | `0. Overview` Section 4 버튼으로 진입. `data/output/cq_benchmark_report.json`을 그대로 읽어 CQ별 근거 앵커까지 표시 |
 
 `4. Wiki Agent`, `6. BQG Agent`, `8. AI FDE`는 동일한 추론 콘솔을 공유하되, 상단 모드 바에 각 에이전트의
@@ -252,14 +258,31 @@ python3 run_pipeline.py
 > - `data/llm_wiki/`: Karpathy 3-Layer 위키 (`summary.md`, `entities.md`, `concepts.md`, `rules.md`)
 > - `data/output/ontology.jsonld`: OKF v0.2 지식 온톨로지
 > - `data/output/create_property_graph.sql`: BigQuery Property Graph 물리 DDL
-> - `data/output/cq_benchmark_report.json`: 100% 수치 일치율 및 0% 환각 검증 리포트
+> - `data/output/cq_benchmark_report.json`: CQ별 실행 결과와 근거 앵커가 기록된 벤치마크 리포트
 
 #### 3단계: Agentic Ontology Studio 실행
 ```bash
 python3 -m src.web.studio_server
 ```
-브라우저에서 `http://127.0.0.1:8088`에 접속하면 `0. Overview` ~ `8. AI FDE` 전 구간을 확인할 수 있습니다.
-특정 탭으로 바로 이동하려면 `http://127.0.0.1:8088/?tab=lineage`처럼 `?tab=` 파라미터를 사용합니다.
+브라우저에서 `http://127.0.0.1:8088`에 접속하면 `0. Overview` ~ `9. Evaluation` 전 구간을 확인할 수 있습니다.
+특정 탭으로 바로 이동하려면 `http://127.0.0.1:8088/?tab=evaluation`처럼 `?tab=` 파라미터를 사용합니다.
+
+#### 3-1단계: 내 도메인 데이터로 교체하기 (코드 수정 없음)
+`0. Overview`와 `9. Evaluation` 화면은 코드가 아니라 아래 두 파일에서 내용을 읽어 그립니다.
+
+| 교체 대상 | 파일 | 바뀌는 화면 |
+| :--- | :--- | :--- |
+| 스테이지·스텝 흐름, 피처 갭 표, 레퍼런스 지표 | `config/portal_profile.json` ➔ `overview` | `0. Overview` 전체 |
+| 질문셋 설계, 실패 원인 분류, 회차 정의 | `config/portal_profile.json` ➔ `evaluation` | `9. Evaluation` A · E · F 섹션 |
+| 루브릭 차원과 가중치 | `config/eval_rubric.json` | `9. Evaluation` A 섹션 루브릭 카드 |
+| 실제 채점 결과 | `data/output/cq_benchmark_report.json` | `9. Evaluation` B · C 섹션 |
+| 바운더리 회귀 결과 | `data/output/boundary_benchmark_results.json` | `9. Evaluation` B · D 섹션 |
+
+다른 경로의 프로파일을 쓰려면 환경변수로 지정합니다.
+```bash
+PORTAL_PROFILE=config/my_domain_profile.json python3 -m src.web.studio_server
+```
+테마·레이아웃·탭 구성·에이전트 콘솔 동작은 그대로 유지되고, 화면에 채워지는 데이터만 바뀝니다.
 
 #### 4단계 (선택): Cloud Run 배포
 컨테이너는 표준 라이브러리만 사용하므로 별도 빌드 설정 없이 그대로 배포됩니다.

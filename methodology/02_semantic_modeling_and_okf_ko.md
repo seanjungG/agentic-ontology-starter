@@ -57,7 +57,7 @@ flowchart TD
    - 문서의 시각적 계층(H1, H2, 표 원본, 주의사항 박스)을 보존하는 **구조적 청킹(Structural Chunking)**을 적용합니다.
 2. **불변 해시 앵커 (`DocChunk`)**:
    - 각 청크 본문과 상위 헤더 경로를 기반으로 고유 식별자(`DOC_CHUNK_XXX`)를 부여합니다.
-   - LLM이 답변을 생성할 때 반드시 해당 청크의 해시 식별자를 증거로 인용하도록 강제하여 0% 환각 및 완벽한 감사 추적성을 확보합니다.
+   - LLM이 답변을 생성할 때 반드시 해당 청크의 해시 식별자를 증거로 인용하도록 강제하여 근거 추적성을 확보합니다.
 
 ### 2.2 Karpathy 스타일 Open Knowledge Format (OKF v0.2) 및 LLM-Wiki 구조
 Google Cloud OKF v0.2 표준과 Andrej Karpathy의 3-Layer Wiki 아키텍처를 결합하여 도메인 지식을 체계화합니다:

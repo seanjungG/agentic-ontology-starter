@@ -18,16 +18,16 @@ Traditional enterprise generative AI implementations have predominantly relied o
 
 ### 1.2 Core Architectural Principles of the 5-Stage Methodology
 This methodology formalizes an end-to-end engineering lifecycle that unifies structured datasets and unstructured policies into a singular **Knowledge Ontology** and physical **BigQuery Property Graph**, orchestrated transparently via a **Multi-Domain MCP Suite**:
-- **Zero-Hallucination Grounding**: Deterministic computation blending enterprise DW ledgers and codified business rules.
+- **Grounded Answering**: Deterministic computation blending enterprise DW ledgers and codified business rules.
 - **2-Layer Anti-Redundancy Refinement**: Direct promotion of existing DW tables to graph nodes without duplicating underlying storage.
 - **Cross-Domain Reasoning**: Dynamic decomposition and sequential chaining between domain business logic and engineering infrastructure tools.
 - **Strict 5-Stage Phase-Gate Control**: Distinct milestone inputs, outputs, and quality acceptance criteria capped at 5 stages.
 
-### 1.3 System Executive Summary and the 5-Stage ↔ 8-Step Studio Mapping
+### 1.3 System Executive Summary and the 5-Stage ↔ 9-Step Studio Mapping
 > **Business & Ontology System Executive Definition**  
 > This platform unifies **fragmented enterprise structured ledgers (BigQuery DW) and unstructured policy/contract documents (GCS/PDF/HTML) into a single Semantic Knowledge Graph (Property Graph)**, so that agents can reason over and execute complex business decisions without hallucination.
 
-The execution unit of this methodology is the **5-stage framework (Stage 1–5)**. The unit users actually see in `Agentic Ontology Studio` is the set of **8 step tabs (STEP 1–8)**. The two schemes map one-to-many as shown below, and stage numbers in this document always follow this mapping.
+The execution unit of this methodology is the **5-stage framework (Stage 1–5)**. The unit users actually see in `Agentic Ontology Studio` is the set of **9 step tabs (STEP 1–9)**. The two schemes map one-to-many as shown below, and stage numbers in this document always follow this mapping.
 
 | Stage | Methodology Stage | Studio STEP (tab) | Key Deliverable IDs |
 | :--- | :--- | :--- | :--- |
@@ -35,7 +35,7 @@ The execution unit of this methodology is the **5-stage framework (Stage 1–5)*
 | **Stage 2** | Semantic Modeling, OKF Formalization & Grounding | `STEP 2 · 2. OKF Layer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (exit-gate validation) |
 | **Stage 3** | BigQuery Property Graph Engineering & GQL Compilation | `STEP 5 · 5. Bigquery Graph` | `D3.1` – `D3.4` |
 | **Stage 4** | Multi-Domain MCP Suite Packaging & Agentic Orchestration | `STEP 6 · 6. BQG Agent` | `D4.1` – `D4.4` |
-| **Stage 5** | Enterprise Studio Integration, Automated Evaluation & Production Deployment | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE` | `D5.1` `D5.2`<br>`D5.3` `D5.4` |
+| **Stage 5** | Enterprise Studio Integration, Automated Evaluation & Production Deployment | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE`<br>`STEP 9 · 9. Evaluation` | `D5.1` `D5.2`<br>`D5.3` `D5.4`<br>`D5.5` |
 
 **Why two agents are built sequentially (`4. Wiki Agent` ➔ `6. BQG Agent`)**
 
@@ -395,7 +395,7 @@ sequenceDiagram
 > 📘 **Detailed Execution Guide**: [05_enterprise_studio_and_deployment_en.md](./05_enterprise_studio_and_deployment_en.md)
 
 #### 1. Objective & Scope
-Stage 5 deploys a unified enterprise web console adhering to enterprise design standards, provides 4-tier data lineage visualization, executes automated regression evaluation across 20 Golden CQs to certify zero hallucination, and delivers containerized production deployment on Google Cloud Run with least-privilege IAM governance.
+Stage 5 deploys a unified enterprise web console adhering to enterprise design standards, provides 4-tier data lineage visualization, executes rubric-scored evaluation across 20 Golden CQs plus boundary-question regression, and delivers containerized production deployment on Google Cloud Run with least-privilege IAM governance.
 
 #### 2. Detailed Work Items
 1. **Unified Enterprise Web Studio Implementation**:
@@ -449,8 +449,9 @@ flowchart LR
 | :--- | :--- | :--- | :--- | :--- |
 | `D5.1` | Unified Enterprise Web Studio Suite | Python / HTML / JS (`src/web/`) | 5 integrated web studios, responsive UI, bilingual localization | Frontend / Fullstack |
 | `D5.2` | 4-Tier End-to-End Lineage Specification | Markdown (`LINEAGE_ARCHITECTURE.md`) | Lineage graph architecture, provenance tracing, audit viewer | Data Architect |
-| `D5.3` | Automated Golden CQ Evaluation Report | Markdown / JSON (`CQ_EVALUATION_REPORT.md`) | 20 CQ benchmark execution results, numerical accuracy, zero hallucination audit | QA Lead / FDE |
+| `D5.3` | Automated Golden CQ Evaluation Report | Markdown / JSON (`CQ_EVALUATION_REPORT.md`) | 20 CQ benchmark execution results, 5-dimension rubric scoring, deduction rationale and cited sources | QA Lead / FDE |
 | `D5.4` | Cloud Run Deployment Scripts & Operations Runbook | Shell / Markdown (`OPERATIONAL_RUNBOOK.md`) | Container build, gcloud deployment commands, health checks, IAM | DevOps / Cloud Architect |
+| `D5.5` | Evaluation Report Studio (`9. Evaluation`) | Python / JSON (`/api/eval/summary`) | Measured aggregation of Golden CQ, boundary-question and rubric artifacts; failure taxonomy; round comparison | QA Lead / FDE |
 
 ---
 
@@ -478,6 +479,7 @@ flowchart LR
 | | `D5.2` | 4-Tier End-to-End Lineage Specification | **A/R** | C | C | I | I |
 | | `D5.3` | Automated Golden CQ Evaluation Report | I | I | I | C | **A/R** |
 | | `D5.4` | Cloud Run Deployment Scripts & Operations Runbook | C | **R** | I | **A** | I |
+| | `D5.5` | Evaluation Report Studio (`9. Evaluation`) | I | C | I | **R** | **A** |
 
 > **RACI Legend**:
 > - **A (Accountable)**: Final sign-off authority and quality owner.
@@ -496,4 +498,4 @@ flowchart LR
 | **Gate 2** | Semantic Ontology Model Sign-off | - Formal approval of OKF 3-layer conceptual taxonomy<br/>- 100% of policy text chunks assigned immutable hash anchors<br/>- Verified 2-layer anti-redundancy semantic bridge mapping | `D2.1`, `D2.2`, `D2.4` |
 | **Gate 3** | Property Graph DDL Sign-off | - Error-free compilation of BigQuery Property Graph DDL<br/>- Verified projection of 7 node tables and 5 edge tables<br/>- Demonstrated query expressiveness and efficiency of GQL over SQL | `D3.1`, `D3.3`, `D3.4` |
 | **Gate 4** | MCP Suite & Agentic Routing Sign-off | - Verified contract tests for all 11 domain MCP tools<br/>- Successful execution of multi-goal decomposition & sequential chaining<br/>- Validated guardrails for ambiguous terms and restricted permissions | `D4.1`, `D4.2`, `D4.4` |
-| **Gate 5** | Production Readiness & Go-Live Sign-off | - 100% compliance with enterprise UI design system (`05_DESIGN.md`)<br/>- 100% accuracy and zero hallucination verified across 20 Golden CQs<br/>- Successful Cloud Run deployment with IAM security audit clearance | `D5.1`, `D5.3`, `D5.4` |
+| **Gate 5** | Production Readiness & Go-Live Sign-off | - Compliance with the enterprise UI design system (`05_DESIGN.md`)<br/>- Golden CQ rubric average of 95 or above with source citations on every answer<br/>- Boundary-question success rate and failure taxonomy published as measured values on `9. Evaluation`<br/>- Successful Cloud Run deployment with IAM security audit clearance | `D5.1`, `D5.3`, `D5.4`, `D5.5` |

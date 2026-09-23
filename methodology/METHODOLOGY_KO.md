@@ -18,16 +18,16 @@
 
 ### 1.2 5단계 하이브리드 온톨로지 방법론의 핵심 원칙
 본 방법론은 정형 데이터와 비정형 규정을 하나의 일관된 **지식 온톨로지(Knowledge Ontology)** 및 **물리 프로퍼티 그래프(BigQuery Property Graph)**로 통합하고, 이를 **멀티도메인 MCP 스위트**를 통해 에이전트에 공급하는 5단계 표준 수명주기를 규정합니다:
-- **0% 환각 (Zero-Hallucination Grounding)**: 정형 DW 원장과 결정론적 규칙 엔진 결합.
+- **근거 기반 그라운딩 (Grounded Answering)**: 정형 DW 원장과 결정론적 규칙 엔진 결합.
 - **2-Layer 안티 리던던시 (Anti-Redundancy Refinement)**: 정형 테이블을 별도 중복 저장하지 않고 그래프 노드로 직접 승격.
 - **크로스도메인 투명성 (Cross-Domain Reasoning)**: 비즈니스 정책과 엔지니어링 인프라 도구의 동적 분해 및 체이닝.
 - **5단계 수명주기 통제 (Strict 5-Stage Gate)**: 단계별 명확한 입출력 산출물과 검수 기준 수립.
 
-### 1.3 비즈니스·온톨로지 시스템 개요와 5-Stage ↔ 8-Step 스튜디오 매핑
+### 1.3 비즈니스·온톨로지 시스템 개요와 5-Stage ↔ 9-Step 스튜디오 매핑
 > **비즈니스 및 온톨로지 시스템 핵심 정의 (Executive Summary)**  
 > 본 시스템은 엔터프라이즈 도메인에 산재된 **파편화된 정형 원장(BigQuery DW)과 비정형 규정·약관 문서(GCS/PDF/HTML)를 단일 시맨틱 지식그래프(Property Graph)로 통합**하여, 에이전트가 환각 없이 복합 비즈니스 의사결정을 추론·실행하는 엔터프라이즈 온톨로지 플랫폼입니다.
 
-본 방법론의 실행 단위는 **5단계(Stage 1~5) 프레임워크**이며, 실제 산출물을 눈으로 확인하는 화면 단위는 `Agentic Ontology Studio`의 **8개 스텝 탭(STEP 1~8)**입니다. 두 체계는 아래 표와 같이 1:N으로 대응하며, 본 문서의 Stage 번호와 스튜디오의 STEP 번호는 항상 이 매핑을 따릅니다.
+본 방법론의 실행 단위는 **5단계(Stage 1~5) 프레임워크**이며, 실제 산출물을 눈으로 확인하는 화면 단위는 `Agentic Ontology Studio`의 **9개 스텝 탭(STEP 1~9)**입니다. 두 체계는 아래 표와 같이 1:N으로 대응하며, 본 문서의 Stage 번호와 스튜디오의 STEP 번호는 항상 이 매핑을 따릅니다.
 
 | Stage | 방법론 단계 명칭 | 스튜디오 STEP (탭) | 핵심 산출물 ID |
 | :--- | :--- | :--- | :--- |
@@ -35,7 +35,7 @@
 | **Stage 2** | 시맨틱 모델링, OKF 정형화 및 그라운딩 | `STEP 2 · 2. OKF Layer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (종료 게이트 검증) |
 | **Stage 3** | BigQuery Property Graph 엔지니어링 및 GQL 질의 체계 | `STEP 5 · 5. Bigquery Graph` | `D3.1` ~ `D3.4` |
 | **Stage 4** | 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 | `STEP 6 · 6. BQG Agent` | `D4.1` ~ `D4.4` |
-| **Stage 5** | 엔터프라이즈 스튜디오 구축, 자동화 검증 및 프로덕션 배포 | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE` | `D5.1` `D5.2`<br>`D5.3` `D5.4` |
+| **Stage 5** | 엔터프라이즈 스튜디오 구축, 자동화 검증 및 프로덕션 배포 | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE`<br>`STEP 9 · 9. Evaluation` | `D5.1` `D5.2`<br>`D5.3` `D5.4`<br>`D5.5` |
 
 **두 개의 에이전트를 순차적으로 구축하는 이유 (`4. Wiki Agent` ➔ `6. BQG Agent`)**
 
@@ -333,7 +333,7 @@ flowchart TD
 > 📘 **하부 세부 실행 명세서**: [04_multi_domain_mcp_and_agent_ko.md](./04_multi_domain_mcp_and_agent_ko.md)
 
 #### 1. 개요 및 목적
-AI 에이전트가 복잡한 물리 데이터베이스 스키마나 원시 GQL/SQL 조인 쿼리를 직접 작성하지 않도록, 도메인 온톨로지의 비즈니스 개념과 엔지니어링 역량을 **도메인 온톨로지 MCP 추상화 계층(Domain Ontology MCP Layer)**으로 캡슐화합니다. 에이전트는 이 고수준 인터페이스를 통해 복합 질의를 하위 목표로 동적 분해하고, 도메인 도구와 엔지니어링 도구를 상호 체이닝하여 0% 환각의 결정론적 결론을 도출합니다.
+AI 에이전트가 복잡한 물리 데이터베이스 스키마나 원시 GQL/SQL 조인 쿼리를 직접 작성하지 않도록, 도메인 온톨로지의 비즈니스 개념과 엔지니어링 역량을 **도메인 온톨로지 MCP 추상화 계층(Domain Ontology MCP Layer)**으로 캡슐화합니다. 에이전트는 이 고수준 인터페이스를 통해 복합 질의를 하위 목표로 동적 분해하고, 도메인 도구와 엔지니어링 도구를 상호 체이닝하여 원천 데이터에 근거한 결정론적 결론을 도출합니다.
 
 #### 2. 핵심 작업 항목 (Work Items)
 1. **도메인 온톨로지 추상화 계층 구축 (11종 MCP 도구 스위트)**:
@@ -439,7 +439,7 @@ flowchart LR
 
     subgraph Tier4 ["Tier 4: MCP & AI 에이전트"]
         T4_MCP["11종 MCP 스위트 (비즈니스/엔지니어링)"]
-        T4_Agent["AI FDE 에이전트 (0% 환각 리포트)"]
+        T4_Agent["AI FDE 에이전트 (근거 출처 첨부 리포트)"]
     end
 
     Tier1 --> Tier2 --> Tier3 --> Tier4
@@ -450,8 +450,9 @@ flowchart LR
 | :--- | :--- | :--- | :--- | :--- |
 | `D5.1` | 엔터프라이즈 통합 웹 스튜디오 소스 코드 | Python / HTML / JS (`src/web/`) | 5대 통합 스튜디오 구현체, 반응형 UI, 영문/국문 로컬라이제이션 | Frontend / Fullstack |
 | `D5.2` | 4-Tier 엔드투엔드 데이터 리니지 명세서 | Markdown (`LINEAGE_ARCHITECTURE.md`) | 4-Tier 데이터 흐름, 노드 간 감사 추적 경로, 리니지 뷰어 | Data Architect |
-| `D5.3` | 20대 Golden CQ 자동화 평가 결과 보고서 | Markdown / JSON (`CQ_EVALUATION_REPORT.md`) | 20대 질의 전수 검증 결과, 수치 일치율, 환각 지수 0% 인증 | QA Lead / FDE |
+| `D5.3` | 20대 Golden CQ 자동화 평가 결과 보고서 | Markdown / JSON (`CQ_EVALUATION_REPORT.md`) | 20대 질의 전수 실행 결과, 5차원 루브릭 채점, 감점 사유 및 근거 출처 기록 | QA Lead / FDE |
 | `D5.4` | Cloud Run 무중단 배포 스크립트 및 운영 런북 | Shell / Markdown (`OPERATIONAL_RUNBOOK.md`) | Docker 빌드, gcloud 배포 절차, 헬스체크, IAM 거버넌스 | DevOps / Cloud Architect |
+| `D5.5` | 검증 리포트 스튜디오 (`9. Evaluation`) | Python / JSON (`/api/eval/summary`) | 골든 CQ·바운더리 질의·루브릭 3종 산출물 실측 집계 화면, 실패 원인 분류, 회차별 비교 | QA Lead / FDE |
 
 ---
 
@@ -479,6 +480,7 @@ flowchart LR
 | | `D5.2` | 4-Tier 엔드투엔드 데이터 리니지 명세서 | **A/R** | C | C | I | I |
 | | `D5.3` | 20대 Golden CQ 자동화 평가 결과 보고서 | I | I | I | C | **A/R** |
 | | `D5.4` | Cloud Run 무중단 배포 스크립트 및 운영 런북 | C | **R** | I | **A** | I |
+| | `D5.5` | 검증 리포트 스튜디오 (`9. Evaluation`) | I | C | I | **R** | **A** |
 
 > **RACI 기호 정의**:
 > - **A (Accountable)**: 최종 승인권자 (산출물 품질 최종 책임)
@@ -497,4 +499,4 @@ flowchart LR
 | **Gate 2** | 시맨틱 온톨로지 모델 승인 | - OKF 3-Layer 개념 모델 검수 완료<br/>- 비정형 텍스트 청크 100% 고유 해시 앵커 부여<br/>- 2-Layer 안티 리던던시 브릿지 매핑 검증 | `D2.1`, `D2.2`, `D2.4` |
 | **Gate 3** | 프로퍼티 그래프 DDL 승인 | - BigQuery Property Graph DDL 정상 컴파일<br/>- 노드 7종/엣지 5종 무복제 프로젝션 실측<br/>- GQL 질의 응답 시간 및 SQL 대비 효율성 입증 | `D3.1`, `D3.3`, `D3.4` |
 | **Gate 4** | MCP 스위트 및 에이전트 승인 | - 11종 도메인 MCP 도구 규약 테스트 통과<br/>- 복합 질의 2단계 시퀀셜 체이닝 및 핸드오프 검증<br/>- 예외/모호 질의 가드레일 정상 작동 확인 | `D4.1`, `D4.2`, `D4.4` |
-| **Gate 5** | 프로덕션 운영 및 서비스 승인 | - 엔터프라이즈 디자인 표준 100% 준수 확인<br/>- 20대 Golden CQ 평가 수치 일치율 100% 달성<br/>- Cloud Run 프로덕션 배포 및 IAM 보안 감사 통과 | `D5.1`, `D5.3`, `D5.4` |
+| **Gate 5** | 프로덕션 운영 및 서비스 승인 | - 엔터프라이즈 디자인 표준(`05_DESIGN.md`) 준수 확인<br/>- 20대 Golden CQ 루브릭 평균 95점 이상, 모든 응답에 근거 출처 첨부<br/>- 바운더리 질의 10종 성공률 및 실패 원인 분류표 `9. Evaluation` 화면에 실측 게시<br/>- Cloud Run 프로덕션 배포 및 IAM 보안 감사 통과 | `D5.1`, `D5.3`, `D5.4`, `D5.5` |
