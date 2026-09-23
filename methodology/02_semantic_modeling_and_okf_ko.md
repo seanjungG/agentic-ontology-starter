@@ -1,7 +1,7 @@
 # Stage 2: 시맨틱 지식 온톨로지 모델링 및 정형화 세부 실행 명세서
 ## Stage 2: Semantic Modeling, Open Knowledge Formalization & Grounding Detailed Execution Guide (KO)
 
-- **상위 방법론**: [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md)
+- **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
 - **문서 버전**: `v1.0.0`
 - **목적**: 비정형 문서를 구조적으로 분해하여 결정론적 불변 해시 앵커(`DocChunk`)를 부여하고, Google Cloud Open Knowledge Format (OKF v0.2) 기반으로 개념·엔티티·규칙을 정형화하며, 정형 DW 원장 테이블을 노드로 직접 승격시키는 2-Layer 안티 리던던시(Anti-Redundancy) 지식 모델 구축 표준 절차 명세
 

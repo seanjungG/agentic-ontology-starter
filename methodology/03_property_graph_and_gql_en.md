@@ -1,7 +1,7 @@
 # Stage 3: BigQuery Property Graph Engineering & GQL Compilation Detailed Execution Guide
 ## Stage 3: Property Graph & GQL Compilation (English Edition)
 
-- **Master Methodology**: [METHODOLOGY_EN.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_EN.md)
+- **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.0.0`
 - **Objective**: Physically implement the hybrid ontology into Google Cloud BigQuery SQL:2023 Property Graph, achieve zero-copy node/edge projection, and engineer a multi-hop Graph Query Language (GQL) template engine.
 

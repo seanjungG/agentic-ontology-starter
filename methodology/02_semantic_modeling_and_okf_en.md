@@ -1,7 +1,7 @@
 # Stage 2: Semantic Modeling, Open Knowledge Formalization & Grounding Detailed Execution Guide
 ## Stage 2: Semantic Modeling, OKF & Grounding (English Edition)
 
-- **Master Methodology**: [METHODOLOGY_EN.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_EN.md)
+- **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.0.0`
 - **Objective**: Structure unstructured policy guides into deterministic chunks with immutable cryptographic hash anchors (`DocChunk`), formalize concepts and rules using Google Cloud Open Knowledge Format (OKF v0.2), and build a 2-Layer Anti-Redundancy knowledge model promoting existing DW tables directly to graph nodes.
 
