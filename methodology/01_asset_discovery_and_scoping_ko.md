@@ -1,7 +1,7 @@
 # Stage 1: 자산 탐색, 도메인 스코핑 및 거버넌스 수집 세부 실행 명세서
 ## Stage 1: Asset Discovery, Scoping & Governance Ingestion Detailed Execution Guide (KO)
 
-- **상위 방법론**: [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md)
+- **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
 - **문서 버전**: `v1.0.0`
 - **목적**: 기업 내 분산된 정형 DW 원장과 비정형 업무 규정을 식별하고, 불필요한 노이즈를 사전에 배제(Pruning)하며, 20대 핵심 역량 질문(Golden CQs)과 Dataplex 거버넌스 메타데이터를 통합 수집하는 표준 절차 명세
 

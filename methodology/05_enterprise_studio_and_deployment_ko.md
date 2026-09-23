@@ -1,21 +1,21 @@
 # Stage 5: 엔터프라이즈 스튜디오 구축, 자동화 검증 및 프로덕션 배포 세부 실행 명세서
 ## Stage 5: Enterprise Studio Integration, Automated Evaluation & Production Deployment Detailed Execution Guide (KO)
 
-- **상위 방법론**: [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md)
-- **문서 버전**: `v1.0.0`
-- **목적**: `05_DESIGN.md` 표준을 100% 준수하는 엔터프라이즈 웹 스튜디오 5종을 구축하고, 4-Tier 데이터 리니지를 시각화하며, 20대 Golden CQ 기반 자동화 0% 환각 평가 및 Google Cloud Run 컨테이너 무중단 배포를 완결하는 표준 절차 명세
+- **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
+- **문서 버전**: `v1.1.0`
+- **목적**: `05_DESIGN.md` 표준을 준수하는 **`Agentic Ontology Studio - LG Uplus` 9단계 통합 웹 스튜디오(`1. Overview` ~ `9. Agent`)**를 구축하고, 4-Tier 데이터 리니지(`2. Lineage`)를 시각화하며, 20대 Golden CQ 기반 자동화 0% 환각 평가 및 Google Cloud Run 컨테이너 무중단 배포를 완결하는 표준 절차 명세
 
 ---
 
 ## 1. 전체 실행 프로세스 (Overall Execution Process)
 
-Stage 5는 구축된 지식 온톨로지, 물리 그래프 및 에이전트를 실사용자가 직관적으로 검증하고 운영할 수 있도록 통합 웹 스튜디오를 제공하고, 프로덕션 환경으로 안전하게 릴리스하는 최종 인도 단계입니다.
+Stage 5는 구축된 지식 온톨로지, 물리 그래프 및 에이전트를 실사용자가 직관적으로 검증하고 운영할 수 있도록 9단계 통합 웹 스튜디오를 제공하고, 프로덕션 환경으로 안전하게 릴리스하는 최종 인도 단계입니다.
 
 ```mermaid
 flowchart TD
-    subgraph Step1 ["Step 5.1: 05_DESIGN.md 준수 엔터프라이즈 웹 스튜디오 구축"]
-        DesignToken["디자인 표준 준수<br/>- Pretendard 타이포그래피<br/>- Apple/Google Enterprise 다크 테마<br/>- 장식용 만화 이모지 0건 원칙"]
-        Studios["통합 스튜디오 5종 완비<br/>- 파이프라인 모니터링 (/pipeline)<br/>- 자산 레지스트리 거버넌스 (/)<br/>- BQG 그래프 탐색기 (/hybrid-graph)<br/>- CQ 벤치마크 콘솔 (/cq-studio)<br/>- AI FDE 엔지니어 콘솔 (/fde)"]
+    subgraph Step1 ["Step 5.1: 05_DESIGN.md 준수 9단계 엔터프라이즈 웹 스튜디오 구축"]
+        DesignToken["디자인 표준 준수<br/>- Pretendard 타이포그래피<br/>- Apple/Google Enterprise 테마<br/>- 44px 글로벌 탑바 & 52px 서브바 통일"]
+        Studios["Agentic Ontology Studio 9-Tab 완비<br/>- 1. Overview (비즈니스 개요 & GCP 아키텍처 & 피처갭)<br/>- 2. Lineage / 3. Glossaries / 4. Wiki Agent<br/>- 5. Bigquery Graph / 6. BQG Agent<br/>- 7. FDE / 8. Governance / 9. Agent"]
         DesignToken --> Studios
     end
 

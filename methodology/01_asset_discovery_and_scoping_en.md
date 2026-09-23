@@ -1,7 +1,7 @@
 # Stage 1: Asset Discovery, Scoping & Governance Ingestion Detailed Execution Guide
 ## Stage 1: Asset Discovery, Scoping & Governance Ingestion (English Edition)
 
-- **Master Methodology**: [METHODOLOGY_EN.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_EN.md)
+- **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.0.0`
 - **Objective**: Identify distributed structured DW ledgers and unstructured SOP manuals across the enterprise, proactively prune irrelevant noise, formulate 20 Golden Competency Questions (CQs), and ingest metadata into Google Cloud Dataplex Knowledge Catalog.
 

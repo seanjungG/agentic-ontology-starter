@@ -1,7 +1,7 @@
 # Stage 3: BigQuery Property Graph 엔지니어링 및 GQL 질의 체계 세부 실행 명세서
 ## Stage 3: BigQuery Property Graph Engineering & GQL Compilation Detailed Execution Guide (KO)
 
-- **상위 방법론**: [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md)
+- **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
 - **문서 버전**: `v1.0.0`
 - **목적**: Stage 2에서 정립된 하이브리드 온톨로지를 Google Cloud BigQuery SQL:2023 Property Graph 표준으로 물리 구현하고, 무복제(Zero-Copy) 노드/엣지 프로젝션 및 다중 홉 GQL(Graph Query Language) 템플릿 엔진을 구축하는 표준 절차 명세
 

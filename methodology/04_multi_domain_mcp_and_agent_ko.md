@@ -1,7 +1,7 @@
 # Stage 4: 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 세부 실행 명세서
 ## Stage 4: Multi-Domain MCP Suite Packaging & Agentic Orchestration Detailed Execution Guide (KO)
 
-- **상위 방법론**: [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md)
+- **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
 - **문서 버전**: `v1.0.0`
 - **목적**: 온톨로지 지식과 물리 그래프 탐색을 Model Context Protocol (MCP) 표준 도구로 패키징하고, 복합 질의를 하위 목표로 동적 분해하여 비즈니스-엔지니어링 크로스도메인 시퀀셜 체이닝을 실행하는 지능형 AI FDE 오케스트레이터 구축 표준 절차 명세
 

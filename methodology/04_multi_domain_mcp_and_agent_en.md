@@ -1,7 +1,7 @@
 # Stage 4: Multi-Domain MCP Suite Packaging & Agentic Orchestration Detailed Execution Guide
 ## Stage 4: Multi-Domain MCP Suite & Agentic Orchestration (English Edition)
 
-- **Master Methodology**: [METHODOLOGY_EN.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_EN.md)
+- **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.0.0`
 - **Objective**: Package domain ontology and graph engines into standardized Model Context Protocol (MCP) tools, and orchestrate an autonomous AI Forward Deployed Engineer (FDE) agent capable of dynamic multi-goal decomposition and cross-domain sequential chaining.
 

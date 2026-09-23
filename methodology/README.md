@@ -57,17 +57,17 @@ flowchart TD
 #### 마스터 총괄 가이드
 | 문서명 (Master Document) | 언어 (Language) | 주요 내용 및 목적 |
 | :--- | :---: | :--- |
-| [METHODOLOGY_KO.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_KO.md) | 한국어 (Korean) | 진화적 통합 아키텍처, 5단계 표준 라이프사이클 마스터 명세서, RACI 매트릭스, 종합 품질 게이트 |
-| [METHODOLOGY_EN.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/METHODOLOGY_EN.md) | 영어 (English) | Evolutionary Architecture Framework, Master 5-Stage Specification, RACI Matrix, Quality Gates |
+| [METHODOLOGY_KO.md](./METHODOLOGY_KO.md) | 한국어 (Korean) | 진화적 통합 아키텍처, 5단계 표준 라이프사이클 마스터 명세서, RACI 매트릭스, 종합 품질 게이트 |
+| [METHODOLOGY_EN.md](./METHODOLOGY_EN.md) | 영어 (English) | Evolutionary Architecture Framework, Master 5-Stage Specification, RACI Matrix, Quality Gates |
 
 #### 5대 단계별 세부 하부 실행 명세서 (Detailed Stage Sub-Documents)
 | 단계 (Stage) | 한국어 상세 명세서 (KO) | 영어 상세 명세서 (EN) | 핵심 다이어그램 및 기술 스펙 |
 | :--- | :--- | :--- | :--- |
-| **Stage 1: 자산 탐색 및 거버넌스 수집** | [01_asset_discovery_and_scoping_ko.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/01_asset_discovery_and_scoping_ko.md) | [01_asset_discovery_and_scoping_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/01_asset_discovery_and_scoping_en.md) | 자산 스코핑 데이터플로우, 노이즈 Pruning 헌장, 20대 Golden CQ 정의, Dataplex 태깅 |
-| **Stage 2: 시맨틱 온톨로지 모델링 & LLM-Wiki** | [02_semantic_modeling_and_okf_ko.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/02_semantic_modeling_and_okf_ko.md) | [02_semantic_modeling_and_okf_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/02_semantic_modeling_and_okf_en.md) | 비정형 파싱, Karpathy 3-Layer LLM-Wiki, GCS 프로토타이핑, 2-Layer 안티 리던던시 |
-| **Stage 3: BigQuery 그래프 엔지니어링** | [03_property_graph_and_gql_ko.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/03_property_graph_and_gql_ko.md) | [03_property_graph_and_gql_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/03_property_graph_and_gql_en.md) | SQL:2023 Property Graph DDL, DW 노드 승격 & 청크/정책 브릿지, 다중 홉 GQL 템플릿 |
-| **Stage 4: 멀티도메인 MCP 스위트 구축** | [04_multi_domain_mcp_and_agent_ko.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/04_multi_domain_mcp_and_agent_ko.md) | [04_multi_domain_mcp_and_agent_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/04_multi_domain_mcp_and_agent_en.md) | 11종 MCP 도구셋(비즈니스/엔지니어링), 에이전트 추상화 계층, 동적 체이닝 시퀀스 |
-| **Stage 5: 스튜디오 구축 및 배포** | [05_enterprise_studio_and_deployment_ko.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/05_enterprise_studio_and_deployment_ko.md) | [05_enterprise_studio_and_deployment_en.md](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/05_enterprise_studio_and_deployment_en.md) | 5단계 E2E 데이터 라이프사이클 스튜디오(Overview/레지스트리/OKF 레이어/정형/하이브리드 BQG/AI FDE/CQ), 4-Tier 리니지, 무중단 배포 |
+| **Stage 1: 자산 탐색 및 거버넌스 수집** | [01_asset_discovery_and_scoping_ko.md](./01_asset_discovery_and_scoping_ko.md) | [01_asset_discovery_and_scoping_en.md](./01_asset_discovery_and_scoping_en.md) | 자산 스코핑 데이터플로우, 노이즈 Pruning 헌장, 20대 Golden CQ 정의, Dataplex 태깅 |
+| **Stage 2: 시맨틱 온톨로지 모델링 & LLM-Wiki** | [02_semantic_modeling_and_okf_ko.md](./02_semantic_modeling_and_okf_ko.md) | [02_semantic_modeling_and_okf_en.md](./02_semantic_modeling_and_okf_en.md) | 비정형 파싱, Karpathy 3-Layer LLM-Wiki, GCS 프로토타이핑, 2-Layer 안티 리던던시 |
+| **Stage 3: BigQuery 그래프 엔지니어링** | [03_property_graph_and_gql_ko.md](./03_property_graph_and_gql_ko.md) | [03_property_graph_and_gql_en.md](./03_property_graph_and_gql_en.md) | SQL:2023 Property Graph DDL, DW 노드 승격 & 청크/정책 브릿지, 다중 홉 GQL 템플릿 |
+| **Stage 4: 멀티도메인 MCP 스위트 구축** | [04_multi_domain_mcp_and_agent_ko.md](./04_multi_domain_mcp_and_agent_ko.md) | [04_multi_domain_mcp_and_agent_en.md](./04_multi_domain_mcp_and_agent_en.md) | 11종 MCP 도구셋(비즈니스/엔지니어링), 에이전트 추상화 계층, 동적 체이닝 시퀀스 |
+| **Stage 5: 스튜디오 구축 및 배포** | [05_enterprise_studio_and_deployment_ko.md](./05_enterprise_studio_and_deployment_ko.md) | [05_enterprise_studio_and_deployment_en.md](./05_enterprise_studio_and_deployment_en.md) | 5단계 E2E 데이터 라이프사이클 스튜디오(Overview/레지스트리/OKF 레이어/정형/하이브리드 BQG/AI FDE/CQ), 4-Tier 리니지, 무중단 배포 |
 
 ### 3. GCP Native First 아키텍처 원칙 및 커스텀 확장 체계 (GCP Native First vs Custom Extension)
 
@@ -101,9 +101,9 @@ flowchart TD
 ---
 
 ### 4. 방법론 활용 및 실행 순서
-1. **착수 및 스코핑**: [Stage 1 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/01_asset_discovery_and_scoping_ko.md)를 따라 비즈니스 경계와 20대 Golden CQ를 확정합니다.
-2. **비정형 체계화 및 LLM-Wiki 프로토타이핑**: [Stage 2 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/02_semantic_modeling_and_okf_ko.md)를 통해 비정형 텍스트 청킹, OKF 변환 및 Karpathy 3-Layer LLM-Wiki를 GCS에 프로토타이핑합니다.
-3. **물리 그래프 결합 및 안티 리던던시**: [Stage 3 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/03_property_graph_and_gql_ko.md)에 따라 BigQuery Property Graph DDL을 정의하고, DW 테이블을 물리 노드로 승격하며 비정형은 청크/규칙만 결합합니다.
-4. **도메인 MCP 추상화 및 에이전트 오케스트레이션**: [Stage 4 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/04_multi_domain_mcp_and_agent_ko.md)를 기반으로 에이전트가 호출할 11종 도메인 MCP 도구 및 동적 체이닝을 구성합니다.
-5. **멀티뷰 스튜디오 검증 및 프로덕션 릴리스**: [Stage 5 가이드](file:///Users/seanjung/Downloads/Uplus%20Ontology/agentic-ontology-starter/methodology/05_enterprise_studio_and_deployment_ko.md)에 따라 멀티뷰 스튜디오에서 20대 CQ 0% 환각 검증을 마치고 배포합니다.
+1. **착수 및 스코핑**: [Stage 1 가이드](./01_asset_discovery_and_scoping_ko.md)를 따라 비즈니스 경계와 20대 Golden CQ를 확정합니다.
+2. **비정형 체계화 및 LLM-Wiki 프로토타이핑**: [Stage 2 가이드](./02_semantic_modeling_and_okf_ko.md)를 통해 비정형 텍스트 청킹, OKF 변환 및 Karpathy 3-Layer LLM-Wiki를 GCS에 프로토타이핑합니다.
+3. **물리 그래프 결합 및 안티 리던던시**: [Stage 3 가이드](./03_property_graph_and_gql_ko.md)에 따라 BigQuery Property Graph DDL을 정의하고, DW 테이블을 물리 노드로 승격하며 비정형은 청크/규칙만 결합합니다.
+4. **도메인 MCP 추상화 및 에이전트 오케스트레이션**: [Stage 4 가이드](./04_multi_domain_mcp_and_agent_ko.md)를 기반으로 에이전트가 호출할 11종 도메인 MCP 도구 및 동적 체이닝을 구성합니다.
+5. **멀티뷰 스튜디오 검증 및 프로덕션 릴리스**: [Stage 5 가이드](./05_enterprise_studio_and_deployment_ko.md)에 따라 멀티뷰 스튜디오에서 20대 CQ 0% 환각 검증을 마치고 배포합니다.
 6. **4대 산업군 실무 케이스 템플릿 참조**: [인더스트리 케이스 템플릿](../industry_cases/README.md)에 수록된 스마트 제조(포스코, 현대차), 핀테크·금융(카카오뱅크, 토스), 유통·이커머스(GS리테일, CJ대한통운/올리브영), 통신·미디어(SKT, KT) 8대 엔터프라이즈 템플릿 및 DDL/샘플 데이터/SOP 문서를 즉시 복제·활용합니다.
