@@ -394,7 +394,7 @@ HTML_PAGE = """<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Subbar 52px: 9-Tab Agentic Ontology Studio Ribbon -->
+  <!-- Subbar 52px: Agentic Ontology Studio Ribbon (0. Overview ~ 8. AI FDE) -->
   <div class="subbar">
     <button class="nav-btn active" onclick="switchTab('overview')">0. Overview</button>
     <button class="nav-btn" onclick="switchTab('assets')">1. Asset</button>
@@ -416,7 +416,7 @@ HTML_PAGE = """<!DOCTYPE html>
         <span style="font-size: 13.5px; color: var(--text-secondary);">OKF v0.2 &bull; 4. Wiki Agent (GCS) &bull; 5. Bigquery Graph &bull; 6. BQG Agent &bull; 7. Lineage (&lt; 5ms)</span>
       </div>
       <h2 style="font-size: 19px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">
-        Agentic Ontology Studio — 9단계 진화형 온톨로지 및 에이전트 구축 전체 스텝 다이어그램
+        Agentic Ontology Studio — 8단계 진화형 온톨로지 및 에이전트 구축 전체 스텝 다이어그램
       </h2>
       <p style="font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 16px;">
         탭 전환 없이 한눈에 파악하는 전체 실행 흐름: [1. Asset &amp; 2. OKF Layer (GCS 3-Layer Wiki)] ➔ [3. Ontology Semantic] ➔ [4. Wiki Agent (선행 GCS 에이전트)] ➔ [5. Bigquery Graph] ➔ [6. BQG Agent (그래프 에이전트)] ➔ [7. Lineage &amp; 8. AI FDE]
@@ -847,7 +847,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     let globalAssets = {};
     let currentToolFilter = 'all';
 
-    // Switch Top Tabs (9-Tab Agentic Ontology Studio Ribbon)
+    // Switch Top Tabs (Agentic Ontology Studio Ribbon: 0. Overview ~ 8. AI FDE)
     function switchTab(tabId) {
       const ids = ['overview', 'assets', 'okf', 'structured', 'wiki-agent', 'graph', 'bqg-agent', 'lineage', 'fde'];
       document.querySelectorAll('.subbar .nav-btn').forEach((b, idx) => {

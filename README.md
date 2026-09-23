@@ -1,13 +1,13 @@
 # Agentic Ontology Studio — Enterprise Starter Pack
 ## 엔터프라이즈 에이전틱 온톨로지 스튜디오 스타터 팩 (`Agentic Ontology Studio`)
 
-> **0% 환각(Zero-Hallucination)과 결정론적 계산 신뢰성을 보장하는 엔터프라이즈 지식 온톨로지 & 9-Tab 통합 AI 스튜디오(`Agentic Ontology Studio`) 스타터 킷**
+> **0% 환각(Zero-Hallucination)과 결정론적 계산 신뢰성을 보장하는 엔터프라이즈 지식 온톨로지 & 통합 AI 스튜디오(`Agentic Ontology Studio`, `0. Overview` ~ `8. AI FDE`) 스타터 킷**
 
 본 저장소는 기업의 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 규정(SOP/PDF)을 통합하여, 누구나 자신의 비즈니스 데이터만 교체하면 즉시 담백한 원본 YAML Frontmatter 기반 **Karpathy 3-Layer LLM-Wiki (`2. OKF Layer`)**, 선행 **`4. Wiki Agent` (GCS 에이전트)**, **`5. Bigquery Graph` (`SQL:2023 Property Graph`)**, **`6. BQG Agent` (`NL2GQL` 그래프 에이전트)**, `< 5ms` 4-Tier 엔터프라이즈 리니지(`7. Lineage`), 그리고 11종 도메인 MCP 기반 **`8. AI FDE`**를 구동할 수 있는 완성형 스타터 패키지입니다.
 
 ---
 
-### 1. 진화적 온톨로지 통합 아키텍처 및 9-Tab `Agentic Ontology Studio` 흐름
+### 1. 진화적 온톨로지 통합 아키텍처 및 `Agentic Ontology Studio` (`0. Overview` ~ `8. AI FDE`) 흐름
 
 ```mermaid
 flowchart TD
@@ -29,7 +29,7 @@ flowchart TD
 
     subgraph TrackD ["Track D & E: 7. Lineage & 8. AI FDE (Agentic Ontology Studio)"]
         BQGAg --> Lineage["7. Lineage: 4-Tier 엔터프라이즈 리니지 (< 5ms 인메모리 즉시 로딩)"]
-        Lineage --> Studio["8. AI FDE & Agentic Ontology Studio (9-Tab & 단일 연속 Overview)"]
+        Lineage --> Studio["8. AI FDE & Agentic Ontology Studio (0. Overview ~ 8. AI FDE & 단일 연속 Overview)"]
     end
 
     TrackA --> TrackC
@@ -51,7 +51,7 @@ flowchart TD
 | **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • 담백한 원본 YAML Frontmatter + Karpathy 3-Layer LLM-Wiki (`data/llm_wiki/`)<br>• 선행 **`4. Wiki Agent` (GCS 기반 추론 에이전트)** | 비정형 PDF/MHTML 구조를 무손실 보존하고, 물리 그래프 구축 전 GCS 위키만으로 16대 규정 CQ 선행 해결 |
 | **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (비즈니스 5종 + 엔지니어링 6종 도구)<br>• **`6. BQG Agent`** (`GRAPH_TABLE()` NL2GQL 실행기) | **BigQuery Remote MCP의 결정적 제약사항(GQL `GRAPH_TABLE()` 미지원) 극복** 및 20/20 골든 CQ 전수 해결 |
 | **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`8. AI FDE`** 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 정적 1회 질의를 넘어 비즈니스 룰과 물리 DW 원장 실측치를 교차 검증하는 자율 추론 사이클 구현 |
-| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio`** (`src/web/studio_server.py`)<br>• 9-Tab 통합 아키텍처 & `< 5ms` 즉시 리니지(`7. Lineage`)<br>• 단일 연속 스크롤 Overview (전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과) | 0 의존성 경량 단일 포트(8088)에서 엔드투엔드 거버넌스, 그래프, 에이전트, CQ 성능을 원스톱 검증 |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio`** (`src/web/studio_server.py`)<br>• 통합 스튜디오 아키텍처 (`0. Overview` ~ `8. AI FDE`) & `< 5ms` 즉시 리니지(`7. Lineage`)<br>• 단일 연속 스크롤 Overview (전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과) | 0 의존성 경량 단일 포트(8088)에서 엔드투엔드 거버넌스, 그래프, 에이전트, CQ 성능을 원스톱 검증 |
 
 #### 2.2 핵심 공식 레퍼런스 저장소 (Official Google Repositories)
 - **Google Cloud Knowledge Catalog (Dataplex / OKF)**:

@@ -15,8 +15,8 @@ Why this script exists:
   matching `^[a-zA-Z0-9-_]{1,64}$`.
 
 What this script does:
-1. Synchronizes `agentic_ontology_ce_walkthrough.ipynb` headers with the 9-Step Studio Architecture
-   (`1. Overview` ~ `9. Agent`, `Agentic Ontology Studio - LG Uplus`).
+1. Synchronizes `agentic_ontology_ce_walkthrough.ipynb` headers with the 8-Step Studio Architecture
+   (`0. Overview` ~ `8. AI FDE`, `Agentic Ontology Studio - LG Uplus`).
 2. Scans every cell across all 7 `.ipynb` files in `notebooks/` for `attachment:<filename>`.
 3. Loads the corresponding binary PNG from `notebooks/assets/<filename>`, verifies the PNG magic bytes
    (`\\x89PNG\\r\\n\\x1a\\n`), encodes it as standard Base64, and embeds `cell["attachments"][<filename>] = {"image/png": b64}`.
@@ -34,49 +34,50 @@ import sys
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
-def update_walkthrough_9step_headers(nb):
-    """Synchronizes agentic_ontology_ce_walkthrough.ipynb markdown cells with the 9-Step Studio Architecture."""
+def update_walkthrough_step_headers(nb):
+    """Synchronizes agentic_ontology_ce_walkthrough.ipynb markdown cells with the
+    8-Step Studio Architecture (`1. Asset` ~ `8. AI FDE`) and the 5-Stage methodology."""
     cells = nb.get("cells", [])
     if len(cells) < 20:
         return
 
-    # Cell 0: Executive Overview & 9-Step Architecture Journey
+    # Cell 0: Executive Overview & 3-Part Journey across the 8 studio steps
     cells[0]["source"] = [
         "# Enterprise Agentic Ontology: Hands-on Walkthrough for Google Cloud CEs\n",
-        "## Agentic Ontology Studio - LG Uplus · 9-Step Progressive Hands-on Guide\n",
+        "## Agentic Ontology Studio - LG Uplus · 8-Step Progressive Hands-on Guide\n",
         "\n",
         "본 주피터 노트북은 **Google Cloud Customer Engineer(CE), Data Architect, AI/GenAI Specialist**를 위한 엔드투엔드 대화식 실습 가이드입니다.\n",
-        "비즈니스 도메인의 파편화된 정형 원장(BigQuery DW)과 비정형 규정 문서(GCS/PDF/HTML)를 **단일 시맨틱 지식그래프(Property Graph)**로 통합하여, 멀티 에이전트가 환각 없이 결정론적으로 추론·실행하는 **`Agentic Ontology Studio - LG Uplus` 9단계(`1. Overview` ~ `9. Agent`) 아키텍처**를 3개의 실습 파트로 나누어 검증합니다.\n",
+        "비즈니스 도메인의 파편화된 정형 원장(BigQuery DW)과 비정형 규정 문서(GCS/PDF/HTML)를 **단일 시맨틱 지식그래프(Property Graph)**로 통합하여, 에이전트가 환각 없이 결정론적으로 추론·실행하는 **`Agentic Ontology Studio - LG Uplus` 8단계(`1. Asset` ~ `8. AI FDE`) 아키텍처**를 3개의 실습 파트로 나누어 검증합니다. 각 STEP과 방법론 5단계(Stage)의 대응은 [`METHODOLOGY_KO.md` 1.3절](../methodology/METHODOLOGY_KO.md)의 매핑 표를 따릅니다.\n",
         "\n",
         "---\n",
         "\n",
-        "### 3-Part Hands-on Journey Mapped to 9-Step Studio Tabs\n",
+        "### 3-Part Hands-on Journey Mapped to the 8-Step Studio Tabs\n",
         "\n",
         "![Evolutionary Journey Overview](attachment:evolutionary_overview_flow.png)\n",
         "\n",
-        "1. **Part 1 (`Studio Tab 2~4`: `2. Lineage` ➔ `3. Glossaries` ➔ `4. Wiki Agent`)**:\n",
-        "   - 비정형 정책 가이드 문서 로드, 구조 보존 청킹 및 결정론적 SHA-256 해시 앵커링\n",
-        "   - Karpathy 3-Layer OKF (Ontology Knowledge Framework) 위키 컴파일 및 GCS 기반 `4. Wiki Agent` 질의 실습 (16/20 CQ 해결)\n",
-        "2. **Part 2 (`Studio Tab 5~6`: `5. Bigquery Graph` ➔ `6. BQG Agent`)**:\n",
+        "1. **Part 1 (`Studio Tab 1~4`: `1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`) · `Stage 1~2`**:\n",
+        "   - 원천 자산 인벤토리 수집, 비정형 정책 가이드 로드, 구조 보존 청킹 및 결정론적 SHA-256 해시 앵커링\n",
+        "   - Karpathy 3-Layer OKF 위키 컴파일 및 GCS 기반 `4. Wiki Agent` 질의 실습 (16/20 CQ 해결)\n",
+        "2. **Part 2 (`Studio Tab 5~6`: `5. Bigquery Graph` ➔ `6. BQG Agent`) · `Stage 3~4`**:\n",
         "   - BigQuery DW 정형 원장 테이블(35➔7 Domain Pruning) Zero-ETL 그래프 승격 (`ISO SQL:2023 CREATE PROPERTY GRAPH`)\n",
-        "   - `GRAPH_TABLE()` 멀티홉 탐색 및 NL2GQL 기반 `6. BQG Agent` 실시간 원장 결합 추론 (20/20 Golden CQ 전수 해결)\n",
-        "3. **Part 3 (`Studio Tab 7~9`: `7. FDE` ➔ `8. Governance` ➔ `9. Agent`)**:\n",
-        "   - `7. FDE` (Forward Deployed Engineer) 자율 하베스팅 파이프라인 및 `8. Governance` 휴먼 승인 루프(HITL) & Dataplex 카탈로그 동기화\n",
-        "   - `9. Agent` (Google Cloud ADK 2.0 + Spanner/BigQuery Dual-Engine + MCP Gateway) 프로덕션 서빙 검증\n"
+        "   - `GRAPH_TABLE()` 멀티홉 탐색 및 NL2GQL 기반 `6. BQG Agent` 실시간 원장 결합 추론 (20대 골든 CQ 최종 수행 주체)\n",
+        "3. **Part 3 (`Studio Tab 7~8`: `7. Lineage` ➔ `8. AI FDE`) · `Stage 5`**:\n",
+        "   - `7. Lineage` 4-Tier 엔드투엔드 계보 추적 및 스키마 변경 영향도 분석\n",
+        "   - `8. AI FDE` 11종 도메인 MCP 오케스트레이션, 20대 골든 CQ 자동 채점(5대 루브릭 100점) 및 Cloud Run 배포 검증\n"
     ]
 
-    # Cell 3: Step 1 Architecture Flow
+    # Cell 3: Part 1 architecture flow
     if "step1_architecture_flow.png" in "".join(cells[3].get("source", [])):
         cells[3]["source"] = [
             "---\n",
-            "## Part 1: `2. Lineage` · `3. Glossaries` · `4. Wiki Agent` (비정형 OKF 위키 파이프라인)\n",
+            "## Part 1: `1. Asset` · `2. OKF Layer` · `3. Ontology Semantic` · `4. Wiki Agent` (비정형 OKF 위키 파이프라인)\n",
             "\n",
             "첫 번째 단계에서는 별도의 외부 그래프 DB 없이도 비정형 규정 문서(PDF/Markdown)를 결정론적 SHA-256 해시 앵커와 3-Layer OKF 위키로 변환하여 **`4. Wiki Agent`**를 즉시 구동합니다.\n",
             "\n",
             "![Step 1 Architecture Flow](attachment:step1_architecture_flow.png)\n"
         ]
 
-    # Cell 12: Step 2 Property Graph Flow
+    # Cell 12: Part 2 property graph flow
     if "step2_property_graph_flow.png" in "".join(cells[12].get("source", [])):
         cells[12]["source"] = [
             "---\n",
@@ -87,16 +88,17 @@ def update_walkthrough_9step_headers(nb):
             "![Step 2 Property Graph Flow](attachment:step2_property_graph_flow.png)\n"
         ]
 
-    # Cell 19: Step 3 FDE Orchestration Flow
+    # Cell 19: Part 3 lineage & AI FDE flow
     if "step3_fde_orchestration_flow.png" in "".join(cells[19].get("source", [])):
         cells[19]["source"] = [
             "---\n",
-            "## Part 3: `7. FDE` 파이프라인 · `8. Governance` 승인 루프 · `9. Agent` (ADK 2.0 & MCP)\n",
+            "## Part 3: `7. Lineage` 4-Tier 계보 추적 · `8. AI FDE` (11종 MCP 오케스트레이션 & CQ 자동 채점)\n",
             "\n",
-            "세 번째 단계에서는 **`7. FDE` (자율 하베스팅 워크플로우)**와 **`8. Governance` (휴먼 검수 및 Dataplex 동기화)**를 거쳐, **`9. Agent` (Google Cloud ADK 2.0 멀티 에이전트 & MCP 프로토콜)**로 엔터프라이즈 프로덕션 상담을 완결합니다.\n",
+            "세 번째 단계에서는 **`7. Lineage` (Raw ➔ OKF ➔ Property Graph ➔ Agent 4-Tier 계보)**를 추적하고, **`8. AI FDE` (11종 도메인 MCP 스위트)**로 동적 하위 목표를 분해하여 20대 골든 CQ를 5대 루브릭으로 자동 채점합니다.\n",
             "\n",
-            "![Step 3 FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)\n"
+            "![Step 3 AI FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)\n"
         ]
+
 
 
 def pack_and_validate_all():
@@ -131,7 +133,7 @@ def pack_and_validate_all():
             nb = json.load(f)
 
         if fname == "agentic_ontology_ce_walkthrough.ipynb":
-            update_walkthrough_9step_headers(nb)
+            update_walkthrough_step_headers(nb)
 
         # Ensure top-level nbformat 4.5 compliance
         nb["nbformat"] = 4

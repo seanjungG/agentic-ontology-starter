@@ -31,7 +31,7 @@ flowchart TD
 
     subgraph TrackD ["Track D & E: 7. Lineage & 8. AI FDE (Agentic Ontology Studio)"]
         BQGAgent --> Lineage["7. Lineage: 4-Tier 엔터프라이즈 리니지<br/>(39 Nodes / 60 Edges, < 5ms 인메모리 즉시 로딩)"]
-        Lineage --> Studio["8. AI FDE & Agentic Ontology Studio<br/>(9-Tab 통합 스튜디오: 전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과)"]
+        Lineage --> Studio["8. AI FDE & Agentic Ontology Studio<br/>(0. Overview ~ 8. AI FDE 통합 스튜디오: 전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과)"]
     end
 
     TrackA --> TrackC
@@ -39,7 +39,7 @@ flowchart TD
     TrackC --> TrackD
 ```
 
-#### 4대 진화 축 및 9단계 스튜디오(`Agentic Ontology Studio`) 흐름의 핵심 원리
+#### 4대 진화 축 및 8단계 스튜디오(`Agentic Ontology Studio`, `1. Asset` ~ `8. AI FDE`) 흐름의 핵심 원리
 1. **비정형 우선 지식화 및 선행 `4. Wiki Agent` 구축 (`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`)**:
    - 비정형 업무 매뉴얼을 파싱하여 OKF(Open Knowledge Format v0.2)로 변환하고, 담백한 원본 YAML Frontmatter(`---\n...\n---`)와 Karpathy 3-Layer LLM-Wiki 구조로 재구성하여 GCS 버킷 상에 배포합니다.
    - 물리 그래프 DB 구축 전이라도, `3. Ontology Semantic` 정의 직후 **`4. Wiki Agent` (GCS 기반 선행 에이전트)**를 즉시 기동하여 위약금 산식·예외 조항 등 16대 규정 중심 CQ(`[GCS Preferred]`)를 1차 해결합니다.

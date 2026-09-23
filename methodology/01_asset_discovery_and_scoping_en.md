@@ -70,6 +70,19 @@ To ensure broad cross-industry applicability, the starter pack abstracts custome
 | **[Customer Consultation SOP Manual]** | Unstructured SOP | MHTML/PDF consultation guide, penalty math formulas, 180-day grace policy | `Consultation_Guide_2.0_Subsidy.mhtml` |
 | **[Business Glossary Registry]** | Governance | Standard enterprise lexicon, synonym registry, boundary definitions | `Business_Glossary.json` |
 
+#### 2.1.1 Asset Registry Taxonomy
+Assets are classified into 5 groups that mirror the physical source folder structure, in the same order as the tabs of the `1. Asset` studio view. Each asset belongs to exactly one group.
+
+| # | Group | Source folder / asset type | Contents |
+| :---: | :--- | :--- | :--- |
+| 1 | Guides | `01_guides/` | Unstructured counseling and policy guides (MHTML/PDF) |
+| 2 | Structured Data | `03_sample_tables/` + `DATA_SOURCE` | DW sample ledger files, data dictionary, BigQuery physical tables |
+| 3 | Questions (CQ) | `04_eval_questions/` + `CQ` | Golden CQ specification, evaluation dataset, approved competency questions |
+| 4 | Glossary | `05_glossary/` + `GLOSSARY` | Customer-confirmed standard terms |
+| 5 | Other Docs & Rules | `02_stt_dialogues/` + `RULE` | Call-transcript summaries, confirmed business rules |
+
+> **Duplicate-registration rule**: each source folder holds both the original file (`<name>.mhtml`) and a parsed output directory with the same stem (`<name>/`). Only **real files** are registered; parsed output directories are skipped. Harvesting directories as well would register every document twice.
+
 ### 2.2 Noise Pruning Charter & Scoping Rules
 1. **Decision-Centric Knowledge Focus**:
    - 100% of modeling effort is concentrated on financial subsidies, contractual penalty formulas, and legal commitment grace periods.

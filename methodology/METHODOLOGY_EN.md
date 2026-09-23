@@ -23,20 +23,24 @@ This methodology formalizes an end-to-end engineering lifecycle that unifies str
 - **Cross-Domain Reasoning**: Dynamic decomposition and sequential chaining between domain business logic and engineering infrastructure tools.
 - **Strict 5-Stage Phase-Gate Control**: Distinct milestone inputs, outputs, and quality acceptance criteria capped at 5 stages.
 
-### 1.3 Business & Ontology System Executive Summary and 9-Step Studio (`Agentic Ontology Studio - LG Uplus`) Flow
+### 1.3 System Executive Summary and the 5-Stage ↔ 8-Step Studio Mapping
 > **Business & Ontology System Executive Definition**  
-> This platform unifies **fragmented enterprise structured ledgers (BigQuery DW) and unstructured policy/contract documents (GCS/PDF/HTML) into a single Semantic Knowledge Graph (Property Graph)**, empowering multi-agents to reason and execute complex business decisions with **0% hallucination**.  
-> Following the **9-Step (`1. Overview` ~ `9. Agent`) Architecture Pipeline** below, the system progressively evolves from source data lineage tracking and glossary standardization to the OKF Wiki Agent, BigQuery SQL:2023 Graph reasoning, autonomous FDE harvesting, governance review, and production multi-agent serving.
+> This platform unifies **fragmented enterprise structured ledgers (BigQuery DW) and unstructured policy/contract documents (GCS/PDF/HTML) into a single Semantic Knowledge Graph (Property Graph)**, so that agents can reason over and execute complex business decisions without hallucination.
 
-1. **Track A (`2. Lineage` ➔ `3. Glossaries` ➔ `4. Wiki Agent` — Source Lineage, Glossary Standardization & First-Gen GCS Wiki Agent)**:
-   - Establishes 4-Tier end-to-end lineage (`2. Lineage`) and business standard glossaries & semantic bridges (`3. Glossaries`) across structured and unstructured assets.
-   - Unstructured manuals (MHTML/PDF) are parsed into visual semantic chunks, converted to OKF (Open Knowledge Format v0.2) and Andrej Karpathy's 3-Layer LLM-Wiki structure on Google Cloud Storage (`gs://<bucket>/ontology/`), and served via **`4. Wiki Agent` (GCS LLM-Wiki Agent)** to immediately resolve 16/20 policy, formula, and exception Golden CQs (`[GCS Preferred]`).
-2. **Track B (`5. Bigquery Graph` & `6. BQG Agent` — SQL:2023 Property Graph Integration & Graph Agent)**:
-   - 35 raw BigQuery tables are pruned by 80% (Domain Pruning: 35 ➔ 7 core master ledgers) and promoted directly to **`5. Bigquery Graph` (`ISO SQL:2023 CREATE PROPERTY GRAPH`)** with Zero-ETL overhead, linked to unstructured Wiki rules via Semantic Bridge edges.
-   - **`6. BQG Agent`** combines `4. Wiki Agent` policy reasoning with live `GRAPH_TABLE()` multi-hop traversal (`NL2GQL`) to resolve all 20/20 Golden CQs (`[BQG Preferred]`).
-3. **Track C (`7. FDE` ➔ `8. Governance` ➔ `9. Agent` — Autonomous Harvesting, Governance Review & Production Multi-Agent Serving)**:
-   - **`7. FDE` (AI Forward Deployed Engineer)** autonomously harvests source schemas and documents into candidate ontology rules, which are reviewed via Human-in-the-Loop (HITL) in **`8. Governance`** and synchronized to Dataplex Knowledge Catalog.
-   - **`9. Agent` (Google Cloud ADK 2.0 + Spanner/BigQuery Dual-Engine)** serves production decisions over the certified knowledge graph and 11-Tool Domain Ontology MCP Suite.
+The execution unit of this methodology is the **5-stage framework (Stage 1–5)**. The unit users actually see in `Agentic Ontology Studio` is the set of **8 step tabs (STEP 1–8)**. The two schemes map one-to-many as shown below, and stage numbers in this document always follow this mapping.
+
+| Stage | Methodology Stage | Studio STEP (tab) | Key Deliverable IDs |
+| :--- | :--- | :--- | :--- |
+| **Stage 1** | Asset Discovery, Scoping & Governance Ingestion | `STEP 1 · 1. Asset` | `D1.1` – `D1.4` |
+| **Stage 2** | Semantic Modeling, OKF Formalization & Grounding | `STEP 2 · 2. OKF Layer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (exit-gate validation) |
+| **Stage 3** | BigQuery Property Graph Engineering & GQL Compilation | `STEP 5 · 5. Bigquery Graph` | `D3.1` – `D3.4` |
+| **Stage 4** | Multi-Domain MCP Suite Packaging & Agentic Orchestration | `STEP 6 · 6. BQG Agent` | `D4.1` – `D4.4` |
+| **Stage 5** | Enterprise Studio Integration, Automated Evaluation & Production Deployment | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE` | `D5.1` `D5.2`<br>`D5.3` `D5.4` |
+
+**Why two agents are built sequentially (`4. Wiki Agent` ➔ `6. BQG Agent`)**
+
+1. **`STEP 4 · 4. Wiki Agent` (Stage 2 exit gate)**: Before any physical graph exists, a first agent is completed that runs purely on the Stage 2 output — the GCS OKF v0.2 wiki. It resolves **16 / 20 Golden CQs** centred on policy and formula reasoning (pro-rata settlement, welfare waivers, same-day rollback) and therefore acts as the exit condition that validates the quality of the structured unstructured knowledge itself.
+2. **`STEP 6 · 6. BQG Agent` (Stage 4)**: After pruning 35 source tables down to 7 core master ledgers and promoting them to Property Graph nodes with Zero-ETL, wiki policy reasoning is combined with live `GRAPH_TABLE()` multi-hop traversal (`NL2GQL`). **The `6. BQG Agent` is the single final executor for all 20 Golden CQs**, and the evidence path each question actually used (GCS OKF Wiki / BigQuery Property Graph) is shown as a secondary tag in the evaluation table.
 
 ### 1.4 GCP Native First Mandate & End-to-End Google Cloud System Architecture
 
@@ -52,8 +56,8 @@ flowchart LR
     end
 
     subgraph T2 ["2. Harvesting & Catalog Layer"]
-        FDE["7. FDE Autonomous Pipeline<br/>Auto Schema & Rule Harvesting"]
-        GOV["8. Governance (HITL) &<br/>Dataplex Knowledge Catalog"]
+        FDE["8. AI FDE Autonomous Pipeline<br/>Auto Schema & Rule Harvesting"]
+        GOV["Human-in-the-Loop Review &<br/>Dataplex Knowledge Catalog"]
     end
 
     subgraph T3 ["3. Semantic & Graph Engine Layer"]
@@ -63,8 +67,8 @@ flowchart LR
     end
 
     subgraph T4 ["4. Agent Runtime & Serving Layer"]
-        ADK["9. Agent (Google Cloud ADK 2.0)<br/>Vertex AI Gemini 2.5 + Domain MCP"]
-        RUN["Cloud Run Serverless<br/>Agentic Ontology Studio (9-Tab UI)"]
+        ADK["Agent Runtime (Google Cloud ADK 2.0)<br/>Vertex AI Gemini + 11 Domain MCP Tools"]
+        RUN["Cloud Run Serverless<br/>Agentic Ontology Studio (0. Overview ~ 8. AI FDE)"]
     end
 
     GCS & BQ --> FDE --> GOV
@@ -79,8 +83,8 @@ flowchart LR
 | **1. Data Lake & DW** | • BigQuery Managed Tables<br>• Cloud Storage (GCS)<br>• BigQuery SQL:2023 Property Graph | • [BigQuery Documentation](https://cloud.google.com/bigquery)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | • 2-Layer Anti-Redundancy Graph DDL Compiler (`pipeline/graph_builder.py`)<br>• Semantic Bridge Edges (`APPLIES_TO`, `CALCULATES`) | Directly promotes DW tables to graph nodes and prunes redundant text entities, saving 80% storage and query costs. |
 | **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • Clean YAML Frontmatter + Karpathy 3-Layer LLM-Wiki Compiler<br>• First-Gen **`4. Wiki Agent` (GCS Wiki Reasoning Agent)** | Preserves manual structures and resolves 16/20 policy CQs directly from GCS Wiki prior to BigQuery Graph setup. |
 | **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (5 Business + 6 Engineering Tools)<br>• **`6. BQG Agent`** (`GRAPH_TABLE()` NL2GQL Runner) | **Overcomes the limitation where BigQuery Remote MCP cannot execute GQL (`GRAPH_TABLE()`)**, achieving 20/20 Golden CQ accuracy. |
-| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`7. FDE` & `9. Agent`** Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Enables autonomous multi-turn reasoning cycles that cross-verify policy rules against physical DW ledgers. |
-| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio - LG Uplus`** (`src/web/studio_server.py`)<br>• 9-Tab Unified Architecture (`1. Overview` ~ `9. Agent`) & `< 5ms` Instant Lineage (`2. Lineage`)<br>• Single Continuous Overview (Executive Summary ➔ Full Step ➔ GCP Architecture ➔ Feature Gap ➔ Results) | One-stop verification of full step flow, dual-agent evolution (`4. Wiki Agent ➔ 6. BQG Agent`), and CQ benchmarks. |
+| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`8. AI FDE` & Agent Runtime (ADK 2.0)** Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Enables autonomous multi-turn reasoning cycles that cross-verify policy rules against physical DW ledgers. |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio - LG Uplus`** (`src/web/studio_server.py`)<br>• Unified Studio Architecture (`0. Overview` ~ `8. AI FDE`) & `< 5ms` Instant Lineage (`7. Lineage`)<br>• Single Continuous Overview (Executive Summary ➔ Full Step ➔ GCP Architecture ➔ Feature Gap ➔ Results) | One-stop verification of full step flow, dual-agent evolution (`4. Wiki Agent ➔ 6. BQG Agent`), and CQ benchmarks. |
 
 #### 1.4.2 Official Reference Repositories
 1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
@@ -130,7 +134,7 @@ flowchart TD
     subgraph TRACK_D ["Governance & Orchestration Flow: 7. Lineage & 8. AI FDE"]
         S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier Enterprise Data Lineage (< 5ms Instant Load)"]
         S7_Lineage --> S8_FDE["8. AI FDE: 11-Domain Ontology MCP Orchestrator"]
-        S8_FDE --> S9_Studio["Agentic Ontology Studio (9-Tab Ribbon & Continuous Overview)"]
+        S8_FDE --> S9_Studio["Agentic Ontology Studio (0. Overview ~ 8. AI FDE Ribbon & Continuous Overview)"]
     end
 
     TRACK_A --> TRACK_C
@@ -400,7 +404,18 @@ Stage 5 deploys a unified enterprise web console adhering to enterprise design s
 2. **4-Tier End-to-End Data Lineage Visualization**:
    - Provide complete provenance tracking from Tier 1 (Source Documents/DW) ➔ Tier 2 (Chunks/Rules) ➔ Tier 3 (OKF/BQG) ➔ Tier 4 (MCP/Agents).
 3. **Automated 20 Golden CQ Evaluation & Audit**:
-   - Benchmark factual accuracy and zero hallucination across all 20 CQs using LLM-as-a-Judge and exact numerical matching.
+   - **Single final executor**: all 20 questions are finally executed by the hybrid `6. BQG Agent`; the **evidence path actually used (GCS OKF Wiki / BigQuery Property Graph)** is kept as a secondary tag so the run stays traceable.
+   - **5-rubric, 100-point scoring model**:
+
+     | Rubric | Points | Acceptance criterion |
+     | :--- | ---: | :--- |
+     | Accuracy & Grounding | 30 | Values and conditions match the source evidence and are traceable to an anchor |
+     | Completeness | 25 | Every core requirement and qualifying clause the question asked for is stated |
+     | Math Precision | 15 | Pro-rata and difference-settlement formulas and digits are exact |
+     | Actionability (SOP) | 15 | The answer gives a procedure or alternative an agent can execute immediately |
+     | Source Attribution | 15 | DW ledger PK, rule ID and SHA-256 chunk anchor are cited |
+
+   - **Deduction transparency rule**: for any item below 100 points, the report must record the **per-rubric points lost, the missing requirement, the root cause, and the remediation** — not just the total. Scores are never retro-adjusted and deduction reasons are never omitted.
    - Profile response latency, token consumption, and BigQuery slot costs.
 4. **Cloud Run Production Deployment & IaC Automation**:
    - Build standardized Docker container images and deploy via declarative scripts with dedicated runtime service accounts (`SA`).
