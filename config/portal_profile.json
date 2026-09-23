@@ -1,0 +1,217 @@
+{
+  "schema_version": "1.0",
+  "_readme": "이 파일 하나만 교체하면 포털의 0. Overview / 9. Evaluation 화면 내용이 그대로 바뀝니다. 화면 코드는 수정하지 않습니다. 값은 모두 문자열이며 <b>, <br>, <code> 태그를 허용합니다.",
+  "brand": {
+    "product_name": "Agentic Ontology Studio",
+    "edition": "Starter Pack",
+    "domain_label": "Telecom Subsidy (Sample Domain)",
+    "topbar_badges": [
+      { "text": "[OKF v0.2 Standard]", "tone": "default" },
+      { "text": "[4. Wiki Agent (GCS)]", "tone": "green" },
+      { "text": "[6. BQG Agent (Graph)]", "tone": "purple" }
+    ]
+  },
+  "overview": {
+    "eyebrow": "SECTION 1 · 전체 스텝 다이어그램 (5 Stage / 9 Step)",
+    "title": "5-Stage 방법론과 9-Step 스튜디오 실행 흐름",
+    "lead": "왼쪽에서 오른쪽으로 STAGE 1 ➔ STAGE 5, 각 컬럼 안에서는 위에서 아래로 STEP이 진행됩니다. 각 STEP 박스는 실행 내용과 산출물 ID를 함께 표기합니다.",
+    "stages": [
+      {
+        "chip": "STAGE 1",
+        "name": "자산 탐색 · 스코핑 & 거버넌스",
+        "accent": "#38bdf8",
+        "steps": [
+          {
+            "badge": "STEP 1 · 1. Asset",
+            "title": "원천 자산 인벤토리 & 스코핑",
+            "bullets": [
+              "정형 DW 원장과 비정형 규정 문서를 단일 인벤토리로 수집",
+              "도메인 바운더리 확정 및 노이즈 테이블 제외 기준 수립",
+              "Golden CQ 질문셋과 사실 정답표 초안 작성"
+            ],
+            "deliverables": "D1.1 스코핑 헌장 · D1.2 Golden CQ 명세 · D1.3 자산 인벤토리 · D1.4 카탈로그 태깅"
+          }
+        ]
+      },
+      {
+        "chip": "STAGE 2",
+        "name": "시맨틱 모델링 & OKF 정형화",
+        "accent": "#14b8a6",
+        "steps": [
+          {
+            "badge": "STEP 2 · 2. OKF Layer",
+            "title": "3-Layer LLM-Wiki 컴파일",
+            "bullets": [
+              "Layer 1(Raw) ➔ Layer 2(Parsed) ➔ Layer 3(.okf.md) 변환",
+              "원본 YAML Frontmatter와 문단 단위 SHA-256 앵커 보존",
+              "객체 스토리지 버킷에 위키 번들 적재"
+            ],
+            "deliverables": "D2.2 3-Layer LLM-Wiki · D2.3 프로토타입 레지스트리 · D2.4 청크·해시 앵커 매니페스트"
+          },
+          {
+            "badge": "STEP 3 · 3. Ontology Semantic",
+            "title": "시맨틱 온톨로지 & 브릿지 설계",
+            "bullets": [
+              "코어 클래스와 시맨틱 관계 정의",
+              "계층형 비즈니스 산식 결정 트리 수립",
+              "비정형 <code>rule_id</code> ↔ 정형 <code>PLCY_ID</code> 브릿지 바인딩"
+            ],
+            "deliverables": "D2.1 온톨로지 명세서 · D2.5 비즈니스 규칙 레지스트리 · D2.6 시맨틱 브릿지 매트릭스"
+          },
+          {
+            "badge": "STEP 4 · 4. Wiki Agent",
+            "title": "Stage 2 종료 게이트 검증 에이전트",
+            "bullets": [
+              "물리 그래프 구축 전, OKF 위키만으로 동작하는 선행 에이전트",
+              "규정·산식 중심 질의를 비정형 근거만으로 해결",
+              "비정형 지식의 구조화 품질 자체를 검증"
+            ],
+            "deliverables": "D2.6 브릿지 검증 결과 (Stage 2 Exit Gate)"
+          }
+        ]
+      },
+      {
+        "chip": "STAGE 3",
+        "name": "Property Graph & GQL 엔지니어링",
+        "accent": "#6366f1",
+        "steps": [
+          {
+            "badge": "STEP 5 · 5. Bigquery Graph",
+            "title": "ISO SQL:2023 Property Graph",
+            "bullets": [
+              "<code>CREATE OR REPLACE PROPERTY GRAPH</code> 선언적 DDL",
+              "핵심 원장을 Zero-ETL로 그래프 노드 직접 승격 (복제 0건)",
+              "1~3홉 GQL 질의 템플릿과 SQL 대비 벤치마크"
+            ],
+            "deliverables": "D3.1 Graph DDL · D3.2 토폴로지 명세 · D3.3 GQL 패턴 카탈로그 · D3.4 SQL vs GQL 벤치마크"
+          }
+        ]
+      },
+      {
+        "chip": "STAGE 4",
+        "name": "MCP 스위트 & 에이전트 오케스트레이션",
+        "accent": "#9333ea",
+        "steps": [
+          {
+            "badge": "STEP 6 · 6. BQG Agent",
+            "title": "정형·비정형 통합 그래프 에이전트",
+            "bullets": [
+              "자연어 ➔ GQL 변환 후 <code>GRAPH_TABLE()</code> 멀티홉 탐색",
+              "OKF 위키 규정 추론과 원장 조회를 단일 응답으로 결합",
+              "동적 하위 목표 분해와 크로스도메인 컨텍스트 핸드오프"
+            ],
+            "deliverables": "D4.1 도메인 MCP 스펙 · D4.2 시맨틱 라우팅 엔진 · D4.3 핸드오프 프로토콜 · D4.4 가드레일 정책"
+          }
+        ]
+      },
+      {
+        "chip": "STAGE 5",
+        "name": "스튜디오 통합 · 검증 & 배포",
+        "accent": "#db2777",
+        "steps": [
+          {
+            "badge": "STEP 7 · 7. Lineage",
+            "title": "4-Tier 엔터프라이즈 데이터 리니지",
+            "bullets": [
+              "Raw ➔ OKF ➔ Property Graph ➔ Agent 전주기 계보 추적",
+              "노드·엣지 토폴로지 기반 역추적 경로 제공",
+              "인메모리 캐시로 즉시 렌더링"
+            ],
+            "deliverables": "D5.1 통합 웹 스튜디오 · D5.2 4-Tier 리니지 명세서"
+          },
+          {
+            "badge": "STEP 8 · 8. AI FDE",
+            "title": "MCP 오케스트레이션 & 프로덕션 운영",
+            "bullets": [
+              "도메인 MCP 도구 콘솔과 추론 타임라인",
+              "신규 DW 테이블 자율 프로파일링 및 Graph DDL 합성",
+              "Cloud Run 컨테이너 배포와 최소 권한 IAM 격리"
+            ],
+            "deliverables": "D5.4 Cloud Run 배포 스크립트 & 운영 런북"
+          },
+          {
+            "badge": "STEP 9 · 9. Evaluation",
+            "title": "검증 리포트 & 회귀 평가",
+            "bullets": [
+              "Golden CQ 5차원 루브릭 채점 및 감점 사유 기록",
+              "바운더리 질의 회귀 (성공률 · 일관성 · 의도 안정성)",
+              "실패 원인 분류와 SQL 단독 대조군 병기",
+              "디스크 산출물 실측값만 집계, 미수행 회차는 PENDING"
+            ],
+            "deliverables": "D5.3 CQ 평가 리포트 · D5.5 검증 리포트 스튜디오"
+          }
+        ]
+      }
+    ],
+    "feature_gap": {
+      "eyebrow": "SECTION 2 & 3 · 아키텍처 & Google Cloud 서비스 vs. 커스텀 피처 갭",
+      "title": "2-Layer 시맨틱 아키텍처 (`4. Wiki Agent` ➔ `6. BQG Agent`) 및 피처 갭 매트릭스",
+      "rows": [
+        {
+          "layer": "2. OKF Layer & 4. Wiki Agent",
+          "layer_color": "accent",
+          "native": "Cloud Storage (GCS) & Gemini API",
+          "gap": "단순 벡터 청킹 시 표·산식 문맥 단절 및 버전 충돌",
+          "solution": "원본 YAML Frontmatter 보존 + Karpathy 3-Layer Wiki + 선행 <b>4. Wiki Agent</b>"
+        },
+        {
+          "layer": "5. Bigquery Graph & 6. BQG Agent",
+          "layer_color": "accent-purple",
+          "native": "BigQuery SQL:2023 Property Graph",
+          "gap": "관리형 MCP의 GQL 미지원 및 자연어➔GQL 변환 부재",
+          "solution": "Zero-ETL 노드 승격 + <b>6. BQG Agent</b> (<code>GRAPH_TABLE()</code> 멀티홉 + 산식 검증)"
+        },
+        {
+          "layer": "7. Lineage & 8. AI FDE",
+          "layer_color": "accent-green",
+          "native": "Dataplex Lineage & MCP SDK",
+          "gap": "SQL 테이블 간 이동만 추적하며 동기 메타데이터 조회 지연",
+          "solution": "4-Tier 전구간 리니지(비동기 인메모리 캐싱) + 도메인 MCP 스위트"
+        },
+        {
+          "layer": "9. Evaluation",
+          "layer_color": "accent-orange",
+          "native": "Vertex AI Evaluation Service",
+          "gap": "온톨로지 근거 경로(위키 앵커 / 그래프 홉)별 실패 원인 분해 부재",
+          "solution": "루브릭 채점 + 바운더리 회귀 + 실패 원인 분류를 단일 화면으로 집계"
+        }
+      ]
+    },
+    "metrics": {
+      "eyebrow": "SECTION 4 · 성능과 결과 (Performance & Results)",
+      "note": "아래 지표는 <b>통신 보조금 도메인 레퍼런스 구현</b>에서 측정된 값이며, 고객 식별 정보는 포함하지 않습니다. 본 저장소에 동봉된 샘플 데이터셋은 규모가 더 작으며, 그 실행 결과는 <code>9. Evaluation</code> 탭에서 리포트 파일 기준으로 확인할 수 있습니다.",
+      "items": [
+        { "label": "4. Wiki Agent (GCS)", "value": "16 / 20 PASS", "caption": "규정·산식 중심 비정형 추론", "color": "#10b981" },
+        { "label": "6. BQG Agent (Graph)", "value": "20 / 20 PASS", "caption": "멀티홉 원장 + 규정 통합", "color": "#c084fc" },
+        { "label": "Domain Pruning", "value": "35 ➔ 7 (-80%)", "caption": "Zero-ETL 직접 노드 승격", "color": "#38bdf8" },
+        { "label": "7. Lineage Latency", "value": "< 5 ms", "caption": "비동기 인메모리 즉시 로딩", "color": "#30d158" }
+      ]
+    }
+  },
+  "evaluation": {
+    "intro": "본 화면은 저장소에 존재하는 평가 산출물 파일만 집계합니다. 산출물이 없으면 해당 항목은 PENDING으로 표기되며, 값을 임의로 채우지 않습니다.",
+    "sources": [
+      { "id": "cq_report", "label": "Golden CQ 벤치마크 리포트", "path": "data/output/cq_benchmark_report.json", "produced_by": "run_pipeline.py" },
+      { "id": "boundary", "label": "바운더리 질의 회귀 결과", "path": "data/output/boundary_benchmark_results.json", "produced_by": "사용자 정의 회귀 러너 (미동봉)" },
+      { "id": "rubric", "label": "루브릭 정의", "path": "config/eval_rubric.json", "produced_by": "본 스타터팩 템플릿" }
+    ],
+    "design": {
+      "title": "검증 설계 (Evaluation Design)",
+      "description": "질문셋은 목적에 따라 3종으로 분리합니다. 각 질문셋은 서로 다른 실패 모드를 노출하도록 설계합니다.",
+      "suites": [
+        { "name": "Golden CQ", "purpose": "정답이 확정된 질문으로 정확성과 근거 인용을 채점", "shape": "질문 N개 × 1회", "metric": "루브릭 총점 (0~100)" },
+        { "name": "Boundary Question", "purpose": "맥락이 의도적으로 결여된 질문으로 분기·기권 능력을 측정", "shape": "질문 N개 × M회 반복", "metric": "성공률 · 일관성 · 의도 안정성" },
+        { "name": "Control Baseline", "purpose": "온톨로지 없이 SQL/RAG 단독으로 동일 질문을 수행한 대조군", "shape": "동일 질문셋", "metric": "성공률 (대조 비교용)" }
+      ]
+    },
+    "root_cause_taxonomy": [
+      { "code": "MISSING_ENTITY", "name": "온톨로지 엔티티 부재", "signal": "의도 분류는 정확하나 답변이 특정 템플릿에 고정됨", "fix": "누락된 엔티티와 규칙 노드를 온톨로지에 추가" },
+      { "code": "NO_SLOT_FILLING", "name": "결여 파라미터 슬롯 필링 부재", "signal": "필수 파라미터가 없는데도 되묻지 않고 원문을 나열", "fix": "필수 슬롯 미충족 시 분기 또는 재질문을 강제하는 정책 추가" },
+      { "code": "MISSING_EXCEPTION_EDGE", "name": "예외 규칙 분기 엣지 누락", "signal": "일반 규칙만 답하고 특례·면제 조항을 누락", "fix": "규칙 노드 간 예외 관계 엣지를 추가" },
+      { "code": "NO_ALIAS_DICT", "name": "엔티티 해석(별칭) 사전 미비", "signal": "동일 별칭이 실행마다 다른 엔티티로 해석됨", "fix": "별칭·세대 매핑 사전을 구축하고 해석 단계에 주입" }
+    ],
+    "rounds": [
+      { "round": 1, "label": "Round 1 · 기준 측정", "status_source": "cq_report", "note": "동봉 샘플 데이터셋 기준" }
+    ]
+  }
+}

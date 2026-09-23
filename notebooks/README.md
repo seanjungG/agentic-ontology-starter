@@ -3,7 +3,7 @@
 
 > **라이브 포털**: 설치 없이 [Agentic Ontology Studio 포털](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)에서 `0. Overview` ~ `8. AI FDE` 전 구간 화면을 바로 확인할 수 있습니다.
 
-본 디렉토리는 **Google Cloud Customer Engineer (CE), Data Architect, AI/GenAI Specialist**가 기업의 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 규정(SOP/가이드)을 통합하여 **0% 환각(Zero-Hallucination)과 수학적 결정론성**을 보장하는 엔터프라이즈 온톨로지를 단계별로 구축하고 검증할 수 있는 인터랙티브 주피터 노트북 패키지를 제공합니다.
+본 디렉토리는 **Google Cloud Customer Engineer (CE), Data Architect, AI/GenAI Specialist**가 기업의 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 규정(SOP/가이드)을 통합하여 **근거 출처 기반 응답(Grounded Answering)과 수학적 결정론성**을 목표로 하는 엔터프라이즈 온톨로지를 단계별로 구축하고 검증할 수 있는 인터랙티브 주피터 노트북 패키지를 제공합니다.
 
 ---
 
@@ -56,7 +56,7 @@ flowchart TD
 ### 3. 단계별 상세 실습 가이드 및 아키텍처 플로우 (Step-by-Step Deep Dive)
 
 #### [Step 1] 비정형 지식 체계화 및 OKF 에이전트 맛보기
-> **핵심 과제**: 복합 비정형 규정 문서에서 단순 벡터 RAG가 유발하는 100% 환각 결함을 해결하고, 감사 가능한 0% 환각 원천 증거 인출 체계를 확립합니다.
+> **핵심 과제**: 복합 비정형 규정 문서에서 단순 벡터 RAG가 유발하는 문맥 단절과 근거 이탈을 해결하고, 감사 가능한 원천 증거 인출 체계를 확립합니다.
 
 ![Step 1 Flow](assets/step1_architecture_flow.svg)
 
@@ -90,7 +90,7 @@ flowchart TD
 ---
 
 #### [Step 3] 하이브리드 온톨로지 통합, Tier 3 MCP 도구 및 AI FDE 에이전트
-> **핵심 과제**: AI 에이전트에게 원시 SQL/GQL 작성을 강요할 때 발생하는 인지 과부하를 Tier 3 Domain MCP로 격리하고, 동적 하위 목표 분해 및 크로스도메인 체이닝을 통해 수학적 0% 환각 의사결정을 실현합니다.
+> **핵심 과제**: AI 에이전트에게 원시 SQL/GQL 작성을 강요할 때 발생하는 인지 과부하를 Tier 3 Domain MCP로 격리하고, 동적 하위 목표 분해 및 크로스도메인 체이닝을 통해 원천 데이터에 근거한 결정론적 의사결정을 실현합니다.
 
 ![Step 3 Flow](assets/step3_fde_orchestration_flow.svg)
 
@@ -100,13 +100,13 @@ flowchart TD
   3. **AI FDE 자율 추론 엔진**:
      - **Phase 1**: 복합 질문 ➔ 동적 다중 하위 목표 분해 (`[G-BIZ-01]` 지원금 산출, `[G-ENG-01]` DW 스키마 실측).
      - **Phase 2 & 3**: 비즈니스 도구 ➔ 엔지니어링 도구 간 시퀀셜 체이닝 (`SEQUENTIAL_CHAIN`).
-     - **Phase 4**: 수학적 0% 환각 종합 리포트 도출.
+     - **Phase 4**: 근거 출처가 첨부된 종합 리포트 도출.
   4. **수학적 결정론성 검증**:
      - 180일 식스플랜 차액정산 위약금 일할 계산: $(450,000 - 150,000) \times (180 - 120) / 180 = 100,000$원
      - 만 65세 이상 시니어 특례 면제: **0원 (전액 면제)**
-  5. **Golden CQ 자동화 벤치마크**: 20대 평가 질문 100% Pass / 0% 환각 완결.
+  5. **Golden CQ 자동화 벤치마크**: 평가 질문 전수 실행 및 근거 앵커 첨부 검증.
 - **실습 산출물**:
-  - `data/output/cq_benchmark_report.json`: Golden CQ 정답률 100%, 환각률 0% 벤치마크 리포트
+  - `data/output/cq_benchmark_report.json`: CQ별 실행 결과와 근거 앵커가 기록된 벤치마크 리포트
 - **실행 바로가기**: [`국문 노트북 (03_graph_integration_mcp_agent_ko.ipynb)`](03_graph_integration_mcp_agent_ko.ipynb) · [`English (03_graph_integration_mcp_agent_en.ipynb)`](03_graph_integration_mcp_agent_en.ipynb)
 
 ---

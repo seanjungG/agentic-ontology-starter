@@ -3,7 +3,7 @@
 
 - **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.1.0`
-- **Objective**: Deploy the **`Agentic Ontology Studio - LG Uplus` (`0. Overview` plus `1. Asset` ~ `8. AI FDE`)** compliant with `05_DESIGN.md`, visualize 4-tier end-to-end data lineage (`7. Lineage`), execute automated regression evaluation across 20 Golden CQs to certify zero hallucination, and achieve containerized production deployment on Google Cloud Run.
+- **Objective**: Deploy the **`Agentic Ontology Studio - LG Uplus` (`0. Overview` plus `1. Asset` ~ `9. Evaluation`)** compliant with `05_DESIGN.md`, visualize 4-tier end-to-end data lineage (`7. Lineage`), execute rubric-scored evaluation across 20 Golden CQs plus boundary-question regression (`9. Evaluation`), and achieve containerized production deployment on Google Cloud Run.
 
 ---
 
@@ -15,7 +15,7 @@ Stage 5 delivers the 8-step production studio interface (plus the `0. Overview` 
 flowchart TD
     subgraph Step1 ["Step 5.1: Enterprise Web Studio Deployment"]
         DesignToken["Design System Standards<br/>- Pretendard Typography<br/>- Apple/Google Enterprise Theme<br/>- Unified 44px Topbar & 52px Subbar"]
-        Studios["Agentic Ontology Studio tabs<br/>- 0. Overview (Exec Summary & GCP Arch & Gap Matrix)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE"]
+        Studios["Agentic Ontology Studio tabs<br/>- 0. Overview (Exec Summary & GCP Arch & Gap Matrix)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE / 9. Evaluation"]
         DesignToken --> Studios
     end
 
@@ -29,7 +29,7 @@ flowchart TD
 
     subgraph Step3 ["Step 5.3: Automated 20 Golden CQ Evaluation"]
         EvalEngine["Automated CQ Benchmark Runner"]
-        Metrics{"Validate 3 Core Dimensions<br/>- 100% Numerical Accuracy<br/>- Exact Hash Anchor Provenance<br/>- Certified 0% Hallucination"}
+        Metrics{"Measure 3 Core Dimensions<br/>- 5-Dimension Rubric Score (0/1/2 scale)<br/>- Exact Hash Anchor Provenance<br/>- Boundary Success Rate & Intent Stability"}
         EvalEngine --> Metrics
     end
 
@@ -61,7 +61,7 @@ flowchart TD
 ### 2.2 4-Tier End-to-End Data Lineage
 - Complete provenance tracing from raw assets (Tier 1) through semantic rules (Tier 2), physical BigQuery graph structures (Tier 3), to agent MCP executions (Tier 4).
 
-### 2.3 Automated Zero-Hallucination Evaluation
+### 2.3 Golden CQ Rubric Evaluation & Boundary-Question Regression
 - Automatic verification of 20 Golden CQs using exact numerical comparisons and ground-truth hash anchor matching.
 
 ---
@@ -70,5 +70,6 @@ flowchart TD
 
 - [ ] All 5 web studios verified compliant with `05_DESIGN.md`.
 - [ ] 4-tier data lineage fully traceable across all entity relationships.
-- [ ] 20 Golden CQs achieve 100% numerical match and 0% hallucination.
-- [ ] Cloud Run container successfully serving 100% of production traffic under least-privilege runtime SA.
+- [ ] 20 Golden CQs reach a rubric average of 95 or above, with source citations attached to every answer.
+- [ ] Boundary-question success rate and failure-cause taxonomy are published as measured values on the `9. Evaluation` tab.
+- [ ] Cloud Run container successfully serving production traffic under a least-privilege runtime SA.
