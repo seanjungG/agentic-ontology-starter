@@ -23,9 +23,9 @@
 
 ---
 
-## 2. 크로스 인더스트리 공통 아키텍처 패턴 (`Agentic Ontology Studio` 9-Tab 연계)
+## 2. 크로스 인더스트리 공통 아키텍처 패턴 (`Agentic Ontology Studio` `0. Overview` ~ `8. AI FDE` 연계)
 
-모든 8개 엔터프라이즈 케이스는 Google Cloud의 **GCP Native First** 원칙과 **`Agentic Ontology Studio` 9단계 진화 라이프사이클**에 따라 동일한 계층 아키텍처를 공유합니다:
+모든 8개 엔터프라이즈 케이스는 Google Cloud의 **GCP Native First** 원칙과 **`Agentic Ontology Studio` 8단계 진화 라이프사이클(`1. Asset` ~ `8. AI FDE`)**에 따라 동일한 계층 아키텍처를 공유합니다:
 
 ```
 [Tab 1: 1. Asset (Unstructured SOP & Structured DW)]
@@ -103,4 +103,4 @@ industry_cases/
 3. **정형 DW 결합 및 `5. Bigquery Graph` / `6. BQG Agent` 확장**:
    - 고객사 DW 테이블을 `data_templates/schema_*.sql`의 DDL 구조에 맞춰 매핑한 뒤 `python3 run_pipeline.py`를 실행하여 **`5. Bigquery Graph`**와 **`6. BQG Agent`**를 활성화합니다.
 4. **`Agentic Ontology Studio` 통합 검증**:
-   - `python3 -m src.web.studio_server`를 기동하여 `0. Overview`(전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과)부터 `4. Wiki Agent`, `6. BQG Agent`, `7. Lineage`(`< 5ms`), `8. AI FDE`까지 9-Tab 전 구간을 확인합니다.
+   - `python3 -m src.web.studio_server`를 기동하여 `0. Overview`(전체 스텝 ➔ 아키텍처 ➔ 피처갭 ➔ 성능/결과)부터 `4. Wiki Agent`, `6. BQG Agent`, `7. Lineage`(`< 5ms`), `8. AI FDE`까지 `0. Overview` ~ `8. AI FDE` 전 구간을 확인합니다.

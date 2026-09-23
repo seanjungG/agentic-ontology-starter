@@ -23,20 +23,24 @@
 - **크로스도메인 투명성 (Cross-Domain Reasoning)**: 비즈니스 정책과 엔지니어링 인프라 도구의 동적 분해 및 체이닝.
 - **5단계 수명주기 통제 (Strict 5-Stage Gate)**: 단계별 명확한 입출력 산출물과 검수 기준 수립.
 
-### 1.3 비즈니스 및 온톨로지 시스템 핵심 개요와 9단계 스튜디오(`Agentic Ontology Studio - LG Uplus`) 흐름
+### 1.3 비즈니스·온톨로지 시스템 개요와 5-Stage ↔ 8-Step 스튜디오 매핑
 > **비즈니스 및 온톨로지 시스템 핵심 정의 (Executive Summary)**  
-> 본 시스템은 엔터프라이즈 도메인에 산재된 **파편화된 정형 원장(BigQuery DW)과 비정형 규정·약관 문서(GCS/PDF/HTML)를 단일 시맨틱 지식그래프(Property Graph)로 통합**하여, 멀티 에이전트가 **0% 환각(Zero-Hallucination)**으로 복합 비즈니스 의사결정을 추론·실행하는 엔터프라이즈 온톨로지 플랫폼입니다.  
-> 아래의 **9단계(`1. Overview` ~ `9. Agent`) 아키텍처 파이프라인**을 따라 원천 데이터 리니지 추적과 용어 표준화부터 OKF 위키 에이전트, BigQuery SQL:2023 그래프 추론, 자율 FDE 하베스팅, 거버넌스 승인 및 멀티 에이전트 서빙까지 순차적으로 확장됩니다.
+> 본 시스템은 엔터프라이즈 도메인에 산재된 **파편화된 정형 원장(BigQuery DW)과 비정형 규정·약관 문서(GCS/PDF/HTML)를 단일 시맨틱 지식그래프(Property Graph)로 통합**하여, 에이전트가 환각 없이 복합 비즈니스 의사결정을 추론·실행하는 엔터프라이즈 온톨로지 플랫폼입니다.
 
-1. **Track A (`2. Lineage` ➔ `3. Glossaries` ➔ `4. Wiki Agent` — 원천 리니지·용어 표준화 & 선행 GCS Wiki 에이전트)**:
-   - 원천 정형/비정형 데이터의 4-Tier 엔드투엔드 리니지(`2. Lineage`)와 비즈니스 표준 용어사전·시맨틱 브릿지(`3. Glossaries`)를 먼저 확립합니다.
-   - 비정형 업무 매뉴얼(MHTML/PDF)을 무손실 시각 청킹하여 OKF(Open Knowledge Format v0.2) 및 Karpathy 3-Layer LLM-Wiki 구조로 Google Cloud Storage(GCS) 버킷에 적재하고, 물리 그래프 DB 구축 이전에 **`4. Wiki Agent` (GCS 기반 선행 추론 에이전트)**를 1차 완성하여 차액정산금·복지면제·당일원복 등 16대 규정/산식 중심 CQ(`[GCS Preferred]`)를 즉시 해결합니다.
-2. **Track B (`5. Bigquery Graph` & `6. BQG Agent` — SQL:2023 Property Graph 결합 및 그래프 에이전트)**:
-   - 데이터웨어하우스 내 35개 원천 테이블 중 노이즈를 80% 제거(Domain Pruning: 35 ➔ 7)한 핵심 마스터 원장 테이블을 복제 없이(Zero-ETL) **`5. Bigquery Graph` (`ISO SQL:2023 CREATE PROPERTY GRAPH`)** 노드로 직접 승격하고, 비정형 위키 규칙과 시맨틱 브릿지로 결합합니다.
-   - 선행 `4. Wiki Agent`의 규정 추론에 실시간 `GRAPH_TABLE()` 멀티홉 원장 탐색(`NL2GQL`)을 결합한 **`6. BQG Agent`**를 통해 대리점 정산·다회선 결합을 포함한 20대 골든 CQ 전수(20/20 PASS)를 해결합니다.
-3. **Track C (`7. FDE` ➔ `8. Governance` ➔ `9. Agent` — 자율 하베스팅, 거버넌스 검수 및 프로덕션 에이전트 관제)**:
-   - **`7. FDE` (AI Forward Deployed Engineer)**가 원천 스키마와 문서를 자율 하베스팅하여 후보 온톨로지 규칙을 생성하면, **`8. Governance`**에서 데이터 스튜어드가 휴먼 승인 루프(HITL)를 거쳐 Dataplex Knowledge Catalog에 공식 배포합니다.
-   - 최종 승인된 지식그래프와 11종 도메인 온톨로지 MCP 스위트를 기반으로 **`9. Agent` (Google Cloud ADK 2.0 + Spanner/BigQuery Dual-Engine)**가 프로덕션 의사결정을 서빙합니다.
+본 방법론의 실행 단위는 **5단계(Stage 1~5) 프레임워크**이며, 실제 산출물을 눈으로 확인하는 화면 단위는 `Agentic Ontology Studio`의 **8개 스텝 탭(STEP 1~8)**입니다. 두 체계는 아래 표와 같이 1:N으로 대응하며, 본 문서의 Stage 번호와 스튜디오의 STEP 번호는 항상 이 매핑을 따릅니다.
+
+| Stage | 방법론 단계 명칭 | 스튜디오 STEP (탭) | 핵심 산출물 ID |
+| :--- | :--- | :--- | :--- |
+| **Stage 1** | 자산 탐색, 스코핑 및 거버넌스 수집 | `STEP 1 · 1. Asset` | `D1.1` ~ `D1.4` |
+| **Stage 2** | 시맨틱 모델링, OKF 정형화 및 그라운딩 | `STEP 2 · 2. OKF Layer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (종료 게이트 검증) |
+| **Stage 3** | BigQuery Property Graph 엔지니어링 및 GQL 질의 체계 | `STEP 5 · 5. Bigquery Graph` | `D3.1` ~ `D3.4` |
+| **Stage 4** | 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 | `STEP 6 · 6. BQG Agent` | `D4.1` ~ `D4.4` |
+| **Stage 5** | 엔터프라이즈 스튜디오 구축, 자동화 검증 및 프로덕션 배포 | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE` | `D5.1` `D5.2`<br>`D5.3` `D5.4` |
+
+**두 개의 에이전트를 순차적으로 구축하는 이유 (`4. Wiki Agent` ➔ `6. BQG Agent`)**
+
+1. **`STEP 4 · 4. Wiki Agent` (Stage 2 종료 게이트)**: 물리 그래프를 구축하기 전에, Stage 2의 산출물인 GCS OKF v0.2 위키만으로 동작하는 선행 에이전트를 먼저 완성합니다. 이 에이전트는 차액정산금·복지면제·당일원복 등 규정/산식 중심 **16 / 20 골든 CQ**를 해결하며, 비정형 지식의 구조화 품질 자체를 검증하는 Stage 2의 종료 조건 역할을 합니다.
+2. **`STEP 6 · 6. BQG Agent` (Stage 4)**: 35개 원천 테이블 중 노이즈를 제거(Domain Pruning: 35 ➔ 7)한 핵심 마스터 원장을 복제 없이(Zero-ETL) Property Graph 노드로 승격한 뒤, 위키 규정 추론과 `GRAPH_TABLE()` 멀티홉 원장 탐색(`NL2GQL`)을 결합합니다. **20대 골든 CQ의 최종 수행 주체는 이 `6. BQG Agent`로 일원화**되며, 각 질문이 실제로 사용한 근거 경로(GCS OKF 위키 / BigQuery Property Graph)는 평가표에 보조 태그로 병기합니다.
 
 ### 1.4 GCP Native First 강령 및 엔드투엔드 GCP 시스템 아키텍처 (GCP Native First Mandate)
 
@@ -52,8 +56,8 @@ flowchart LR
     end
 
     subgraph T2 ["2. Harvesting & Catalog Layer"]
-        FDE["7. FDE Autonomous Pipeline<br/>Auto Schema & Rule Harvesting"]
-        GOV["8. Governance (HITL) &<br/>Dataplex Knowledge Catalog"]
+        FDE["8. AI FDE Autonomous Pipeline<br/>Auto Schema & Rule Harvesting"]
+        GOV["Human-in-the-Loop Review &<br/>Dataplex Knowledge Catalog"]
     end
 
     subgraph T3 ["3. Semantic & Graph Engine Layer"]
@@ -63,8 +67,8 @@ flowchart LR
     end
 
     subgraph T4 ["4. Agent Runtime & Serving Layer"]
-        ADK["9. Agent (Google Cloud ADK 2.0)<br/>Vertex AI Gemini 2.5 + Domain MCP"]
-        RUN["Cloud Run Serverless<br/>Agentic Ontology Studio (9-Tab UI)"]
+        ADK["Agent Runtime (Google Cloud ADK 2.0)<br/>Vertex AI Gemini + 11 Domain MCP Tools"]
+        RUN["Cloud Run Serverless<br/>Agentic Ontology Studio (0. Overview ~ 8. AI FDE)"]
     end
 
     GCS & BQ --> FDE --> GOV
@@ -79,8 +83,8 @@ flowchart LR
 | **1. Data Lake & DW** | • BigQuery Managed Tables<br>• Cloud Storage (GCS)<br>• BigQuery SQL:2023 Property Graph | • [BigQuery Documentation](https://cloud.google.com/bigquery)<br>• [Cloud Storage Documentation](https://cloud.google.com/storage) | • 2-Layer 안티 리던던시 Graph DDL 컴파일러 (`pipeline/graph_builder.py`)<br>• 시맨틱 브릿지 엣지 (`APPLIES_TO`, `CALCULATES`) | DW 원장 테이블을 그래프 노드로 직접 승격하고 텍스트 중복 엔티티를 프루닝하여 저장 공간 및 쿼리 비용 80% 절감 |
 | **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • 담백한 원본 YAML Frontmatter + Karpathy 3-Layer LLM-Wiki 컴파일러<br>• 선행 **`4. Wiki Agent` (GCS 기반 추론 에이전트)** | 비정형 PDF/MHTML의 구조를 보존하고, 물리 그래프 구축 전 GCS 위키만으로 16대 규정 CQ 선행 해결 |
 | **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (비즈니스 5종 + 엔지니어링 6종 도구)<br>• **`6. BQG Agent`** (`GRAPH_TABLE()` NL2GQL 실행기) | **BigQuery Remote MCP의 결정적 제약사항(GQL `GRAPH_TABLE()` 미지원) 극복** 및 20/20 골든 CQ 전수 해결 |
-| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`7. FDE` & `9. Agent`** 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 정적 1회 질의를 넘어 비즈니스 룰과 물리 DW 원장 실측치를 교차 검증하는 자율 추론 사이클 구현 |
-| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio - LG Uplus`** (`src/web/studio_server.py`)<br>• 9-Tab 통합 아키텍처 (`1. Overview` ~ `9. Agent`) & `< 5ms` 즉시 리니지(`2. Lineage`)<br>• 단일 연속 스크롤 Overview (비즈니스 개요 ➔ 전체 스텝 ➔ GCP 아키텍처 ➔ 피처갭 ➔ 성능/결과) | 서브탭 전환 없이 한눈에 전체 흐름과 성능을 검증하는 엔터프라이즈 표준 온톨로지 스튜디오 제공 |
+| **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`8. AI FDE` & Agent Runtime (ADK 2.0)** 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 정적 1회 질의를 넘어 비즈니스 룰과 물리 DW 원장 실측치를 교차 검증하는 자율 추론 사이클 구현 |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio - LG Uplus`** (`src/web/studio_server.py`)<br>• 통합 스튜디오 아키텍처 (`0. Overview` ~ `8. AI FDE`) & `< 5ms` 즉시 리니지(`7. Lineage`)<br>• 단일 연속 스크롤 Overview (비즈니스 개요 ➔ 전체 스텝 ➔ GCP 아키텍처 ➔ 피처갭 ➔ 성능/결과) | 서브탭 전환 없이 한눈에 전체 흐름과 성능을 검증하는 엔터프라이즈 표준 온톨로지 스튜디오 제공 |
 
 #### 1.4.2 핵심 공식 레퍼런스 저장소 (Official Reference Repositories)
 1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
@@ -130,7 +134,7 @@ flowchart TD
     subgraph TRACK_D ["거버넌스 & 오케스트레이션 흐름: 7. Lineage & 8. AI FDE"]
         S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier 엔터프라이즈 데이터 리니지 (< 5ms 즉시 로딩)"]
         S7_Lineage --> S8_FDE["8. AI FDE: 11종 도메인 온톨로지 MCP 오케스트레이터"]
-        S8_FDE --> S9_Studio["Agentic Ontology Studio (9-Tab 통합 & 단일 연속 Overview)"]
+        S8_FDE --> S9_Studio["Agentic Ontology Studio (0. Overview ~ 8. AI FDE 통합 & 단일 연속 Overview)"]
     end
 
     TRACK_A --> TRACK_C
@@ -401,7 +405,18 @@ sequenceDiagram
 2. **4-Tier 엔드투엔드 데이터 리니지 시각화**:
    - Tier 1(원천 문서/DW) ➔ Tier 2(청크/정제) ➔ Tier 3(온톨로지/BQG) ➔ Tier 4(MCP/AI 에이전트)로 이어지는 무결점 감사 추적망 제공.
 3. **20대 Golden CQ 자동화 평가 및 사실 일관성 감사**:
-   - LLM-as-a-Judge 및 수치 일치율 메트릭을 통해 0% 환각 달성 여부 정량 검증.
+   - **최종 수행 주체 일원화**: 20개 문항 모두 정형·비정형을 결합한 `6. BQG Agent`가 최종 수행하며, 각 문항이 실제로 사용한 **근거 경로(GCS OKF 위키 / BigQuery Property Graph)**를 보조 태그로 병기하여 추적 가능하게 유지합니다.
+   - **5대 루브릭 100점 채점 체계**: 아래 배점으로 문항별 점수를 산출합니다.
+
+     | 루브릭 | 배점 | 판정 기준 |
+     | :--- | ---: | :--- |
+     | 정확성 / 그라운딩 (Accuracy & Grounding) | 30 | 정답 수치·조건이 원천 근거와 일치하고 출처 앵커로 추적 가능한가 |
+     | 완결성 (Completeness) | 25 | 질문이 요구한 핵심 요구사항과 단서조항을 빠짐없이 서술했는가 |
+     | 수학적 정밀도 (Math Precision) | 15 | 일할 계산·차액정산 등 산식과 자릿수가 정확한가 |
+     | 실무 SOP (Actionability) | 15 | 상담사가 즉시 실행 가능한 절차·대안을 제시했는가 |
+     | 출처 표기 (Source Attribution) | 15 | DW 원장 PK, 규칙 ID, SHA-256 청크 앵커를 명시했는가 |
+
+   - **감점 투명성 원칙**: 100점 미만 문항은 총점만 표기하지 않고, **루브릭별 감점 점수 · 미충족 요구사항 · 감점 사유(근본 원인) · 개선 조치**를 함께 기록합니다. 점수를 사후 보정하거나 감점 사유를 생략하지 않습니다.
    - 응답 레이턴시, 토큰 소모량, 슬롯 비용 프로파일링.
 4. **Cloud Run 프로덕션 컨테이너 패키징 및 IaC 배포**:
    - Dockerfile 기반 컨테이너 빌드, Terraform IaC 관리, 최소 권한 런타임 서비스 계정(SA) 격리 적용.

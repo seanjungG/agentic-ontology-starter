@@ -3,19 +3,19 @@
 
 - **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.1.0`
-- **Objective**: Deploy the 9-Tab **`Agentic Ontology Studio - LG Uplus` (`1. Overview` ~ `9. Agent`)** compliant with `05_DESIGN.md`, visualize 4-tier end-to-end data lineage (`2. Lineage`), execute automated regression evaluation across 20 Golden CQs to certify zero hallucination, and achieve containerized production deployment on Google Cloud Run.
+- **Objective**: Deploy the **`Agentic Ontology Studio - LG Uplus` (`0. Overview` plus `1. Asset` ~ `8. AI FDE`)** compliant with `05_DESIGN.md`, visualize 4-tier end-to-end data lineage (`7. Lineage`), execute automated regression evaluation across 20 Golden CQs to certify zero hallucination, and achieve containerized production deployment on Google Cloud Run.
 
 ---
 
 ## 1. Overall Execution Process
 
-Stage 5 delivers the 9-Step production studio interface, comprehensive auditing views, and containerized deployment infrastructure.
+Stage 5 delivers the 8-step production studio interface (plus the `0. Overview` tab), comprehensive auditing views, and containerized deployment infrastructure.
 
 ```mermaid
 flowchart TD
-    subgraph Step1 ["Step 5.1: 9-Tab Enterprise Web Studio Deployment"]
+    subgraph Step1 ["Step 5.1: Enterprise Web Studio Deployment"]
         DesignToken["Design System Standards<br/>- Pretendard Typography<br/>- Apple/Google Enterprise Theme<br/>- Unified 44px Topbar & 52px Subbar"]
-        Studios["9-Tab Agentic Ontology Studio<br/>- 1. Overview (Exec Summary & GCP Arch & Gap Matrix)<br/>- 2. Lineage / 3. Glossaries / 4. Wiki Agent<br/>- 5. Bigquery Graph / 6. BQG Agent<br/>- 7. FDE / 8. Governance / 9. Agent"]
+        Studios["Agentic Ontology Studio tabs<br/>- 0. Overview (Exec Summary & GCP Arch & Gap Matrix)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE"]
         DesignToken --> Studios
     end
 
