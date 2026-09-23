@@ -7,6 +7,35 @@
 
 ---
 
+## 라이브 포털 바로 보기 (Live Demo)
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Agentic%20Ontology%20Studio-4285F4?logo=googlecloud&logoColor=white)](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)
+[![Runtime](https://img.shields.io/badge/Runtime-Cloud%20Run%20(asia--northeast3)-34A853?logo=googlecloud&logoColor=white)](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)
+[![Dependencies](https://img.shields.io/badge/Python%20Dependencies-0-lightgrey)](#)
+
+**➔ [Agentic Ontology Studio 포털 열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)**
+
+저장소를 복제하거나 설치하지 않고도 8단계 스튜디오의 실제 화면과 데이터 구조를 브라우저에서 바로 확인할 수 있습니다.
+포털은 본 저장소의 `data/` 산출물을 그대로 읽어 렌더링하므로, README에 적힌 구조와 화면이 1:1로 일치합니다.
+
+| 탭 | 바로가기 | 화면에서 확인할 수 있는 것 |
+| :--- | :--- | :--- |
+| `0. Overview` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=overview) | 전체 스텝 다이어그램, 2-Layer 아키텍처, 피처 갭 매트릭스, 성능 지표 |
+| `1. Asset` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=assets) | 비정형 정책 청크·3-Layer 위키 ↔ 정형 DW 마스터 원장 대조 뷰 |
+| `2. OKF Layer` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=okf) | 무손실 청킹, SHA-256 해시 앵커, OKF v0.2 산출물 |
+| `3. Ontology Semantic` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=structured) | Zero-Copy DW 승격 원리 및 ISO SQL:2023 `CREATE PROPERTY GRAPH` DDL |
+| `4. Wiki Agent` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=wiki-agent) | 물리 그래프 없이 OKF 위키만으로 추론하는 선행 에이전트 콘솔 |
+| `5. Bigquery Graph` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=graph) | 2-Layer 안티 리던던시 토폴로지 맵 및 GQL 쿼리 러너 |
+| `6. BQG Agent` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=bqg-agent) | `GRAPH_TABLE()` 멀티홉 NL2GQL 추론 콘솔 |
+| `7. Lineage` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=lineage) | `data/` 산출물 기반 4-Tier 계보 및 시맨틱 브릿지 엣지 |
+| `8. AI FDE` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=fde) | 11종 도메인 MCP 오케스트레이션 및 동적 하위 목표 분해 |
+| `CQ 벤치마크` | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=cq) | 동봉 샘플 데이터셋의 실제 `cq_benchmark_report.json` 실행 결과 |
+
+> 포털에 표시되는 CQ 지표는 저장소에 동봉된 **샘플 데이터셋의 실제 실행 결과**입니다.
+> `0. Overview` Section 4의 20대 골든 CQ 수치는 LG Uplus 레퍼런스 구현에서 측정된 값으로, 화면에 그 출처를 명시했습니다.
+
+---
+
 ### 1. 진화적 온톨로지 통합 아키텍처 및 `Agentic Ontology Studio` (`0. Overview` ~ `8. AI FDE`) 흐름
 
 ```mermaid
@@ -180,41 +209,37 @@ python3 notebooks/generate_modular_notebooks.py
 
 ---
 
-### 7. 5단계 E2E 데이터 라이프사이클 엔터프라이즈 스튜디오
+### 7. Agentic Ontology Studio 화면 구성 (`0. Overview` ~ `8. AI FDE`)
 
-`DESIGN.md` 표준을 100% 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`)가 제공되며, 데이터 인입부터 AI 에이전트 활용까지 5단계 순차 라이프사이클을 제공합니다:
-0. **Overview (개요 & 플로우)**:
-   - 플랫폼 첫 진입 기본 랜딩 화면.
-   - 엔터프라이즈 온톨로지 비전, ROI 및 5단계 데이터 라이프사이클 인터랙티브 벤토 카드.
-   - 정형 DW 및 비정형 문서의 융합 아키텍처 다이어그램 및 단계별 원클릭 점프.
-1. **자산 레지스트리 (Asset Registry)**:
-   - BigQuery DW 마스터 원장 테이블(`dw_device_master`, `dw_plan_master`, `dw_subsidy_policy_master`) 스키마 및 레코드 카탈로그 뷰어 (`[Direct Node Promotion]` 무복제 원칙).
-2. **OKF 변환 레이어 (OKF Layer)**:
-   - 2주 스프린트 비정형 GCS 파이프라인 전용 탭.
-   - 비정형 정책 가이드 무손실 청킹, SHA-256 불변 해시 앵커 청크(`DocChunk`), Google Cloud OKF v0.2 `ontology.jsonld` 및 Karpathy 3-Layer LLM-Wiki(`summary`, `entities`, `concepts`, `rules`) 뷰어.
-3. **정형 그래프 구조화 (Structured Graph)**:
-   - Zero-Copy DW 직접 승격 원리 및 2-Layer 안티 리던던시 보증.
-   - 선언적 ISO SQL:2023 Property Graph DDL(`create_property_graph.sql`) 신택스 하이라이팅 및 원클릭 복사.
-4. **하이브리드 BQG 통합 (Hybrid BQG)**:
-   - 2-Layer 안티 리던던시 2D/3D 인터랙티브 토폴로지 맵 (정형 노드: 파랑, 비정형 노드: 보라, 시맨틱 브릿지: 초록 점선 `APPLIES_RULE`).
-   - 노드 클릭 시 속성/스키마 인스펙터 및 BigQuery GQL `GRAPH_TABLE()` 다중 홉 쿼리 테스트 러너.
-5. **AI 에이전트 (AI FDE Studio)**:
-   - 11종 도메인 MCP 도구 카탈로그 (비즈니스 5종 + 엔지니어링 6종).
-   - 동적 다중 하위 목표 분해(`Sub-Goals`) 및 시퀀셜 체이닝(`SEQUENTIAL_CHAIN`) 타임라인.
-   - 중간 관측(`Intermediate Observation`) 및 0% 환각 결정론적 위약금 연산 리포트.
-- **CQ 벤치마크 (CQ Benchmark Studio)**:
-   - 20대 Golden CQ 평가 매트릭스, 기대 정답값, 실제 FDE 출력값, 법적 해시 앵커.
-   - 100% 일치율, 0.0% 환각률 실측 KPI 카드 및 원클릭 자동화 검증.
+`DESIGN.md` 표준을 준수한 단일 포트 경량 웹 스튜디오(`src/web/studio_server.py`, 외부 종속성 0개)가 제공됩니다.
+아래 구성은 [라이브 포털](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)에서 그대로 확인할 수 있습니다.
+
+| 탭 | 화면 구성 |
+| :--- | :--- |
+| **`0. Overview`** | Section 1 전체 스텝 다이어그램 · Section 2/3 2-Layer 아키텍처와 피처 갭 매트릭스 · Section 4 성능과 결과 (단일 연속 스크롤) |
+| **`1. Asset`** | 좌: 비정형 정책 청크와 Karpathy 3-Layer 위키(`summary`/`entities`/`concepts`/`rules`) · 우: BigQuery DW 마스터 원장(`dw_device_master`, `dw_plan_master`, `dw_subsidy_policy_master`) |
+| **`2. OKF Layer`** | 비정형 정책 가이드 무손실 청킹, SHA-256 불변 해시 앵커(`DocChunk`), OKF v0.2 `ontology.jsonld` 뷰어 |
+| **`3. Ontology Semantic`** | Zero-Copy DW 직접 승격 원리, 2-Layer 안티 리던던시 설명, ISO SQL:2023 `CREATE PROPERTY GRAPH` DDL 하이라이팅 및 원클릭 복사 |
+| **`4. Wiki Agent`** | 물리 그래프 구축 전, GCS OKF 위키만으로 규정·산식을 추론하는 선행 에이전트 콘솔 (Stage 2 종료 게이트) |
+| **`5. Bigquery Graph`** | 2D 인터랙티브 2-Layer 토폴로지 맵(정형 노드 / 비정형 노드 / 시맨틱 브릿지)과 GQL 쿼리 테스트 러너 |
+| **`6. BQG Agent`** | `GRAPH_TABLE()` 멀티홉 NL2GQL 추론 콘솔 — 정형 원장과 비정형 규정을 실시간 교차 검증 |
+| **`7. Lineage`** | `data/` 산출물을 직접 읽어 계산한 4-Tier 계보(Raw ➔ OKF ➔ Property Graph ➔ Agent)와 시맨틱 브릿지 엣지 테이블 |
+| **`8. AI FDE`** | 11종 도메인 MCP 도구 카탈로그(비즈니스 5 · 엔지니어링 6), 동적 하위 목표 분해 및 시퀀셜 체이닝 타임라인 |
+| **`CQ 벤치마크`** | `0. Overview` Section 4 버튼으로 진입. `data/output/cq_benchmark_report.json`을 그대로 읽어 CQ별 근거 앵커까지 표시 |
+
+`4. Wiki Agent`, `6. BQG Agent`, `8. AI FDE`는 동일한 추론 콘솔을 공유하되, 상단 모드 바에 각 에이전트의
+**근거 경로(Evidence Path)**와 전용 샘플 질의가 표시됩니다.
 
 ---
 
-### 8. 빠른 시작 가이드 (Quickstart in 3 Minutes)
+### 8. 빠른 시작 가이드 (Quickstart)
 
-#### 1단계: 저장소 복제 및 의존성 설치
+#### 1단계: 저장소 복제
+파이프라인과 스튜디오는 **Python 표준 라이브러리만으로 동작**하므로 별도 설치가 필요 없습니다.
+(`requirements.txt`는 BigQuery / Gemini 연동 노트북을 실행할 때만 선택적으로 설치합니다.)
 ```bash
 git clone https://github.com/seanjungG/agentic-ontology-starter.git
 cd agentic-ontology-starter
-pip install -r requirements.txt
 ```
 
 #### 2단계: 데이터 입고 및 파이프라인 실행
@@ -229,9 +254,22 @@ python3 run_pipeline.py
 > - `data/output/create_property_graph.sql`: BigQuery Property Graph 물리 DDL
 > - `data/output/cq_benchmark_report.json`: 100% 수치 일치율 및 0% 환각 검증 리포트
 
-#### 3단계: 멀티뷰 엔터프라이즈 스튜디오 실행
+#### 3단계: Agentic Ontology Studio 실행
 ```bash
 python3 -m src.web.studio_server
 ```
-브라우저에서 `http://127.0.0.1:8088`에 접속하여 4대 스튜디오를 즉시 활용할 수 있습니다.
+브라우저에서 `http://127.0.0.1:8088`에 접속하면 `0. Overview` ~ `8. AI FDE` 전 구간을 확인할 수 있습니다.
+특정 탭으로 바로 이동하려면 `http://127.0.0.1:8088/?tab=lineage`처럼 `?tab=` 파라미터를 사용합니다.
+
+#### 4단계 (선택): Cloud Run 배포
+컨테이너는 표준 라이브러리만 사용하므로 별도 빌드 설정 없이 그대로 배포됩니다.
+```bash
+gcloud run deploy agentic-ontology-starter \
+  --source . \
+  --region asia-northeast3 \
+  --allow-unauthenticated \
+  --port 8080
+```
+포털은 외부 GCP 리소스를 호출하지 않으므로 런타임 서비스 계정에 추가 IAM 권한이 필요하지 않습니다.
+현재 배포된 레퍼런스 인스턴스: https://agentic-ontology-starter-924723860007.asia-northeast3.run.app
 

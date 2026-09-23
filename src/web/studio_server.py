@@ -11,7 +11,7 @@ Features 4 Interactive Studios:
 3. Property Graph Visualizer (2D Interactive 2-Layer Anti-Redundancy Topology & SQL:2023 DDL)
 4. CQ Benchmark Studio (Golden Competency Questions Matrix & 0% Hallucination Scorecards)
 """
-import http.server, socketserver, json, sys, os, csv
+import http.server, json, sys, os, csv
 from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -321,6 +321,16 @@ HTML_PAGE = """<!DOCTYPE html>
     .kpi-item { display: flex; align-items: center; gap: 6px; }
     .kpi-val { font-weight: 700; color: var(--accent); }
     .graph-main-split { flex: 1; display: flex; overflow: hidden; }
+    .agent-mode-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 9px 14px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--card-border);
+    }
     .graph-canvas-box { flex: 1; position: relative; background: radial-gradient(circle at center, #1a1a1e 0%, #000000 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .graph-inspector { width: 360px; border-left: 1px solid var(--card-border); background: var(--surface-1); display: flex; flex-direction: column; overflow: hidden; }
     .code-box {
@@ -510,8 +520,12 @@ HTML_PAGE = """<!DOCTYPE html>
     <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 22px 26px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span class="badge badge-purple" style="font-size: 13px; padding: 4px 10px;">SECTION 4 &middot; 성능과 결과 (Performance &amp; Results)</span>
-        <button class="nav-btn" style="background: rgba(191,90,242,0.2); color: #e9d5ff; font-size: 13px;" onclick="switchTab('cq')">20대 골든 CQ 벤치마크 전체 보기 &rarr;</button>
+        <button class="nav-btn" style="background: rgba(191,90,242,0.2); color: #e9d5ff; font-size: 13px;" onclick="switchTab('cq')">동봉 샘플 CQ 벤치마크 실행 결과 보기 &rarr;</button>
       </div>
+      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 14px 0;">
+        아래 4개 지표는 <b>LG Uplus 레퍼런스 구현(20대 골든 CQ)</b>에서 측정된 값입니다.
+        본 저장소에 동봉된 샘플 데이터셋은 규모가 더 작으며, 그 실행 결과는 위 버튼에서 실제 리포트 파일 기준으로 확인할 수 있습니다.
+      </p>
       <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
         <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">4. Wiki Agent (GCS)</div><div class="metric-value" style="color:#10b981;">16 / 20 PASS</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">평균 1.18s &middot; 규정/산식 중심</div></div>
         <div class="metric-box"><div class="metric-title" style="font-size:12.5px;">6. BQG Agent (Graph)</div><div class="metric-value" style="color:#c084fc;">20 / 20 PASS</div><div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">평균 1.42s &middot; 멀티홉 원장 통합</div></div>
@@ -537,11 +551,15 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
       </div>
       <div class="fde-console">
-        <div class="quick-chips-bar">
+        <div class="agent-mode-bar">
+          <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;">
+            <span class="badge badge-purple" id="agent-mode-badge">8. AI FDE</span>
+            <span style="font-size:13px; font-weight:700; color:var(--text-primary);" id="agent-mode-title">11종 도메인 MCP 오케스트레이션 콘솔</span>
+          </div>
+          <span style="font-size:11.5px; color:var(--text-secondary);" id="agent-mode-path">근거 경로 · OKF 위키 + Property Graph 원장 동시 참조</span>
+        </div>
+        <div class="quick-chips-bar" id="agent-sample-chips">
           <span style="font-size:11px; color:var(--text-secondary); align-self:center;">Sample Directives:</span>
-          <span class="quick-chip" onclick="applySample('Galaxy S26 Ultra 지원금과 원천 DW 테이블 행수 확인해줘')">Galaxy S26 Ultra 지원금 & DW 행수</span>
-          <span class="quick-chip" onclick="applySample('개통 후 120일 시점에 요금제 하향 변경 시 위약금 얼마야?')">120일 요금제 하향 위약금 계산</span>
-          <span class="quick-chip" onclick="applySample('Property Graph GQL 횡단 탐색 및 20대 Golden CQ 벤치마크 실행')">GQL 탐색 & CQ 벤치마크</span>
         </div>
         <div class="chat-timeline" id="timeline">
           <div class="trace-card">
@@ -658,7 +676,7 @@ HTML_PAGE = """<!DOCTYPE html>
           </div>
         </div>
         <button class="nav-btn" style="width: 100%; text-align: center; background: var(--accent); color: #fff; padding: 8px;" onclick="switchTab('structured')">
-          3. 정형 그래프 구조화 보기 &rarr;
+          3. Ontology Semantic 보기 &rarr;
         </button>
       </div>
     </div>
@@ -668,12 +686,12 @@ HTML_PAGE = """<!DOCTYPE html>
   <div class="tab-panel" id="panel-structured" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 20px;">
     <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <div style="font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 4px;">STAGE 3: STRUCTURED GRAPH &amp; ZERO-COPY DDL</div>
+        <div style="font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 4px;">3. ONTOLOGY SEMANTIC &middot; ZERO-COPY DDL</div>
         <h2 style="font-size: 18px; font-weight: 700; color: var(--text-primary);">DW Direct Promotion &amp; 2-Layer Anti-Redundancy</h2>
       </div>
       <div style="display: flex; gap: 8px;">
         <button class="nav-btn" style="padding: 6px 12px; font-size: 11.5px; background: var(--surface-2);" onclick="copyStarterDdl()">DDL 복사 (Copy SQL)</button>
-        <button class="nav-btn" style="padding: 6px 12px; font-size: 11.5px; background: var(--accent); color: #fff;" onclick="switchTab('graph')">4. 하이브리드 BQG 탐색 &rarr;</button>
+        <button class="nav-btn" style="padding: 6px 12px; font-size: 11.5px; background: var(--accent); color: #fff;" onclick="switchTab('graph')">5. Bigquery Graph 탐색 &rarr;</button>
       </div>
     </div>
 
@@ -795,31 +813,70 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     </div>
   </div>
 
+  <!-- VIEW 5: 4-TIER ENTERPRISE LINEAGE -->
+  <div class="tab-panel" id="panel-lineage" style="flex-direction: column; overflow-y: auto; padding: 24px; gap: 18px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="badge badge-green">7. LINEAGE</span>
+        <span style="font-size:15px; font-weight:800; color:var(--text-primary);">4-Tier 엔드투엔드 데이터 계보 (Raw &rarr; OKF &rarr; Property Graph &rarr; Agent)</span>
+      </div>
+      <span class="badge" id="lineage-latency-badge">로딩 중</span>
+    </div>
+    <p style="font-size:13px; color:var(--text-secondary); line-height:1.65; margin:0;">
+      아래 수치는 본 저장소에 동봉된 <code>data/</code> 산출물(<code>doc_chunks.jsonl</code>, <code>llm_wiki/</code>, <code>graph_topology.json</code>, <code>cq_benchmark_report.json</code>)을 요청 시점에 직접 읽어 계산한 값입니다.
+      자신의 데이터를 <code>data/input/</code>에 넣고 <code>python3 run_pipeline.py</code>를 실행하면 동일한 계보가 그대로 갱신됩니다.
+    </p>
+
+    <div class="kpi-grid" id="lineage-kpis"></div>
+
+    <div id="lineage-tiers" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:14px;"></div>
+
+    <div style="background: var(--surface-1); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px 20px;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:10px;">계층 간 전이 및 시맨틱 브릿지 엣지 (Semantic Bridges)</div>
+      <table class="data-table" id="lineage-edge-table">
+        <thead>
+          <tr><th>Source Vertex</th><th>Edge</th><th>Target Vertex</th><th>Edge Type</th></tr>
+        </thead>
+        <tbody id="lineage-edge-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- VIEW 4: CQ BENCHMARK STUDIO -->
   <div class="tab-panel" id="panel-cq">
     <div class="cq-layout">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <button class="nav-btn" onclick="switchTab('overview')" style="font-size:12px;">&larr; 0. Overview</button>
+        <span style="font-size:15px; font-weight:800; color:var(--text-primary);">Golden CQ 벤치마크 (동봉 샘플 데이터셋 실행 결과)</span>
+      </div>
+      <p style="font-size:13px; color:var(--text-secondary); line-height:1.65; margin:0;">
+        아래 지표는 본 저장소에 동봉된 샘플 데이터셋(<code>data/input/04_cq/golden_competency_questions.json</code>)을
+        <code>run_pipeline.py</code>로 실행한 <code>data/output/cq_benchmark_report.json</code>을 그대로 읽어 표시한 값입니다.
+        LG Uplus 레퍼런스 구현의 20대 골든 CQ 실측치는 <code>0. Overview</code> Section 4에 별도로 표기되어 있습니다.
+      </p>
+
       <div class="kpi-grid">
         <div class="metric-box">
-          <div class="metric-title">Golden Competency Questions</div>
-          <div class="metric-value">20 CQs</div>
+          <div class="metric-title">동봉 샘플 CQ 수</div>
+          <div class="metric-value" id="cq-kpi-total">-</div>
         </div>
         <div class="metric-box">
-          <div class="metric-title">Deterministic Accuracy</div>
-          <div class="metric-value" style="color:var(--accent-green);">100%</div>
+          <div class="metric-title">통과 (Passed)</div>
+          <div class="metric-value" style="color:var(--accent-green);" id="cq-kpi-passed">-</div>
         </div>
         <div class="metric-box">
-          <div class="metric-title">Hallucination Rate</div>
-          <div class="metric-value" style="color:var(--accent);">0.0%</div>
+          <div class="metric-title">정확도 (Accuracy)</div>
+          <div class="metric-value" id="cq-kpi-accuracy">-</div>
         </div>
         <div class="metric-box">
-          <div class="metric-title">Average Execution Latency</div>
-          <div class="metric-value">142ms</div>
+          <div class="metric-title">환각률 (Hallucination)</div>
+          <div class="metric-value" style="color:var(--accent);" id="cq-kpi-halluc">-</div>
         </div>
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:12px; font-weight:700; color:var(--text-secondary);">Enterprise Golden Competency Evaluation Matrix</span>
-        <button class="send-btn" onclick="runCqBenchmarks()" style="padding:6px 14px; font-size:11px;">Run All 20 Benchmarks</button>
+        <span style="font-size:12px; font-weight:700; color:var(--text-secondary);">Golden Competency Evaluation Matrix</span>
+        <button class="send-btn" onclick="runCqBenchmarks()" style="padding:6px 14px; font-size:11px;">Reload Benchmark Report</button>
       </div>
 
       <div class="cq-table-container">
@@ -862,7 +919,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
         'wiki-agent': 'panel-fde',
         'graph': 'panel-graph',
         'bqg-agent': 'panel-fde',
-        'lineage': 'panel-cq',
+        'lineage': 'panel-lineage',
         'fde': 'panel-fde',
         'cq': 'panel-cq'
       };
@@ -872,7 +929,9 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
       if ((tabId === 'assets' || tabId === 'okf') && !globalAssets.chunks) loadAssets();
       if (tabId === 'structured') loadStructuredDdl();
       if (tabId === 'graph') loadGraph();
-      if (tabId === 'cq' || tabId === 'lineage') loadCq();
+      if (tabId === 'lineage') loadLineage();
+      if (tabId === 'cq') loadCq();
+      if (panelMap[tabId] === 'panel-fde') setAgentMode(tabId);
     }
 
     async function loadStructuredDdl() {
@@ -1138,12 +1197,176 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     }
 
     // CQ Benchmark Matrix
+    const AGENT_MODES = {
+      'wiki-agent': {
+        badge: '4. Wiki Agent',
+        badgeClass: 'badge badge-green',
+        title: 'GCS OKF v0.2 위키 단독 추론 에이전트 (Stage 2 종료 게이트)',
+        path: '근거 경로 · data/llm_wiki/*.md 마크다운 하이퍼링크 순회 (물리 그래프 미구축 상태)',
+        samples: [
+          '180일 의무유지 위반 시 위약금 산식이 어떻게 되는지 규정 원문으로 설명해줘',
+          '시니어/키즈 요금제 위약금 면제 특례 조항을 찾아줘',
+          '선택약정 25% 할인과 공시지원금 중 무엇이 유리한지 규정 기준으로 비교해줘'
+        ]
+      },
+      'bqg-agent': {
+        badge: '6. BQG Agent',
+        badgeClass: 'badge badge-purple',
+        title: 'BigQuery Property Graph NL2GQL 멀티홉 추론 에이전트',
+        path: '근거 경로 · GRAPH_TABLE() 멀티홉 탐색으로 정형 DW 원장 + 비정형 규정 동시 결합',
+        samples: [
+          'Galaxy S26 Ultra 지원금과 원천 DW 테이블 행수 확인해줘',
+          '개통 후 120일 시점에 요금제 하향 변경 시 위약금 얼마야?',
+          'Property Graph GQL 횡단 탐색으로 단말기-요금제-지원금 경로를 보여줘'
+        ]
+      },
+      'fde': {
+        badge: '8. AI FDE',
+        badgeClass: 'badge badge-purple',
+        title: '11종 도메인 MCP 오케스트레이션 콘솔 (동적 하위 목표 분해)',
+        path: '근거 경로 · 비즈니스 5종 + 엔지니어링 6종 MCP 도구 시퀀셜 체이닝',
+        samples: [
+          'Galaxy S26 Ultra 지원금과 원천 DW 테이블 행수 확인해줘',
+          '개통 후 120일 시점에 요금제 하향 변경 시 위약금 얼마야?',
+          '동봉 샘플 CQ 벤치마크를 실행하고 근거 앵커까지 보여줘'
+        ]
+      }
+    };
+
+    function setAgentMode(tabId) {
+      const mode = AGENT_MODES[tabId] || AGENT_MODES['fde'];
+      const badgeEl = document.getElementById('agent-mode-badge');
+      const titleEl = document.getElementById('agent-mode-title');
+      const pathEl = document.getElementById('agent-mode-path');
+      if (badgeEl) { badgeEl.className = mode.badgeClass; badgeEl.textContent = mode.badge; }
+      if (titleEl) titleEl.textContent = mode.title;
+      if (pathEl) pathEl.textContent = mode.path;
+
+      const chipBar = document.getElementById('agent-sample-chips');
+      if (chipBar) {
+        chipBar.innerHTML = '<span style="font-size:11px; color:var(--text-secondary); align-self:center;">Sample Directives:</span>';
+        mode.samples.forEach(s => {
+          const chip = document.createElement('span');
+          chip.className = 'quick-chip';
+          chip.textContent = s.length > 34 ? s.slice(0, 33) + '…' : s;
+          chip.title = s;
+          chip.onclick = () => applySample(s);
+          chipBar.appendChild(chip);
+        });
+      }
+    }
+
+    async function loadLineage() {
+      const tierBox = document.getElementById('lineage-tiers');
+      const kpiBox = document.getElementById('lineage-kpis');
+      const edgeBody = document.getElementById('lineage-edge-tbody');
+      const latencyEl = document.getElementById('lineage-latency-badge');
+      if (!tierBox) return;
+
+      const t0 = performance.now();
+      let assets = {}, graph = {}, cq = {};
+      try {
+        const [a, g, c] = await Promise.all([fetch('/api/assets'), fetch('/api/graph'), fetch('/api/cq')]);
+        assets = await a.json(); graph = await g.json(); cq = await c.json();
+      } catch (e) {
+        tierBox.innerHTML = '<div class="metric-box">계보 데이터를 불러오지 못했습니다.</div>';
+        return;
+      }
+      const elapsed = Math.round(performance.now() - t0);
+      if (latencyEl) latencyEl.textContent = '실측 로딩 ' + elapsed + 'ms';
+
+      const topo = graph.topology || {};
+      const chunks = assets.chunks || [];
+      const wikiFiles = Object.keys(assets.wiki || {});
+      const tables = assets.tables || {};
+      const tableNames = Object.keys(tables);
+      const rowCount = tableNames.reduce((s, k) => s + ((tables[k].rows || []).length), 0);
+      const dwNodes = topo.structured_dw_nodes || [];
+      const unNodes = topo.unstructured_pruned_nodes || [];
+      const edges = topo.edge_tables || [];
+      const bridges = topo.semantic_bridges || [];
+      const cqItems = cq.evaluation_details || cq.test_results || [];
+      const dupNodes = (topo.metrics || {}).duplicate_entity_nodes;
+
+      kpiBox.innerHTML = [
+        ['추적 대상 아티팩트', (tableNames.length + 1 + chunks.length + wikiFiles.length + dwNodes.length + unNodes.length) + '개', ''],
+        ['Property Graph Vertex / Edge', (dwNodes.length + unNodes.length) + ' / ' + edges.length, ''],
+        ['중복 엔티티 노드', (dupNodes === undefined ? '-' : dupNodes + '개'), 'var(--accent-green)'],
+        ['계보 로딩 지연', elapsed + ' ms', 'var(--accent-green)']
+      ].map(([title, val, color]) =>
+        '<div class="metric-box"><div class="metric-title">' + title + '</div><div class="metric-value"' +
+        (color ? ' style="color:' + color + ';"' : '') + '>' + val + '</div></div>'
+      ).join('');
+
+      const tiers = [
+        {
+          n: 'TIER 1', name: 'Raw Source', color: '#38bdf8',
+          items: [
+            'DW 원장 CSV ' + tableNames.length + '종 · 총 ' + rowCount + ' rows',
+            '비정형 정책 가이드 (data/input/01_guides/)',
+            tableNames.map(k => '<code>' + k + '</code>').join(' · ')
+          ]
+        },
+        {
+          n: 'TIER 2', name: 'OKF Layer', color: '#10b981',
+          items: [
+            'SHA-256 앵커 청크 ' + chunks.length + '개',
+            '3-Layer 위키 파일 ' + wikiFiles.length + '개',
+            chunks.slice(0, 3).map(c => '<code>' + (c.chunk_id || '') + '</code>').join(' · ')
+          ]
+        },
+        {
+          n: 'TIER 3', name: 'Property Graph', color: '#c084fc',
+          items: [
+            '정형 승격 Vertex ' + dwNodes.length + '종 · 비정형 Vertex ' + unNodes.length + '종',
+            'Edge ' + edges.length + '종',
+            '<code>' + (topo.graph_name || 'PROPERTY GRAPH') + '</code>'
+          ]
+        },
+        {
+          n: 'TIER 4', name: 'Agent & CQ', color: '#30d158',
+          items: [
+            '도메인 MCP 도구 11종 (비즈니스 5 · 엔지니어링 6)',
+            '동봉 샘플 CQ 실행 결과 ' + cqItems.length + '건',
+            cqItems.slice(0, 3).map(c => '<code>' + (c.cq_id || '') + '</code>').join(' · ')
+          ]
+        }
+      ];
+
+      tierBox.innerHTML = tiers.map(tr =>
+        '<div style="background:var(--surface-1); border:1px solid var(--card-border); border-left:4px solid ' + tr.color +
+        '; border-radius:10px; padding:14px 16px;">' +
+        '<div style="font-size:11.5px; font-weight:800; color:' + tr.color + '; margin-bottom:3px;">' + tr.n + '</div>' +
+        '<div style="font-size:14px; font-weight:800; color:var(--text-primary); margin-bottom:9px;">' + tr.name + '</div>' +
+        tr.items.filter(Boolean).map(i =>
+          '<div style="font-size:12.5px; color:var(--text-secondary); line-height:1.65;">&bull; ' + i + '</div>'
+        ).join('') +
+        '</div>'
+      ).join('');
+
+      edgeBody.innerHTML = bridges.length
+        ? bridges.map(b =>
+            '<tr><td><code>' + (b.source || '') + '</code></td><td><span class="badge badge-purple">' + (b.edge || '') +
+            '</span></td><td><code>' + (b.target || '') + '</code></td><td>' + (b.type || '') + '</td></tr>'
+          ).join('')
+        : '<tr><td colspan="4">graph_topology.json에 등록된 엣지가 없습니다. run_pipeline.py를 먼저 실행하세요.</td></tr>';
+    }
+
     async function loadCq() {
       const resp = await fetch('/api/cq');
       const data = await resp.json();
       const tbody = document.getElementById('cq-tbody');
       tbody.innerHTML = '';
       const items = data.evaluation_details || data.test_results || [];
+
+      const passed = (data.passed !== undefined)
+        ? data.passed
+        : items.filter(x => (x.status === 'PASSED' || x.verification_status === 'EXACT_MATCH')).length;
+      const setKpi = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setKpi('cq-kpi-total', (data.total_cqs !== undefined ? data.total_cqs : items.length) + ' CQs');
+      setKpi('cq-kpi-passed', passed + ' / ' + (data.total_cqs !== undefined ? data.total_cqs : items.length));
+      setKpi('cq-kpi-accuracy', (data.accuracy_rate !== undefined ? data.accuracy_rate : '-') + '%');
+      setKpi('cq-kpi-halluc', (data.hallucination_rate !== undefined ? data.hallucination_rate : '-') + '%');
       items.forEach(cq => {
         const cat = cq.category || (cq.dispatched_tools && cq.dispatched_tools[0] ? cq.dispatched_tools[0].replace('mcp_', '') : 'General');
         const p = cq.query || cq.prompt || '';
@@ -1166,7 +1389,7 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
     }
 
     function runCqBenchmarks() {
-      alert('Running Automated 20 Golden CQ Benchmarks... (All 20 verified: 100% Passed, 0% Hallucination)');
+      // Re-reads data/output/cq_benchmark_report.json produced by run_pipeline.py.
       loadCq();
     }
 
@@ -1176,6 +1399,16 @@ Select any node in the canvas to view its schema properties, anti-redundancy pro
 
     // Init
     loadCatalog();
+    setAgentMode('fde');
+
+    // Deep link support: /?tab=lineage opens that tab directly, so the README
+    // and external docs can link straight to a specific studio step.
+    (function applyTabFromQuery() {
+      const requested = new URLSearchParams(window.location.search).get('tab');
+      const allowed = ['overview', 'assets', 'okf', 'structured', 'wiki-agent',
+                       'graph', 'bqg-agent', 'lineage', 'fde', 'cq'];
+      if (requested && allowed.includes(requested)) switchTab(requested);
+    })();
   </script>
 </body>
 </html>
@@ -1327,13 +1560,23 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
+class ThreadingStudioServer(http.server.ThreadingHTTPServer):
+    """Cloud Run serves many concurrent requests against a single container
+    instance. The default single-threaded server would serialize them behind
+    one connection, so requests are handled on daemon worker threads instead."""
+    daemon_threads = True
+    allow_reuse_address = True
+
 def run_server():
-    server = socketserver.TCPServer(("", PORT), StudioHandler)
-    print(f"[STUDIO SERVER RUNNING] http://127.0.0.1:{PORT}")
+    # Bind to 0.0.0.0 so the container accepts traffic from the Cloud Run proxy.
+    server = ThreadingStudioServer(("0.0.0.0", PORT), StudioHandler)
+    print(f"[STUDIO SERVER RUNNING] listening on 0.0.0.0:{PORT}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
+    finally:
+        server.server_close()
 
 if __name__ == "__main__":
     run_server()
