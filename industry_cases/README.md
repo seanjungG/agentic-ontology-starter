@@ -1,5 +1,7 @@
 # Enterprise Agentic Ontology - 4대 산업군 8대 엔터프라이즈 케이스 템플릿 패키지
 
+> **라이브 포털**: 설치 없이 [Agentic Ontology Studio 포털](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)에서 `0. Overview` ~ `8. AI FDE` 전 구간 화면을 바로 확인할 수 있습니다.
+
 본 디렉토리(`industry_cases/`)는 특정 산업이나 단일 기업에 종속되지 않고, **국내 대표 4대 핵심 산업군(스마트 제조, 핀테크/금융, 유통/물류, 통신/미디어)의 대표 8대 기업 실무 요건**을 추상화하여 즉시 현장 프로젝트에 이식할 수 있도록 설계된 엔터프라이즈 온톨로지 템플릿 패키지입니다.
 
 기획자, 데이터 엔지니어, AI 개발자가 고객사 현장에 투입되었을 때, **비정형 업무 규정/SOP 문서**와 **정형 DW(BigQuery) 원장 데이터**를 어떻게 융합하고, **BigQuery Property Graph(SQL:2023)**와 **Tier 3 Domain MCP 도구**로 캡슐화하여 **0% 환각 AI 에이전트**를 완성하는지 구체적인 청사진과 즉시 구동 가능한 템플릿을 제공합니다.

@@ -1,6 +1,8 @@
 # Enterprise Agentic Ontology Methodology & Implementation Process
 ## 엔터프라이즈 에이전틱 온톨로지 구축 방법론 및 실행 프로세스 가이드
 
+> **라이브 포털**: 설치 없이 [Agentic Ontology Studio 포털](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app)에서 `0. Overview` ~ `8. AI FDE` 전 구간 화면을 바로 확인할 수 있습니다.
+
 본 디렉토리는 정형 데이터웨어하우스(BigQuery DW)와 비정형 업무 가이드(MHTML/PDF)를 단일 지식 체계로 통합하여, 0% 환각(Zero-Hallucination)과 결정론적 계산 신뢰성을 보장하는 **에이전틱 지식 온톨로지(Agentic Knowledge Ontology)**를 엔드투엔드로 구축·배포하기 위한 표준 방법론과 실행 프로세스를 제공합니다.
 
 특정 고객사의 환경에 종속되지 않고 누구나 데이터만 교체하여 재구성할 수 있도록 모든 원천 자산과 테이블 명칭을 표준 비즈니스 아키텍처 수준으로 1단계 추상화(예: `[단말기 카탈로그 마스터 BQ 테이블]`, `[고객 상담가이드 비정형 매뉴얼]`)하여 수록하였습니다.
