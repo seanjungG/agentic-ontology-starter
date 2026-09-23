@@ -99,28 +99,36 @@ flowchart LR
 
 ---
 
-## 2. Evolutionary End-to-End Lifecycle Architecture
+## 2. 2-Layer Structured & Unstructured Data Structure and Semantic Bridge Data Flow
+
+This section defines the physical **Data Structure** of unstructured business policy documents (GCS OKF v0.2 Wiki) and structured data warehouse ledgers (BigQuery 7 Master Tables), and how data flows across the **Semantic Bridge** from **`4. Wiki Agent` ➔ `6. BQG Agent`** (**Data Flow**).
+
+| Data Layer | Physical Storage & Data Structure | Data Flow & Consumer Agent |
+| :--- | :--- | :--- |
+| **Layer 1: Unstructured Policy Data Structure**<br>*(Unstructured Policy Layer)* | • **GCS Bucket**: `.okf.md` Markdown Wiki under `okf/bundles/subsidy/`<br>• **Meta Schema**: YAML Frontmatter (`trust_tier`, `priority`, `stale_after`) + SHA-256 paragraph hash anchors<br>• **Extracted Objects**: `RULE-*` (Rules), `TERM-*` (Glossary), `CQ-*` (Competency Questions) | • Flows through **`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic`** into **`4. Wiki Agent`**<br>• Resolves 16 policy/formula CQs (**16/20 PASS, 1.18s avg latency**) (`[GCS Preferred]`) |
+| **Semantic Bridge: Cross-Mapping Data Structure**<br>*(Cross-Layer Mapping Layer)* | • **Bridge Edge Views**: `v_edge_applies_to` (`RULE_ID ➔ POLICY_ID`), `v_edge_calculates` (`RULE_ID ➔ SALE_ID`), `v_edge_defined_in` (`RULE_ID ➔ CHUNK_ID`)<br>• **Anti-Redundancy**: Maps structured PKs directly to unstructured Rule IDs without duplicating text nodes | • Establishes bi-directional data flow linking unstructured policy rules (`RULE-*`) to physical columns and rows in BigQuery DW ledgers |
+| **Layer 2: Structured DW & Property Graph Structure**<br>*(Structured DW & Graph Layer)* | • **BigQuery 7 Master Ledgers**: `tb_subscription_sale`, `tb_subsidy_policy`, `tb_device_master`, `tb_price_plan`, `tb_agency_master`, `tb_customer`, `tb_settlement_amount`<br>• **SQL:2023 Property Graph**: `uplus_telecom_graph` (6 Vertex & 5 Edge Zero-ETL Views) | • Flows through **`5. Bigquery Graph`** DDL into **`6. BQG Agent`**<br>• Combines NL2GQL `GRAPH_TABLE()` multi-hop ledger joins with Wiki rules to resolve **20/20 Golden CQs (100%, 1.42s avg latency)** |
 
 ```mermaid
 flowchart TD
-    subgraph TRACK_A ["Track A: Unstructured Knowledge & First-Gen 4. Wiki Agent (GCS Unstructured First)"]
+    subgraph TRACK_A ["Layer 1 (Unstructured Data Structure): GCS OKF v0.2 Wiki ➔ 4. Wiki Agent Data Flow"]
         S1_Doc["1. Asset: Unstructured Policy Guides & SOPs"] --> S2_OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
-        S2_OKF --> S3_Sem["3. Ontology Semantic: 5-Element Extraction & Semantic Bridge"]
-        S3_Sem --> S4_WikiAgent["4. Wiki Agent (First-Gen GCS Agent)<br/>Resolves 16 Policy/Formula CQs ([GCS Preferred])"]
+        S2_OKF --> S3_Sem["3. Ontology Semantic: 5-Element Extraction & Semantic Bridge (APPLIES_TO / CALCULATES)"]
+        S3_Sem --> S4_WikiAgent["4. Wiki Agent (Consumes Unstructured Wiki Data)<br/>Resolves 16 Policy/Formula CQs ([GCS Preferred])"]
     end
 
-    subgraph TRACK_B ["Track B: Structured DW Ledger Profiling (Structured DW)"]
+    subgraph TRACK_B ["Layer 2 (Structured DW Data Structure): BigQuery 7 Master Ledgers"]
         S1_DW["1. Asset: BigQuery DW 7 Master Ledger Tables"] --> S1_Profile["Domain Pruning (35 ➔ 7) & PK·FK Integrity Analysis"]
     end
 
-    subgraph TRACK_C ["Track C: 5. Bigquery Graph & 6. BQG Agent (BQG & Anti-Redundancy)"]
+    subgraph TRACK_C ["Semantic Bridge Data Flow: 5. Bigquery Graph ➔ 6. BQG Agent"]
         S4_WikiAgent & S1_Profile --> S5_BQG{"5. Bigquery Graph (SQL:2023 Property Graph)"}
-        S5_BQG -->|Zero-ETL DW Node Promotion| S5_Nodes["6 Vertex & 5 Edge Views"]
-        S5_Nodes --> S6_BQGAgent["6. BQG Agent (Graph Reasoning Agent)<br/>NL2GQL Multi-Hop Traversal + Wiki Hybrid (20/20 CQs)"]
+        S5_BQG -->|Zero-ETL DW Node Promotion + Bridge Join| S5_Nodes["6 Vertex & 5 Edge Views"]
+        S5_Nodes --> S6_BQGAgent["6. BQG Agent (Consumes Hybrid Graph + Wiki Data)<br/>NL2GQL Multi-Hop Traversal + Wiki Hybrid (20/20 CQs)"]
     end
 
-    subgraph TRACK_D ["Track D & E: 7. Lineage & 8. AI FDE (Agentic Ontology Studio)"]
-        S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier Enterprise Lineage (< 5ms Instant Load)"]
+    subgraph TRACK_D ["Governance & Orchestration Flow: 7. Lineage & 8. AI FDE"]
+        S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier Enterprise Data Lineage (< 5ms Instant Load)"]
         S7_Lineage --> S8_FDE["8. AI FDE: 11-Domain Ontology MCP Orchestrator"]
         S8_FDE --> S9_Studio["Agentic Ontology Studio (9-Tab Ribbon & Continuous Overview)"]
     end

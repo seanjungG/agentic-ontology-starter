@@ -99,28 +99,36 @@ flowchart LR
 
 ---
 
-## 2. 진화적 엔드투엔드 라이프사이클 아키텍처 (End-to-End Lifecycle Architecture)
+## 2. 정형·비정형 2-Layer 데이터 구조 및 시맨틱 브릿지(Semantic Bridge) 데이터 흐름 (Data Structure & Data Flow)
+
+본 섹션은 비정형 업무 규정(GCS OKF v0.2 Wiki)과 정형 데이터 웨어하우스 원장(BigQuery 7대 마스터 테이블)이 어떤 **데이터 구조(Data Structure)**로 저장되고, **시맨틱 브릿지(Semantic Bridge)**를 통해 어떻게 연결되어 **`4. Wiki Agent` ➔ `6. BQG Agent`**로 데이터가 흐르는지(Data Flow)를 정의한다.
+
+| 데이터 계층 (Data Layer) | 저장소 및 물리 데이터 구조 (Physical Data Structure) | 데이터 흐름 및 소비 에이전트 (Data Flow & Consumer Agent) |
+| :--- | :--- | :--- |
+| **Layer 1: 비정형 규정 데이터 구조**<br>*(Unstructured Policy Layer)* | • **GCS Bucket**: `okf/bundles/subsidy/` 내 `.okf.md` 마크다운 위키<br>• **메타 스키마**: YAML Frontmatter (`trust_tier`, `priority`, `stale_after`) + SHA-256 문단 해시 앵커<br>• **추출 객체**: `RULE-*`(비즈니스 규칙), `TERM-*`(용어), `CQ-*`(핵심 역량 질문) | • **`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic`**을 거쳐 **`4. Wiki Agent`**로 유입<br>• 규정/산식/예외 조항 16개 CQ를 **100% (16/20, 평균 1.18s)** 즉시 응답 (`[GCS Preferred]`) |
+| **Semantic Bridge: 교차 매핑 데이터 구조**<br>*(Cross-Layer Mapping Layer)* | • **브릿지 엣지 뷰**: `v_edge_applies_to` (`RULE_ID ➔ POLICY_ID`), `v_edge_calculates` (`RULE_ID ➔ SALE_ID`), `v_edge_defined_in` (`RULE_ID ➔ CHUNK_ID`)<br>• **Anti-Redundancy**: 정형 원장 PK와 비정형 규칙 ID만 경량 매핑 (중복 텍스트 노드 생성 배제) | • 비정형 위키의 비즈니스 규칙(`RULE-*`)이 정형 BigQuery 원장의 어떤 물리 컬럼·행에 적용되는지 양방향(Bi-directional) 데이터 흐름 연결 |
+| **Layer 2: 정형 DW & Property Graph 구조**<br>*(Structured DW & Graph Layer)* | • **BigQuery 7대 핵심 마스터 원장**: `tb_subscription_sale`, `tb_subsidy_policy`, `tb_device_master`, `tb_price_plan`, `tb_agency_master`, `tb_customer`, `tb_settlement_amount`<br>• **SQL:2023 Property Graph**: `uplus_telecom_graph` (6종 Vertex & 5종 Edge Zero-ETL 뷰) | • **`5. Bigquery Graph`** DDL을 통해 **`6. BQG Agent`**로 유입<br>• NL2GQL `GRAPH_TABLE()` 멀티홉 원장 조인 + 위키 산식을 결합해 **20/20 골든 CQ (100%, 평균 1.42s)** 완결 |
 
 ```mermaid
 flowchart TD
-    subgraph TRACK_A ["Track A: 비정형 지식 체계화 & 선행 4. Wiki Agent (GCS Unstructured First)"]
+    subgraph TRACK_A ["Layer 1 (비정형 데이터 구조): GCS OKF v0.2 Wiki ➔ 4. Wiki Agent 흐름"]
         S1_Doc["1. Asset: 비정형 정책 가이드 & SOP"] --> S2_OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
-        S2_OKF --> S3_Sem["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지"]
-        S3_Sem --> S4_WikiAgent["4. Wiki Agent (선행 GCS 에이전트)<br/>16대 규정/산식 CQ 즉시 해결 ([GCS Preferred])"]
+        S2_OKF --> S3_Sem["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지 (APPLIES_TO / CALCULATES)"]
+        S3_Sem --> S4_WikiAgent["4. Wiki Agent (비정형 위키 데이터 소비)<br/>16대 규정/산식 CQ 즉시 해결 ([GCS Preferred])"]
     end
 
-    subgraph TRACK_B ["Track B: 정형 DW 원장 프로파일링 (Structured DW)"]
+    subgraph TRACK_B ["Layer 2 (정형 DW 데이터 구조): BigQuery 7대 마스터 원장 프로파일링"]
         S1_DW["1. Asset: BigQuery DW 7대 마스터 원장 테이블"] --> S1_Profile["Domain Pruning (35 ➔ 7) & PK·FK 무결성 분석"]
     end
 
-    subgraph TRACK_C ["Track C: 5. Bigquery Graph & 6. BQG Agent (BQG & Anti-Redundancy)"]
+    subgraph TRACK_C ["시맨틱 브릿지 통합 흐름: 5. Bigquery Graph ➔ 6. BQG Agent"]
         S4_WikiAgent & S1_Profile --> S5_BQG{"5. Bigquery Graph (SQL:2023 Property Graph)"}
-        S5_BQG -->|정형 원장 Zero-ETL 승격| S5_Nodes["6종 Vertex & 5종 Edge 뷰"]
-        S5_Nodes --> S6_BQGAgent["6. BQG Agent (그래프 에이전트)<br/>NL2GQL 멀티홉 원장 탐색 + 위키 결합 (20/20 CQ 전수 해결)"]
+        S5_BQG -->|정형 원장 Zero-ETL 승격 + 브릿지 결합| S5_Nodes["6종 Vertex & 5종 Edge 뷰"]
+        S5_Nodes --> S6_BQGAgent["6. BQG Agent (정형+비정형 통합 그래프 데이터 소비)<br/>NL2GQL 멀티홉 원장 탐색 + 위키 결합 (20/20 CQ 전수 해결)"]
     end
 
-    subgraph TRACK_D ["Track D & E: 7. Lineage & 8. AI FDE (Agentic Ontology Studio)"]
-        S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier 엔터프라이즈 리니지 (< 5ms 즉시 로딩)"]
+    subgraph TRACK_D ["거버넌스 & 오케스트레이션 흐름: 7. Lineage & 8. AI FDE"]
+        S6_BQGAgent --> S7_Lineage["7. Lineage: 4-Tier 엔터프라이즈 데이터 리니지 (< 5ms 즉시 로딩)"]
         S7_Lineage --> S8_FDE["8. AI FDE: 11종 도메인 온톨로지 MCP 오케스트레이터"]
         S8_FDE --> S9_Studio["Agentic Ontology Studio (9-Tab 통합 & 단일 연속 Overview)"]
     end
