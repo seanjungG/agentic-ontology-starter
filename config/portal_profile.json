@@ -162,7 +162,7 @@
             "title": "Golden CQ 5종 & 바운더리 질의 10건 회귀 평가",
             "bullets": [
               "Golden CQ 5종 정량 채점 및 바운더리 케이스 10건(결여 맥락·특례·별칭) 평가",
-              "실패 원인 4대 분류(<code>NO_SLOT_FILLING</code> 등) 및 FDE 온톨로지 보강 전/후 비교(32% ➔ 92%)"
+              "실패 원인 4대 분류(<code>NO_SLOT_FILLING</code> 등) 및 반복 실행 실측(성공률·일관성·의도 안정성)"
             ],
             "deliverables": "D5.2 cq_benchmark_report.json · D5.3 boundary_benchmark_results.json"
           }
@@ -207,8 +207,8 @@
       "eyebrow": "SECTION 4 · MEASURED STARTER BENCHMARK & REFERENCE TELEMETRY",
       "note": "아래 지표는 본 스타터팩에 동봉된 비식별화 샘플 데이터셋(4개 마스터 테이블, 2개 정책 가이드, 5개 Golden CQ, 10개 바운더리 케이스)의 실측 결과입니다.",
       "items": [
-        { "label": "Golden CQ Pass Rate", "value": "5 / 5 (100%)", "caption": "동봉 Golden CQ-01~05 결정론적 검증", "color": "#059669" },
-        { "label": "Boundary Eval (R1 ➔ R2)", "value": "32% ➔ 92%", "caption": "바운더리 10건 FDE 온톨로지 보강 후 성공률", "color": "#0071e3" },
+        { "label": "Golden CQ Pass Rate", "source": "golden", "value": "미측정", "caption": "검증 SQL + Gemini 에이전트 답변 대조 (pipeline/validator.py)", "color": "#059669" },
+        { "label": "Boundary Success Rate", "source": "boundary", "value": "미측정", "caption": "바운더리 10건 × 반복 실행 실측 (pipeline/validator.py)", "color": "#0071e3" },
         { "label": "Graph Engines Supported", "value": "BigQuery & Spanner", "caption": "SQL:2023 & ISO GQL 듀얼 DDL 어댑터", "color": "#6366f1" },
         { "label": "Modular MCP Suite", "value": "8 Core MCPs", "caption": "Stage 1~5 파이프라인 + Runtime 3종", "color": "#0d9488" }
       ]
@@ -225,9 +225,9 @@
       "title": "2-트랙 검증 설계 (Golden CQ 정확도 + Boundary 질의 강건성)",
       "description": "정답이 확정된 Golden CQ(5문항)로 수치·근거 앵커 정확성을 검증하고, 필수 파라미터나 예외 맥락이 결여된 Boundary Question(10문항 × 5회 반복)으로 온톨로지 보강 전후의 추론 안정성을 측정합니다.",
       "suites": [
-        { "name": "Golden CQ Suite (CQ-01 ~ CQ-05)", "purpose": "출고가, 지원금, 180일 일할 위약금, 24개월 TCO, 시니어 복지 면제 정량 검증", "shape": "5개 핵심 질문 × 1회 결정론적 검증", "metric": "수치 일치율 & 해시 앵커 인용률 (100%)" },
-        { "name": "Boundary Regression (BQ-01 ~ BQ-10)", "purpose": "슬롯 결여, 특례 면제, 단말 별칭, 경계값(180일) 질의에 대한 분기·안내 능력 측정", "shape": "10개 경계 질문 × 5회 반복 (50 Trials)", "metric": "성공률 (32% ➔ 92%) · 일관성 (96%) · 의도 안정성 (98%)" },
-        { "name": "Dual Graph DDL Verification", "purpose": "BigQuery Property Graph 및 Cloud Spanner Graph 스키마 무복제 투영 검증", "shape": "4 DW Node + 2 Unstructured Node + 6 Edge", "metric": "중복 엔티티 노드 0건 (Zero-ETL Projection)" }
+        { "name": "Golden CQ Suite (CQ-01 ~ CQ-05)", "purpose": "출고가, 지원금, 180일 일할 위약금, 24개월 TCO, 시니어 복지 면제 정량 검증", "shape": "5개 핵심 질문 × 1회 결정론적 검증", "metric": "검증 SQL 일치 · 답변 수치 포함 · 근거 청크 인용" },
+        { "name": "Boundary Regression (BQ-01 ~ BQ-10)", "purpose": "슬롯 결여, 특례 면제, 단말 별칭, 경계값(180일) 질의에 대한 분기·안내 능력 측정", "shape": "10개 경계 질문 × 5회 반복 (50 Trials)", "metric": "성공률 · 일관성 · 의도 안정성 (validator 실측)" },
+        { "name": "Dual Graph DDL Verification", "purpose": "BigQuery Property Graph 및 Cloud Spanner Graph 스키마 무복제 투영 검증", "shape": "4 DW Node + 2 Unstructured Node + 6 Edge", "metric": "노드 테이블 중복 키 건수 (mcp_stage3 실측)" }
       ]
     },
     "root_cause_taxonomy": [
@@ -236,9 +236,6 @@
       { "code": "MISSING_ENTITY", "name": "도메인 규칙/세그먼트 엔티티 부재", "signal": "군입대 정지 유예나 법인(B2B) 회선 조건 질문 시 일반 약관만 반복", "fix": "RULE_MILITARY_HOLD 규칙 노드 및 customer_segment 속성 분기 추가" },
       { "code": "NO_ALIAS_DICT", "name": "단말·엔진 별칭 매핑 사전 미비", "signal": "'아이폰 최신형 프로' 등 별칭 질의 시 모델 코드를 찾지 못함", "fix": "단말 별칭 사전(Alias Dictionary) 및 듀얼 그래프 어댑터 메타데이터 주입" }
     ],
-    "rounds": [
-      { "round": 1, "label": "Round 1 · 초기 베이스라인 (보강 전)", "status_source": "boundary", "note": "바운더리 성공률 32.0% · 일관성 64.0% · 의도 안정성 78.0%" },
-      { "round": 2, "label": "Round 2 · FDE 온톨로지 & MCP 보강 후", "status_source": "boundary", "note": "바운더리 성공률 92.0% (+60.0%p) · 일관성 96.0% · 의도 안정성 98.0%" }
-    ]
+    "rounds": []
   }
 }

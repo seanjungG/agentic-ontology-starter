@@ -1,0 +1,89 @@
+[
+  {
+    "case_id": "BQ-01",
+    "query": "개통한 지 4개월 됐는데 요금제 낮추면 위약금 나오나요?",
+    "missing_context": "고객 ID / 현재 요금제 / 변경 희망 요금제 미지정",
+    "root_cause_code": "NO_SLOT_FILLING",
+    "expected_behavior": "금액을 단정하지 않고 부족한 정보(고객 ID·변경 요금제 등)를 안내",
+    "accept_answer_status": ["INSUFFICIENT_PARAMETERS"]
+  },
+  {
+    "case_id": "BQ-02",
+    "query": "어르신 요금제로 바꾸려는데 180일 안 지났으면 위약금 내야 하나요?",
+    "missing_context": "시니어 특례 면제 등록 여부 미지정",
+    "root_cause_code": "MISSING_EXCEPTION_EDGE",
+    "expected_behavior": "시니어 특례(RULE_WELFARE_EXEMPT / DOC_CHUNK_004) 조건을 안내하고 고객 정보를 요청",
+    "accept_answer_status": ["INSUFFICIENT_PARAMETERS"],
+    "answer_terms_any": ["RULE_WELFARE_EXEMPT", "DOC_CHUNK_004"]
+  },
+  {
+    "case_id": "BQ-03",
+    "query": "갤럭시 S26 울트라 지금 사면 지원금 얼마 받아요?",
+    "missing_context": "용량(256GB/512GB) 및 가입 요금제 미지정",
+    "root_cause_code": "NO_SLOT_FILLING",
+    "expected_behavior": "BigQuery 지원금 정책의 요금제별 총 지원금을 제시",
+    "verification_sql": "SELECT s.base_subsidy_krw + s.additional_subsidy_cap_krw AS total_subsidy FROM `{fq}.tb_subsidy_policy` s JOIN `{fq}.tb_device_master` d ON d.device_id = s.device_id WHERE STARTS_WITH(d.device_name, 'Galaxy S26 Ultra')",
+    "sql_values_match": "any"
+  },
+  {
+    "case_id": "BQ-04",
+    "query": "군대 입대 때문에 일시정지하면 180일 의무기간은 어떻게 되나요?",
+    "missing_context": "군입대 정지 특례 엔티티 참조",
+    "root_cause_code": "MISSING_ENTITY",
+    "expected_behavior": "군입대 장기정지 특례(MILITARY_PAUSE_ELIGIBLE / DOC_CHUNK_004) 근거를 인용",
+    "answer_terms_any": ["MILITARY_PAUSE_ELIGIBLE", "RULE_MILITARY_HOLD", "DOC_CHUNK_004"]
+  },
+  {
+    "case_id": "BQ-05",
+    "query": "아이폰 최신형 프로 모델 선약이랑 공시 중 뭐가 더 이득인가요?",
+    "missing_context": "단말 별칭(아이폰 최신형 프로) 및 요금제 미지정",
+    "root_cause_code": "NO_ALIAS_DICT",
+    "expected_behavior": "카탈로그의 iPhone 16 Pro로 매핑하고 BigQuery 정책 기준 24개월 총비용 차액을 제시",
+    "verification_sql": "SELECT ABS(CAST(ROUND(d.factory_price_krw + p.monthly_fee_krw * (1 - p.selective_discount_rate) * 24) AS INT64) - (d.factory_price_krw - s.base_subsidy_krw - s.additional_subsidy_cap_krw + p.monthly_fee_krw * 24)) AS tco_savings FROM `{fq}.tb_subsidy_policy` s JOIN `{fq}.tb_device_master` d ON d.device_id = s.device_id JOIN `{fq}.tb_plan_master` p ON p.plan_id = s.plan_id WHERE STARTS_WITH(d.device_name, 'iPhone 16 Pro')",
+    "sql_values_match": "any"
+  },
+  {
+    "case_id": "BQ-06",
+    "query": "개통 185일째인데 제일 싼 LTE 요금제로 내려도 위약금 없죠?",
+    "missing_context": "180일 경과 후 면제 경계값",
+    "root_cause_code": "NO_SLOT_FILLING",
+    "expected_behavior": "경과일 185일이 의무기간 이상이므로 위약금 0원",
+    "answer_numbers_all": [0],
+    "verification_sql": "SELECT MAX(mandatory_retention_days) AS retention_days FROM `{fq}.tb_subsidy_policy`",
+    "sql_values_match": "all"
+  },
+  {
+    "case_id": "BQ-07",
+    "query": "지원금 테이블이랑 실제 그래프 노드에 중복 적재된 데이터가 있나요?",
+    "missing_context": "노드 테이블 중복 키 메타데이터 조회",
+    "root_cause_code": "MISSING_ENTITY",
+    "expected_behavior": "Stage 3 실측 결과(노드 테이블 중복 키 건수)를 제시",
+    "verification_sql": "SELECT COUNT(*) - COUNT(DISTINCT policy_id) AS duplicate_keys FROM `{fq}.tb_subsidy_policy`",
+    "sql_values_match": "all"
+  },
+  {
+    "case_id": "BQ-08",
+    "query": "5G 프리미어 에센셜에서 다이렉트 61로 바꾸면 기준선 위반인가요?",
+    "missing_context": "기준선 이상 요금제 간 하향 시 차액정산 여부",
+    "root_cause_code": "MISSING_EXCEPTION_EDGE",
+    "expected_behavior": "변경 요금제 월정액이 기준선 이상이므로 기준선 위반 아님",
+    "verification_sql": "SELECT (SELECT MIN(monthly_fee_krw) FROM `{fq}.tb_plan_master` WHERE min_maintenance_days > 0) AS baseline_fee, (SELECT monthly_fee_krw FROM `{fq}.tb_plan_master` WHERE plan_name = '5G Direct 61') AS target_fee",
+    "sql_values_match": "all"
+  },
+  {
+    "case_id": "BQ-09",
+    "query": "법인 명의로 개통한 회선도 180일 식스플랜 룰이 똑같이 적용되나요?",
+    "missing_context": "법인(Corporate_B2B) 세그먼트 정책 매핑",
+    "root_cause_code": "MISSING_ENTITY",
+    "expected_behavior": "세그먼트별 예외 규칙 존재 여부를 도구 결과로 밝히고 RULE_SIX_PLAN_180D 근거를 인용",
+    "answer_terms_any": ["RULE_SIX_PLAN_180D"]
+  },
+  {
+    "case_id": "BQ-10",
+    "query": "Spanner Graph로 전환하면 지금 쓰는 GQL 쿼리랑 스키마를 다 새로 짜야 하나요?",
+    "missing_context": "BigQuery Graph vs Spanner Graph 호환성",
+    "root_cause_code": "NO_ALIAS_DICT",
+    "expected_behavior": "도구 실측 결과(BigQuery Property Graph)에 근거해 답하고 결과에 없는 내용은 단정하지 않음",
+    "answer_terms_any": ["STARTER_ONTOLOGY_GRAPH", "GRAPH_TABLE"]
+  }
+]

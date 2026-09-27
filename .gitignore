@@ -6,3 +6,4 @@ venv/
 .env
 .DS_Store
 .ipynb_checkpoints/
+terraform/last_terraform_apply.log

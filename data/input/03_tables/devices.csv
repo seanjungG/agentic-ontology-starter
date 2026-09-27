@@ -1,5 +1,5 @@
-device_id,model_code,pet_name,storage,factory_price
-DEV-S26U-256,SM-S938N-256,Galaxy S26 Ultra,256GB,1698400
-DEV-S26U-512,SM-S938N-512,Galaxy S26 Ultra,512GB,1841400
-DEV-IP16P-256,A3293-256,iPhone 16 Pro,256GB,1700000
-DEV-IP16P-512,A3293-512,iPhone 16 Pro,512GB,2000000
+device_id,model_code,pet_name,storage,factory_price,manufacturer,release_date
+DEV-S26U-256,SM-S938N-256,Galaxy S26 Ultra,256GB,1698400,Samsung,2026-01-15
+DEV-S26U-512,SM-S938N-512,Galaxy S26 Ultra,512GB,1841400,Samsung,2026-01-15
+DEV-IP16P-256,A3293-256,iPhone 16 Pro,256GB,1700000,Apple,2026-01-15
+DEV-IP16P-512,A3293-512,iPhone 16 Pro,512GB,2000000,Apple,2026-01-15

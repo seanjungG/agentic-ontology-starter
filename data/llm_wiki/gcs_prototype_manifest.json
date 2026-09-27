@@ -1,19 +1,83 @@
 {
-  "gcs_uri": "gs://enterprise-ontology-vault/starter-v2/okf-v0.2/",
-  "status": "PROTOTYPE_STAGED",
-  "artifacts": [
-    "summary.md",
-    "entities.md",
-    "concepts.md",
-    "rules.md",
-    "ontology.jsonld",
-    "doc_chunks.jsonl"
+  "gcs_uri": "gs://seanjung-poc-starter-ontology/",
+  "bigquery_dataset": "seanjung-poc.starter_ontology_dw",
+  "status": "LIVE_GCP_SYNCED",
+  "uploaded_gcs_objects": [
+    "gs://seanjung-poc-starter-ontology/raw/sample_policy_guide.md",
+    "gs://seanjung-poc-starter-ontology/raw/sample_welfare_exemption_guide.md",
+    "gs://seanjung-poc-starter-ontology/parsed/doc_chunks.jsonl",
+    "gs://seanjung-poc-starter-ontology/ontology/summary.md",
+    "gs://seanjung-poc-starter-ontology/ontology/entities.md",
+    "gs://seanjung-poc-starter-ontology/ontology/concepts.md",
+    "gs://seanjung-poc-starter-ontology/ontology/rules.md",
+    "gs://seanjung-poc-starter-ontology/ontology/ontology.jsonld"
   ],
-  "sync_timestamp": "2026-09-27T16:40:00+09:00",
+  "bigquery_load_jobs": [
+    {
+      "table": "tb_device_master",
+      "rows": 4,
+      "job_id": "job_bLXAr5rWnc2W9ZnEaaPePKOasnaK",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "tb_plan_master",
+      "rows": 6,
+      "job_id": "job_nCAA5shxbPi0RQLtsr96UB_ctXxh",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "tb_subsidy_policy",
+      "rows": 5,
+      "job_id": "job_HB_Q4fbSh4CJaI5wvzRVpiPoyQMh",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "tb_customer_contract",
+      "rows": 6,
+      "job_id": "job_PP6e9Ml5rO1rhHGvV4EvKA6bWLjU",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "tb_doc_chunks",
+      "rows": 5,
+      "job_id": "job_8XtqW65lcxedJljzr_nwSH2BRTiP",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "tb_domain_rules",
+      "rows": 4,
+      "job_id": "job_izS4LQRbHKmDAsinZvDAsUbQeDk4",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "edge_contract_device",
+      "rows": 6,
+      "job_id": "job_fT87u6RPmRSIX-JyIp7I4rD8vGE9",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "edge_contract_plan",
+      "rows": 6,
+      "job_id": "job_7OnkYJPQQOvyFM1zqgAVSRCqBkbv",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "edge_subsidy_binding",
+      "rows": 5,
+      "job_id": "job_0qWo5Xlj8Os8U5mu5NdtUiALpCC1",
+      "status": "SUCCESS"
+    },
+    {
+      "table": "edge_rule_applies_to_plan",
+      "rows": 12,
+      "job_id": "job_4h8ukSc09vHazheAZSCfJvSTw1_3",
+      "status": "SUCCESS"
+    }
+  ],
+  "sync_timestamp": "2026-09-27T19:41:09+09:00",
   "validation": {
     "chunk_count": 5,
     "guide_count": 2,
-    "zero_duplicate_entities_flag": true,
-    "anti_redundancy_ready": true
+    "bigquery_tables_loaded": 10
   }
 }

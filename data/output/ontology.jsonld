@@ -5,7 +5,7 @@
       "@id": "domain:TelecomSubsidyManagement",
       "@type": "DomainOntology",
       "label": "Enterprise Subsidy & Contract Management (Starter v2.0)",
-      "summary": "Hybrid ontology unifying structured DW tables and unstructured policy manuals.",
+      "summary": "Hybrid ontology unifying structured BigQuery DW tables and unstructured policy manuals.",
       "totalChunks": 5,
       "supportedTracks": [
         "lite",
