@@ -24,7 +24,7 @@
 | **`Stage 2. Wiki & Semantic Graph`** | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) | [Stage 2 가이드](methodology/02_semantic_modeling_and_okf_ko.md)<br>`mcp_stage2_wiki_and_semantic` | 좌: Karpathy 3-Layer LLM-Wiki(`summary`/`entities`/`concepts`/`rules`) & SHA-256 청크 · 우: `vis-network` 시맨틱 그래프(`Entity=Node`, `Concept=Edge`, Sky Blue 허브 `#0284c7`) |
 | **`Stage 3. Property Graph`** | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) | [Stage 3 가이드](methodology/03_property_graph_and_gql_ko.md)<br>`mcp_stage3_property_graph` | 상단 `BigQuery Property Graph (SQL:2023)` ↔ `Cloud Spanner Graph (ISO GQL)` 실시간 전환기 · 좌: 물리 Property Graph 토폴로지(Teal 허브 `#0d9488`) · 우: 듀얼 DDL 및 멀티홉 GQL 실행기 |
 | **`Stage 4. Agent & MCP`** | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) | [Stage 4 가이드](methodology/04_multi_domain_mcp_and_agent_ko.md)<br>`mcp_stage4_agent_orchestration` | 좌: **8대 모듈형 MCP 스위트**(Stage 1~5 파이프라인 MCP + Runtime 도메인 MCP 3종, 세부 `steps` 선택 실행) · 우: AI FDE 하위 목표 분해 및 근거 앵커 추론 콘솔 |
-| **`Stage 5. Lineage & Eval`** | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage5) | [Stage 5 가이드](methodology/05_enterprise_studio_and_deployment_ko.md)<br>`mcp_stage5_lineage_and_eval` | 상단: 4-Tier 엔드투엔드 데이터 리니지(Raw ➔ OKF ➔ Graph ➔ Agent) · 하단: Golden CQ 5종 채점표 및 바운더리 질의 10건 회귀 평가(Round 1 `32%` ➔ Round 2 `92%`) |
+| **`Stage 5. Lineage & Eval`** | [열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage5) | [Stage 5 가이드](methodology/05_enterprise_studio_and_deployment_ko.md)<br>`mcp_stage5_lineage_and_eval` | 상단: 4-Tier 엔드투엔드 데이터 리니지(Raw ➔ OKF ➔ Graph ➔ Agent) · 하단: Golden CQ 5종 채점표 및 바운더리 질의 10건 × 5회 실측 결과(`pipeline/validator.py` 산출 JSON을 읽어 표시) |
 
 ---
 
@@ -75,7 +75,7 @@
    - `sample_welfare_exemption_guide.md` (`DOC_CHUNK_004` ~ `DOC_CHUNK_005`: 시니어·군입대 위약금 면제 특례 및 24개월 TCO 비교 규칙)
 3. **평가 벤치마크 데이터셋**:
    - `data/input/04_cq/golden_competency_questions.json` (Golden CQ 5문항: `CQ-01` ~ `CQ-05`)
-   - `data/output/boundary_benchmark_results.json` (바운더리 경계 질의 10문항 × 5회 반복 결과: Round 1 `32.0%` ➔ Round 2 `92.0%`)
+   - `data/output/boundary_benchmark_results.json` (바운더리 경계 질의 10문항 × 5회 반복 실측 결과, `pipeline/validator.py`가 Vertex AI Gemini + BigQuery MCP 실행으로 생성)
 
 ---
 

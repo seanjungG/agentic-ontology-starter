@@ -17,7 +17,7 @@ def main():
     print("\n>>> Stage 3: Synthesizing BigQuery SQL:2023 Property Graph DDL...")
     build_graph()
 
-    print("\n>>> Stage 5: Validating 0% Hallucination & Golden CQ Suite...")
+    print("\n>>> Stage 5: Live Golden CQ validation (BigQuery verification SQL + Gemini agent answers)...")
     run_validation()
 
     print("==================================================================")

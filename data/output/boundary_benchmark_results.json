@@ -1,132 +1,318 @@
 {
-  "benchmark_id": "STARTER_BOUNDARY_EVAL_V2",
-  "evaluated_at": "2026-09-27T16:40:00+09:00",
+  "benchmark_id": "STARTER_BOUNDARY_LIVE",
+  "evaluated_at": "2026-09-27T19:45:26+09:00",
+  "method": "live agent (Vertex AI gemini-3.8-flash + BigQuery MCP) x 5 trials per case; checks from data/input/04_cq/boundary_cases.json",
+  "model": "gemini-3.8-flash",
+  "dataset": "seanjung-poc.starter_ontology_dw",
   "case_count": 10,
   "trials_per_case": 5,
   "total_trials": 50,
-  "baseline_round1": {
-    "avg_success_rate": 32.0,
-    "avg_consistency_rate": 64.0,
-    "avg_intent_stability": 78.0
-  },
-  "remediated_round2": {
-    "avg_success_rate": 92.0,
-    "avg_consistency_rate": 96.0,
-    "avg_intent_stability": 98.0
-  },
-  "avg_success_rate": 92.0,
-  "avg_consistency_rate": 96.0,
-  "avg_intent_stability": 98.0,
+  "avg_success_rate": 96.0,
+  "avg_consistency_rate": 92.0,
+  "avg_intent_stability": 78.0,
+  "llm_tokens_total": 332129,
   "cases": [
     {
       "case_id": "BQ-01",
       "query": "개통한 지 4개월 됐는데 요금제 낮추면 위약금 나오나요?",
       "missing_context": "고객 ID / 현재 요금제 / 변경 희망 요금제 미지정",
       "root_cause_code": "NO_SLOT_FILLING",
-      "r1_success_rate": 20,
-      "success_rate": 100,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "필수 슬롯(고객ID, 변경 요금제) 결여 시 45,000원 기준선 분기 안내 및 슬롯 확인 프롬프트 강제"
+      "expected_behavior": "금액을 단정하지 않고 부족한 정보(고객 ID·변경 요금제 등)를 안내",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 80.0,
+      "answer_statuses": {
+        "INSUFFICIENT_PARAMETERS": 5
+      },
+      "tool_sets": {
+        "mcp_stage4_agent_orchestration > mcp_calculate_penalty_rule > mcp_query_graph_and_wiki": 1,
+        "mcp_query_graph_and_wiki > mcp_calculate_penalty_rule": 4
+      },
+      "failure_reasons": [],
+      "verification_sql_values": null,
+      "verification_job_id": null,
+      "sample_answer": "### **결론**\n개통 후 4개월(약 120일) 시점은 의무유지 기간인 **180일 이내**에 해당합니다. \n변경하려는 요금제가 **기준선(월 45,000원) 이상**이라면 위약금이 발생하지 않지만, **월 45,000원 미만 요금제로 하향 변경할 경우 차액정산 위약금(일할 계산)이 발생**합니다. (단, 만 65세 이상 시니어 복지 요금제 전환 등 법정 면제 대상은 제외)\n\n정확한 위약금 금액 산출을 위해서는 다음의 추가 정보(missing_slots)가 필요합니다:\n- **customer_id 또는 단말기(+가입 요금제)**\n- **개통 후 정확한 경과일수(elapsed_days)**\n- **변경 희망 요금제(target_plan_name / target_monthly_fee_krw)**\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n온톨로지 그래프 조회 결과, 공시지원금 요금제 유지 의무 기준선 및 관련 정책 수치는 다음과 같습니다:\n\n* **의무유지 기준선 요금제**: 5G Slim (Baseline Threshold) — 월 45,000원\n* **기준선 미만 요금제 예시**: 5G Light (Below Baseline) — 월 37,",
+      "sample_bq_job_ids": [
+        "job_IREnN4xgF-BcvBKdmofxU9x4OY98",
+        "job_agTnuSvDsPMD8BD1cb0565wdJE9D",
+        "job_unm97PHPL6tKgTuKzsgkkzdYwTOh",
+        "job_ehnRq4ST7QeiWCvKAyTHHTkAdAWl"
+      ]
     },
     {
       "case_id": "BQ-02",
       "query": "어르신 요금제로 바꾸려는데 180일 안 지났으면 위약금 내야 하나요?",
       "missing_context": "시니어 특례 면제 등록 여부 미지정",
       "root_cause_code": "MISSING_EXCEPTION_EDGE",
-      "r1_success_rate": 0,
-      "success_rate": 100,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "RULE_WELFARE_EXEMPT 시맨틱 예외 엣지 추가 및 DOC_CHUNK_004 근거 연결"
+      "expected_behavior": "시니어 특례(RULE_WELFARE_EXEMPT / DOC_CHUNK_004) 조건을 안내하고 고객 정보를 요청",
+      "trials": 5,
+      "passed_trials": 4,
+      "success_rate": 80.0,
+      "consistency_rate": 80.0,
+      "intent_stability": 80.0,
+      "answer_statuses": {
+        "GROUNDED": 1,
+        "INSUFFICIENT_PARAMETERS": 4
+      },
+      "tool_sets": {
+        "mcp_stage4_agent_orchestration > mcp_query_graph_and_wiki": 1,
+        "mcp_query_graph_and_wiki > mcp_calculate_penalty_rule": 4
+      },
+      "failure_reasons": [
+        "ANSWER_STATUS GROUNDED"
+      ],
+      "verification_sql_values": null,
+      "verification_job_id": null,
+      "sample_answer": "### **결론**\n**위약금을 내지 않아도 됩니다 (0원).**\n\n180일 의무유지 기간이 지나지 않은 상태에서 기준선 미만 요금제로 하향하더라도, 시니어(어르신·만 65세 이상) 및 복지 요금제로 전환하는 경우에는 **위약금 면제 특례 규정**이 적용되어 차액정산금(위약금)이 발생하지 않습니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **정상 기준선 하향 시 위약금 산식**:\n  $$\\text{Penalty} = (\\text{초기 지원금} - \\text{하향 요금제 지원금}) \\times \\frac{180 - \\text{경과일수}}{180}$$\n  *(경과일수 180일 미만이고 45,000원 미만 요금제로 변경 시 원칙적으로 일할 계산)*\n- **시니어 특례 적용 산식**:\n  $$\\text{Penalty} = 0 \\text{ (SENIOR\\_EXEMPT)}$$\n  *(가입자 조건 충족 및 지정 시니어/복지 요금제 전환 시 180일 이내라도 면제 적용)*\n\n---\n\n### **규칙·원문 근거**\n- **규칙 ID**: `RULE_WELFARE_EXEMPT`\n  - **규칙명**: 시니어·복지 요금제 전환 및 군입대 장기정지 위약금 면",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_nFRmB8jUL_QNNWNC48UdQ4fmlS6D",
+        "job_b_cS7-pUihZYXswtJ1C6HgpCUtX1"
+      ]
     },
     {
       "case_id": "BQ-03",
       "query": "갤럭시 S26 울트라 지금 사면 지원금 얼마 받아요?",
-      "missing_context": "용량(256GB/512GB) 및 가입 요금제 티어 미지정",
+      "missing_context": "용량(256GB/512GB) 및 가입 요금제 미지정",
       "root_cause_code": "NO_SLOT_FILLING",
-      "r1_success_rate": 40,
-      "success_rate": 100,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "요금제 티어별(Premier Super / Essential / Slim) 지원금 매트릭스 동시 제시"
+      "expected_behavior": "BigQuery 지원금 정책의 요금제별 총 지원금을 제시",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 80.0,
+      "answer_statuses": {
+        "GROUNDED": 5
+      },
+      "tool_sets": {
+        "mcp_query_graph_and_wiki": 1,
+        "mcp_lookup_customer_profile > mcp_query_graph_and_wiki": 4
+      },
+      "failure_reasons": [],
+      "verification_sql_values": [
+        575000,
+        172500,
+        345000,
+        517500
+      ],
+      "verification_job_id": "job_KFNI-HXB3DB5HurBakD9mV-OTCdU",
+      "sample_answer": "### **결론**\n**Galaxy S26 Ultra 256GB**(출고가 1,698,400원) 구매 시 가입 요금제에 따라 **최소 172,500원부터 최대 575,000원**의 공시지원금이 적용됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n온톨로지 그래프 조회 결과, 가입 요금제별 공시지원금 내역은 다음과 같습니다:\n\n| 정책 ID | 가입 요금제 | 월 납부액 | 공시지원금 합계 |\n| :--- | :--- | :--- | :--- |\n| **POL-2026-001** | 5G Premier Super | 130,000원 | **575,000원** |\n| **POL-2026-002** | 5G Premier Essential | 85,000원 | **517,500원** |\n| **POL-2026-003** | 5G Slim (Baseline Threshold) | 45,000원 | **345,000원** |\n| **POL-2026-004** | 5G Light (Below Baseline) | 37,000원 | **172,500원** |\n\n---\n\n### **규칙·원문 근거**\n\n1. **RULE_SIX_PLAN_180D (180일",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_JjhzmE0aWPD5AROG5hxlsbAiwESc"
+      ]
     },
     {
       "case_id": "BQ-04",
       "query": "군대 입대 때문에 일시정지하면 180일 의무기간은 어떻게 되나요?",
       "missing_context": "군입대 정지 특례 엔티티 참조",
       "root_cause_code": "MISSING_ENTITY",
-      "r1_success_rate": 20,
-      "success_rate": 80,
-      "consistency_rate": 80,
-      "intent_stability": 100,
-      "fde_remediation": "RULE_MILITARY_HOLD 규칙 노드 및 정지 일수 산입 제외 로직 바인딩"
+      "expected_behavior": "군입대 장기정지 특례(MILITARY_PAUSE_ELIGIBLE / DOC_CHUNK_004) 근거를 인용",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 80.0,
+      "answer_statuses": {
+        "GROUNDED": 5
+      },
+      "tool_sets": {
+        "mcp_stage2_wiki_and_semantic > mcp_query_graph_and_wiki": 1,
+        "mcp_query_graph_and_wiki": 4
+      },
+      "failure_reasons": [],
+      "verification_sql_values": null,
+      "verification_job_id": null,
+      "sample_answer": "### **결론**\n군 입대로 인한 정지 시 **180일 의무유지 기간 계산(Commitment Clock)은 군 복무 기간 동안 일시 정지(Pause)**되며, 조기 해지 차액정산금(위약금)은 부과되지 않습니다. 복무 종료 후 정지가 해제되면 중단되었던 잔여 의무 기간이 재개됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n* **산식 및 처리 로직**: `pause_commitment_counter (MILITARY_PAUSE_ELIGIBLE)`\n* **면제 조건**: 군 복무 확인 기간(verified service period) 동안 의무 기간 카운터가 정지되며, 위약금 청구가 발생하지 않음(without triggering early termination penalties).\n\n---\n\n### **규칙·원문 근거**\n* **규칙 ID**: `RULE_WELFARE_EXEMPT` (세부 조항: `RULE_MILITARY_HOLD`)\n* **규칙명**: 시니어·복지 요금제 전환 및 군입대 장기정지 위약금 면제 특례\n* **청크 ID**: `DOC_CHUNK_004` (섹션: Statutory Penalty Exemptions, 앵커: `",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_XCAQlYfpBYc1mnl8HpA1gkWPd6oO",
+        "job_6pEbHFgib4XIRBgp_yXWncNiwp2-"
+      ]
     },
     {
       "case_id": "BQ-05",
       "query": "아이폰 최신형 프로 모델 선약이랑 공시 중 뭐가 더 이득인가요?",
-      "missing_context": "단말 별칭(아이폰 최신형 프로 -> iPhone 16 Pro 256GB) 매핑",
+      "missing_context": "단말 별칭(아이폰 최신형 프로) 및 요금제 미지정",
       "root_cause_code": "NO_ALIAS_DICT",
-      "r1_success_rate": 40,
-      "success_rate": 100,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "단말 별칭 사전(Alias Dictionary) 주입 및 24개월 TCO 비교 산식 자동 호출"
+      "expected_behavior": "카탈로그의 iPhone 16 Pro로 매핑하고 BigQuery 정책 기준 24개월 총비용 차액을 제시",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 60.0,
+      "intent_stability": 60.0,
+      "answer_statuses": {
+        "INSUFFICIENT_PARAMETERS": 3,
+        "GROUNDED": 2
+      },
+      "tool_sets": {
+        "mcp_lookup_customer_profile > mcp_calculate_penalty_rule > mcp_query_graph_and_wiki": 3,
+        "mcp_query_graph_and_wiki": 2
+      },
+      "failure_reasons": [],
+      "verification_sql_values": [
+        50000
+      ],
+      "verification_job_id": "job_cQbBXtOkfcR46RDQueCx5rOJlluz",
+      "sample_answer": "### **결론**\n\n데이터베이스에 등록된 아이폰 최신형 프로 모델인 **iPhone 16 Pro 256GB** 및 **5G Premier Essential(월 85,000원)** 요금제를 기준으로 24개월 총소유비용(TCO)을 비교한 결과, **선택약정(25% 요금할인)이 공시지원금 대비 50,000원 더 저렴하여 유리**합니다.\n\n* **선택약정(25% 할인) 24개월 총비용**: **3,230,000원**\n* **공시지원금 개통 24개월 총비용**: **3,280,000원**\n* **선택약정 선택 시 절감액**: **50,000원**\n\n---\n\n### **근거 데이터 (BigQuery)**\n\nBigQuery 온톨로지 DW에 등록된 단말기 및 정책 데이터(`DEV-IP16P-256`, `POL-2026-005` 기준):\n\n* **단말기 정보**: iPhone 16 Pro 256GB (출고가: 1,700,000원)\n* **적용 요금제**: 5G Premier Essential (월정액: 85,000원)\n* **공시지원금 혜택**:\n  * 기본 공시지원금(`base_subsidy_krw`): 400,000원\n  * 추가지원금 한도(`additional_sub",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_zUANI1kj3zLh1xSgMwnyIeL2LCrA",
+        "job_6dctuHg4lFlGVQbE-RRv_xv3xCr1",
+        "job_tXpPrWWmsMu60x7lQc5nZvfxsBzB"
+      ]
     },
     {
       "case_id": "BQ-06",
       "query": "개통 185일째인데 제일 싼 LTE 요금제로 내려도 위약금 없죠?",
-      "missing_context": "180일 경과 후 면제 임계치 경계값 검증",
+      "missing_context": "180일 경과 후 면제 경계값",
       "root_cause_code": "NO_SLOT_FILLING",
-      "r1_success_rate": 60,
-      "success_rate": 100,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "elapsed_days >= 180 조건식을 결정론적 MCP 산식(mcp_calculate_penalty_rule)으로 고정"
+      "expected_behavior": "경과일 185일이 의무기간 이상이므로 위약금 0원",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 60.0,
+      "answer_statuses": {
+        "INSUFFICIENT_PARAMETERS": 5
+      },
+      "tool_sets": {
+        "mcp_query_graph_and_wiki > mcp_calculate_penalty_rule": 3,
+        "mcp_stage4_agent_orchestration > mcp_calculate_penalty_rule > mcp_query_graph_and_wiki": 2
+      },
+      "failure_reasons": [],
+      "verification_sql_values": [
+        180
+      ],
+      "verification_job_id": "job_67hTUQFfhX2vLIbRNVwe8YZ0hWhR",
+      "sample_answer": "### **결론**\n**네, 위약금이 발생하지 않습니다(위약금 0원).**\n\n개통 후 유지일수가 **185일**로 의무 유지 기간인 180일을 경과하였으므로, 기준선 미만 요금제인 'LTE Basic (Below Baseline)'(월 33,000원)으로 하향 변경하더라도 법정 면제 조건(Full Statutory Exemption)이 충족되어 차액정산 위약금은 **0원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **경과 일수(elapsed_days)**: 185일\n- **의무 유지 일수(retention_days)**: 180일\n- **기준선 월정액(baseline_fee_krw)**: 45,000원\n- **변경 대상 요금제(target_plan_name)**: LTE Basic (Below Baseline)\n- **변경 대상 월정액(target_monthly_fee_krw)**: 33,000원\n- **면제 판정 상태(status)**: `EXEMPT_RETENTION_COMPLETED`\n- **산정 위약금(penalty_krw)**: **0원**\n\n*(참고: 고객 식별자 및 기존 가입 단말 정보(`customer_id`, `",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_SYSv6xhmqL6V8ec9aeJfL1AHXz7d",
+        "job_gFRNpU_Pzer5hBkmFreMaCHaqTV2",
+        "job_A-_AWL8ETcNiZGZ_knx7-4QXKBHu"
+      ]
     },
     {
       "case_id": "BQ-07",
       "query": "지원금 테이블이랑 실제 그래프 노드에 중복 적재된 데이터가 있나요?",
-      "missing_context": "엔지니어링 메타데이터 및 Zero-ETL 투영 검증",
+      "missing_context": "노드 테이블 중복 키 메타데이터 조회",
       "root_cause_code": "MISSING_ENTITY",
-      "r1_success_rate": 40,
-      "success_rate": 100,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "Stage 3 Property Graph 토폴로지 메트릭(duplicate_entity_nodes = 0) 직접 조회 연결"
+      "expected_behavior": "Stage 3 실측 결과(노드 테이블 중복 키 건수)를 제시",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 100.0,
+      "answer_statuses": {
+        "GROUNDED": 5
+      },
+      "tool_sets": {
+        "mcp_stage3_property_graph": 5
+      },
+      "failure_reasons": [],
+      "verification_sql_values": [
+        0
+      ],
+      "verification_job_id": "job_gTx8eQxbJWUJeM21fcOxRk9gx0TS",
+      "sample_answer": "### **결론**\n지원금 테이블(`tb_subsidy_policy`)을 포함하여 그래프 노드 테이블 전체에서 **중복 적재된 데이터는 없습니다 (중복 키 총 0건)**.\n\n---\n\n### **근거 데이터 (BigQuery)**\n그래프 모델(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`)의 노드 테이블 검증 결과는 다음과 같습니다.\n\n* **지원금 정책 노드 (`tb_subsidy_policy`)**: 5개 행 / 중복 키 **0건**\n* **단말기 마스터 (`tb_device_master`)**: 4개 행 / 중복 키 **0건**\n* **요금제 마스터 (`tb_plan_master`)**: 6개 행 / 중복 키 **0건**\n* **고객 계약 (`tb_customer_contract`)**: 6개 행 / 중복 키 **0건**\n* **문서 청크 (`tb_doc_chunks`)**: 5개 행 / 중복 키 **0건**\n* **도메인 규칙 (`tb_domain_rules`)**: 4개 행 / 중복 키 **0건**\n\n* **전체 중복 키 합계 (`duplicate_keys_total`)**: **0건**\n* *",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_uc-oBR5RVRGQHqg2TWooUgdJ9602",
+        "job_cqIpiCoehmHpttPR62FnM13FF_wF"
+      ]
     },
     {
       "case_id": "BQ-08",
       "query": "5G 프리미어 에센셜에서 다이렉트 61로 바꾸면 기준선 위반인가요?",
-      "missing_context": "기준선(45,000원) 상위 요금제 간 하향 시 차액정산 여부",
+      "missing_context": "기준선 이상 요금제 간 하향 시 차액정산 여부",
       "root_cause_code": "MISSING_EXCEPTION_EDGE",
-      "r1_success_rate": 20,
-      "success_rate": 80,
-      "consistency_rate": 100,
-      "intent_stability": 90,
-      "fde_remediation": "is_baseline_tier=true 구간 내 변경과 기준선 미만 하향 규칙을 분리 정의"
+      "expected_behavior": "변경 요금제 월정액이 기준선 이상이므로 기준선 위반 아님",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 80.0,
+      "answer_statuses": {
+        "INSUFFICIENT_PARAMETERS": 5
+      },
+      "tool_sets": {
+        "mcp_query_graph_and_wiki > mcp_calculate_penalty_rule": 4,
+        "mcp_stage4_agent_orchestration > mcp_calculate_penalty_rule > mcp_query_graph_and_wiki": 1
+      },
+      "failure_reasons": [],
+      "verification_sql_values": [
+        45000,
+        61000
+      ],
+      "verification_job_id": "job_8Bk_1tddye5xG98-04yQeHPw6Wdo",
+      "sample_answer": "### **결론**\n**기준선 위반이 아닙니다.** \n변경하려는 요금제인 **'다이렉트 61(5G Direct 61)'의 월정액은 61,000원**으로, 180일 의무유지 기준선인 **45,000원 이상**을 충족하므로 위약금(차액정산금)이 발생하지 않습니다(`status: NO_PENALTY_ABOVE_BASELINE`, `penalty_krw: 0원`).\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **현재 요금제**: 5G Premier Essential (월정액: 85,000원)\n- **변경 대상 요금제**: 5G Direct 61 (월정액: 61,000원)\n- **의무유지 기준선(Threshold)**: 월 45,000원\n- **위반 여부 판정**: 변경 후 월정액(61,000원) $\\ge$ 기준선(45,000원) $\\rightarrow$ **기준선 유지 충족 (위약금 0원)**\n\n*(참고: 정확한 고객별 위약금 계산을 위한 개통 후 경과일수, 고객 ID/단말기 정보는 미입력 상태이나, 변경 요금제의 월정액이 기준선 이상이므로 일수와 무관하게 위반에 해당하지 않습니다.)*\n\n---\n\n### **규칙·원문 근거**\n- **적용 규칙**",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_iRH56s4OHqcVzMy7KgrkMroDO6LK",
+        "job_fbLZGg4KbUF4lOdrTc6PqBSdowXx",
+        "job_J9DqjC8O__cujfnovCF2KazbR3s1"
+      ]
     },
     {
       "case_id": "BQ-09",
       "query": "법인 명의로 개통한 회선도 180일 식스플랜 룰이 똑같이 적용되나요?",
-      "missing_context": "CUST_DEMO_006 (Corporate_B2B) 세그먼트 정책 매핑",
+      "missing_context": "법인(Corporate_B2B) 세그먼트 정책 매핑",
       "root_cause_code": "MISSING_ENTITY",
-      "r1_success_rate": 40,
-      "success_rate": 80,
-      "consistency_rate": 80,
-      "intent_stability": 90,
-      "fde_remediation": "CustomerContractNode의 customer_segment 속성 기반 정책 분기 추가"
+      "expected_behavior": "세그먼트별 예외 규칙 존재 여부를 도구 결과로 밝히고 RULE_SIX_PLAN_180D 근거를 인용",
+      "trials": 5,
+      "passed_trials": 5,
+      "success_rate": 100.0,
+      "consistency_rate": 100.0,
+      "intent_stability": 100.0,
+      "answer_statuses": {
+        "GROUNDED": 5
+      },
+      "tool_sets": {
+        "mcp_query_graph_and_wiki": 5
+      },
+      "failure_reasons": [],
+      "verification_sql_values": null,
+      "verification_job_id": null,
+      "sample_answer": "### **결론**\nBigQuery 온톨로지 데이터베이스(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`) 규정상 공시지원금을 지급받은 가입자(Subscribers receiving public device subsidies) 전체에 대해 180일 기준선 의무유지 규칙이 적용됩니다. 별도의 법인 명의 예외 조항은 규정되어 있지 않으며, 면제 특례는 시니어(만 65세 이상), 복지, 청소년, 군입대 장기정지에 한정됩니다. 따라서 법인 명의 회선도 공시지원금을 받았다면 **180일 식스플랜 룰(`RULE_SIX_PLAN_180D`)이 동일하게 적용**됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **기준 요금제(Baseline Plan Threshold)**: \n  - 5G: 월 45,000원 (`5G Slim (Baseline Threshold)`)\n  - LTE: 월 26,400원\n- **위약금 산식 (DOC_CHUNK_003)**:\n  $$\\text{차액정산금(Penalty)} = (\\text{Initial Granted Subsidy} - \\text{Lower Tier Subs",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_rI7H_lOuG4opPAkvQdbXldCzEaGb"
+      ]
     },
     {
       "case_id": "BQ-10",
       "query": "Spanner Graph로 전환하면 지금 쓰는 GQL 쿼리랑 스키마를 다 새로 짜야 하나요?",
-      "missing_context": "BigQuery Graph vs Spanner Graph 듀얼 어댑터 호환성",
+      "missing_context": "BigQuery Graph vs Spanner Graph 호환성",
       "root_cause_code": "NO_ALIAS_DICT",
-      "r1_success_rate": 40,
-      "success_rate": 80,
-      "consistency_rate": 100,
-      "intent_stability": 100,
-      "fde_remediation": "starter_config.json의 graph_engine 어댑터 및 create_spanner_graph.sql 자동 합성 명세 연동"
+      "expected_behavior": "도구 실측 결과(BigQuery Property Graph)에 근거해 답하고 결과에 없는 내용은 단정하지 않음",
+      "trials": 5,
+      "passed_trials": 4,
+      "success_rate": 80.0,
+      "consistency_rate": 80.0,
+      "intent_stability": 60.0,
+      "answer_statuses": {
+        "GROUNDED": 5
+      },
+      "tool_sets": {
+        "mcp_stage2_wiki_and_semantic > mcp_stage3_property_graph": 3,
+        "mcp_stage3_property_graph > mcp_stage2_wiki_and_semantic": 1,
+        "mcp_stage2_wiki_and_semantic": 1
+      },
+      "failure_reasons": [
+        "TERMS_MISSING ['STARTER_ONTOLOGY_GRAPH', 'GRAPH_TABLE']"
+      ],
+      "verification_sql_values": null,
+      "verification_job_id": null,
+      "sample_answer": "**결론**\n\n현재 구축된 그래프 모델(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`)은 노드 테이블 기반의 프로퍼티 그래프 구조로 검증되어 있으며, GQL 쿼리 및 스키마를 전면 재작성할 필요가 없습니다. \n\n현재 시스템의 노드 테이블 6종(중복 키 총 0건)과 정의된 그래프 경로(Device→Plan←Rule 경로 10개, 지원금 엣지 5개) 및 온톨로지 규칙 체계가 표준 프로퍼티 그래프 DDL 및 GQL 템플릿 단계에서 이미 상호 호환성을 유지하도록 설계·검증되어 있습니다.\n\n---\n\n**근거 데이터 (BigQuery)**\n\n현재 BigQuery 기반 그래프 환경(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`, 엔진: `bigquery`)에서 검증된 노드 테이블 및 경로 구조는 다음과 같습니다:\n\n- **노드 테이블 검증 현황 (중복 키 총 0건)**:\n  - `tb_device_master`: 4행 (중복 키 0개)\n  - `tb_plan_master`: 6행 (중복 키 0개)\n  - `tb_subsidy_policy`: 5행 (중복 키 ",
+      "sample_bq_job_ids": [
+        "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
+        "job_xpf5syfS7uv894EoAqyXUjdLS4Ch",
+        "job_3EQ6m-CbAmTQ5482hKBXdgnO-R3U",
+        "job_mWAbYB61hSE_mULsRfqRfFKABLyQ"
+      ]
     }
   ]
 }

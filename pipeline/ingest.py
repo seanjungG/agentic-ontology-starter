@@ -1,29 +1,78 @@
 # -*- coding: utf-8 -*-
 """
-Pipeline Ingest Engine:
-- GCP Native Foundation:
-    * Google Cloud Open Knowledge Format (OKF v0.2) specification
-    * Google Cloud Knowledge Catalog Bundle standards
-    * Google Cloud Storage (GCS) object storage manifest
-- Custom Extensions:
-    * Visual chunk parser with deterministic SHA-256 hash anchors across multiple policy guides
-    * Andrej Karpathy 3-Layer LLM-Wiki compiler (summary, entities, concepts, rules)
+Pipeline Ingest Engine (Real GCP BigQuery & Cloud Storage Integration):
+- Parses unstructured policy guides (`01_guides/*.md`) into SHA-256 anchored chunks (`doc_chunks.jsonl`)
+- Compiles Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`)
+- Uploads `raw/`, `parsed/`, and `ontology/` artifacts to real GCS bucket `gs://seanjung-poc-starter-ontology`
+- Loads the 10 Terraform-provisioned BigQuery tables from data/input/03_tables/*.csv (no values typed in code)
 """
-import os, re, json, hashlib
 
-def run_ingest(guide_dir="data/input/01_guides", output_dir="data/output", wiki_dir="data/llm_wiki"):
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(wiki_dir, exist_ok=True)
+import csv
+import hashlib
+import json
+import os
+import re
+import sys
+from datetime import datetime
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+from src.gcp_client import (
+    DEFAULT_DATASET_ID,
+    DEFAULT_GCS_BUCKET,
+    DEFAULT_PROJECT_ID,
+    execute_bq_sql,
+    upload_gcs_object,
+)
+
+
+def _sql_str(val: str) -> str:
+    if val is None:
+        return "NULL"
+    escaped = str(val).replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
+    return f"'{escaped}'"
+
+
+def _lit(v) -> str:
+    if v is None:
+        return "NULL"
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        return repr(v)
+    return _sql_str(v)
+
+
+def _read_csv(rel_path: str):
+    full = os.path.join(BASE_DIR, rel_path)
+    with open(full, "r", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def run_ingest(
+    guide_dir: str = "data/input/01_guides",
+    output_dir: str = "data/output",
+    wiki_dir: str = "data/llm_wiki",
+    sync_gcp: bool = True,
+):
+    abs_guide_dir = os.path.join(BASE_DIR, guide_dir)
+    abs_output_dir = os.path.join(BASE_DIR, output_dir)
+    abs_wiki_dir = os.path.join(BASE_DIR, wiki_dir)
+    os.makedirs(abs_output_dir, exist_ok=True)
+    os.makedirs(abs_wiki_dir, exist_ok=True)
 
     guide_files = []
-    if os.path.isdir(guide_dir):
-        for fn in sorted(os.listdir(guide_dir)):
+    if os.path.isdir(abs_guide_dir):
+        for fn in sorted(os.listdir(abs_guide_dir)):
             if fn.endswith(".md"):
-                guide_files.append(os.path.join(guide_dir, fn))
-    elif os.path.isfile(guide_dir):
-        guide_files.append(guide_dir)
+                guide_files.append(os.path.join(abs_guide_dir, fn))
+    elif os.path.isfile(abs_guide_dir):
+        guide_files.append(abs_guide_dir)
 
-    chunk_pattern = re.compile(r"<!--\s*(DOC_CHUNK_\d+):?\s*(.*?)\s*-->\s*(.*?)(?=(?:<!--\s*DOC_CHUNK_\d+)|$)", re.DOTALL)
+    chunk_pattern = re.compile(
+        r"<!--\s*(DOC_CHUNK_\d+):?\s*(.*?)\s*-->\s*(.*?)(?=(?:<!--\s*DOC_CHUNK_\d+)|$)",
+        re.DOTALL,
+    )
     chunks = []
 
     for gpath in guide_files:
@@ -38,25 +87,29 @@ def run_ingest(guide_dir="data/input/01_guides", output_dir="data/output", wiki_
                 title_match = re.search(r"##\s+(.*)", sec)
                 title = title_match.group(1) if title_match else f"Section {idx+1}"
                 h = hashlib.sha256(sec.encode("utf-8")).hexdigest()[:12]
-                chunks.append({
-                    "chunk_id": cid,
-                    "title": title.strip(),
-                    "source_doc": source_doc,
-                    "hash_anchor": f"anchor_{h}",
-                    "content": sec.strip()
-                })
+                chunks.append(
+                    {
+                        "chunk_id": cid,
+                        "title": title.strip(),
+                        "source_doc": source_doc,
+                        "hash_anchor": f"anchor_{h}",
+                        "content": sec.strip(),
+                    }
+                )
         else:
             for cid, title, body in matches:
                 h = hashlib.sha256(body.encode("utf-8")).hexdigest()[:12]
-                chunks.append({
-                    "chunk_id": cid,
-                    "title": title.strip() or cid,
-                    "source_doc": source_doc,
-                    "hash_anchor": f"anchor_{h}",
-                    "content": body.strip()
-                })
+                chunks.append(
+                    {
+                        "chunk_id": cid,
+                        "title": title.strip() or cid,
+                        "source_doc": source_doc,
+                        "hash_anchor": f"anchor_{h}",
+                        "content": body.strip(),
+                    }
+                )
 
-    chunks_path = os.path.join(output_dir, "doc_chunks.jsonl")
+    chunks_path = os.path.join(abs_output_dir, "doc_chunks.jsonl")
     with open(chunks_path, "w", encoding="utf-8") as f:
         for c in chunks:
             f.write(json.dumps(c, ensure_ascii=False) + "\n")
@@ -68,129 +121,162 @@ def run_ingest(guide_dir="data/input/01_guides", output_dir="data/output", wiki_
                 "@id": "domain:TelecomSubsidyManagement",
                 "@type": "DomainOntology",
                 "label": "Enterprise Subsidy & Contract Management (Starter v2.0)",
-                "summary": "Hybrid ontology unifying structured DW tables and unstructured policy manuals.",
+                "summary": "Hybrid ontology unifying structured BigQuery DW tables and unstructured policy manuals.",
                 "totalChunks": len(chunks),
                 "supportedTracks": ["lite", "standard", "full"],
-                "supportedGraphEngines": ["bigquery", "spanner"]
+                "supportedGraphEngines": ["bigquery", "spanner"],
             }
-        ]
+        ],
     }
     for c in chunks:
-        ontology["@graph"].append({
-            "@id": f"chunk:{c['chunk_id']}",
-            "@type": "DocChunk",
-            "title": c["title"],
-            "sourceDoc": c.get("source_doc", "sample_policy_guide.md"),
-            "hashAnchor": c["hash_anchor"]
-        })
+        ontology["@graph"].append(
+            {
+                "@id": f"chunk:{c['chunk_id']}",
+                "@type": "DocChunk",
+                "title": c["title"],
+                "sourceDoc": c.get("source_doc", "sample_policy_guide.md"),
+                "hashAnchor": c["hash_anchor"],
+            }
+        )
 
-    onto_path = os.path.join(output_dir, "ontology.jsonld")
+    onto_path = os.path.join(abs_output_dir, "ontology.jsonld")
     with open(onto_path, "w", encoding="utf-8") as f:
         json.dump(ontology, f, ensure_ascii=False, indent=2)
 
-    # Layer 1: summary.md
-    summary_md = f"""# Enterprise Knowledge Wiki: Executive Summary (Layer 1)
-- **Domain**: Telecom Terminal Subsidy, Tariff Plans & Customer Commitment Management
-- **Target Framework**: OKF v0.2 & Dual Property Graph (BigQuery SQL:2023 / Cloud Spanner Graph)
-- **Total Parsed Chunks**: {len(chunks)} (Across {len(guide_files)} Policy Guides)
-- **De-Identified DW Tables**: 4 Master Tables (`customer_contracts`, `devices`, `plans`, `subsidies`)
+    # Structured sample tables (data/input/03_tables) -> rows for the 10 Terraform-provisioned tables (terraform/bigquery.tf)
+    devices = _read_csv("data/input/03_tables/devices.csv")
+    plans = _read_csv("data/input/03_tables/plans.csv")
+    subsidies = _read_csv("data/input/03_tables/subsidies.csv")
+    contracts = _read_csv("data/input/03_tables/customer_contracts.csv")
+    rules = _read_csv("data/input/03_tables/domain_rules.csv")
+    rule_edges = _read_csv("data/input/03_tables/rule_plan_edges.csv")
+    total_subsidy = {s["policy_id"]: int(s["basic_subsidy"]) + int(s["distribution_subsidy"]) for s in subsidies}
+    rule_cols = ("rule_id", "rule_name", "rule_category", "condition_expr", "formula_expr", "source_chunk_id", "description_ko")
+    tables = {
+        "tb_device_master": (
+            ("device_id", "device_name", "manufacturer", "storage_gb", "factory_price_krw", "release_date"),
+            [(d["device_id"], f"{d['pet_name']} {d['storage']}", d["manufacturer"], int(re.sub(r"\D", "", d["storage"])),
+              int(d["factory_price"]), d["release_date"] or None) for d in devices]),
+        "tb_plan_master": (
+            ("plan_id", "plan_name", "tier_category", "monthly_fee_krw", "min_maintenance_days", "selective_discount_rate"),
+            [(p["plan_id"], p["plan_name"], p["tier_category"], int(p["monthly_fee"]), int(p["min_maintenance_days"]),
+              float(p["selective_discount_rate"])) for p in plans]),
+        "tb_subsidy_policy": (
+            ("policy_id", "device_id", "plan_id", "base_subsidy_krw", "additional_subsidy_cap_krw", "mandatory_retention_days", "effective_from"),
+            [(s["policy_id"], s["device_id"], s["plan_id"], int(s["basic_subsidy"]), int(s["distribution_subsidy"]),
+              int(s["mandatory_retention_days"]), s["effective_start_date"]) for s in subsidies]),
+        "tb_customer_contract": (
+            ("customer_id", "contract_id", "customer_segment", "age_group", "device_id", "plan_id", "contract_type",
+             "commitment_months", "elapsed_days", "granted_subsidy_krw", "welfare_status", "status"),
+            [(c["customer_id"], c["contract_id"], c["customer_segment"], c["age_group"], c["device_id"], c["plan_id"],
+              c["contract_type"], int(c["commitment_months"]), int(c["elapsed_days"]),
+              0 if c["contract_type"] == "SELECTIVE_25PCT" else total_subsidy.get(c["policy_id"]),
+              c["welfare_status"], c["status"]) for c in contracts]),
+        "tb_doc_chunks": (
+            ("chunk_id", "source_file", "section_title", "content", "content_sha256", "trust_tier"),
+            [(ch["chunk_id"], ch["source_doc"], ch["title"], ch["content"], ch["hash_anchor"], "GOLDEN_VERIFIED") for ch in chunks]),
+        "tb_domain_rules": (rule_cols, [tuple(r[k] for k in rule_cols) for r in rules]),
+        "edge_contract_device": (
+            ("contract_id", "customer_id", "device_id", "edge_type"),
+            [(c["contract_id"], c["customer_id"], c["device_id"], "USES_DEVICE") for c in contracts]),
+        "edge_contract_plan": (
+            ("contract_id", "customer_id", "plan_id", "edge_type"),
+            [(c["contract_id"], c["customer_id"], c["plan_id"], "SUBSCRIBES_PLAN") for c in contracts]),
+        "edge_subsidy_binding": (
+            ("policy_id", "device_id", "plan_id", "total_subsidy_krw", "edge_type"),
+            [(s["policy_id"], s["device_id"], s["plan_id"], total_subsidy[s["policy_id"]], "HAS_SUBSIDY_POLICY") for s in subsidies]),
+        "edge_rule_applies_to_plan": (
+            ("edge_id", "rule_id", "plan_id", "source_chunk_id", "relation_label_ko", "edge_type"),
+            [(e["edge_id"], e["rule_id"], e["plan_id"], e["source_chunk_id"], e["relation_label_ko"], "APPLIES_TO_PLAN") for e in rule_edges]),
+    }
 
-## Operational Philosophy
-This knowledge base unifies unstructured legal and customer service manuals with structured enterprise DW ledgers.
-By combining deterministic rule MCP execution with SHA-256 paragraph anchors, agents ground every numerical calculation in verifiable source evidence.
-"""
-    with open(os.path.join(wiki_dir, "summary.md"), "w", encoding="utf-8") as f:
-        f.write(summary_md)
+    # 3-Layer LLM-Wiki generated from the same parsed chunks / CSV rows (no values typed in code)
+    fq = f"{DEFAULT_PROJECT_ID}.{DEFAULT_DATASET_ID}"
+    seg = lambda s: s.replace("_", " ")  # noqa: E731
+    wiki = {
+        "summary.md": (
+            "# Enterprise Knowledge Wiki: Executive Summary (Layer 1)\n"
+            "- **Domain**: Telecom Terminal Subsidy, Tariff Plans & Customer Commitment Management\n"
+            f"- **Target Framework**: OKF v0.2 & Dual Property Graph (`{fq}.STARTER_ONTOLOGY_GRAPH`)\n"
+            f"- **Total Parsed Chunks**: {len(chunks)} (Across {len(guide_files)} Policy Guides)\n"
+            f"- **BigQuery Tables Loaded**: {len(tables)} tables in `{fq}` (schema: `terraform/bigquery.tf`)\n\n"
+            "## Operational Philosophy\n"
+            "Unstructured policy guides and structured BigQuery tables share one ontology. The agent answers with live "
+            "BigQuery SQL/GQL results, SHA-256 paragraph anchors and Vertex AI Gemini, and cites the rule and chunk used.\n"),
+        "entities.md": "\n".join(
+            ["# Enterprise Knowledge Wiki: Core Entities Directory (Layer 2)",
+             f"Generated from `data/input/03_tables/*.csv` (the rows loaded into `{fq}`).", "",
+             "## 1. Customer Contract Ledger (`tb_customer_contract`)"]
+            + [f"- `{c['contract_id']}` (`{c['customer_id']}` · {seg(c['customer_segment'])} · `{c['device_id']}` · `{c['plan_id']}` · "
+               f"{c['elapsed_days']} Days Elapsed" + (f" · `{c['welfare_status']}`" if c["welfare_status"] != "NONE" else "")
+               + (f" · `{c['contract_type']}`" if c["contract_type"] != "PUBLIC_SUBSIDY" else "") + ")" for c in contracts]
+            + ["", "## 2. Terminal Device Master (`tb_device_master`)"]
+            + [f"- `{d['pet_name']} {d['storage']}` (`{d['device_id']}`, Factory Price: {int(d['factory_price']):,} KRW)" for d in devices]
+            + ["", "## 3. Tariff Plan Master (`tb_plan_master`)"]
+            + [f"- `{p['plan_name']}` (`{p['plan_id']}`, {int(p['monthly_fee']):,} KRW, Minimum Maintenance: {p['min_maintenance_days']} Days)" for p in plans]
+            + ["", "## 4. Subsidy Policy Master (`tb_subsidy_policy`)"]
+            + [f"- `{s['policy_id']}` (`{s['device_id']}` + `{s['plan_id']}`: Basic {int(s['basic_subsidy']):,} + Dist "
+               f"{int(s['distribution_subsidy']):,} = {total_subsidy[s['policy_id']]:,} KRW)" for s in subsidies]) + "\n",
+        "concepts.md": (
+            "# Enterprise Knowledge Wiki: Semantic Concepts & Edges (Layer 3)\n"
+            "In the Agentic Ontology Studio graph model, **Entities are represented as Nodes** and **Semantic Concepts/Relationships are represented as Edges**:\n\n"
+            "1. `USES_DEVICE` (`개통 단말기 관계`): Links a Customer Contract (`tb_customer_contract`) to its Terminal Device (`tb_device_master`).\n"
+            "2. `SUBSCRIBES_PLAN` (`가입 요금제 관계`): Links a Customer Contract (`tb_customer_contract`) to its Tariff Plan (`tb_plan_master`).\n"
+            "3. `HAS_SUBSIDY_POLICY` (`단말×요금제 지원금 결합`): Connects a Terminal Device (`tb_device_master`) to a Tariff Plan (`tb_plan_master`) with public and distribution subsidy amounts.\n"
+            "4. `APPLIES_TO_PLAN` (`비즈니스 규칙 적용`): Binds a codified Domain Rule (`tb_domain_rules`) to Tariff Plans (`tb_plan_master`) with SHA-256 chunk grounding.\n"),
+        "rules.md": "\n".join(
+            ["# Enterprise Knowledge Wiki: Codified Business Rules (Layer 3)",
+             "Generated from `data/input/03_tables/domain_rules.csv` (BigQuery `tb_domain_rules`).", ""]
+            + [f"### `{r['rule_id']}` · {r['rule_name']} (`{r['source_chunk_id']}`)\n- **Condition**: `{r['condition_expr']}`\n"
+               f"- **Formula**: `{r['formula_expr']}`\n- {r['description_ko']}\n" for r in rules]),
+    }
+    for fn, body in wiki.items():
+        with open(os.path.join(abs_wiki_dir, fn), "w", encoding="utf-8") as f:
+            f.write(body)
 
-    # Layer 2: entities.md
-    entities_md = """# Enterprise Knowledge Wiki: Core Entities Directory (Layer 2)
-Canonical entities harmonized across structured DW tables and unstructured policy guides:
+    uploaded_objects, bq_jobs = [], []
+    if sync_gcp:
+        # 1. raw/ guides, parsed/ chunks and ontology/ wiki -> GCS bucket (Terraform-provisioned)
+        uploads = [(f"raw/{os.path.basename(g)}", g, "text/markdown; charset=utf-8") for g in guide_files]
+        uploads += [("parsed/doc_chunks.jsonl", chunks_path, "application/json; charset=utf-8")]
+        uploads += [(f"ontology/{fn}", os.path.join(abs_wiki_dir, fn), "text/markdown; charset=utf-8") for fn in wiki]
+        uploads += [("ontology/ontology.jsonld", onto_path, "application/ld+json; charset=utf-8")]
+        for obj, path, ctype in uploads:
+            with open(path, "rb") as f:
+                upload_gcs_object(obj, f.read(), bucket=DEFAULT_GCS_BUCKET, content_type=ctype)
+            uploaded_objects.append(f"gs://{DEFAULT_GCS_BUCKET}/{obj}")
 
-## 1. Customer Contract Ledger (`customer_contracts.csv`)
-- `CONTRACT_DEMO_101` (`CUST_DEMO_001` · General VIP · `DEV-S26U-256` · `PLAN-5G-85` · 120 Days Elapsed)
-- `CONTRACT_DEMO_102` (`CUST_DEMO_002` · General Standard · `DEV-S26U-256` · `PLAN-5G-130` · 224 Days Elapsed)
-- `CONTRACT_DEMO_103` (`CUST_DEMO_003` · Senior Welfare · `DEV-IP16P-256` · `PLAN-5G-85` · 88 Days Elapsed · `SENIOR_EXEMPT`)
-
-## 2. Terminal Device Master (`devices.csv`)
-- `Galaxy S26 Ultra 256GB` (`DEV-S26U-256`, Factory Price: 1,698,400 KRW)
-- `Galaxy S26 Ultra 512GB` (`DEV-S26U-512`, Factory Price: 1,841,400 KRW)
-- `iPhone 16 Pro 256GB` (`DEV-IP16P-256`, Factory Price: 1,700,000 KRW)
-- `iPhone 16 Pro 512GB` (`DEV-IP16P-512`, Factory Price: 2,000,000 KRW)
-
-## 3. Tariff Plan Master (`plans.csv`)
-- `5G Premier Super` (`PLAN-5G-130`, 130,000 KRW, Baseline Tier: True)
-- `5G Premier Essential` (`PLAN-5G-85`, 85,000 KRW, Baseline Tier: True)
-- `5G Slim (Baseline Threshold)` (`PLAN-5G-45`, 45,000 KRW, Baseline Tier: True)
-- `5G Light (Below Baseline)` (`PLAN-5G-37`, 37,000 KRW, Baseline Tier: False)
-
-## 4. Subsidy Policy Master (`subsidies.csv`)
-- `POL-2026-001` (`DEV-S26U-256` + `PLAN-5G-130`: Basic 500,000 + Dist 75,000 = 575,000 KRW)
-- `POL-2026-002` (`DEV-S26U-256` + `PLAN-5G-85`: Basic 450,000 + Dist 67,500 = 517,500 KRW)
-- `POL-2026-004` (`DEV-S26U-256` + `PLAN-5G-37`: Basic 150,000 + Dist 22,500 = 172,500 KRW)
-"""
-    with open(os.path.join(wiki_dir, "entities.md"), "w", encoding="utf-8") as f:
-        f.write(entities_md)
-
-    # Layer 3: concepts.md & rules.md
-    concepts_md = """# Enterprise Knowledge Wiki: Semantic Concepts & Edges (Layer 3)
-In the Agentic Ontology Studio graph model, **Entities are represented as Nodes** and **Semantic Concepts/Relationships are represented as Edges**:
-
-1. `SUBSCRIBES_CONTRACT` (`약정 가입 관계`): Links a Customer Contract (`고객 약정 원장`) to a Tariff Plan (`모바일 요금제`) and Terminal Device (`단말기 모델`).
-2. `COVERS_DEVICE` (`단말 지원금 적용`): Connects a Subsidy Policy (`공시지원금 정책`) to its eligible Terminal Device (`단말기 모델`).
-3. `REQUIRES_PLAN` (`요금제 티어 요건`): Connects a Subsidy Policy (`공시지원금 정책`) to its required Tariff Plan (`모바일 요금제`).
-4. `APPLIES_RULE` (`위약금 규칙 적용`): Binds a codified Domain Rule (`약정 위약금 규칙`) to Tariff Plans and Customer Contracts.
-5. `EXEMPTS_PENALTY` (`특례 면제 관계`): Binds Senior/Welfare or Military pause clauses (`위약금 면제 특례`) to eligible customer segments.
-6. `GROUNDED_IN` (`원문 해시 근거`): Anchors every Domain Rule (`약정 위약금 규칙`) to an immutable SHA-256 `DocChunk` (`정책 가이드 청크`).
-"""
-    with open(os.path.join(wiki_dir, "concepts.md"), "w", encoding="utf-8") as f:
-        f.write(concepts_md)
-
-    rules_md = """# Enterprise Knowledge Wiki: Codified Business Rules (Layer 3)
-Deterministic business logic governing penalty calculations, TCO comparison, and statutory exemptions:
-
-### Rule 1: 180-Day Baseline Plan Commitment (`RULE_SIX_PLAN_180D` · `DOC_CHUNK_002`, `DOC_CHUNK_003`)
-- **Condition**: Subscriber activated terminal with public subsidy under a baseline or higher plan (`>= 45,000 KRW`).
-- **Constraint**: Must maintain baseline tier (`is_baseline_tier = true`) for at least **180 days** from activation.
-- **Penalty on Breach (< 180 Days)**:
-  `Penalty = (Initial Basic Subsidy - Lower Tier Basic Subsidy) * (180 - Elapsed Days) / 180`
-- **Post-180 Days (`>= 180 Days`)**: Penalty is `0 KRW`.
-
-### Rule 2: Statutory Welfare & Military Exemptions (`RULE_WELFARE_EXEMPT` · `DOC_CHUNK_004`)
-- **Senior / Welfare Transition**: Subscribers with `welfare_status = SENIOR_EXEMPT` transitioning to designated Senior/Welfare plans incur `0 KRW` penalty even within 180 days.
-- **Military Enlistment Hold**: `MILITARY_PAUSE_ELIGIBLE` pauses the 180-day commitment counter during active service.
-
-### Rule 3: 24-Month Public Subsidy vs. 25% Selective Contract (`RULE_TCO_COMPARE` · `DOC_CHUNK_005`)
-- **Public Subsidy 24M TCO**: `(Factory Price - Total Subsidy) + (Monthly Fee * 24)`
-- **Selective 25% Discount 24M TCO**: `Factory Price + (Monthly Fee * 0.75 * 24)`
-"""
-    with open(os.path.join(wiki_dir, "rules.md"), "w", encoding="utf-8") as f:
-        f.write(rules_md)
+        # 2. TRUNCATE + INSERT each BigQuery table in one transaction (auto rollback on error); any failed job stops the pipeline
+        for table, (cols, rows) in tables.items():
+            res = execute_bq_sql(
+                f"BEGIN TRANSACTION;\nTRUNCATE TABLE `{fq}.{table}`;\nINSERT INTO `{fq}.{table}` ({', '.join(cols)}) VALUES\n"
+                + ",\n".join("(" + ", ".join(_lit(v) for v in r) + ")" for r in rows) + ";\nCOMMIT TRANSACTION;")
+            bq_jobs.append({"table": table, "rows": len(rows), "job_id": res.get("job_id"), "status": res.get("status")})
+            if res.get("status") != "SUCCESS":
+                raise RuntimeError(f"BigQuery load failed ({table}): {str(res.get('error', ''))[:500]}")
 
     gcs_manifest = {
-        "gcs_uri": "gs://enterprise-ontology-vault/starter-v2/okf-v0.2/",
-        "status": "PROTOTYPE_STAGED",
-        "artifacts": [
-            "summary.md",
-            "entities.md",
-            "concepts.md",
-            "rules.md",
-            "ontology.jsonld",
-            "doc_chunks.jsonl"
-        ],
-        "sync_timestamp": "2026-09-27T16:40:00+09:00",
+        "gcs_uri": f"gs://{DEFAULT_GCS_BUCKET}/",
+        "bigquery_dataset": fq,
+        "status": "LIVE_GCP_SYNCED" if sync_gcp else "LOCAL_ONLY",
+        "uploaded_gcs_objects": uploaded_objects,
+        "bigquery_load_jobs": bq_jobs,
+        "sync_timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
         "validation": {
             "chunk_count": len(chunks),
             "guide_count": len(guide_files),
-            "zero_duplicate_entities_flag": True,
-            "anti_redundancy_ready": True
-        }
+            "bigquery_tables_loaded": sum(j["status"] == "SUCCESS" for j in bq_jobs),
+        },
     }
-    with open(os.path.join(wiki_dir, "gcs_prototype_manifest.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(abs_wiki_dir, "gcs_prototype_manifest.json"), "w", encoding="utf-8") as f:
         json.dump(gcs_manifest, f, ensure_ascii=False, indent=2)
 
-    print(f"[INGEST SUCCESS] Processed {len(chunks)} chunks across {len(guide_files)} guides -> {chunks_path}, {onto_path}")
-    print(f"[LLM-WIKI SUCCESS] Generated Karpathy 3-Layer Wiki in {wiki_dir}/")
+    print(
+        f"[INGEST SUCCESS] Processed {len(chunks)} chunks across {len(guide_files)} guides | "
+        f"GCS Uploaded: {len(uploaded_objects)} objects | BigQuery Loaded: {len(bq_jobs)} tables"
+    )
     return chunks
+
 
 if __name__ == "__main__":
     run_ingest()

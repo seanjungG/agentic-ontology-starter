@@ -100,6 +100,8 @@ def build_eval_summary():
             "total": cq_total,
             "passed": cq_passed,
             "pass_rate": cq_rate,
+            "evaluated_at": cq_raw.get("evaluated_at"),
+            "model": cq_raw.get("model"),
             "rows": [
                 {
                     "cq_id": x.get("cq_id", ""),
@@ -109,7 +111,7 @@ def build_eval_summary():
                     "actual_value": x.get("actual_value") or x.get("status", "-"),
                     "legal_anchor": x.get("grounded_chunk") or x.get("legal_anchor", "-"),
                     "verification_status": x.get("verification_status") or x.get("status", "UNKNOWN"),
-                    "passed": (x.get("status") == "PASSED" or x.get("verification_status") == "EXACT_MATCH"),
+                    "passed": x.get("status") == "PASSED",
                 }
                 for x in cq_items
             ],
@@ -117,7 +119,9 @@ def build_eval_summary():
         "boundary": {
             "status": "MEASURED" if bd_exists and len(bd_cases) > 0 else "PENDING",
             "case_count": len(bd_cases),
-            "r1_avg_success_rate": (bd_raw.get("baseline_round1") or {}).get("avg_success_rate", 32.0),
+            "trials_per_case": bd_raw.get("trials_per_case"),
+            "evaluated_at": bd_raw.get("evaluated_at"),
+            "model": bd_raw.get("model"),
             "avg_success_rate": bd_raw.get("avg_success_rate") if bd_exists else None,
             "avg_consistency_rate": bd_raw.get("avg_consistency_rate") if bd_exists else None,
             "avg_intent_stability": bd_raw.get("avg_intent_stability") if bd_exists else None,
@@ -1262,7 +1266,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                   <div class="ovd-node">
                     <span class="ovd-node-kicker">CLOSED-LOOP EVAL</span>
                     <span class="ovd-node-title">Golden CQ 5 &amp; Boundary 10</span>
-                    <span class="ovd-node-desc">바운더리 실패 진단 및 FDE 온톨로지 보강 (32% &rarr; 92%)</span>
+                    <span class="ovd-node-desc">실제 에이전트(Gemini + BigQuery) 반복 실행 결과로 정확도·강건성 실측 (pipeline/validator.py)</span>
                   </div>
                 </div>
               </div>
@@ -1320,23 +1324,23 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div class="bento-kpi-grid">
           <div class="bento-card">
             <div class="bento-card-label" data-ko="스코핑 완료 핵심 자산" data-en="SCOPED CORE ASSETS">스코핑 완료 핵심 자산</div>
-            <div class="bento-card-value" style="color:var(--apple-blue);">6 Assets</div>
-            <div class="bento-card-sub">DW 마스터 테이블 4종 + 정책 가이드 2종</div>
+            <div class="bento-card-value" style="color:var(--apple-blue);" id="st1-kpi-assets">-</div>
+            <div class="bento-card-sub" id="st1-kpi-assets-sub">-</div>
           </div>
           <div class="bento-card">
             <div class="bento-card-label" data-ko="정형 원장 레코드" data-en="STRUCTURED DW ROWS">정형 원장 레코드</div>
-            <div class="bento-card-value" style="color:var(--apple-indigo);">21 Rows</div>
-            <div class="bento-card-sub">고객약정 6 · 단말 4 · 요금제 6 · 지원금 5</div>
+            <div class="bento-card-value" style="color:var(--apple-indigo);" id="st1-kpi-rows">-</div>
+            <div class="bento-card-sub" id="st1-kpi-rows-sub">-</div>
           </div>
           <div class="bento-card">
             <div class="bento-card-label" data-ko="비정형 해시 앵커 청크" data-en="ANCHORED DOC CHUNKS">비정형 해시 앵커 청크</div>
-            <div class="bento-card-value" style="color:var(--apple-teal);">5 Chunks</div>
-            <div class="bento-card-sub">DOC_CHUNK_001 ~ DOC_CHUNK_005 (SHA-256)</div>
+            <div class="bento-card-value" style="color:var(--apple-teal);" id="st1-kpi-chunks">-</div>
+            <div class="bento-card-sub" id="st1-kpi-chunks-sub">-</div>
           </div>
           <div class="bento-card">
             <div class="bento-card-label" data-ko="노이즈 프루닝 & 비식별화" data-en="NOISE PRUNING & PII GUARD">노이즈 프루닝 &amp; 비식별화</div>
-            <div class="bento-card-value" style="color:var(--apple-emerald);">100% Masked</div>
-            <div class="bento-card-sub">실제 고객명/식별자 0건 (합성 ID 적용)</div>
+            <div class="bento-card-value" style="color:var(--apple-emerald);" id="st1-kpi-pii">-</div>
+            <div class="bento-card-sub" id="st1-kpi-pii-sub">-</div>
           </div>
         </div>
 
@@ -1594,9 +1598,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <!-- Part C: 10 Boundary Cases & FDE Remediation -->
         <div class="ov-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow indigo">PART C · BOUNDARY QUESTION REGRESSION (10 CASES &times; 5 TRIALS) &amp; FDE REMEDIATION</span>
+            <span class="ov-eyebrow indigo">PART C · BOUNDARY QUESTION EVALUATION (10 CASES &times; N TRIALS, LIVE)</span>
           </div>
-          <h2 class="ov-h2">바운더리 질의 10건 회귀 평가 (Round 1 베이스라인 32.0% &rarr; Round 2 FDE 보강 후 92.0%)</h2>
+          <h2 class="ov-h2">바운더리 질의 10건 실측 평가 (실제 에이전트 반복 실행 · data/input/04_cq/boundary_cases.json 판정 기준)</h2>
           <div id="ev-boundary-wrap" style="margin-bottom:16px;"></div>
           <h3 style="font-size:14px; font-weight:800; margin:14px 0 8px 0; color:var(--apple-text-primary);">실패 원인 4대 분류 (Root Cause Taxonomy) 및 온톨로지 보강 규칙</h3>
           <table class="ov-gap-table">
@@ -1815,13 +1819,36 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
 
   const STAGE1_CATALOG = [
-    { id: 'customer_contracts', name: '고객 약정 원장 (dw_customer_contract)', type: 'dw', schema: '6 Rows · 10 Columns (PK: contract_id)', status: 'PII Masked (CUST_DEMO_*)', badge: 'approved' },
-    { id: 'devices', name: '단말기 마스터 원장 (dw_device_master)', type: 'dw', schema: '4 Rows · 5 Columns (PK: device_id)', status: 'Zero-ETL Promoted', badge: 'human' },
-    { id: 'plans', name: '모바일 요금제 원장 (dw_plan_master)', type: 'dw', schema: '6 Rows · 5 Columns (PK: plan_id)', status: 'Zero-ETL Promoted', badge: 'human' },
-    { id: 'subsidies', name: '공시지원금 정책 원장 (dw_subsidy_policy_master)', type: 'dw', schema: '5 Rows · 7 Columns (PK: policy_id)', status: 'Zero-ETL Promoted', badge: 'human' },
-    { id: 'guide_policy', name: '단말 지원금 및 180일 의무유지 약관 (sample_policy_guide.md)', type: 'doc', schema: '3 Anchored Chunks (DOC_CHUNK_001~003)', status: 'SHA-256 Anchored', badge: 'llm' },
-    { id: 'guide_welfare', name: '시니어·복지 위약금 면제 특례 및 24M TCO 가이드 (sample_welfare_exemption_guide.md)', type: 'doc', schema: '2 Anchored Chunks (DOC_CHUNK_004~005)', status: 'SHA-256 Anchored', badge: 'llm' }
+    { id: 'customer_contracts', short: '고객약정', name: '고객 약정 원장 (dw_customer_contract)', type: 'dw', pk: 'contract_id', status: 'PII Masked (CUST_DEMO_*)', badge: 'approved' },
+    { id: 'devices', short: '단말', name: '단말기 마스터 원장 (dw_device_master)', type: 'dw', pk: 'device_id', status: 'Zero-ETL Promoted', badge: 'human' },
+    { id: 'plans', short: '요금제', name: '모바일 요금제 원장 (dw_plan_master)', type: 'dw', pk: 'plan_id', status: 'Zero-ETL Promoted', badge: 'human' },
+    { id: 'subsidies', short: '지원금', name: '공시지원금 정책 원장 (dw_subsidy_policy_master)', type: 'dw', pk: 'policy_id', status: 'Zero-ETL Promoted', badge: 'human' },
+    { id: 'guide_policy', name: '단말 지원금 및 180일 의무유지 약관 (sample_policy_guide.md)', type: 'doc', doc: 'sample_policy_guide.md', status: 'SHA-256 Anchored', badge: 'llm' },
+    { id: 'guide_welfare', name: '시니어·복지 위약금 면제 특례 및 24M TCO 가이드 (sample_welfare_exemption_guide.md)', type: 'doc', doc: 'sample_welfare_exemption_guide.md', status: 'SHA-256 Anchored', badge: 'llm' }
   ];
+
+  // Counts come from /api/assets (repo CSVs + data/output/doc_chunks.jsonl), not from fixed values.
+  function stage1Table(id) { return ((globalAssets || {}).tables || {})[id] || { headers: [], rows: [] }; }
+  function stage1Chunks(doc) { return ((globalAssets || {}).chunks || []).filter(c => !doc || c.source_doc === doc).map(c => c.chunk_id); }
+  function stage1Schema(item) {
+    if (item.type === 'dw') { const t = stage1Table(item.id); return `${t.rows.length} Rows · ${t.headers.length} Columns (PK: ${item.pk})`; }
+    const ids = stage1Chunks(item.doc);
+    return `${ids.length} Anchored Chunks (${ids[0] || '-'}~${ids[ids.length - 1] || '-'})`;
+  }
+  function renderStage1Kpis() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    const dw = STAGE1_CATALOG.filter(i => i.type === 'dw');
+    set('st1-kpi-assets', `${STAGE1_CATALOG.length} Assets`);
+    set('st1-kpi-assets-sub', `DW 마스터 테이블 ${dw.length}종 + 정책 가이드 ${STAGE1_CATALOG.length - dw.length}종`);
+    set('st1-kpi-rows', `${dw.reduce((s, i) => s + stage1Table(i.id).rows.length, 0)} Rows`);
+    set('st1-kpi-rows-sub', dw.map(i => `${i.short} ${stage1Table(i.id).rows.length}`).join(' · '));
+    const ids = stage1Chunks();
+    set('st1-kpi-chunks', `${ids.length} Chunks`);
+    set('st1-kpi-chunks-sub', `${ids[0] || '-'} ~ ${ids[ids.length - 1] || '-'} (SHA-256)`);
+    const ct = stage1Table('customer_contracts'), ci = ct.headers.indexOf('customer_id');
+    set('st1-kpi-pii', `${ct.rows.filter(r => /^CUST_DEMO_\d+$/.test(r[ci] || '')).length}/${ct.rows.length} Synthetic IDs`);
+    set('st1-kpi-pii-sub', 'customer_id 중 합성 식별자(CUST_DEMO_*) 건수');
+  }
 
   function filterStage1Assets(flt) {
     stage1Filter = flt;
@@ -1834,13 +1861,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
   function renderStage1Assets() {
     const tbody = document.getElementById('stage1-asset-tbody');
     if (!tbody) return;
+    renderStage1Kpis();
     const rows = STAGE1_CATALOG.filter(item => stage1Filter === 'all' || item.type === stage1Filter);
     tbody.innerHTML = rows.map((item, idx) => `
       <tr id="st1-row-${item.id}" onclick="inspectStage1Asset('${item.id}')">
         <td><code style="font-weight:700; color:var(--apple-blue);">${item.id}</code></td>
         <td style="font-weight:600;">${item.name}</td>
         <td><span class="badge ${item.type === 'dw' ? 'human' : 'llm'}">${item.type === 'dw' ? 'Track B · DW Table' : 'Track A · Policy Guide'}</span></td>
-        <td style="font-family:var(--font-mono); font-size:12px;">${item.schema}</td>
+        <td style="font-family:var(--font-mono); font-size:12px;">${stage1Schema(item)}</td>
         <td><span class="badge ${item.badge}">${item.status}</span></td>
       </tr>
     `).join('');
@@ -2154,14 +2182,17 @@ HTML_PAGE = r"""<!DOCTYPE html>
   // 9. Stage 5 Lineage & Evaluation
   async function loadLineageAndEvaluation() {
     const t0 = performance.now();
-    const [aRes, gRes, eRes] = await Promise.all([
+    const [aRes, gRes, eRes, s3Res] = await Promise.all([
       fetch('/api/assets'),
       fetch('/api/graph'),
-      fetch('/api/eval/summary')
+      fetch('/api/eval/summary'),
+      fetch('/api/mcp/execute', { method: 'POST', headers: {'Content-Type': 'application/json'},
+                                  body: JSON.stringify({ tool_name: 'mcp_stage3_property_graph', args: {} }) })
     ]);
     const assets = await aRes.json();
     const graph = await gRes.json();
     const ev = await eRes.json();
+    const s3 = await s3Res.json();
     const elapsed = Math.round(performance.now() - t0);
     document.getElementById('lineage-latency-badge').textContent = `Lineage Loaded in ${elapsed} ms`;
 
@@ -2173,19 +2204,20 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const unNodes = topo.unstructured_pruned_nodes || [];
     const edges = topo.edge_tables || [];
     const bridges = topo.semantic_bridges || [];
+    const g0 = ev.golden || {}, b0 = ev.boundary || {};
 
     document.getElementById('lineage-kpis').innerHTML = [
       ['추적 대상 아티팩트', (tableNames.length + chunks.length + wikiFiles.length + dwNodes.length + unNodes.length) + '개', 'var(--apple-blue)'],
       ['Property Graph Vertex / Edge', (dwNodes.length + unNodes.length) + ' Nodes / ' + edges.length + ' Edges', 'var(--apple-indigo)'],
-      ['중복 엔티티 노드 (Zero-ETL)', '0건 (무복제 투영)', 'var(--apple-emerald)'],
+      ['노드 테이블 중복 키 (BigQuery 실측)', s3.status === 'SUCCESS' ? `${s3.duplicate_keys_total}건 · ${esc(s3.bq_job_id || '')}` : `조회 실패 (${esc(s3.status)})`, 'var(--apple-emerald)'],
       ['계보 집계 응답 지연', elapsed + ' ms', 'var(--apple-teal)']
     ].map(([k, v, c]) => `<div class="metric-box"><div class="metric-title">${k}</div><div class="metric-value" style="color:${c};">${v}</div></div>`).join('');
 
     const tiers = [
       { n: 'TIER 1 · RAW SOURCE', name: 'DW Ledgers & Guides', color: '#3b82f6', items: [`정형 마스터 테이블 ${tableNames.length}종 (21 rows)`, `비정형 정책 가이드 2종`, tableNames.map(t => `<code>${t}</code>`).join(' · ')] },
       { n: 'TIER 2 · OKF WIKI', name: '3-Layer Wiki & Anchors', color: '#0d9488', items: [`SHA-256 해시 앵커 청크 ${chunks.length}개`, `Karpathy 3-Layer Wiki (${wikiFiles.length} files)`, `<code>DOC_CHUNK_001 ~ 005</code>`] },
-      { n: 'TIER 3 · GRAPH', name: 'BigQuery & Spanner Graph', color: '#6366f1', items: [`정형 승격 노드 ${dwNodes.length}종 + 비정형 노드 ${unNodes.length}종`, `듀얼 DDL (SQL:2023 & ISO GQL)`, `<code>ENTERPRISE_SUBSIDY_GRAPH</code>`] },
-      { n: 'TIER 4 · AGENT & EVAL', name: '8 MCPs & Closed-Loop Eval', color: '#db2777', items: [`Stage MCP 5종 + Runtime MCP 3종`, `Golden CQ 5/5 (100%)`, `Boundary 10건 (32% ➔ 92%)`] }
+      { n: 'TIER 3 · GRAPH', name: 'BigQuery & Spanner Graph', color: '#6366f1', items: [`정형 승격 노드 ${dwNodes.length}종 + 비정형 노드 ${unNodes.length}종`, `듀얼 DDL (SQL:2023 & ISO GQL)`, `<code>${esc(topo.graph_name || '-')}</code>`] },
+      { n: 'TIER 4 · AGENT & EVAL', name: '8 MCPs & Closed-Loop Eval', color: '#db2777', items: [`Stage MCP 5종 + Runtime MCP 3종`, `Golden CQ ${g0.passed ?? '-'}/${g0.total ?? '-'} (실측 ${esc(g0.evaluated_at || '미측정')})`, `Boundary ${b0.case_count || 0}건 · 성공률 ${b0.avg_success_rate ?? '-'}%`] }
     ];
     document.getElementById('lineage-tiers').innerHTML = tiers.map(tr => `
       <div style="background:#f8fafc; border:1px solid #cbd5e1; border-top:3px solid ${tr.color}; border-radius:10px; padding:14px;">
@@ -2207,11 +2239,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
     // Evaluation Summary
     document.getElementById('ev-intro').innerHTML = esc(ev.intro);
     const g = ev.golden || {}, b = ev.boundary || {};
+    const pct = v => (v === null || v === undefined) ? '미측정' : `${v}%`;
     document.getElementById('ev-kpi-grid').innerHTML = `
-      <div class="metric-box"><div class="metric-title">Golden CQ 통과율</div><div class="metric-value" style="color:var(--apple-emerald);">${g.passed || 0} / ${g.total || 0} (${g.pass_rate || 100}%)</div><div class="ov-metric-cap">결정론적 산식 & 해시 앵커 검증</div></div>
-      <div class="metric-box"><div class="metric-title">Boundary Round 1 (보강 전)</div><div class="metric-value" style="color:var(--apple-amber);">${b.r1_avg_success_rate || 32}%</div><div class="ov-metric-cap">슬롯 결여·특례 누락 초기 상태</div></div>
-      <div class="metric-box"><div class="metric-title">Boundary Round 2 (FDE 보강 후)</div><div class="metric-value" style="color:var(--apple-blue);">${b.avg_success_rate || 92}% (+60%p)</div><div class="ov-metric-cap">시맨틱 예외 엣지 & 슬롯 필링 주입</div></div>
-      <div class="metric-box"><div class="metric-title">응답 일관성 / 의도 안정성</div><div class="metric-value" style="color:var(--apple-indigo);">${b.avg_consistency_rate || 96}% / ${b.avg_intent_stability || 98}%</div><div class="ov-metric-cap">10 Cases × 5 Trials 반복 측정</div></div>
+      <div class="metric-box"><div class="metric-title">Golden CQ 통과</div><div class="metric-value" style="color:var(--apple-emerald);">${g.passed ?? '-'} / ${g.total ?? '-'} (${pct(g.pass_rate)})</div><div class="ov-metric-cap">검증 SQL + 에이전트 답변 대조 · ${esc(g.evaluated_at || '미측정')}</div></div>
+      <div class="metric-box"><div class="metric-title">Boundary 성공률</div><div class="metric-value" style="color:var(--apple-blue);">${pct(b.avg_success_rate)}</div><div class="ov-metric-cap">${b.case_count || 0} Cases × ${b.trials_per_case ?? '-'} Trials 실측</div></div>
+      <div class="metric-box"><div class="metric-title">응답 일관성</div><div class="metric-value" style="color:var(--apple-indigo);">${pct(b.avg_consistency_rate)}</div><div class="ov-metric-cap">반복 실행 간 (응답 상태, 판정) 일치 비율</div></div>
+      <div class="metric-box"><div class="metric-title">의도 안정성</div><div class="metric-value" style="color:var(--apple-teal);">${pct(b.avg_intent_stability)}</div><div class="ov-metric-cap">반복 실행 간 호출 도구 조합 일치 비율 · ${esc(b.model || '')} · ${esc(b.evaluated_at || '미측정')}</div></div>
     `;
 
     document.getElementById('ev-golden-wrap').innerHTML = `
@@ -2226,7 +2259,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <td><code>${esc(r.expected_value)}</code></td>
               <td><code>${esc(r.actual_value)}</code></td>
               <td><span class="badge llm">${esc(r.legal_anchor)}</span></td>
-              <td><span class="badge approved">${esc(r.verification_status)}</span></td>
+              <td><span class="badge ${r.passed ? 'approved' : 'amber'}">${esc(r.verification_status)}</span></td>
             </tr>
           `).join('')}
         </tbody>
@@ -2235,7 +2268,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
     document.getElementById('ev-boundary-wrap').innerHTML = `
       <table class="ov-gap-table">
-        <thead><tr><th>Case ID</th><th>바운더리 질문</th><th>결여 맥락 / 경계 조건</th><th>원인 코드</th><th>R1 성공률</th><th>R2 성공률</th><th>FDE 온톨로지 보강 내역</th></tr></thead>
+        <thead><tr><th>Case ID</th><th>바운더리 질문</th><th>결여 맥락 / 경계 조건</th><th>원인 코드</th><th>성공률</th><th>일관성 / 의도 안정성</th><th>기대 동작 · 실패 사유</th></tr></thead>
         <tbody>
           ${(b.cases || []).map(c => `
             <tr>
@@ -2243,9 +2276,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <td>${esc(c.query)}</td>
               <td class="muted">${esc(c.missing_context)}</td>
               <td><span class="badge amber">${esc(c.root_cause_code)}</span></td>
-              <td style="font-family:var(--font-mono); color:#b45309;">${esc(c.r1_success_rate)}%</td>
-              <td style="font-family:var(--font-mono); font-weight:800; color:var(--apple-emerald);">${esc(c.success_rate)}%</td>
-              <td>${esc(c.fde_remediation)}</td>
+              <td style="font-family:var(--font-mono); font-weight:800; color:var(--apple-emerald);">${esc(c.success_rate)}% (${esc(c.passed_trials)}/${esc(c.trials)})</td>
+              <td style="font-family:var(--font-mono);">${esc(c.consistency_rate)}% / ${esc(c.intent_stability)}%</td>
+              <td>${esc(c.expected_behavior)}${(c.failure_reasons || []).length ? `<br><span class="muted">실패 사유: ${esc(c.failure_reasons.join(' | '))}</span>` : ''}</td>
             </tr>
           `).join('')}
         </tbody>

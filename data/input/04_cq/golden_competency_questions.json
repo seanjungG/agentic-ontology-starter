@@ -3,87 +3,50 @@
     "cq_id": "CQ-01",
     "category": "Single-Hop Lookup",
     "query": "Galaxy S26 Ultra 256GB 모델의 공식 출고가는 얼마인가?",
-    "target_tools": [
-      "mcp_lookup_customer_profile"
-    ],
+    "target_tools": ["mcp_lookup_customer_profile"],
     "expected_value": "1,698,400 KRW",
-    "actual_value": "1,698,400 KRW",
-    "expected_math": 1698400,
+    "expected_math": {"factory_price": 1698400},
     "grounded_chunk": "DOC_CHUNK_001",
-    "legal_anchor": "DOC_CHUNK_001",
-    "verification_status": "EXACT_MATCH"
+    "verification_sql": "SELECT factory_price_krw AS factory_price FROM `{fq}.tb_device_master` WHERE device_name = 'Galaxy S26 Ultra 256GB'"
   },
   {
     "cq_id": "CQ-02",
     "category": "Two-Hop Subsidy",
     "query": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원) 요금제로 개통할 때 총 지원금과 실구매가는?",
-    "target_tools": [
-      "mcp_lookup_customer_profile",
-      "mcp_query_graph_and_wiki"
-    ],
+    "target_tools": ["mcp_lookup_customer_profile", "mcp_query_graph_and_wiki"],
     "expected_value": "지원금 517,500 KRW / 실구매가 1,180,900 KRW",
-    "actual_value": "지원금 517,500 KRW / 실구매가 1,180,900 KRW",
-    "expected_math": {
-      "subsidy": 517500,
-      "net_price": 1180900
-    },
+    "expected_math": {"subsidy": 517500, "net_price": 1180900},
     "grounded_chunk": "DOC_CHUNK_002",
-    "legal_anchor": "DOC_CHUNK_002",
-    "verification_status": "EXACT_MATCH"
+    "verification_sql": "SELECT s.base_subsidy_krw + s.additional_subsidy_cap_krw AS subsidy, d.factory_price_krw - s.base_subsidy_krw - s.additional_subsidy_cap_krw AS net_price FROM `{fq}.tb_subsidy_policy` s JOIN `{fq}.tb_device_master` d ON d.device_id = s.device_id JOIN `{fq}.tb_plan_master` p ON p.plan_id = s.plan_id WHERE d.device_name = 'Galaxy S26 Ultra 256GB' AND p.plan_name = '5G Premier Essential' AND p.monthly_fee_krw = 85000"
   },
   {
     "cq_id": "CQ-03",
     "category": "Multi-Hop Penalty",
     "query": "CUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만인 5G Light(37,000원) 요금제로 하향 변경 시 차액정산 위약금은?",
-    "target_tools": [
-      "mcp_lookup_customer_profile",
-      "mcp_calculate_penalty_rule"
-    ],
-    "expected_value": "100,000 KRW ((450,000 - 150,000) * 60 / 180)",
-    "actual_value": "100,000 KRW ((450,000 - 150,000) * 60 / 180)",
-    "expected_math": {
-      "penalty": 100000,
-      "formula": "(450000 - 150000) * (180 - 120) / 180"
-    },
+    "target_tools": ["mcp_lookup_customer_profile", "mcp_calculate_penalty_rule"],
+    "expected_value": "100,000 KRW ((450,000 - 150,000) × 60 / 180)",
+    "expected_math": {"penalty": 100000},
     "grounded_chunk": "DOC_CHUNK_003",
-    "legal_anchor": "DOC_CHUNK_003",
-    "verification_status": "EXACT_MATCH"
+    "verification_sql": "SELECT CAST(ROUND((s0.base_subsidy_krw - s1.base_subsidy_krw) * (s0.mandatory_retention_days - 120) / s0.mandatory_retention_days) AS INT64) AS penalty FROM `{fq}.tb_customer_contract` c JOIN `{fq}.tb_subsidy_policy` s0 ON s0.device_id = c.device_id AND s0.plan_id = c.plan_id JOIN `{fq}.tb_plan_master` t ON t.monthly_fee_krw = 37000 JOIN `{fq}.tb_subsidy_policy` s1 ON s1.device_id = c.device_id AND s1.plan_id = t.plan_id WHERE c.customer_id = 'CUST_DEMO_001'"
   },
   {
     "cq_id": "CQ-04",
     "category": "24M TCO Optimization",
     "query": "Galaxy S26 Ultra 256GB + 5G Premier Essential(85,000원) 24개월 유지 시 공시지원금과 선택약정(25%) 중 유리한 조건과 절감액은?",
-    "target_tools": [
-      "mcp_calculate_penalty_rule",
-      "mcp_query_graph_and_wiki"
-    ],
-    "expected_value": "선택약정 유리 (24개월 총비용 3,228,400원 vs 3,220,900원 · 선택약정 할인 총액 510,000원 비교)",
-    "actual_value": "선택약정/공시지원금 TCO 결정론적 비교 완료 (차액 7,500 KRW)",
-    "expected_math": {
-      "selective_discount_total": 510000,
-      "public_subsidy_total": 517500
-    },
+    "target_tools": ["mcp_calculate_penalty_rule", "mcp_query_graph_and_wiki"],
+    "expected_value": "공시지원금 유리 (공시지원금 총액 517,500원 vs 선택약정 할인 총액 510,000원 · 24개월 총비용 차액 7,500원)",
+    "expected_math": {"public_subsidy_total": 517500, "selective_discount_total": 510000, "tco_savings": 7500},
     "grounded_chunk": "DOC_CHUNK_005",
-    "legal_anchor": "DOC_CHUNK_005",
-    "verification_status": "EXACT_MATCH"
+    "verification_sql": "SELECT s.base_subsidy_krw + s.additional_subsidy_cap_krw AS public_subsidy_total, CAST(ROUND(p.monthly_fee_krw * p.selective_discount_rate * 24) AS INT64) AS selective_discount_total, ABS(CAST(ROUND(d.factory_price_krw + p.monthly_fee_krw * (1 - p.selective_discount_rate) * 24) AS INT64) - (d.factory_price_krw - s.base_subsidy_krw - s.additional_subsidy_cap_krw + p.monthly_fee_krw * 24)) AS tco_savings FROM `{fq}.tb_subsidy_policy` s JOIN `{fq}.tb_device_master` d ON d.device_id = s.device_id JOIN `{fq}.tb_plan_master` p ON p.plan_id = s.plan_id WHERE d.device_name = 'Galaxy S26 Ultra 256GB' AND p.monthly_fee_krw = 85000"
   },
   {
     "cq_id": "CQ-05",
     "category": "Welfare Exemption & Lineage",
     "query": "CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경할 때 위약금 면제 여부와 근거 규정 앵커를 확인해줘.",
-    "target_tools": [
-      "mcp_lookup_customer_profile",
-      "mcp_calculate_penalty_rule",
-      "mcp_query_graph_and_wiki"
-    ],
+    "target_tools": ["mcp_lookup_customer_profile", "mcp_calculate_penalty_rule", "mcp_query_graph_and_wiki"],
     "expected_value": "0 KRW (시니어/복지 특례 면제 · DOC_CHUNK_004)",
-    "actual_value": "0 KRW (시니어/복지 특례 면제 · DOC_CHUNK_004)",
-    "expected_math": {
-      "penalty": 0,
-      "exemption_rule": "RULE_WELFARE_EXEMPT"
-    },
+    "expected_math": {"penalty": 0, "exemption_rule": "RULE_WELFARE_EXEMPT"},
     "grounded_chunk": "DOC_CHUNK_004",
-    "legal_anchor": "DOC_CHUNK_004",
-    "verification_status": "EXACT_MATCH"
+    "verification_sql": "SELECT IF(c.welfare_status = 'SENIOR_EXEMPT', 0, NULL) AS penalty, r.rule_id AS exemption_rule FROM `{fq}.tb_customer_contract` c JOIN `{fq}.tb_domain_rules` r ON r.rule_category = 'WELFARE_EXEMPT' WHERE c.customer_id = 'CUST_DEMO_003'"
   }
 ]
