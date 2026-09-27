@@ -1,5 +1,5 @@
 {
-  "gcs_uri": "gs://enterprise-ontology-vault/prototype/v0.2/",
+  "gcs_uri": "gs://enterprise-ontology-vault/starter-v2/okf-v0.2/",
   "status": "PROTOTYPE_STAGED",
   "artifacts": [
     "summary.md",
@@ -9,9 +9,10 @@
     "ontology.jsonld",
     "doc_chunks.jsonl"
   ],
-  "sync_timestamp": "2026-03-22T09:00:00Z",
+  "sync_timestamp": "2026-09-27T16:40:00+09:00",
   "validation": {
-    "chunk_count": 3,
+    "chunk_count": 5,
+    "guide_count": 2,
     "zero_duplicate_entities_flag": true,
     "anti_redundancy_ready": true
   }

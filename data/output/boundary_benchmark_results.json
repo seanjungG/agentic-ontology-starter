@@ -1,0 +1,132 @@
+{
+  "benchmark_id": "STARTER_BOUNDARY_EVAL_V2",
+  "evaluated_at": "2026-09-27T16:40:00+09:00",
+  "case_count": 10,
+  "trials_per_case": 5,
+  "total_trials": 50,
+  "baseline_round1": {
+    "avg_success_rate": 32.0,
+    "avg_consistency_rate": 64.0,
+    "avg_intent_stability": 78.0
+  },
+  "remediated_round2": {
+    "avg_success_rate": 92.0,
+    "avg_consistency_rate": 96.0,
+    "avg_intent_stability": 98.0
+  },
+  "avg_success_rate": 92.0,
+  "avg_consistency_rate": 96.0,
+  "avg_intent_stability": 98.0,
+  "cases": [
+    {
+      "case_id": "BQ-01",
+      "query": "개통한 지 4개월 됐는데 요금제 낮추면 위약금 나오나요?",
+      "missing_context": "고객 ID / 현재 요금제 / 변경 희망 요금제 미지정",
+      "root_cause_code": "NO_SLOT_FILLING",
+      "r1_success_rate": 20,
+      "success_rate": 100,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "필수 슬롯(고객ID, 변경 요금제) 결여 시 45,000원 기준선 분기 안내 및 슬롯 확인 프롬프트 강제"
+    },
+    {
+      "case_id": "BQ-02",
+      "query": "어르신 요금제로 바꾸려는데 180일 안 지났으면 위약금 내야 하나요?",
+      "missing_context": "시니어 특례 면제 등록 여부 미지정",
+      "root_cause_code": "MISSING_EXCEPTION_EDGE",
+      "r1_success_rate": 0,
+      "success_rate": 100,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "RULE_WELFARE_EXEMPT 시맨틱 예외 엣지 추가 및 DOC_CHUNK_004 근거 연결"
+    },
+    {
+      "case_id": "BQ-03",
+      "query": "갤럭시 S26 울트라 지금 사면 지원금 얼마 받아요?",
+      "missing_context": "용량(256GB/512GB) 및 가입 요금제 티어 미지정",
+      "root_cause_code": "NO_SLOT_FILLING",
+      "r1_success_rate": 40,
+      "success_rate": 100,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "요금제 티어별(Premier Super / Essential / Slim) 지원금 매트릭스 동시 제시"
+    },
+    {
+      "case_id": "BQ-04",
+      "query": "군대 입대 때문에 일시정지하면 180일 의무기간은 어떻게 되나요?",
+      "missing_context": "군입대 정지 특례 엔티티 참조",
+      "root_cause_code": "MISSING_ENTITY",
+      "r1_success_rate": 20,
+      "success_rate": 80,
+      "consistency_rate": 80,
+      "intent_stability": 100,
+      "fde_remediation": "RULE_MILITARY_HOLD 규칙 노드 및 정지 일수 산입 제외 로직 바인딩"
+    },
+    {
+      "case_id": "BQ-05",
+      "query": "아이폰 최신형 프로 모델 선약이랑 공시 중 뭐가 더 이득인가요?",
+      "missing_context": "단말 별칭(아이폰 최신형 프로 -> iPhone 16 Pro 256GB) 매핑",
+      "root_cause_code": "NO_ALIAS_DICT",
+      "r1_success_rate": 40,
+      "success_rate": 100,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "단말 별칭 사전(Alias Dictionary) 주입 및 24개월 TCO 비교 산식 자동 호출"
+    },
+    {
+      "case_id": "BQ-06",
+      "query": "개통 185일째인데 제일 싼 LTE 요금제로 내려도 위약금 없죠?",
+      "missing_context": "180일 경과 후 면제 임계치 경계값 검증",
+      "root_cause_code": "NO_SLOT_FILLING",
+      "r1_success_rate": 60,
+      "success_rate": 100,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "elapsed_days >= 180 조건식을 결정론적 MCP 산식(mcp_calculate_penalty_rule)으로 고정"
+    },
+    {
+      "case_id": "BQ-07",
+      "query": "지원금 테이블이랑 실제 그래프 노드에 중복 적재된 데이터가 있나요?",
+      "missing_context": "엔지니어링 메타데이터 및 Zero-ETL 투영 검증",
+      "root_cause_code": "MISSING_ENTITY",
+      "r1_success_rate": 40,
+      "success_rate": 100,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "Stage 3 Property Graph 토폴로지 메트릭(duplicate_entity_nodes = 0) 직접 조회 연결"
+    },
+    {
+      "case_id": "BQ-08",
+      "query": "5G 프리미어 에센셜에서 다이렉트 61로 바꾸면 기준선 위반인가요?",
+      "missing_context": "기준선(45,000원) 상위 요금제 간 하향 시 차액정산 여부",
+      "root_cause_code": "MISSING_EXCEPTION_EDGE",
+      "r1_success_rate": 20,
+      "success_rate": 80,
+      "consistency_rate": 100,
+      "intent_stability": 90,
+      "fde_remediation": "is_baseline_tier=true 구간 내 변경과 기준선 미만 하향 규칙을 분리 정의"
+    },
+    {
+      "case_id": "BQ-09",
+      "query": "법인 명의로 개통한 회선도 180일 식스플랜 룰이 똑같이 적용되나요?",
+      "missing_context": "CUST_DEMO_006 (Corporate_B2B) 세그먼트 정책 매핑",
+      "root_cause_code": "MISSING_ENTITY",
+      "r1_success_rate": 40,
+      "success_rate": 80,
+      "consistency_rate": 80,
+      "intent_stability": 90,
+      "fde_remediation": "CustomerContractNode의 customer_segment 속성 기반 정책 분기 추가"
+    },
+    {
+      "case_id": "BQ-10",
+      "query": "Spanner Graph로 전환하면 지금 쓰는 GQL 쿼리랑 스키마를 다 새로 짜야 하나요?",
+      "missing_context": "BigQuery Graph vs Spanner Graph 듀얼 어댑터 호환성",
+      "root_cause_code": "NO_ALIAS_DICT",
+      "r1_success_rate": 40,
+      "success_rate": 80,
+      "consistency_rate": 100,
+      "intent_stability": 100,
+      "fde_remediation": "starter_config.json의 graph_engine 어댑터 및 create_spanner_graph.sql 자동 합성 명세 연동"
+    }
+  ]
+}

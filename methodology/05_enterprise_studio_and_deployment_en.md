@@ -3,7 +3,7 @@
 
 - **Master Methodology**: [METHODOLOGY_EN.md](./METHODOLOGY_EN.md)
 - **Document Version**: `v1.1.0`
-- **Objective**: Deploy the **`Agentic Ontology Studio - LG Uplus` (`0. Overview` plus `1. Asset` ~ `9. Evaluation`)** compliant with `05_DESIGN.md`, visualize 4-tier end-to-end data lineage (`7. Lineage`), execute rubric-scored evaluation across 20 Golden CQs plus boundary-question regression (`9. Evaluation`), and achieve containerized production deployment on Google Cloud Run.
+- **Objective**: Deploy the **`Agentic Ontology Studio` (`0. Overview` plus `1. Asset` ~ `9. Evaluation`)** compliant with `05_DESIGN.md`, visualize 4-tier end-to-end data lineage (`7. Lineage`), execute rubric-scored evaluation across 20 Golden CQs plus boundary-question regression (`9. Evaluation`), and achieve containerized production deployment on Google Cloud Run.
 
 ---
 
@@ -15,7 +15,7 @@ Stage 5 delivers the 8-step production studio interface (plus the `0. Overview` 
 flowchart TD
     subgraph Step1 ["Step 5.1: Enterprise Web Studio Deployment"]
         DesignToken["Design System Standards<br/>- Pretendard Typography<br/>- Apple/Google Enterprise Theme<br/>- Unified 44px Topbar & 52px Subbar"]
-        Studios["Agentic Ontology Studio tabs<br/>- 0. Overview (Exec Summary & GCP Arch & Gap Matrix)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE / 9. Evaluation"]
+        Studios["Agentic Ontology Studio tabs<br/>- 0. Overview (Exec Summary & GCP Arch & Gap Matrix)<br/>- 1. Asset / 2. Knowledge Viewer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE / 9. Evaluation"]
         DesignToken --> Studios
     end
 

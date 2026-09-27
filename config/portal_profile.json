@@ -1,217 +1,244 @@
 {
-  "schema_version": "1.0",
-  "_readme": "이 파일 하나만 교체하면 포털의 0. Overview / 9. Evaluation 화면 내용이 그대로 바뀝니다. 화면 코드는 수정하지 않습니다. 값은 모두 문자열이며 <b>, <br>, <code> 태그를 허용합니다.",
+  "schema_version": "2.0",
+  "_readme": "이 파일은 스튜디오의 0. Overview 및 Stage 5. Lineage & Eval 화면 메타데이터를 정의합니다. Uplus Ontology Light Enterprise 디자인 토큰(#3b82f6, #0d9488, #6366f1, #7c3aed, #db2777)과 100% 동기화되어 있습니다.",
   "brand": {
     "product_name": "Agentic Ontology Studio",
-    "edition": "Starter Pack",
-    "domain_label": "Telecom Subsidy (Sample Domain)",
+    "edition": "Starter Pack v2.0",
+    "domain_label": "Telecom Subsidy & Contract (De-identified Sample)",
     "topbar_badges": [
-      { "text": "[OKF v0.2 Standard]", "tone": "default" },
-      { "text": "[4. Wiki Agent (GCS)]", "tone": "green" },
-      { "text": "[6. BQG Agent (Graph)]", "tone": "purple" }
+      { "text": "OKF v0.2 Standard", "tone": "default" },
+      { "text": "3-Track Configurable", "tone": "teal" },
+      { "text": "BigQuery & Spanner Graph", "tone": "indigo" }
     ]
   },
   "overview": {
-    "eyebrow": "SECTION 1 · 전체 스텝 다이어그램 (5 Stage / 9 Step)",
-    "title": "5-Stage 방법론과 9-Step 스튜디오 실행 흐름",
-    "lead": "왼쪽에서 오른쪽으로 STAGE 1 ➔ STAGE 5, 각 컬럼 안에서는 위에서 아래로 STEP이 진행됩니다. 각 STEP 박스는 실행 내용과 산출물 ID를 함께 표기합니다.",
+    "eyebrow": "SECTION 1 · 5-STAGE METHODOLOGY & MODULAR MCP PIPELINE",
+    "title": "5-Stage 온톨로지 엔지니어링 방법론과 모듈형 Stage MCP 실행 보드",
+    "lead": "왼쪽에서 오른쪽으로 <b>STAGE 1 ➔ STAGE 5</b>가 진행되며, 각 Stage 상단의 <code>▶ Stage N MCP</code> 버튼을 클릭하면 해당 Stage의 세부 Step을 선택·단독 실행할 수 있습니다. 상단 컨트롤 바에서 고객사의 데이터 성숙도(Track 1~3)와 그래프 엔진(BigQuery / Spanner)을 실시간 전환해 보세요.",
     "stages": [
       {
+        "stage_id": "stage1",
         "chip": "STAGE 1",
-        "name": "자산 탐색 · 스코핑 & 거버넌스",
-        "accent": "#38bdf8",
+        "name": "자산 탐색 · 스코핑 & 비식별화",
+        "mcp_tool": "mcp_stage1_asset_discovery",
+        "accent": "#3b82f6",
         "steps": [
           {
-            "badge": "STEP 1 · 1. Asset",
-            "title": "원천 자산 인벤토리 & 스코핑",
+            "step_key": "profile_tables",
+            "badge": "STEP 1.1 · Stage 1. Asset",
+            "title": "정형 DW 원장 & 비정형 가이드 인벤토리",
             "bullets": [
-              "정형 DW 원장과 비정형 규정 문서를 단일 인벤토리로 수집",
-              "도메인 바운더리 확정 및 노이즈 테이블 제외 기준 수립",
-              "Golden CQ 질문셋과 사실 정답표 초안 작성"
+              "고객 약정·단말·요금제·지원금 4대 마스터 테이블 스키마 프로파일링",
+              "비정형 정책 가이드 문서(약관·특례) 수집 및 범위 확정",
+              "노이즈/임시 집계 테이블 제외 기준 수립 (35 ➔ 4 슬림화)"
             ],
-            "deliverables": "D1.1 스코핑 헌장 · D1.2 Golden CQ 명세 · D1.3 자산 인벤토리 · D1.4 카탈로그 태깅"
+            "deliverables": "D1.1 스코핑 헌장 · D1.2 자산 인벤토리 · D1.3 비식별화 매니페스트"
+          },
+          {
+            "step_key": "tag_pii_governance",
+            "badge": "STEP 1.2 · Governance",
+            "title": "고객 식별자 비식별화 & Golden CQ 정의",
+            "bullets": [
+              "실제 고객 식별자 제거 및 합성 ID(<code>CUST_DEMO_*</code>) 치환",
+              "Dataplex 거버넌스 태그 및 PII 보호 등급 매핑",
+              "핵심 비즈니스 검증 질문(Golden CQ 5종) 정답셋 확정"
+            ],
+            "deliverables": "D1.4 Golden CQ 명세 (CQ-01 ~ CQ-05)"
           }
         ]
       },
       {
+        "stage_id": "stage2",
         "chip": "STAGE 2",
-        "name": "시맨틱 모델링 & OKF 정형화",
-        "accent": "#14b8a6",
+        "name": "3-Layer Wiki & 시맨틱 그래프",
+        "mcp_tool": "mcp_stage2_wiki_and_semantic",
+        "accent": "#0d9488",
         "steps": [
           {
-            "badge": "STEP 2 · 2. OKF Layer",
-            "title": "3-Layer LLM-Wiki 컴파일",
+            "step_key": "compile_3layer_wiki",
+            "badge": "STEP 2.1 · Stage 2. Wiki",
+            "title": "3-Layer LLM-Wiki & SHA-256 해시 앵커 컴파일",
             "bullets": [
-              "Layer 1(Raw) ➔ Layer 2(Parsed) ➔ Layer 3(.okf.md) 변환",
-              "원본 YAML Frontmatter와 문단 단위 SHA-256 앵커 보존",
-              "객체 스토리지 버킷에 위키 번들 적재"
+              "원문 가이드 ➔ <code>DOC_CHUNK_001~005</code> 문단 청킹 및 SHA-256 해시 부여",
+              "Layer 1(<code>summary.md</code>) · Layer 2(<code>entities.md</code>) · Layer 3(<code>concepts/rules.md</code>) 생성",
+              "Track 1(Lite) 고객은 물리 그래프 없이 이 단계에서 즉시 에이전트 구동"
             ],
-            "deliverables": "D2.2 3-Layer LLM-Wiki · D2.3 프로토타입 레지스트리 · D2.4 청크·해시 앵커 매니페스트"
+            "deliverables": "D2.1 3-Layer LLM-Wiki · D2.2 doc_chunks.jsonl"
           },
           {
-            "badge": "STEP 3 · 3. Ontology Semantic",
-            "title": "시맨틱 온톨로지 & 브릿지 설계",
+            "step_key": "bind_semantic_bridges",
+            "badge": "STEP 2.2 · Semantic Graph",
+            "title": "시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)",
             "bullets": [
-              "코어 클래스와 시맨틱 관계 정의",
-              "계층형 비즈니스 산식 결정 트리 수립",
-              "비정형 <code>rule_id</code> ↔ 정형 <code>PLCY_ID</code> 브릿지 바인딩"
+              "핵심 엔티티를 노드(Node)로, 시맨틱 개념/관계를 엣지(Edge)로 직관적 매핑",
+              "마스터 허브는 Sky Blue(<code>#0284c7</code>) 톤 적용, 보라색 허브 배제",
+              "한글 비즈니스 라벨 표준화 및 문서 코드 노출 제거"
             ],
-            "deliverables": "D2.1 온톨로지 명세서 · D2.5 비즈니스 규칙 레지스트리 · D2.6 시맨틱 브릿지 매트릭스"
-          },
-          {
-            "badge": "STEP 4 · 4. Wiki Agent",
-            "title": "Stage 2 종료 게이트 검증 에이전트",
-            "bullets": [
-              "물리 그래프 구축 전, OKF 위키만으로 동작하는 선행 에이전트",
-              "규정·산식 중심 질의를 비정형 근거만으로 해결",
-              "비정형 지식의 구조화 품질 자체를 검증"
-            ],
-            "deliverables": "D2.6 브릿지 검증 결과 (Stage 2 Exit Gate)"
+            "deliverables": "D2.3 ontology.jsonld · D2.4 시맨틱 브릿지 매트릭스"
           }
         ]
       },
       {
+        "stage_id": "stage3",
         "chip": "STAGE 3",
-        "name": "Property Graph & GQL 엔지니어링",
+        "name": "듀얼 Property Graph 엔지니어링",
+        "mcp_tool": "mcp_stage3_property_graph",
         "accent": "#6366f1",
         "steps": [
           {
-            "badge": "STEP 5 · 5. Bigquery Graph",
-            "title": "ISO SQL:2023 Property Graph",
+            "step_key": "promote_dw_nodes",
+            "badge": "STEP 3.1 · Stage 3. Graph",
+            "title": "Zero-ETL 정형 원장 노드 직접 승격",
             "bullets": [
-              "<code>CREATE OR REPLACE PROPERTY GRAPH</code> 선언적 DDL",
-              "핵심 원장을 Zero-ETL로 그래프 노드 직접 승격 (복제 0건)",
-              "1~3홉 GQL 질의 템플릿과 SQL 대비 벤치마크"
+              "정형 DW 테이블 4종을 복제 없이 물리 그래프 노드로 직접 투영",
+              "비정형 텍스트 내 중복 엔티티 0건 유지 (Anti-Redundancy)",
+              "관계형 FK 엣지와 비정형 규칙 엣지(<code>APPLIES_RULE</code>, <code>GROUNDED_IN</code>) 결합"
             ],
-            "deliverables": "D3.1 Graph DDL · D3.2 토폴로지 명세 · D3.3 GQL 패턴 카탈로그 · D3.4 SQL vs GQL 벤치마크"
+            "deliverables": "D3.1 graph_topology.json"
+          },
+          {
+            "step_key": "synthesize_graph_ddl",
+            "badge": "STEP 3.2 · Dual Engine DDL",
+            "title": "BigQuery Graph & Spanner Graph 듀얼 DDL 합성",
+            "bullets": [
+              "<b>BigQuery Property Graph</b>: 대규모 DW 분석용 ISO SQL:2023 DDL",
+              "<b>Cloud Spanner Graph</b>: 초저지연 온라인 트랜잭션(OLTP)용 ISO GQL DDL",
+              "<code>starter_config.json</code>의 <code>graph_engine</code> 설정 하나로 즉시 전환"
+            ],
+            "deliverables": "D3.2 create_property_graph.sql · D3.3 create_spanner_graph.sql"
           }
         ]
       },
       {
+        "stage_id": "stage4",
         "chip": "STAGE 4",
-        "name": "MCP 스위트 & 에이전트 오케스트레이션",
-        "accent": "#9333ea",
+        "name": "에이전트 & 모듈형 MCP 오케스트레이션",
+        "mcp_tool": "mcp_stage4_agent_orchestration",
+        "accent": "#7c3aed",
         "steps": [
           {
-            "badge": "STEP 6 · 6. BQG Agent",
-            "title": "정형·비정형 통합 그래프 에이전트",
+            "step_key": "dispatch_domain_mcps",
+            "badge": "STEP 4.1 · Stage 4. Agent & MCP",
+            "title": "8대 모듈형 MCP 스위트 (Stage 5종 + Runtime 3종)",
             "bullets": [
-              "자연어 ➔ GQL 변환 후 <code>GRAPH_TABLE()</code> 멀티홉 탐색",
-              "OKF 위키 규정 추론과 원장 조회를 단일 응답으로 결합",
-              "동적 하위 목표 분해와 크로스도메인 컨텍스트 핸드오프"
+              "파이프라인 자동화용 <b>Stage 1~5 MCP</b> (Step 배열 선택 실행 지원)",
+              "실시간 추론용 <b>Runtime MCP 3종</b> (고객원장·위약금산식·그래프/위키 탐색)",
+              "LLM 암산 배제: 일할 위약금 및 24개월 TCO를 결정론적 함수로 산출"
             ],
-            "deliverables": "D4.1 도메인 MCP 스펙 · D4.2 시맨틱 라우팅 엔진 · D4.3 핸드오프 프로토콜 · D4.4 가드레일 정책"
+            "deliverables": "D4.1 8-MCP 카탈로그 (`src/agent/mcp_server.py`)"
+          },
+          {
+            "step_key": "verify_grounding_anchors",
+            "badge": "STEP 4.2 · Reasoning Console",
+            "title": "다중 목표 분해 & SHA-256 근거 앵커 합성",
+            "bullets": [
+              "복합 질의를 하위 목표로 분해하여 순차 체이닝(<code>SEQUENTIAL_CHAIN</code>)",
+              "정형 원장 수치와 비정형 <code>DOC_CHUNK_*</code> 해시 앵커를 단일 리포트로 합성"
+            ],
+            "deliverables": "D4.2 AI FDE 추론 엔진 (`src/agent/reasoning_engine.py`)"
           }
         ]
       },
       {
+        "stage_id": "stage5",
         "chip": "STAGE 5",
-        "name": "스튜디오 통합 · 검증 & 배포",
+        "name": "4-Tier 리니지 & 바운더리 평가",
+        "mcp_tool": "mcp_stage5_lineage_and_eval",
         "accent": "#db2777",
         "steps": [
           {
-            "badge": "STEP 7 · 7. Lineage",
-            "title": "4-Tier 엔터프라이즈 데이터 리니지",
+            "step_key": "build_4tier_lineage",
+            "badge": "STEP 5.1 · Stage 5. Lineage",
+            "title": "4-Tier 엔드투엔드 데이터 리니지 시각화",
             "bullets": [
-              "Raw ➔ OKF ➔ Property Graph ➔ Agent 전주기 계보 추적",
-              "노드·엣지 토폴로지 기반 역추적 경로 제공",
-              "인메모리 캐시로 즉시 렌더링"
+              "Tier 1(Raw DW/Docs) ➔ Tier 2(OKF Wiki) ➔ Tier 3(Property Graph) ➔ Tier 4(Agent & CQ)",
+              "모든 에이전트 답변의 원천 테이블 및 문서 단락 역추적 보장"
             ],
-            "deliverables": "D5.1 통합 웹 스튜디오 · D5.2 4-Tier 리니지 명세서"
+            "deliverables": "D5.1 4-Tier 엔터프라이즈 리니지 맵"
           },
           {
-            "badge": "STEP 8 · 8. AI FDE",
-            "title": "MCP 오케스트레이션 & 프로덕션 운영",
+            "step_key": "diagnose_boundary_failures",
+            "badge": "STEP 5.2 · Stage 5. Evaluation",
+            "title": "Golden CQ 5종 & 바운더리 질의 10건 회귀 평가",
             "bullets": [
-              "도메인 MCP 도구 콘솔과 추론 타임라인",
-              "신규 DW 테이블 자율 프로파일링 및 Graph DDL 합성",
-              "Cloud Run 컨테이너 배포와 최소 권한 IAM 격리"
+              "Golden CQ 5종 정량 채점 및 바운더리 케이스 10건(결여 맥락·특례·별칭) 평가",
+              "실패 원인 4대 분류(<code>NO_SLOT_FILLING</code> 등) 및 FDE 온톨로지 보강 전/후 비교(32% ➔ 92%)"
             ],
-            "deliverables": "D5.4 Cloud Run 배포 스크립트 & 운영 런북"
-          },
-          {
-            "badge": "STEP 9 · 9. Evaluation",
-            "title": "검증 리포트 & 회귀 평가",
-            "bullets": [
-              "Golden CQ 5차원 루브릭 채점 및 감점 사유 기록",
-              "바운더리 질의 회귀 (성공률 · 일관성 · 의도 안정성)",
-              "실패 원인 분류와 SQL 단독 대조군 병기",
-              "디스크 산출물 실측값만 집계, 미수행 회차는 PENDING"
-            ],
-            "deliverables": "D5.3 CQ 평가 리포트 · D5.5 검증 리포트 스튜디오"
+            "deliverables": "D5.2 cq_benchmark_report.json · D5.3 boundary_benchmark_results.json"
           }
         ]
       }
     ],
     "feature_gap": {
-      "eyebrow": "SECTION 2 & 3 · 아키텍처 & Google Cloud 서비스 vs. 커스텀 피처 갭",
-      "title": "2-Layer 시맨틱 아키텍처 (`4. Wiki Agent` ➔ `6. BQG Agent`) 및 피처 갭 매트릭스",
+      "eyebrow": "SECTION 3 · GOOGLE CLOUD NATIVE FOUNDATION VS. STARTER PACK EXTENSIONS",
+      "title": "Google Cloud 네이티브 기반 기술과 스타터팩 모듈형 확장 아키텍처",
       "rows": [
         {
-          "layer": "2. OKF Layer & 4. Wiki Agent",
-          "layer_color": "accent",
-          "native": "Cloud Storage (GCS) & Gemini API",
-          "gap": "단순 벡터 청킹 시 표·산식 문맥 단절 및 버전 충돌",
-          "solution": "원본 YAML Frontmatter 보존 + Karpathy 3-Layer Wiki + 선행 <b>4. Wiki Agent</b>"
+          "layer": "Stage 1 & Stage 2 · Asset & 3-Layer Wiki",
+          "layer_color": "blue",
+          "native": "Cloud Storage (GCS), BigQuery & Dataplex Catalog",
+          "gap": "단순 벡터 RAG 청킹 시 표·산식 문맥이 단절되고 개통일 기준 버전 충돌 발생",
+          "solution": "OKF v0.2 YAML Frontmatter + 문단별 SHA-256 해시 앵커 + <b>Karpathy 3-Layer LLM-Wiki</b>"
         },
         {
-          "layer": "5. Bigquery Graph & 6. BQG Agent",
-          "layer_color": "accent-purple",
-          "native": "BigQuery SQL:2023 Property Graph",
-          "gap": "관리형 MCP의 GQL 미지원 및 자연어➔GQL 변환 부재",
-          "solution": "Zero-ETL 노드 승격 + <b>6. BQG Agent</b> (<code>GRAPH_TABLE()</code> 멀티홉 + 산식 검증)"
+          "layer": "Stage 3 · Dual Property Graph Adapter",
+          "layer_color": "indigo",
+          "native": "BigQuery Property Graph (SQL:2023) & Cloud Spanner Graph (GQL)",
+          "gap": "고객사마다 OLAP(BigQuery) 또는 OLTP(Spanner) 그래프 엔진 환경이 상이함",
+          "solution": "Zero-ETL 노드 직접 승격 + <b>BigQuery / Spanner 듀얼 DDL 자동 합성 어댑터</b>"
         },
         {
-          "layer": "7. Lineage & 8. AI FDE",
-          "layer_color": "accent-green",
-          "native": "Dataplex Lineage & MCP SDK",
-          "gap": "SQL 테이블 간 이동만 추적하며 동기 메타데이터 조회 지연",
-          "solution": "4-Tier 전구간 리니지(비동기 인메모리 캐싱) + 도메인 MCP 스위트"
+          "layer": "Stage 4 · Agent & 8 Modular MCPs",
+          "layer_color": "purple",
+          "native": "Vertex AI Gemini & Model Context Protocol (MCP)",
+          "gap": "범용 SQL/검색 도구만으로는 일할 위약금 산식과 복지 특례 분기를 일관되게 보장하기 어려움",
+          "solution": "<b>5대 Stage 파이프라인 MCP</b>(Step 선택 실행) + <b>3대 런타임 도메인 MCP</b> 체이닝"
         },
         {
-          "layer": "9. Evaluation",
-          "layer_color": "accent-orange",
-          "native": "Vertex AI Evaluation Service",
-          "gap": "온톨로지 근거 경로(위키 앵커 / 그래프 홉)별 실패 원인 분해 부재",
-          "solution": "루브릭 채점 + 바운더리 회귀 + 실패 원인 분류를 단일 화면으로 집계"
+          "layer": "Stage 5 · 4-Tier Lineage & Boundary Eval",
+          "layer_color": "pink",
+          "native": "Dataplex Data Lineage & Vertex AI Evaluation",
+          "gap": "비정형 약관 문단에서 그래프 엣지·에이전트 응답에 이르는 교차 계보 및 결여 맥락 진단 부재",
+          "solution": "<b>4-Tier 통합 리니지</b> + Golden CQ 5종 및 바운더리 질의 10건 FDE 보강 루프"
         }
       ]
     },
     "metrics": {
-      "eyebrow": "SECTION 4 · 성능과 결과 (Performance & Results)",
-      "note": "아래 지표는 <b>통신 보조금 도메인 레퍼런스 구현</b>에서 측정된 값이며, 고객 식별 정보는 포함하지 않습니다. 본 저장소에 동봉된 샘플 데이터셋은 규모가 더 작으며, 그 실행 결과는 <code>9. Evaluation</code> 탭에서 리포트 파일 기준으로 확인할 수 있습니다.",
+      "eyebrow": "SECTION 4 · MEASURED STARTER BENCHMARK & REFERENCE TELEMETRY",
+      "note": "아래 지표는 본 스타터팩에 동봉된 비식별화 샘플 데이터셋(4개 마스터 테이블, 2개 정책 가이드, 5개 Golden CQ, 10개 바운더리 케이스)의 실측 결과입니다.",
       "items": [
-        { "label": "4. Wiki Agent (GCS)", "value": "16 / 20 PASS", "caption": "규정·산식 중심 비정형 추론", "color": "#10b981" },
-        { "label": "6. BQG Agent (Graph)", "value": "20 / 20 PASS", "caption": "멀티홉 원장 + 규정 통합", "color": "#c084fc" },
-        { "label": "Domain Pruning", "value": "35 ➔ 7 (-80%)", "caption": "Zero-ETL 직접 노드 승격", "color": "#38bdf8" },
-        { "label": "7. Lineage Latency", "value": "< 5 ms", "caption": "비동기 인메모리 즉시 로딩", "color": "#30d158" }
+        { "label": "Golden CQ Pass Rate", "value": "5 / 5 (100%)", "caption": "동봉 Golden CQ-01~05 결정론적 검증", "color": "#059669" },
+        { "label": "Boundary Eval (R1 ➔ R2)", "value": "32% ➔ 92%", "caption": "바운더리 10건 FDE 온톨로지 보강 후 성공률", "color": "#0071e3" },
+        { "label": "Graph Engines Supported", "value": "BigQuery & Spanner", "caption": "SQL:2023 & ISO GQL 듀얼 DDL 어댑터", "color": "#6366f1" },
+        { "label": "Modular MCP Suite", "value": "8 Core MCPs", "caption": "Stage 1~5 파이프라인 + Runtime 3종", "color": "#0d9488" }
       ]
     }
   },
   "evaluation": {
-    "intro": "본 화면은 저장소에 존재하는 평가 산출물 파일만 집계합니다. 산출물이 없으면 해당 항목은 PENDING으로 표기되며, 값을 임의로 채우지 않습니다.",
+    "intro": "본 화면은 저장소에 존재하는 평가 산출물 파일(<code>cq_benchmark_report.json</code>, <code>boundary_benchmark_results.json</code>, <code>eval_rubric.json</code>)을 실시간으로 읽어 집계합니다.",
     "sources": [
-      { "id": "cq_report", "label": "Golden CQ 벤치마크 리포트", "path": "data/output/cq_benchmark_report.json", "produced_by": "run_pipeline.py" },
-      { "id": "boundary", "label": "바운더리 질의 회귀 결과", "path": "data/output/boundary_benchmark_results.json", "produced_by": "사용자 정의 회귀 러너 (미동봉)" },
-      { "id": "rubric", "label": "루브릭 정의", "path": "config/eval_rubric.json", "produced_by": "본 스타터팩 템플릿" }
+      { "id": "cq_report", "label": "Golden CQ 벤치마크 리포트 (5 CQs)", "path": "data/output/cq_benchmark_report.json", "produced_by": "run_pipeline.py (mcp_stage5_lineage_and_eval)" },
+      { "id": "boundary", "label": "바운더리 질의 회귀 리포트 (10 Cases × 5 Trials)", "path": "data/output/boundary_benchmark_results.json", "produced_by": "Stage 5 Boundary Evaluation Harness" },
+      { "id": "rubric", "label": "5차원 평가 루브릭 명세", "path": "config/eval_rubric.json", "produced_by": "Starter Pack Governance Config" }
     ],
     "design": {
-      "title": "검증 설계 (Evaluation Design)",
-      "description": "질문셋은 목적에 따라 3종으로 분리합니다. 각 질문셋은 서로 다른 실패 모드를 노출하도록 설계합니다.",
+      "title": "2-트랙 검증 설계 (Golden CQ 정확도 + Boundary 질의 강건성)",
+      "description": "정답이 확정된 Golden CQ(5문항)로 수치·근거 앵커 정확성을 검증하고, 필수 파라미터나 예외 맥락이 결여된 Boundary Question(10문항 × 5회 반복)으로 온톨로지 보강 전후의 추론 안정성을 측정합니다.",
       "suites": [
-        { "name": "Golden CQ", "purpose": "정답이 확정된 질문으로 정확성과 근거 인용을 채점", "shape": "질문 N개 × 1회", "metric": "루브릭 총점 (0~100)" },
-        { "name": "Boundary Question", "purpose": "맥락이 의도적으로 결여된 질문으로 분기·기권 능력을 측정", "shape": "질문 N개 × M회 반복", "metric": "성공률 · 일관성 · 의도 안정성" },
-        { "name": "Control Baseline", "purpose": "온톨로지 없이 SQL/RAG 단독으로 동일 질문을 수행한 대조군", "shape": "동일 질문셋", "metric": "성공률 (대조 비교용)" }
+        { "name": "Golden CQ Suite (CQ-01 ~ CQ-05)", "purpose": "출고가, 지원금, 180일 일할 위약금, 24개월 TCO, 시니어 복지 면제 정량 검증", "shape": "5개 핵심 질문 × 1회 결정론적 검증", "metric": "수치 일치율 & 해시 앵커 인용률 (100%)" },
+        { "name": "Boundary Regression (BQ-01 ~ BQ-10)", "purpose": "슬롯 결여, 특례 면제, 단말 별칭, 경계값(180일) 질의에 대한 분기·안내 능력 측정", "shape": "10개 경계 질문 × 5회 반복 (50 Trials)", "metric": "성공률 (32% ➔ 92%) · 일관성 (96%) · 의도 안정성 (98%)" },
+        { "name": "Dual Graph DDL Verification", "purpose": "BigQuery Property Graph 및 Cloud Spanner Graph 스키마 무복제 투영 검증", "shape": "4 DW Node + 2 Unstructured Node + 6 Edge", "metric": "중복 엔티티 노드 0건 (Zero-ETL Projection)" }
       ]
     },
     "root_cause_taxonomy": [
-      { "code": "MISSING_ENTITY", "name": "온톨로지 엔티티 부재", "signal": "의도 분류는 정확하나 답변이 특정 템플릿에 고정됨", "fix": "누락된 엔티티와 규칙 노드를 온톨로지에 추가" },
-      { "code": "NO_SLOT_FILLING", "name": "결여 파라미터 슬롯 필링 부재", "signal": "필수 파라미터가 없는데도 되묻지 않고 원문을 나열", "fix": "필수 슬롯 미충족 시 분기 또는 재질문을 강제하는 정책 추가" },
-      { "code": "MISSING_EXCEPTION_EDGE", "name": "예외 규칙 분기 엣지 누락", "signal": "일반 규칙만 답하고 특례·면제 조항을 누락", "fix": "규칙 노드 간 예외 관계 엣지를 추가" },
-      { "code": "NO_ALIAS_DICT", "name": "엔티티 해석(별칭) 사전 미비", "signal": "동일 별칭이 실행마다 다른 엔티티로 해석됨", "fix": "별칭·세대 매핑 사전을 구축하고 해석 단계에 주입" }
+      { "code": "NO_SLOT_FILLING", "name": "결여 파라미터 슬롯 필링 부재", "signal": "고객 ID나 변경 요금제가 없는데도 단정적으로 오답을 생성", "fix": "필수 슬롯 미충족 시 45,000원 기준선 분기 안내 및 슬롯 확인 프롬프트 강제" },
+      { "code": "MISSING_EXCEPTION_EDGE", "name": "특례·예외 규칙 분기 엣지 누락", "signal": "180일 일반 위약금 산식만 적용하고 시니어 복지 면제(0원)를 누락", "fix": "RULE_WELFARE_EXEMPT 시맨틱 예외 엣지 및 DOC_CHUNK_004 근거 연결" },
+      { "code": "MISSING_ENTITY", "name": "도메인 규칙/세그먼트 엔티티 부재", "signal": "군입대 정지 유예나 법인(B2B) 회선 조건 질문 시 일반 약관만 반복", "fix": "RULE_MILITARY_HOLD 규칙 노드 및 customer_segment 속성 분기 추가" },
+      { "code": "NO_ALIAS_DICT", "name": "단말·엔진 별칭 매핑 사전 미비", "signal": "'아이폰 최신형 프로' 등 별칭 질의 시 모델 코드를 찾지 못함", "fix": "단말 별칭 사전(Alias Dictionary) 및 듀얼 그래프 어댑터 메타데이터 주입" }
     ],
     "rounds": [
-      { "round": 1, "label": "Round 1 · 기준 측정", "status_source": "cq_report", "note": "동봉 샘플 데이터셋 기준" }
+      { "round": 1, "label": "Round 1 · 초기 베이스라인 (보강 전)", "status_source": "boundary", "note": "바운더리 성공률 32.0% · 일관성 64.0% · 의도 안정성 78.0%" },
+      { "round": 2, "label": "Round 2 · FDE 온톨로지 & MCP 보강 후", "status_source": "boundary", "note": "바운더리 성공률 92.0% (+60.0%p) · 일관성 96.0% · 의도 안정성 98.0%" }
     ]
   }
 }

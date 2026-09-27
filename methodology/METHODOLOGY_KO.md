@@ -32,7 +32,7 @@
 | Stage | 방법론 단계 명칭 | 스튜디오 STEP (탭) | 핵심 산출물 ID |
 | :--- | :--- | :--- | :--- |
 | **Stage 1** | 자산 탐색, 스코핑 및 거버넌스 수집 | `STEP 1 · 1. Asset` | `D1.1` ~ `D1.4` |
-| **Stage 2** | 시맨틱 모델링, OKF 정형화 및 그라운딩 | `STEP 2 · 2. OKF Layer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (종료 게이트 검증) |
+| **Stage 2** | 시맨틱 모델링, OKF 정형화 및 그라운딩 | `STEP 2 · 2. Knowledge Viewer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (종료 게이트 검증) |
 | **Stage 3** | BigQuery Property Graph 엔지니어링 및 GQL 질의 체계 | `STEP 5 · 5. Bigquery Graph` | `D3.1` ~ `D3.4` |
 | **Stage 4** | 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 | `STEP 6 · 6. BQG Agent` | `D4.1` ~ `D4.4` |
 | **Stage 5** | 엔터프라이즈 스튜디오 구축, 자동화 검증 및 프로덕션 배포 | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE`<br>`STEP 9 · 9. Evaluation` | `D5.1` `D5.2`<br>`D5.3` `D5.4`<br>`D5.5` |
@@ -84,7 +84,7 @@ flowchart LR
 | **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • 담백한 원본 YAML Frontmatter + Karpathy 3-Layer LLM-Wiki 컴파일러<br>• 선행 **`4. Wiki Agent` (GCS 기반 추론 에이전트)** | 비정형 PDF/MHTML의 구조를 보존하고, 물리 그래프 구축 전 GCS 위키만으로 16대 규정 CQ 선행 해결 |
 | **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (비즈니스 5종 + 엔지니어링 6종 도구)<br>• **`6. BQG Agent`** (`GRAPH_TABLE()` NL2GQL 실행기) | **BigQuery Remote MCP의 결정적 제약사항(GQL `GRAPH_TABLE()` 미지원) 극복** 및 20/20 골든 CQ 전수 해결 |
 | **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`8. AI FDE` & Agent Runtime (ADK 2.0)** 동적 다중 하위 목표 분해 엔진 (`fdeAgentEngine.py`)<br>• 크로스도메인 시퀀셜 체이닝 (`Data Hand-off`, `Intermediate Observation`) | 정적 1회 질의를 넘어 비즈니스 룰과 물리 DW 원장 실측치를 교차 검증하는 자율 추론 사이클 구현 |
-| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio - LG Uplus`** (`src/web/studio_server.py`)<br>• 통합 스튜디오 아키텍처 (`0. Overview` ~ `8. AI FDE`) & `< 5ms` 즉시 리니지(`7. Lineage`)<br>• 단일 연속 스크롤 Overview (비즈니스 개요 ➔ 전체 스텝 ➔ GCP 아키텍처 ➔ 피처갭 ➔ 성능/결과) | 서브탭 전환 없이 한눈에 전체 흐름과 성능을 검증하는 엔터프라이즈 표준 온톨로지 스튜디오 제공 |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio`** (`src/web/studio_server.py`)<br>• 통합 스튜디오 아키텍처 (`0. Overview` ~ `8. AI FDE`) & `< 5ms` 즉시 리니지(`7. Lineage`)<br>• 단일 연속 스크롤 Overview (비즈니스 개요 ➔ 전체 스텝 ➔ GCP 아키텍처 ➔ 피처갭 ➔ 성능/결과) | 서브탭 전환 없이 한눈에 전체 흐름과 성능을 검증하는 엔터프라이즈 표준 온톨로지 스튜디오 제공 |
 
 #### 1.4.2 핵심 공식 레퍼런스 저장소 (Official Reference Repositories)
 1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
@@ -109,14 +109,14 @@ flowchart LR
 
 | 데이터 계층 (Data Layer) | 저장소 및 물리 데이터 구조 (Physical Data Structure) | 데이터 흐름 및 소비 에이전트 (Data Flow & Consumer Agent) |
 | :--- | :--- | :--- |
-| **Layer 1: 비정형 규정 데이터 구조**<br>*(Unstructured Policy Layer)* | • **GCS Bucket**: `okf/bundles/subsidy/` 내 `.okf.md` 마크다운 위키<br>• **메타 스키마**: YAML Frontmatter (`trust_tier`, `priority`, `stale_after`) + SHA-256 문단 해시 앵커<br>• **추출 객체**: `RULE-*`(비즈니스 규칙), `TERM-*`(용어), `CQ-*`(핵심 역량 질문) | • **`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic`**을 거쳐 **`4. Wiki Agent`**로 유입<br>• 규정/산식/예외 조항 16개 CQ를 **100% (16/20, 평균 1.18s)** 즉시 응답 (`[GCS Preferred]`) |
+| **Layer 1: 비정형 규정 데이터 구조**<br>*(Unstructured Policy Layer)* | • **GCS Bucket**: `gs://<bucket>/ontology/<domain>/` 내 `.okf.md` 마크다운 위키<br>• **메타 스키마**: YAML Frontmatter (`trust_tier`, `priority`, `stale_after`) + SHA-256 문단 해시 앵커<br>• **추출 객체**: `RULE-*`(비즈니스 규칙), `TERM-*`(용어), `CQ-*`(핵심 역량 질문) | • **`1. Asset` ➔ `2. Knowledge Viewer` ➔ `3. Ontology Semantic`**을 거쳐 **`4. Wiki Agent`**로 유입<br>• 규정/산식/예외 조항 16개 CQ를 **100% (16/20, 평균 1.18s)** 즉시 응답 (`[GCS Preferred]`) |
 | **Semantic Bridge: 교차 매핑 데이터 구조**<br>*(Cross-Layer Mapping Layer)* | • **브릿지 엣지 뷰**: `v_edge_applies_to` (`RULE_ID ➔ POLICY_ID`), `v_edge_calculates` (`RULE_ID ➔ SALE_ID`), `v_edge_defined_in` (`RULE_ID ➔ CHUNK_ID`)<br>• **Anti-Redundancy**: 정형 원장 PK와 비정형 규칙 ID만 경량 매핑 (중복 텍스트 노드 생성 배제) | • 비정형 위키의 비즈니스 규칙(`RULE-*`)이 정형 BigQuery 원장의 어떤 물리 컬럼·행에 적용되는지 양방향(Bi-directional) 데이터 흐름 연결 |
 | **Layer 2: 정형 DW & Property Graph 구조**<br>*(Structured DW & Graph Layer)* | • **BigQuery 7대 핵심 마스터 원장**: `tb_subscription_sale`, `tb_subsidy_policy`, `tb_device_master`, `tb_price_plan`, `tb_agency_master`, `tb_customer`, `tb_settlement_amount`<br>• **SQL:2023 Property Graph**: `uplus_telecom_graph` (6종 Vertex & 5종 Edge Zero-ETL 뷰) | • **`5. Bigquery Graph`** DDL을 통해 **`6. BQG Agent`**로 유입<br>• NL2GQL `GRAPH_TABLE()` 멀티홉 원장 조인 + 위키 산식을 결합해 **20/20 골든 CQ (100%, 평균 1.42s)** 완결 |
 
 ```mermaid
 flowchart TD
     subgraph TRACK_A ["Layer 1 (비정형 데이터 구조): GCS OKF v0.2 Wiki ➔ 4. Wiki Agent 흐름"]
-        S1_Doc["1. Asset: 비정형 정책 가이드 & SOP"] --> S2_OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
+        S1_Doc["1. Asset: 비정형 정책 가이드 & SOP"] --> S2_OKF["2. Knowledge Viewer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
         S2_OKF --> S3_Sem["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지 (APPLIES_TO / CALCULATES)"]
         S3_Sem --> S4_WikiAgent["4. Wiki Agent (비정형 위키 데이터 소비)<br/>16대 규정/산식 CQ 즉시 해결 ([GCS Preferred])"]
     end
@@ -329,66 +329,62 @@ flowchart TD
 
 ---
 
-### Stage 4: 멀티도메인 MCP 스위트 구축 및 에이전트 오케스트레이션 (Multi-Domain MCP Suite Packaging & Agentic Orchestration)
+### Stage 4: 3대 계층 MCP 스위트 구축, 경계값 검증 및 에이전트 오케스트레이션 (3-Tier MCP Suite Packaging, Boundary Verification & Agentic Orchestration)
 > 📘 **하부 세부 실행 명세서**: [04_multi_domain_mcp_and_agent_ko.md](./04_multi_domain_mcp_and_agent_ko.md)
 
 #### 1. 개요 및 목적
-AI 에이전트가 복잡한 물리 데이터베이스 스키마나 원시 GQL/SQL 조인 쿼리를 직접 작성하지 않도록, 도메인 온톨로지의 비즈니스 개념과 엔지니어링 역량을 **도메인 온톨로지 MCP 추상화 계층(Domain Ontology MCP Layer)**으로 캡슐화합니다. 에이전트는 이 고수준 인터페이스를 통해 복합 질의를 하위 목표로 동적 분해하고, 도메인 도구와 엔지니어링 도구를 상호 체이닝하여 원천 데이터에 근거한 결정론적 결론을 도출합니다.
+AI 에이전트가 복잡한 물리 데이터베이스 스키마나 원시 GQL/SQL 조인 쿼리를 직접 작성하지 않도록, 도메인 온톨로지의 비즈니스 개념·엔지니어링 역량·5-Stage 방법론 파이프라인을 **3대 계층 16종 도메인 온톨로지 MCP 추상화 계층(3-Tier Domain Ontology MCP Layer)**으로 캡슐화합니다. 나아가 정상 입력(Happy Path)뿐만 아니라 경계값·오타·미존재 엔티티·파괴적 쿼리 인젝션·스테이지 게이트 미달을 검증하는 **24대 경계값 검증 및 반복 고도화(Round 1 ➔ Round 2) 루프**를 수행합니다.
 
 #### 2. 핵심 작업 항목 (Work Items)
-1. **도메인 온톨로지 추상화 계층 구축 (11종 MCP 도구 스위트)**:
-   - 물리 원장 테이블 조인이나 복잡한 그래프 순회 로직을 에이전트로부터 완전히 은닉(Shielding).
-   - **비즈니스 도구 5종**: 단말기 출고가(`mcp_get_device_factory_price`), 지원금(`mcp_get_device_subsidy_by_plan`), 위약금 계산(`mcp_calculate_plan_change_penalty`), 약정 계약비교(`mcp_compare_contract_plans`), 근거 청크(`mcp_get_policy_anchor_grounding`).
-   - **엔지니어링/인프라 도구 6종**: BigQuery GQL 탐색(`mcp_explore_property_graph`), DW 볼륨/통계(`mcp_inspect_dw_table_schema`), Dataplex 카탈로그(`mcp_search_dataplex_catalog`), 리니지 조회(`mcp_get_lineage_trace`), DDL 내보내기(`mcp_export_graph_ddl`), 벤치마크(`mcp_run_cq_benchmark`).
-2. **AI FDE 에이전트 동적 다중 목표 분해 (`Sub-Goals`) 엔진 구현**:
-   - 복합 질문을 분석하여 1개 이상의 독립 하위 목표(`G-BIZ-01`, `G-ENG-01` 등)로 분해.
-   - 단일 정적 분기문을 완전 배제하고 질의 의도 기반 의미적 라우팅 수행.
-3. **크로스도메인 시퀀셜 체이닝 (`SEQUENTIAL_CHAIN`) 및 컨텍스트 전달**:
-   - 선행 도구의 출력물(인출된 테이블명, 정책 기간 등)을 후속 도구의 인자로 동적 주입.
-   - 비즈니스 결과(지원금 계산)와 인프라 결과(원천 테이블 행수)를 교차 검증(`cross_domain_integration`).
-4. **타임라인 시각화 및 모호 질의 가드레일 수립**:
-   - 사유(Reason), 중간 관측(Intermediate Observation), 데이터 핸드오프를 투명하게 표출.
-   - 카탈로그 미지원(`[NOT_FOUND]`) 및 권한 제한(`[RESTRICTED]`) 시 안전한 대체 안내.
+1. **3대 계층 도메인 온톨로지 추상화 계층 구축 (총 16종 MCP 도구 스위트)**:
+   - 물리 원장 테이블 조인이나 복잡한 그래프 순회 로직을 에이전트로부터 은닉(Shielding).
+   - **비즈니스 MCP 5종 (`BUSINESS_MCP`)**: 지원금 조회(`mcp_get_device_subsidy_by_plan`), 위약금 정산 검증(`mcp_verify_penalty_settlement`), 개통 정산 감사(`mcp_audit_sales_transaction`), 비정형 규정 앵커(`mcp_ground_unstructured_policy`), 공시 vs 선택약정 최적 추천(`mcp_recommend_optimal_plan_subsidy`).
+   - **BQ+KC 엔지니어링 MCP 6종 (`BQ_KC_MCP`)**: BQ 스키마 OKF 추출(`mcp_extract_okf_entity_from_bq`), KC 비즈니스 용어 등록(`mcp_register_kc_glossary_term`), BQG Property Graph DDL 빌드(`mcp_build_bqg_property_graph`), GCS 렉시컬 해시 앵커 동기화(`mcp_sync_gcs_lexical_anchors`), CQ 그라운딩 검증(`mcp_validate_cq_grounding`), BQG 그래프 토폴로지/GQL 탐색(`mcp_query_bqg_graph_topology`).
+   - **방법론 Stage MCP 5종 (`ONTOLOGY_STAGE_MCP`)**: Stage 1~5 자동 실행 및 `D1.1`~`D5.5` 산출물·품질 게이트 실측 검증(`mcp_stage1_asset_discovery_and_scoping` ~ `mcp_stage5_lineage_eval_and_deployment_gate`).
+2. **AI FDE 에이전트 동적 다중 목표 분해 (`Sub-Goals`) 및 크로스도메인 체이닝**:
+   - 복합 질문을 분석하여 독립 하위 목표로 분해하고, 비즈니스 결과와 인프라/방법론 검증 결과를 순차 체이닝(`SEQUENTIAL_CHAIN`).
+3. **3대 MCP 계층 24대 경계값·계약·예외 검증 및 2단계 고도화 루프 (`scripts/evaluate_mcp_quality_suite.py`)**:
+   - **1차 베이스라인 검증 (Round 1 Baseline)**: 무음 기본값 대체(Silent Fallback), 경계 조건(180일 정확히 도래, 45,000원 하한선, 시니어 특례), 미존재 자산 허위 통과, 파괴적 GQL/DDL 인젝션 등 24대 경계 시나리오를 직접 호출하여 초기 취약점 진단(실측 **5/24 통과, 20.8%**).
+   - **2차 MCP 핸들러 및 라우터 고도화 (Round 2 Refinement)**: 명시적 입력 검증(`INVALID_INPUT_BOUNDARY`), 레지스트리 대조(`ENTITY_NOT_FOUND`), 도메인 외 거절(`UNSUPPORTED_MODALITY_ABSTENTION`), 읽기 전용 GQL 정규식 차단(`SECURITY_GUARDRAIL_BLOCKED`), Stage 게이트 임계치 검사(`STAGE_GATE_BLOCKED`)를 주입하여 재검증(실측 **24/24 통과, 100.0%, +79.2%p**).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as 사용자 (FDE / 현업)
     participant Engine as AI FDE 에이전트 엔진
-    participant BizMCP as 비즈니스 MCP 스위트
-    participant EngMCP as 엔지니어링 MCP 스위트
+    participant BizMCP as 비즈니스 MCP (5종)
+    participant EngMCP as BQ+KC 엔지니어 MCP (6종)
+    participant StgMCP as 방법론 Stage MCP (5종)
     participant BQ as BigQuery Property Graph
 
-    User->>Engine: 복합 질의 전송 (지원금 및 원천 DW 볼륨 검증)
-    Engine->>Engine: Step 1: 다중 하위 목표 분해 (G-BIZ-01, G-ENG-01)
+    User->>Engine: 복합 질의 또는 경계값/예외 질의 전송
+    Engine->>Engine: Step 1: 의도 분류 및 보안·도메인 가드레일 검사
     
     rect rgb(240, 248, 255)
-        Note over Engine,BizMCP: Step 2-1: 비즈니스 도메인 실행
-        Engine->>BizMCP: mcp_get_device_subsidy_by_plan(단말기, 요금제)
-        BizMCP->>BQ: GQL 탐색 및 지원금 원장 조회
-        BQ-->>BizMCP: 공시지원금 & 180일 식스플랜 반환
-        BizMCP-->>Engine: 중간 관측 1 산출 (Data Hand-off 준비)
+        Note over Engine,BizMCP: Step 2-1: 비즈니스 도메인 실행 & 경계값 검증
+        Engine->>BizMCP: mcp_verify_penalty_settlement(단말, 요금제, 180일 경계, 시니어 여부)
+        BizMCP->>BQ: 입력 계약 검증 후 GQL 탐색 및 위약금 산식 판정
+        BQ-->>BizMCP: 정산 결과 또는 명시적 경계 상태 코드 반환
+        BizMCP-->>Engine: 관측 1 산출
     end
 
     rect rgb(255, 245, 245)
-        Note over Engine,EngMCP: Step 2-2: 엔지니어링 인프라 체이닝
-        Engine->>EngMCP: mcp_inspect_dw_table_schema(원천 테이블, 정책 파라미터)
-        EngMCP->>BQ: INFORMATION_SCHEMA 및 테이블 메타데이터 스캔
-        BQ-->>EngMCP: 물리 행수 (1,240건) 및 파티션 상태 반환
-        EngMCP-->>Engine: 중간 관측 2 산출
+        Note over Engine,StgMCP: Step 2-2: 엔지니어링 & Stage MCP 체이닝
+        Engine->>EngMCP: mcp_query_bqg_graph_topology(읽기 전용 GQL 가드레일)
+        Engine->>StgMCP: mcp_stage5_lineage_eval_and_deployment_gate(게이트 임계치 검증)
+        StgMCP-->>Engine: 관측 2 산출 (D1.1~D5.5 및 배포 게이트 상태)
     end
 
-    Engine->>Engine: Step 3: 크로스도메인 의사결정 및 종합 통합
-    Engine->>User: Step 4: 종합 마크다운 리포트 (수치, 법적 규정, 원천 메타)
+    Engine->>User: Step 3: 무환각 종합 리포트 및 출처·리니지 반환
 ```
 
 #### 3. Stage 4 산출물 매트릭스
 | 산출물 ID | 산출물 명칭 | 파일 형식 | 주요 내용 및 목적 | 담당 R&R |
 | :--- | :--- | :--- | :--- | :--- |
-| `D4.1` | 11종 도메인 온톨로지 MCP 서버 스펙 및 구현체 | Python / JSON (`src/agents/mcpServer.py`) | 도구 정의, JSON 스키마, 파라미터 명세, 모의/실제 백엔드 | Agent Engineer |
-| `D4.2` | AI FDE 시맨틱 라우팅 및 다중 목표 분해 엔진 | Python (`src/agents/fdeAgentEngine.py`) | 동적 하위 목표 분해, 시퀀셜 체이닝, 중간 관측 생성기 | AI Lead |
+| `D4.1` | 16종 3대 계층 온톨로지 MCP 서버 스펙 및 구현체 | Python / JSON (`src/mcp/ontologyMcpTools.py`) | 비즈니스 5종·BQ+KC 6종·Stage 5종 도구 스키마 및 핸들러 | Agent Engineer |
+| `D4.2` | AI FDE 시맨틱 라우팅 및 다중 목표 분해 엔진 | Python (`src/agents/fdeAgentEngine.py`) | 동적 하위 목표 분해, 시퀀셜 체이닝, 도메인/보안 가드레일 | AI Lead |
 | `D4.3` | 크로스도메인 컨텍스트 전달 및 핸드오프 프로토콜 | Markdown (`HANDOFF_PROTOCOL.md`) | 도구 간 데이터 인자 주입 표준 규약, 데이터 계약 | Solution Architect |
-| `D4.4` | 모호/권한부족 질의 가드레일 정책 핸들러 | Python / Markdown (`GUARDRAIL_RULES.md`) | 예외 처리 가드레일, IAM 권한 부족 대응, 감사 로그 정책 | Security Lead |
+| `D4.4` | 3대 MCP 계층 24대 경계값 검증 스위트 및 고도화 리포트 | Python / JSON (`scripts/evaluate_mcp_quality_suite.py`, `evals/mcp_3tier_boundary_*.json`) | 24대 경계값 시나리오 실측, Round 1(20.8%) ➔ Round 2(100.0%) 고도화 증빙 | QA Lead / Security Lead |
 
 ---
 
@@ -396,17 +392,16 @@ sequenceDiagram
 > 📘 **하부 세부 실행 명세서**: [05_enterprise_studio_and_deployment_ko.md](./05_enterprise_studio_and_deployment_ko.md)
 
 #### 1. 개요 및 목적
-구축된 지식 온톨로지와 에이전트를 사용자가 시각적으로 탐색·검증하고 현업에 서비스할 수 있도록 엔터프라이즈 웹 스튜디오를 배포하고, 20대 Golden CQ 기반 자동화 회귀 검증 및 Cloud Run 컨테이너 운영 환경을 무중단 배포하는 최종 단계입니다.
+구축된 지식 온톨로지와 에이전트를 사용자가 시각적으로 탐색·검증하고 현업에 서비스할 수 있도록 엔터프라이즈 웹 스튜디오를 배포하고, 20대 Golden CQ·10종 바운더리 질문·24대 3-Tier MCP 경계값 스위트 기반 자동화 회귀 검증 및 Cloud Run 컨테이너 운영 환경을 무중단 배포하는 최종 단계입니다.
 
 #### 2. 핵심 작업 항목 (Work Items)
 1. **엔터프라이즈 디자인 시스템 준수 웹 스튜디오 통합 구축**:
    - `05_DESIGN.md` 표준 100% 준수 (Pretendard 폰트, 다크모드, 0% 장식용 이모지).
-   - 5대 스튜디오: 파이프라인 모니터, 자산 레지스트리, BQG 프로퍼티 그래프 탐색기, CQ 벤치마크 콘솔, AI FDE 스튜디오.
+   - 10대 통합 탭(`0. Overview` ~ `9. Evaluation`): 파이프라인 모니터, 자산 레지스트리, 지식 뷰어, 시맨틱 그래프, Wiki 에이전트, BQG 프로퍼티 그래프, BQG 에이전트, 리니지, AI FDE, Evaluation 스튜디오.
 2. **4-Tier 엔드투엔드 데이터 리니지 시각화**:
    - Tier 1(원천 문서/DW) ➔ Tier 2(청크/정제) ➔ Tier 3(온톨로지/BQG) ➔ Tier 4(MCP/AI 에이전트)로 이어지는 단절 없는 감사 추적망 제공.
-3. **20대 Golden CQ 자동화 평가 및 사실 일관성 감사**:
-   - **최종 수행 주체 일원화**: 20개 문항 모두 정형·비정형을 결합한 `6. BQG Agent`가 최종 수행하며, 각 문항이 실제로 사용한 **근거 경로(GCS OKF 위키 / BigQuery Property Graph)**를 보조 태그로 병기하여 추적 가능하게 유지합니다.
-   - **5대 루브릭 100점 채점 체계**: 아래 배점으로 문항별 점수를 산출합니다.
+3. **4대 평가 스위트(`9. Evaluation`) 자동화 검증 및 사실 일관성 감사**:
+   - **Suite 1 (20대 Golden CQ 루브릭 채점)**: 정형·비정형을 결합한 `6. BQG Agent` 및 `4. Wiki Agent`가 수행하며 5대 루브릭 100점 만점 체계(평균 99.0점)로 채점합니다.
 
      | 루브릭 | 배점 | 판정 기준 |
      | :--- | ---: | :--- |
@@ -416,8 +411,9 @@ sequenceDiagram
      | 실무 SOP (Actionability) | 15 | 상담사가 즉시 실행 가능한 절차·대안을 제시했는가 |
      | 출처 표기 (Source Attribution) | 15 | DW 원장 PK, 규칙 ID, SHA-256 청크 앵커를 명시했는가 |
 
-   - **감점 투명성 원칙**: 100점 미만 문항은 총점만 표기하지 않고, **루브릭별 감점 점수 · 미충족 요구사항 · 감점 사유(근본 원인) · 개선 조치**를 함께 기록합니다. 점수를 사후 보정하거나 감점 사유를 생략하지 않습니다.
-   - 응답 레이턴시, 토큰 소모량, 슬롯 비용 프로파일링.
+   - **Suite 2 (10종 바운더리 질문 × 10회 반복 평가)**: 필수 조건이 결여된 모호 질문에 대한 되묻기·조건 분기 성공률 검증 (1차 67.0% ➔ 2차 100.0%).
+   - **Suite 3 (심사 루브릭 명세)**: 5차원 평가 루브릭 및 통과 게이트 정의.
+   - **Suite 4 (3대 MCP 계층 24대 경계값·계약·예외 검증)**: 16종 MCP 도구 및 AI FDE 라우터에 대한 24개 경계값 시나리오 실측 비교 (1차 20.8% ➔ 2차 100.0%, Section G UI 및 실시간 재검증 API `/api/eval/mcp-suite/run` 제공).
 4. **Cloud Run 프로덕션 컨테이너 패키징 및 IaC 배포**:
    - Dockerfile 기반 컨테이너 빌드, Terraform IaC 관리, 최소 권한 런타임 서비스 계정(SA) 격리 적용.
 
@@ -434,12 +430,12 @@ flowchart LR
     end
 
     subgraph Tier3 ["Tier 3: 물리 그래프"]
-        T3_BQG["BigQuery Property Graph<br/>(7 Node Tables + 5 Edge Tables)"]
+        T3_BQG["BigQuery Property Graph<br/>(LGUPLUS_UNIFIED_ONTOLOGY_GRAPH)"]
     end
 
-    subgraph Tier4 ["Tier 4: MCP & AI 에이전트"]
-        T4_MCP["11종 MCP 스위트 (비즈니스/엔지니어링)"]
-        T4_Agent["AI FDE 에이전트 (근거 출처 첨부 리포트)"]
+    subgraph Tier4 ["Tier 4: 16종 MCP & AI 에이전트"]
+        T4_MCP["3-Tier 16종 MCP 스위트<br/>(24대 경계값 100% 검증)"]
+        T4_Agent["AI FDE & BQG 에이전트<br/>(9. Evaluation 상시 감시)"]
     end
 
     Tier1 --> Tier2 --> Tier3 --> Tier4
@@ -448,11 +444,11 @@ flowchart LR
 #### 3. Stage 5 산출물 매트릭스
 | 산출물 ID | 산출물 명칭 | 파일 형식 | 주요 내용 및 목적 | 담당 R&R |
 | :--- | :--- | :--- | :--- | :--- |
-| `D5.1` | 엔터프라이즈 통합 웹 스튜디오 소스 코드 | Python / HTML / JS (`src/web/`) | 5대 통합 스튜디오 구현체, 반응형 UI, 영문/국문 로컬라이제이션 | Frontend / Fullstack |
+| `D5.1` | 엔터프라이즈 통합 웹 스튜디오 소스 코드 | Python / HTML / JS (`src/web/`) | 10대 통합 스튜디오 구현체, 반응형 UI, 영문/국문 로컬라이제이션 | Frontend / Fullstack |
 | `D5.2` | 4-Tier 엔드투엔드 데이터 리니지 명세서 | Markdown (`LINEAGE_ARCHITECTURE.md`) | 4-Tier 데이터 흐름, 노드 간 감사 추적 경로, 리니지 뷰어 | Data Architect |
 | `D5.3` | 20대 Golden CQ 자동화 평가 결과 보고서 | Markdown / JSON (`CQ_EVALUATION_REPORT.md`) | 20대 질의 전수 실행 결과, 5차원 루브릭 채점, 감점 사유 및 근거 출처 기록 | QA Lead / FDE |
 | `D5.4` | Cloud Run 무중단 배포 스크립트 및 운영 런북 | Shell / Markdown (`OPERATIONAL_RUNBOOK.md`) | Docker 빌드, gcloud 배포 절차, 헬스체크, IAM 거버넌스 | DevOps / Cloud Architect |
-| `D5.5` | 검증 리포트 스튜디오 (`9. Evaluation`) | Python / JSON (`/api/eval/summary`) | 골든 CQ·바운더리 질의·루브릭 3종 산출물 실측 집계 화면, 실패 원인 분류, 회차별 비교 | QA Lead / FDE |
+| `D5.5` | 통합 검증 리포트 스튜디오 (`9. Evaluation`) | Python / JSON (`/api/eval/summary`, `/api/eval/mcp-suite`) | 골든 CQ·바운더리 질의·루브릭·3대 MCP 경계값(24 시나리오) 4대 스위트 실측 집계 및 실시간 재검증 화면 | QA Lead / FDE |
 
 ---
 
@@ -472,15 +468,15 @@ flowchart LR
 | | `D3.2` | 그래프 토폴로지 구조도 및 데이터플로우 명세서 | **A/R** | C | C | I | I |
 | | `D3.3` | GQL 질의 패턴 카탈로그 및 템플릿 엔진 | I | C | I | **A/R** | C |
 | | `D3.4` | SQL vs GQL 성능·비용 벤치마크 보고서 | I | C | I | C | **A/R** |
-| **Stage 4** | `D4.1` | 11종 도메인 온톨로지 MCP 서버 스펙 및 구현체 | I | I | I | **A/R** | C |
+| **Stage 4** | `D4.1` | 16종 3대 계층 온톨로지 MCP 서버 스펙 및 구현체 | I | I | I | **A/R** | C |
 | | `D4.2` | AI FDE 시맨틱 라우팅 및 다중 목표 분해 엔진 | I | I | I | **A/R** | C |
 | | `D4.3` | 크로스도메인 컨텍스트 전달 및 핸드오프 프로토콜 | **A** | I | C | **R** | I |
-| | `D4.4` | 모호/권한부족 질의 가드레일 정책 핸들러 | C | I | I | **R** | **A** |
+| | `D4.4` | 3대 MCP 계층 24대 경계값 검증 스위트 및 고도화 리포트 | C | I | I | **R** | **A** |
 | **Stage 5** | `D5.1` | 엔터프라이즈 통합 웹 스튜디오 소스 코드 | I | I | I | **A/R** | C |
 | | `D5.2` | 4-Tier 엔드투엔드 데이터 리니지 명세서 | **A/R** | C | C | I | I |
 | | `D5.3` | 20대 Golden CQ 자동화 평가 결과 보고서 | I | I | I | C | **A/R** |
 | | `D5.4` | Cloud Run 무중단 배포 스크립트 및 운영 런북 | C | **R** | I | **A** | I |
-| | `D5.5` | 검증 리포트 스튜디오 (`9. Evaluation`) | I | C | I | **R** | **A** |
+| | `D5.5` | 통합 검증 리포트 스튜디오 (`9. Evaluation`) | I | C | I | **R** | **A** |
 
 > **RACI 기호 정의**:
 > - **A (Accountable)**: 최종 승인권자 (산출물 품질 최종 책임)
@@ -498,5 +494,6 @@ flowchart LR
 | **Gate 1** | 자산 탐색 및 스코핑 승인 | - 도메인 바운더리 및 노이즈 제외 원칙 서명 완료<br/>- 20대 Golden CQ 및 사실 정답표 100% 확정<br/>- DW 7대 원장 및 비정형 문서 접근성 확인 | `D1.1`, `D1.2`, `D1.3` |
 | **Gate 2** | 시맨틱 온톨로지 모델 승인 | - OKF 3-Layer 개념 모델 검수 완료<br/>- 비정형 텍스트 청크 100% 고유 해시 앵커 부여<br/>- 2-Layer 안티 리던던시 브릿지 매핑 검증 | `D2.1`, `D2.2`, `D2.4` |
 | **Gate 3** | 프로퍼티 그래프 DDL 승인 | - BigQuery Property Graph DDL 정상 컴파일<br/>- 노드 7종/엣지 5종 무복제 프로젝션 실측<br/>- GQL 질의 응답 시간 및 SQL 대비 효율성 입증 | `D3.1`, `D3.3`, `D3.4` |
-| **Gate 4** | MCP 스위트 및 에이전트 승인 | - 11종 도메인 MCP 도구 규약 테스트 통과<br/>- 복합 질의 2단계 시퀀셜 체이닝 및 핸드오프 검증<br/>- 예외/모호 질의 가드레일 정상 작동 확인 | `D4.1`, `D4.2`, `D4.4` |
-| **Gate 5** | 프로덕션 운영 및 서비스 승인 | - 엔터프라이즈 디자인 표준(`05_DESIGN.md`) 준수 확인<br/>- 20대 Golden CQ 루브릭 평균 95점 이상, 모든 응답에 근거 출처 첨부<br/>- 바운더리 질의 10종 성공률 및 실패 원인 분류표 `9. Evaluation` 화면에 실측 게시<br/>- Cloud Run 프로덕션 배포 및 IAM 보안 감사 통과 | `D5.1`, `D5.3`, `D5.4`, `D5.5` |
+| **Gate 4** | 3-Tier MCP 스위트 및 경계값 승인 | - 16종(비즈니스 5·BQ+KC 6·Stage 5) MCP 도구 규약 및 스키마 검증 통과<br/>- 24대 경계값·계약·예외·인젝션 차단 시나리오(`evaluate_mcp_quality_suite.py`) 100% 통과<br/>- 복합 질의 시퀀셜 체이닝 및 도메인 외 거절 가드레일 정상 작동 확인 | `D4.1`, `D4.2`, `D4.4` |
+| **Gate 5** | 프로덕션 운영 및 서비스 승인 | - 엔터프라이즈 디자인 표준(`05_DESIGN.md`) 준수 확인<br/>- 20대 Golden CQ 루브릭 평균 95점 이상, 모든 응답에 근거 출처 첨부<br/>- 바운더리 질의 10종 및 3대 MCP 경계값 24종 회차별 실측 비교표 `9. Evaluation` 화면 게시<br/>- Cloud Run 프로덕션 배포 및 IAM 보안 감사 통과 | `D5.1`, `D5.3`, `D5.4`, `D5.5` |
+

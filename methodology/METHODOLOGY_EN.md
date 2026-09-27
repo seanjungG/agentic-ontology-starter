@@ -32,7 +32,7 @@ The execution unit of this methodology is the **5-stage framework (Stage 1–5)*
 | Stage | Methodology Stage | Studio STEP (tab) | Key Deliverable IDs |
 | :--- | :--- | :--- | :--- |
 | **Stage 1** | Asset Discovery, Scoping & Governance Ingestion | `STEP 1 · 1. Asset` | `D1.1` – `D1.4` |
-| **Stage 2** | Semantic Modeling, OKF Formalization & Grounding | `STEP 2 · 2. OKF Layer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (exit-gate validation) |
+| **Stage 2** | Semantic Modeling, OKF Formalization & Grounding | `STEP 2 · 2. Knowledge Viewer`<br>`STEP 3 · 3. Ontology Semantic`<br>`STEP 4 · 4. Wiki Agent` | `D2.2` `D2.3` `D2.4`<br>`D2.1` `D2.5` `D2.6`<br>`D2.6` (exit-gate validation) |
 | **Stage 3** | BigQuery Property Graph Engineering & GQL Compilation | `STEP 5 · 5. Bigquery Graph` | `D3.1` – `D3.4` |
 | **Stage 4** | Multi-Domain MCP Suite Packaging & Agentic Orchestration | `STEP 6 · 6. BQG Agent` | `D4.1` – `D4.4` |
 | **Stage 5** | Enterprise Studio Integration, Automated Evaluation & Production Deployment | `STEP 7 · 7. Lineage`<br>`STEP 8 · 8. AI FDE`<br>`STEP 9 · 9. Evaluation` | `D5.1` `D5.2`<br>`D5.3` `D5.4`<br>`D5.5` |
@@ -84,7 +84,7 @@ flowchart LR
 | **2. Catalog & Semantics** | • Dataplex Knowledge Catalog<br>• Open Knowledge Format (OKF v0.2)<br>• Custom Aspect Types & Entries | • [Knowledge Catalog GitHub](https://github.com/GoogleCloudPlatform/knowledge-catalog)<br>• [`references/knowledge-catalog/okf`](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) | • Clean YAML Frontmatter + Karpathy 3-Layer LLM-Wiki Compiler<br>• First-Gen **`4. Wiki Agent` (GCS Wiki Reasoning Agent)** | Preserves manual structures and resolves 16/20 policy CQs directly from GCS Wiki prior to BigQuery Graph setup. |
 | **3. MCP & Tooling** | • Dataplex KC Remote MCP (`search_entries`, `lookup_entry`, `lookup_context`)<br>• BigQuery Remote MCP (`list_dataset_ids`, `get_table_info`, `execute_sql_readonly`) | • KC Remote MCP: `https://dataplex.googleapis.com/mcp`<br>• BQ Remote MCP: `https://bigquery.googleapis.com/mcp`<br>• [GCP Remote MCP Docs](https://docs.cloud.google.com/dataplex/docs/use-remote-mcp) | • Tier 3 Domain Ontology MCP Server (5 Business + 6 Engineering Tools)<br>• **`6. BQG Agent`** (`GRAPH_TABLE()` NL2GQL Runner) | **Overcomes the limitation where BigQuery Remote MCP cannot execute GQL (`GRAPH_TABLE()`)**, achieving 20/20 Golden CQ accuracy. |
 | **4. Agent & Orchestration** | • Google Agent Development Kit (ADK Python 2.0)<br>• ADK Web UI (Angular)<br>• Google Cloud Data Agent Kit (Conversational Analytics API)<br>• Vertex AI Gemini 2.5 Flash | • [ADK Python GitHub](https://github.com/google/adk-python)<br>• [ADK Web GitHub](https://github.com/google/adk-web)<br>• [Conversational Analytics API](https://docs.cloud.google.com/gemini/docs/conversational-analytics-api/overview) | • **`8. AI FDE` & Agent Runtime (ADK 2.0)** Dynamic Sub-Goal Decomposition Engine (`fdeAgentEngine.py`)<br>• Cross-Domain Sequential Chaining (`Data Hand-off`, `Intermediate Observation`) | Enables autonomous multi-turn reasoning cycles that cross-verify policy rules against physical DW ledgers. |
-| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio - LG Uplus`** (`src/web/studio_server.py`)<br>• Unified Studio Architecture (`0. Overview` ~ `8. AI FDE`) & `< 5ms` Instant Lineage (`7. Lineage`)<br>• Single Continuous Overview (Executive Summary ➔ Full Step ➔ GCP Architecture ➔ Feature Gap ➔ Results) | One-stop verification of full step flow, dual-agent evolution (`4. Wiki Agent ➔ 6. BQG Agent`), and CQ benchmarks. |
+| **5. Presentation & Studio** | • Google Cloud Run (Serverless Container)<br>• Google Cloud Logging / Monitoring | • [Cloud Run Documentation](https://cloud.google.com/run) | • **`Agentic Ontology Studio`** (`src/web/studio_server.py`)<br>• Unified Studio Architecture (`0. Overview` ~ `8. AI FDE`) & `< 5ms` Instant Lineage (`7. Lineage`)<br>• Single Continuous Overview (Executive Summary ➔ Full Step ➔ GCP Architecture ➔ Feature Gap ➔ Results) | One-stop verification of full step flow, dual-agent evolution (`4. Wiki Agent ➔ 6. BQG Agent`), and CQ benchmarks. |
 
 #### 1.4.2 Official Reference Repositories
 1. **Google Cloud Knowledge Catalog (Dataplex / OKF)**:
@@ -109,14 +109,14 @@ This section defines the physical **Data Structure** of unstructured business po
 
 | Data Layer | Physical Storage & Data Structure | Data Flow & Consumer Agent |
 | :--- | :--- | :--- |
-| **Layer 1: Unstructured Policy Data Structure**<br>*(Unstructured Policy Layer)* | • **GCS Bucket**: `.okf.md` Markdown Wiki under `okf/bundles/subsidy/`<br>• **Meta Schema**: YAML Frontmatter (`trust_tier`, `priority`, `stale_after`) + SHA-256 paragraph hash anchors<br>• **Extracted Objects**: `RULE-*` (Rules), `TERM-*` (Glossary), `CQ-*` (Competency Questions) | • Flows through **`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic`** into **`4. Wiki Agent`**<br>• Resolves 16 policy/formula CQs (**16/20 PASS, 1.18s avg latency**) (`[GCS Preferred]`) |
+| **Layer 1: Unstructured Policy Data Structure**<br>*(Unstructured Policy Layer)* | • **GCS Bucket**: `.okf.md` Markdown Wiki under `gs://<bucket>/ontology/<domain>/`<br>• **Meta Schema**: YAML Frontmatter (`trust_tier`, `priority`, `stale_after`) + SHA-256 paragraph hash anchors<br>• **Extracted Objects**: `RULE-*` (Rules), `TERM-*` (Glossary), `CQ-*` (Competency Questions) | • Flows through **`1. Asset` ➔ `2. Knowledge Viewer` ➔ `3. Ontology Semantic`** into **`4. Wiki Agent`**<br>• Resolves 16 policy/formula CQs (**16/20 PASS, 1.18s avg latency**) (`[GCS Preferred]`) |
 | **Semantic Bridge: Cross-Mapping Data Structure**<br>*(Cross-Layer Mapping Layer)* | • **Bridge Edge Views**: `v_edge_applies_to` (`RULE_ID ➔ POLICY_ID`), `v_edge_calculates` (`RULE_ID ➔ SALE_ID`), `v_edge_defined_in` (`RULE_ID ➔ CHUNK_ID`)<br>• **Anti-Redundancy**: Maps structured PKs directly to unstructured Rule IDs without duplicating text nodes | • Establishes bi-directional data flow linking unstructured policy rules (`RULE-*`) to physical columns and rows in BigQuery DW ledgers |
 | **Layer 2: Structured DW & Property Graph Structure**<br>*(Structured DW & Graph Layer)* | • **BigQuery 7 Master Ledgers**: `tb_subscription_sale`, `tb_subsidy_policy`, `tb_device_master`, `tb_price_plan`, `tb_agency_master`, `tb_customer`, `tb_settlement_amount`<br>• **SQL:2023 Property Graph**: `uplus_telecom_graph` (6 Vertex & 5 Edge Zero-ETL Views) | • Flows through **`5. Bigquery Graph`** DDL into **`6. BQG Agent`**<br>• Combines NL2GQL `GRAPH_TABLE()` multi-hop ledger joins with Wiki rules to resolve **20/20 Golden CQs (100%, 1.42s avg latency)** |
 
 ```mermaid
 flowchart TD
     subgraph TRACK_A ["Layer 1 (Unstructured Data Structure): GCS OKF v0.2 Wiki ➔ 4. Wiki Agent Data Flow"]
-        S1_Doc["1. Asset: Unstructured Policy Guides & SOPs"] --> S2_OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
+        S1_Doc["1. Asset: Unstructured Policy Guides & SOPs"] --> S2_OKF["2. Knowledge Viewer: Karpathy 3-Layer LLM-Wiki (.okf.md)"]
         S2_OKF --> S3_Sem["3. Ontology Semantic: 5-Element Extraction & Semantic Bridge (APPLIES_TO / CALCULATES)"]
         S3_Sem --> S4_WikiAgent["4. Wiki Agent (Consumes Unstructured Wiki Data)<br/>Resolves 16 Policy/Formula CQs ([GCS Preferred])"]
     end
@@ -329,65 +329,62 @@ flowchart TD
 
 ---
 
-### Stage 4: Multi-Domain MCP Suite Packaging & Agentic Orchestration
+### Stage 4: 3-Tier MCP Suite Packaging, Boundary Verification & Agentic Orchestration
 > 📘 **Detailed Execution Guide**: [04_multi_domain_mcp_and_agent_en.md](./04_multi_domain_mcp_and_agent_en.md)
 
 #### 1. Objective & Scope
-Stage 4 packages the domain ontology and graph traversal capabilities into a high-level **Domain Ontology MCP Abstraction Layer**, shielding AI agents from raw database schemas and direct GQL traversal syntax. This enables an autonomous AI Forward Deployed Engineer (FDE) agent to dynamically decompose multi-part user prompts and execute cross-domain sequential chaining at the business semantic level.
+Stage 4 packages the domain ontology, BigQuery/Knowledge Catalog engineering capabilities, and the 5-stage methodology pipeline into a **3-Tier 16-Tool Domain Ontology MCP Abstraction Layer**, shielding AI agents from raw database schemas and direct GQL traversal syntax. Furthermore, it executes a **24-Scenario Boundary, Contract & Exception Verification Loop (`Round 1 Baseline ➔ Round 2 Refined`)** to verify that every MCP handler and router blocks invalid inputs, edge-case traps, unmapped entities, and destructive GQL/DDL injections.
 
 #### 2. Detailed Work Items
-1. **Domain Ontology MCP Abstraction Layer (11-Tool MCP Suite)**:
+1. **3-Tier Domain Ontology MCP Abstraction Layer (16-Tool MCP Suite)**:
    - Shield agent logic from underlying table schemas and raw graph traversals.
-   - **5 Business Tools**: Device list price (`mcp_get_device_factory_price`), subsidy lookup (`mcp_get_device_subsidy_by_plan`), penalty calculation (`mcp_calculate_plan_change_penalty`), contract plan comparison (`mcp_compare_contract_plans`), grounding chunk retrieval (`mcp_get_policy_anchor_grounding`).
-   - **6 Engineering/Infra Tools**: Property graph GQL traversal (`mcp_explore_property_graph`), DW schema inspection (`mcp_inspect_dw_table_schema`), Dataplex catalog search (`mcp_search_dataplex_catalog`), lineage trace (`mcp_get_lineage_trace`), DDL export (`mcp_export_graph_ddl`), CQ benchmark execution (`mcp_run_cq_benchmark`).
-2. **AI FDE Dynamic Multi-Goal Decomposition Engine**:
-   - Deconstruct complex user queries into discrete sub-goals (`G-BIZ-01`, `G-ENG-01`, etc.) without brittle static if-else branches.
-3. **Cross-Domain Sequential Chaining (`SEQUENTIAL_CHAIN`) & Data Hand-off**:
-   - Dynamically inject outputs from business lookups (e.g., target table name, commitment dates) into subsequent engineering infrastructure tools.
-   - Cross-verify mathematical results with physical database row counts and catalog tags (`cross_domain_integration`).
-4. **Transparent Timeline Synthesis & Guardrails**:
-   - Surface dispatch reasons, intermediate observations, and data hand-off states in real-time.
-   - Provide safe fallback handling for unsupported requests (`[NOT_FOUND]`) or restricted permissions (`[RESTRICTED]`).
+   - **5 Business MCP Tools (`BUSINESS_MCP`)**: Subsidy lookup (`mcp_get_device_subsidy_by_plan`), penalty settlement verification (`mcp_verify_penalty_settlement`), sales transaction audit (`mcp_audit_sales_transaction`), unstructured policy anchor grounding (`mcp_ground_unstructured_policy`), optimal plan vs. contract recommendation (`mcp_recommend_optimal_plan_subsidy`).
+   - **6 BQ+KC Engineering MCP Tools (`BQ_KC_MCP`)**: BQ schema OKF extraction (`mcp_extract_okf_entity_from_bq`), KC business glossary registration (`mcp_register_kc_glossary_term`), BQG Property Graph DDL builder (`mcp_build_bqg_property_graph`), GCS lexical hash anchor sync (`mcp_sync_gcs_lexical_anchors`), CQ grounding validation (`mcp_validate_cq_grounding`), BQG graph topology & GQL traversal (`mcp_query_bqg_graph_topology`).
+   - **5 Methodology Stage MCP Tools (`ONTOLOGY_STAGE_MCP`)**: Automated Stage 1–5 execution and `D1.1`–`D5.5` deliverable & quality-gate verification (`mcp_stage1_asset_discovery_and_scoping` through `mcp_stage5_lineage_eval_and_deployment_gate`).
+2. **AI FDE Dynamic Multi-Goal Decomposition & Cross-Domain Chaining**:
+   - Deconstruct complex user queries into discrete sub-goals and chain business results with infrastructure and methodology stage checks (`SEQUENTIAL_CHAIN`).
+3. **24-Scenario 3-Tier MCP Boundary Verification & 2-Round Refinement Loop (`scripts/evaluate_mcp_quality_suite.py`)**:
+   - **Round 1 Baseline Verification**: Directly invoke all 16 MCP tools and the AI FDE router across 24 boundary/exception scenarios (silent default fallbacks, exact 180-day commitment boundary, 45,000 KRW floor, senior exemptions, nonexistent tables/CQs, destructive GQL/DDL injection) to diagnose baseline defects (**5/24 Passed, 20.8%**).
+   - **Round 2 Handler & Router Refinement**: Enforce explicit input validation (`INVALID_INPUT_BOUNDARY`), registry lookup checks (`ENTITY_NOT_FOUND`), out-of-domain abstention (`UNSUPPORTED_MODALITY_ABSTENTION`), read-only GQL regex guards (`SECURITY_GUARDRAIL_BLOCKED`), and stage threshold checks (`STAGE_GATE_BLOCKED`), achieving **24/24 Passed (100.0%, +79.2%p)**.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Enterprise User / FDE
     participant Engine as AI FDE Agent Engine
-    participant BizMCP as Business MCP Suite
-    participant EngMCP as Engineering MCP Suite
+    participant BizMCP as Business MCP (5 Tools)
+    participant EngMCP as BQ+KC Engineer MCP (6 Tools)
+    participant StgMCP as Methodology Stage MCP (5 Tools)
     participant BQ as BigQuery Property Graph
 
-    User->>Engine: Send Multi-Domain Query (Subsidy + DW Volume Check)
-    Engine->>Engine: Step 1: Decompose into Sub-Goals (G-BIZ-01, G-ENG-01)
+    User->>Engine: Send Multi-Domain or Boundary/Exception Query
+    Engine->>Engine: Step 1: Intent Classification & Security/Abstention Guardrail Check
     
     rect rgb(240, 248, 255)
-        Note over Engine,BizMCP: Step 2-1: Execute Business Domain Tool
-        Engine->>BizMCP: mcp_get_device_subsidy_by_plan(device, plan)
-        BizMCP->>BQ: GQL traversal & subsidy lookup
-        BQ-->>BizMCP: Return public subsidy & 180-day commitment policy
-        BizMCP-->>Engine: Emit Intermediate Observation 1 (Prepare Hand-off)
+        Note over Engine,BizMCP: Step 2-1: Execute Business Tool & Boundary Validation
+        Engine->>BizMCP: mcp_verify_penalty_settlement(device, plan, 180d boundary, senior flag)
+        BizMCP->>BQ: Validate input contract & traverse GQL penalty rules
+        BQ-->>BizMCP: Return settlement result or explicit boundary status code
+        BizMCP-->>Engine: Emit Observation 1
     end
 
     rect rgb(255, 245, 245)
-        Note over Engine,EngMCP: Step 2-2: Chain Engineering Infra Tool
-        Engine->>EngMCP: mcp_inspect_dw_table_schema(target_table, policy_param)
-        EngMCP->>BQ: Scan INFORMATION_SCHEMA & table metadata
-        BQ-->>EngMCP: Return row count (1,240 rows) & partition status
-        EngMCP-->>Engine: Emit Intermediate Observation 2
+        Note over Engine,StgMCP: Step 2-2: Chain Engineering & Stage MCP Tools
+        Engine->>EngMCP: mcp_query_bqg_graph_topology(read-only GQL guardrail)
+        Engine->>StgMCP: mcp_stage5_lineage_eval_and_deployment_gate(gate threshold check)
+        StgMCP-->>Engine: Emit Observation 2 (D1.1~D5.5 & deployment gate status)
     end
 
-    Engine->>Engine: Step 3: Cross-Domain Integration & Synthesis
-    Engine->>User: Step 4: Output Synthesis Report (Math + Policy + DW Metadata)
+    Engine->>User: Step 3: Output Grounded Synthesis Report + Lineage
 ```
 
 #### 3. Stage 4 Deliverable Matrix
 | Deliverable ID | Deliverable Title | Format | Contents & Purpose | Lead Role |
 | :--- | :--- | :--- | :--- | :--- |
-| `D4.1` | 11-Tool Domain Ontology MCP Server Suite | Python / JSON (`src/agents/mcpServer.py`) | Tool schemas, parameter definitions, mock & live backend handlers | Agent Engineer |
-| `D4.2` | AI FDE Semantic Routing & Multi-Goal Engine | Python (`src/agents/fdeAgentEngine.py`) | Sub-goal decomposition, sequential chaining, observation generator | AI Lead |
+| `D4.1` | 16-Tool 3-Tier Ontology MCP Server Suite | Python / JSON (`src/mcp/ontologyMcpTools.py`) | Schemas & handlers for 5 Business, 6 BQ+KC, and 5 Stage MCP tools | Agent Engineer |
+| `D4.2` | AI FDE Semantic Routing & Multi-Goal Engine | Python (`src/agents/fdeAgentEngine.py`) | Sub-goal decomposition, sequential chaining, domain/security guardrails | AI Lead |
 | `D4.3` | Cross-Domain Context Hand-off Protocol | Markdown (`HANDOFF_PROTOCOL.md`) | Typed inter-tool parameter passing standards and data contracts | Solution Architect |
-| `D4.4` | Guardrail Policy & Ambiguous Query Handler | Python / Markdown (`GUARDRAIL_RULES.md`) | Guardrail rules for restricted IAM permissions and unmapped terms | Security Lead |
+| `D4.4` | 3-Tier MCP 24-Scenario Boundary Suite & Refinement Report | Python / JSON (`scripts/evaluate_mcp_quality_suite.py`, `evals/mcp_3tier_boundary_*.json`) | 24 boundary scenarios, Round 1 (20.8%) ➔ Round 2 (100.0%) refinement proof | QA Lead / Security Lead |
 
 ---
 
@@ -395,17 +392,16 @@ sequenceDiagram
 > 📘 **Detailed Execution Guide**: [05_enterprise_studio_and_deployment_en.md](./05_enterprise_studio_and_deployment_en.md)
 
 #### 1. Objective & Scope
-Stage 5 deploys a unified enterprise web console adhering to enterprise design standards, provides 4-tier data lineage visualization, executes rubric-scored evaluation across 20 Golden CQs plus boundary-question regression, and delivers containerized production deployment on Google Cloud Run with least-privilege IAM governance.
+Stage 5 deploys a unified enterprise web console adhering to enterprise design standards, provides 4-tier data lineage visualization, executes automated evaluation across 4 verification suites (20 Golden CQs, 10 Boundary Questions, Rubric Spec, and 24-Scenario 3-Tier MCP Boundary Suite), and delivers containerized production deployment on Google Cloud Run with least-privilege IAM governance.
 
 #### 2. Detailed Work Items
 1. **Unified Enterprise Web Studio Implementation**:
    - Adhere strictly to `05_DESIGN.md` (Pretendard font, enterprise dark mode, 0% decorative emojis).
-   - Deliver 5 integrated studios: Pipeline Monitor, Asset Registry, Property Graph Explorer, CQ Benchmark Console, AI FDE Studio.
+   - Deliver 10 integrated tabs (`0. Overview` through `9. Evaluation`): Pipeline Monitor, Asset Registry, Knowledge Viewer, Semantic Graph, Wiki Agent, Property Graph Explorer, BQG Agent, Lineage, AI FDE, and Evaluation Studio.
 2. **4-Tier End-to-End Data Lineage Visualization**:
    - Provide complete provenance tracking from Tier 1 (Source Documents/DW) ➔ Tier 2 (Chunks/Rules) ➔ Tier 3 (OKF/BQG) ➔ Tier 4 (MCP/Agents).
-3. **Automated 20 Golden CQ Evaluation & Audit**:
-   - **Single final executor**: all 20 questions are finally executed by the hybrid `6. BQG Agent`; the **evidence path actually used (GCS OKF Wiki / BigQuery Property Graph)** is kept as a secondary tag so the run stays traceable.
-   - **5-rubric, 100-point scoring model**:
+3. **4-Suite Automated Evaluation (`9. Evaluation`) & Audit**:
+   - **Suite 1 (20 Golden CQ Rubric Scoring)**: Executed by `6. BQG Agent` and `4. Wiki Agent` on a 5-rubric, 100-point scoring model (average 99.0 / 100):
 
      | Rubric | Points | Acceptance criterion |
      | :--- | ---: | :--- |
@@ -415,8 +411,9 @@ Stage 5 deploys a unified enterprise web console adhering to enterprise design s
      | Actionability (SOP) | 15 | The answer gives a procedure or alternative an agent can execute immediately |
      | Source Attribution | 15 | DW ledger PK, rule ID and SHA-256 chunk anchor are cited |
 
-   - **Deduction transparency rule**: for any item below 100 points, the report must record the **per-rubric points lost, the missing requirement, the root cause, and the remediation** — not just the total. Scores are never retro-adjusted and deduction reasons are never omitted.
-   - Profile response latency, token consumption, and BigQuery slot costs.
+   - **Suite 2 (10 Boundary Questions × 10 Repeated Runs)**: Measures clarification and conditional branching stability on underspecified prompts (Round 1: 67.0% ➔ Round 2: 100.0%).
+   - **Suite 3 (Judging Rubric Specification)**: 5 weighted dimensions and pass gates.
+   - **Suite 4 (3-Tier MCP 24-Scenario Boundary & Contract Verification)**: Directly verifies all 16 MCP tools and the AI FDE Router across 24 boundary/exception scenarios (Round 1: 20.8% ➔ Round 2: 100.0%, rendered in Section G with live re-run endpoint `POST /api/eval/mcp-suite/run`).
 4. **Cloud Run Production Deployment & IaC Automation**:
    - Build standardized Docker container images and deploy via declarative scripts with dedicated runtime service accounts (`SA`).
 
@@ -433,12 +430,12 @@ flowchart LR
     end
 
     subgraph Tier3 ["Tier 3: Physical Graph"]
-        T3_BQG["BigQuery Property Graph<br/>(7 Node Tables + 5 Edge Tables)"]
+        T3_BQG["BigQuery Property Graph<br/>(LGUPLUS_UNIFIED_ONTOLOGY_GRAPH)"]
     end
 
-    subgraph Tier4 ["Tier 4: MCP & AI Agents"]
-        T4_MCP["11-Tool MCP Suite (Biz & Infra)"]
-        T4_Agent["AI FDE Agent (0% Hallucination Report)"]
+    subgraph Tier4 ["Tier 4: 16-Tool MCP & AI Agents"]
+        T4_MCP["3-Tier 16-Tool MCP Suite<br/>(24 Boundary Scenarios 100% Verified)"]
+        T4_Agent["AI FDE & BQG Agents<br/>(9. Evaluation Live Monitoring)"]
     end
 
     Tier1 --> Tier2 --> Tier3 --> Tier4
@@ -447,11 +444,11 @@ flowchart LR
 #### 3. Stage 5 Deliverable Matrix
 | Deliverable ID | Deliverable Title | Format | Contents & Purpose | Lead Role |
 | :--- | :--- | :--- | :--- | :--- |
-| `D5.1` | Unified Enterprise Web Studio Suite | Python / HTML / JS (`src/web/`) | 5 integrated web studios, responsive UI, bilingual localization | Frontend / Fullstack |
+| `D5.1` | Unified Enterprise Web Studio Suite | Python / HTML / JS (`src/web/`) | 10 integrated web studio tabs, responsive UI, bilingual localization | Frontend / Fullstack |
 | `D5.2` | 4-Tier End-to-End Lineage Specification | Markdown (`LINEAGE_ARCHITECTURE.md`) | Lineage graph architecture, provenance tracing, audit viewer | Data Architect |
 | `D5.3` | Automated Golden CQ Evaluation Report | Markdown / JSON (`CQ_EVALUATION_REPORT.md`) | 20 CQ benchmark execution results, 5-dimension rubric scoring, deduction rationale and cited sources | QA Lead / FDE |
 | `D5.4` | Cloud Run Deployment Scripts & Operations Runbook | Shell / Markdown (`OPERATIONAL_RUNBOOK.md`) | Container build, gcloud deployment commands, health checks, IAM | DevOps / Cloud Architect |
-| `D5.5` | Evaluation Report Studio (`9. Evaluation`) | Python / JSON (`/api/eval/summary`) | Measured aggregation of Golden CQ, boundary-question and rubric artifacts; failure taxonomy; round comparison | QA Lead / FDE |
+| `D5.5` | Unified Evaluation Report Studio (`9. Evaluation`) | Python / JSON (`/api/eval/summary`, `/api/eval/mcp-suite`) | Measured aggregation of Golden CQ, boundary-question, rubric, and 24-scenario 3-Tier MCP boundary suites with live re-run | QA Lead / FDE |
 
 ---
 
@@ -471,15 +468,15 @@ flowchart LR
 | | `D3.2` | Graph Topology & Dataflow Specification | **A/R** | C | C | I | I |
 | | `D3.3` | GQL Query Pattern Catalog & Template Engine | I | C | I | **A/R** | C |
 | | `D3.4` | SQL vs GQL Performance & Cost Benchmark Report | I | C | I | C | **A/R** |
-| **Stage 4** | `D4.1` | 11-Tool Domain Ontology MCP Server Suite | I | I | I | **A/R** | C |
+| **Stage 4** | `D4.1` | 16-Tool 3-Tier Ontology MCP Server Suite | I | I | I | **A/R** | C |
 | | `D4.2` | AI FDE Semantic Routing & Multi-Goal Engine | I | I | I | **A/R** | C |
 | | `D4.3` | Cross-Domain Context Hand-off Protocol | **A** | I | C | **R** | I |
-| | `D4.4` | Guardrail Policy & Ambiguous Query Handler | C | I | I | **R** | **A** |
+| | `D4.4` | 3-Tier MCP 24-Scenario Boundary Suite & Refinement Report | C | I | I | **R** | **A** |
 | **Stage 5** | `D5.1` | Unified Enterprise Web Studio Suite | I | I | I | **A/R** | C |
 | | `D5.2` | 4-Tier End-to-End Lineage Specification | **A/R** | C | C | I | I |
 | | `D5.3` | Automated Golden CQ Evaluation Report | I | I | I | C | **A/R** |
 | | `D5.4` | Cloud Run Deployment Scripts & Operations Runbook | C | **R** | I | **A** | I |
-| | `D5.5` | Evaluation Report Studio (`9. Evaluation`) | I | C | I | **R** | **A** |
+| | `D5.5` | Unified Evaluation Report Studio (`9. Evaluation`) | I | C | I | **R** | **A** |
 
 > **RACI Legend**:
 > - **A (Accountable)**: Final sign-off authority and quality owner.
@@ -497,5 +494,6 @@ flowchart LR
 | **Gate 1** | Asset Discovery & Scoping Sign-off | - Signed charter establishing domain scope and pruning boundaries<br/>- 100% agreement on 20 Golden CQs and verified ground truth<br/>- Data access confirmed for 7 DW tables and policy documents | `D1.1`, `D1.2`, `D1.3` |
 | **Gate 2** | Semantic Ontology Model Sign-off | - Formal approval of OKF 3-layer conceptual taxonomy<br/>- 100% of policy text chunks assigned immutable hash anchors<br/>- Verified 2-layer anti-redundancy semantic bridge mapping | `D2.1`, `D2.2`, `D2.4` |
 | **Gate 3** | Property Graph DDL Sign-off | - Error-free compilation of BigQuery Property Graph DDL<br/>- Verified projection of 7 node tables and 5 edge tables<br/>- Demonstrated query expressiveness and efficiency of GQL over SQL | `D3.1`, `D3.3`, `D3.4` |
-| **Gate 4** | MCP Suite & Agentic Routing Sign-off | - Verified contract tests for all 11 domain MCP tools<br/>- Successful execution of multi-goal decomposition & sequential chaining<br/>- Validated guardrails for ambiguous terms and restricted permissions | `D4.1`, `D4.2`, `D4.4` |
-| **Gate 5** | Production Readiness & Go-Live Sign-off | - Compliance with the enterprise UI design system (`05_DESIGN.md`)<br/>- Golden CQ rubric average of 95 or above with source citations on every answer<br/>- Boundary-question success rate and failure taxonomy published as measured values on `9. Evaluation`<br/>- Successful Cloud Run deployment with IAM security audit clearance | `D5.1`, `D5.3`, `D5.4`, `D5.5` |
+| **Gate 4** | 3-Tier MCP Suite & Boundary Sign-off | - Verified contract schemas for all 16 MCP tools (5 Business, 6 BQ+KC, 5 Stage)<br/>- 100% pass rate on the 24-scenario boundary, contract & injection suite (`evaluate_mcp_quality_suite.py`)<br/>- Validated sequential chaining and out-of-domain abstention guardrails | `D4.1`, `D4.2`, `D4.4` |
+| **Gate 5** | Production Readiness & Go-Live Sign-off | - Compliance with the enterprise UI design system (`05_DESIGN.md`)<br/>- Golden CQ rubric average of 95 or above with source citations on every answer<br/>- Boundary-question 10-case and 3-Tier MCP 24-scenario Round 1 ➔ Round 2 comparisons published on `9. Evaluation`<br/>- Successful Cloud Run deployment with IAM security audit clearance | `D5.1`, `D5.3`, `D5.4`, `D5.5` |
+

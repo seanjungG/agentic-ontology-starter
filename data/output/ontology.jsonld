@@ -4,28 +4,53 @@
     {
       "@id": "domain:TelecomSubsidyManagement",
       "@type": "DomainOntology",
-      "label": "Enterprise Subsidy & Contract Management",
+      "label": "Enterprise Subsidy & Contract Management (Starter v2.0)",
       "summary": "Hybrid ontology unifying structured DW tables and unstructured policy manuals.",
-      "totalChunks": 3,
-      "evolutionTrack": "Track A (Unstructured Wiki & GCS Proto) -> Track C (BQG Anti-Redundancy Integration)"
+      "totalChunks": 5,
+      "supportedTracks": [
+        "lite",
+        "standard",
+        "full"
+      ],
+      "supportedGraphEngines": [
+        "bigquery",
+        "spanner"
+      ]
     },
     {
       "@id": "chunk:DOC_CHUNK_001",
       "@type": "DocChunk",
       "title": "Overview & Scope",
+      "sourceDoc": "sample_policy_guide.md",
       "hashAnchor": "anchor_a52e1a72869f"
     },
     {
       "@id": "chunk:DOC_CHUNK_002",
       "@type": "DocChunk",
       "title": "Baseline Plan Commitment (Six-Plan Rule)",
+      "sourceDoc": "sample_policy_guide.md",
       "hashAnchor": "anchor_3003b683cea0"
     },
     {
       "@id": "chunk:DOC_CHUNK_003",
       "@type": "DocChunk",
       "title": "Penalty Math Formula",
+      "sourceDoc": "sample_policy_guide.md",
       "hashAnchor": "anchor_47971ec8e4d8"
+    },
+    {
+      "@id": "chunk:DOC_CHUNK_004",
+      "@type": "DocChunk",
+      "title": "Statutory Penalty Exemptions",
+      "sourceDoc": "sample_welfare_exemption_guide.md",
+      "hashAnchor": "anchor_269d9c42e05c"
+    },
+    {
+      "@id": "chunk:DOC_CHUNK_005",
+      "@type": "DocChunk",
+      "title": "24-Month Contract TCO Comparison Rule",
+      "sourceDoc": "sample_welfare_exemption_guide.md",
+      "hashAnchor": "anchor_4fbaf9c5cba8"
     }
   ]
 }
