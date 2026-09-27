@@ -3,7 +3,7 @@
 
 - **상위 방법론**: [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)
 - **문서 버전**: `v1.1.0`
-- **목적**: `05_DESIGN.md` 표준을 준수하는 **`Agentic Ontology Studio - LG Uplus` 통합 웹 스튜디오(`0. Overview` 및 `1. Asset` ~ `9. Evaluation`)**를 구축하고, 4-Tier 데이터 리니지(`7. Lineage`)를 시각화하며, 20대 Golden CQ 루브릭 평가와 바운더리 질의 회귀 검증(`9. Evaluation`)을 거쳐 Google Cloud Run 컨테이너 배포를 완결하는 표준 절차 명세
+- **목적**: `05_DESIGN.md` 표준을 준수하는 **`Agentic Ontology Studio` 통합 웹 스튜디오(`0. Overview` 및 `1. Asset` ~ `9. Evaluation`)**를 구축하고, 4-Tier 데이터 리니지(`7. Lineage`)를 시각화하며, 20대 Golden CQ 루브릭 평가와 바운더리 질의 회귀 검증(`9. Evaluation`)을 거쳐 Google Cloud Run 컨테이너 배포를 완결하는 표준 절차 명세
 
 ---
 
@@ -15,7 +15,7 @@ Stage 5는 구축된 지식 온톨로지, 물리 그래프 및 에이전트를 �
 flowchart TD
     subgraph Step1 ["Step 5.1: 05_DESIGN.md 준수 엔터프라이즈 웹 스튜디오 구축"]
         DesignToken["디자인 표준 준수<br/>- Pretendard 타이포그래피<br/>- Apple/Google Enterprise 테마<br/>- 44px 글로벌 탑바 & 52px 서브바 통일"]
-        Studios["Agentic Ontology Studio 탭 구성<br/>- 0. Overview (비즈니스 개요 & GCP 아키텍처 & 피처갭)<br/>- 1. Asset / 2. OKF Layer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE / 9. Evaluation"]
+        Studios["Agentic Ontology Studio 탭 구성<br/>- 0. Overview (비즈니스 개요 & GCP 아키텍처 & 피처갭)<br/>- 1. Asset / 2. Knowledge Viewer / 3. Ontology Semantic<br/>- 4. Wiki Agent / 5. Bigquery Graph / 6. BQG Agent<br/>- 7. Lineage / 8. AI FDE / 9. Evaluation"]
         DesignToken --> Studios
     end
 

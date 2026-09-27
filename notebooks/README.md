@@ -13,7 +13,7 @@
 
 | 단계 (Step) | 실습 노트북 (Notebooks) | 연계 스튜디오 탭 (`Agentic Ontology Studio`) | 핵심 실습 내용 및 산출물 (Core Hands-on & Artifacts) |
 | :---: | :---: | :--- | :--- |
-| **Step 1** | [국문 (KO)](01_okf_unstructured_agent_ko.ipynb)<br>[English (EN)](01_okf_unstructured_agent_en.ipynb) | **`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`**<br>([Stage 2 명세](../methodology/02_semantic_modeling_and_okf_ko.md)) | • **단순 RAG 결함 극복**: 문맥 단절 및 환각 인용 원천 차단<br>• **담백한 원본 YAML Frontmatter & Karpathy 3-Layer Wiki**: `.okf.md` 구조화<br>• **선행 `4. Wiki Agent` (GCS 에이전트)**: DB/그래프 구축 전 GCS 위키만으로 16대 규정/산식 CQ(`[GCS Preferred]`) 즉시 해결 |
+| **Step 1** | [국문 (KO)](01_okf_unstructured_agent_ko.ipynb)<br>[English (EN)](01_okf_unstructured_agent_en.ipynb) | **`1. Asset` ➔ `2. Knowledge Viewer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`**<br>([Stage 2 명세](../methodology/02_semantic_modeling_and_okf_ko.md)) | • **단순 RAG 결함 극복**: 문맥 단절 및 환각 인용 원천 차단<br>• **담백한 원본 YAML Frontmatter & Karpathy 3-Layer Wiki**: `.okf.md` 구조화<br>• **선행 `4. Wiki Agent` (GCS 에이전트)**: DB/그래프 구축 전 GCS 위키만으로 16대 규정/산식 CQ(`[GCS Preferred]`) 즉시 해결 |
 | **Step 2** | [국문 (KO)](02_property_graph_and_gql_ko.ipynb)<br>[English (EN)](02_property_graph_and_gql_en.ipynb) | **`5. Bigquery Graph` ➔ `6. BQG Agent`**<br>([Stage 3 명세](../methodology/03_property_graph_and_gql_ko.md)) | • **Domain Pruning (35➔7) & DW 직접 승격**: `devices`, `plans`, `subsidies` Zero-ETL 노드화<br>• **ISO SQL:2023 DDL (`5. Bigquery Graph`)**: `CREATE PROPERTY GRAPH` 자동 합성<br>• **`6. BQG Agent` (`NL2GQL` 멀티홉)**: `GRAPH_TABLE()` 탐색 + 위키 결합으로 20/20 골든 CQ 전수 해결 |
 | **Step 3** | [국문 (KO)](03_graph_integration_mcp_agent_ko.ipynb)<br>[English (EN)](03_graph_integration_mcp_agent_en.ipynb) | **`7. Lineage` ➔ `8. AI FDE` (`0. Overview` 종합 검증)**<br>([Stage 4~5 명세](../methodology/04_multi_domain_mcp_and_agent_ko.md)) | • **11종 도메인 MCP 스위트 (`8. AI FDE`)**: 비즈니스 5종 + 엔지니어링 6종 도구 캡슐화<br>• **4-Tier 즉시 리니지 (`7. Lineage`)**: 비동기 인메모리 캐싱 기반 `< 5ms` 계보 추적<br>• **성능과 결과 (`0. Overview` Section 4)**: `4. Wiki Agent`(16/20) vs `6. BQG Agent`(20/20) 실측 벤치마크 |
 | **통합본** | [올인원 (KO/EN)](agentic_ontology_ce_walkthrough.ipynb) | **`Agentic Ontology Studio` 전 과정 (Tab 0 ~ Tab 8)**<br>([종합 표준 방법론 전체](../methodology/README.md)) | Step 1(`4. Wiki Agent`) ➔ Step 2(`5. BQG` & `6. BQG Agent`) ➔ Step 3(`7. Lineage` & `8. AI FDE`) 전 과정을 체험하는 29개 셀 워크스루 |
@@ -30,7 +30,7 @@
 ```mermaid
 flowchart TD
     subgraph Step1 ["Step 1: 비정형 지식화 및 선행 4. Wiki Agent (Tab 1 ~ Tab 4)"]
-        Raw["1. Asset: 비정형 정책 가이드 (sample_policy_guide.md)"] --> Wiki["2. OKF Layer: 담백한 YAML Frontmatter & Karpathy 3-Layer Wiki"]
+        Raw["1. Asset: 비정형 정책 가이드 (sample_policy_guide.md)"] --> Wiki["2. Knowledge Viewer: 담백한 YAML Frontmatter & Karpathy 3-Layer Wiki"]
         Wiki --> Sem["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지"]
         Sem --> WikiAg["4. Wiki Agent (GCS 기반 선행 에이전트): 16대 규정/산식 CQ 해결"]
     end

@@ -34,7 +34,7 @@
   PDF / Markdown 업무 규정, 계약서, 공정 매뉴얼 + BigQuery DW 원장 테이블
           │
           ▼ (Clean YAML Frontmatter + Karpathy 3-Layer LLM-Wiki on GCS)
-[Tab 2 & 3: 2. OKF Layer & 3. Ontology Semantic]
+[Tab 2 & 3: 2. Knowledge Viewer & 3. Ontology Semantic]
   담백한 원본 YAML Frontmatter (.okf.md) + 5대 온톨로지 요소 & 시맨틱 브릿지
           │
           ├──► [Tab 4: 4. Wiki Agent (선행 GCS 위키 에이전트)]
@@ -101,7 +101,7 @@ industry_cases/
 1. **도메인 선정 및 케이스 복사**:
    - 신규 고객사의 산업군에 매칭되는 `industry_cases/` 서브폴더의 케이스 명세서를 참조합니다.
 2. **원천 데이터 매핑 및 선행 `4. Wiki Agent` 검증**:
-   - 고객사의 비정형 규정 문서(PDF/Word)를 담백한 YAML Frontmatter(`---\n...\n---`)가 포함된 `2. OKF Layer` 위키로 변환하고, **`4. Wiki Agent` (GCS)**로 규정/예외 질의를 선행 검증합니다.
+   - 고객사의 비정형 규정 문서(PDF/Word)를 담백한 YAML Frontmatter(`---\n...\n---`)가 포함된 `2. Knowledge Viewer` 위키로 변환하고, **`4. Wiki Agent` (GCS)**로 규정/예외 질의를 선행 검증합니다.
 3. **정형 DW 결합 및 `5. Bigquery Graph` / `6. BQG Agent` 확장**:
    - 고객사 DW 테이블을 `data_templates/schema_*.sql`의 DDL 구조에 맞춰 매핑한 뒤 `python3 run_pipeline.py`를 실행하여 **`5. Bigquery Graph`**와 **`6. BQG Agent`**를 활성화합니다.
 4. **`Agentic Ontology Studio` 통합 검증**:

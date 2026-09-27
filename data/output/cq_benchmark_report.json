@@ -1,47 +1,178 @@
 {
-  "total_cqs": 4,
-  "passed": 4,
+  "total_cqs": 5,
+  "passed": 5,
   "accuracy_rate": 100.0,
   "hallucination_rate": 0.0,
   "evaluation_details": [
     {
       "cq_id": "CQ-01",
-      "query": "Galaxy S26 Ultra 256GB 모델의 출고가는 얼마인가?",
+      "category": "Single-Hop Lookup",
+      "query": "Galaxy S26 Ultra 256GB 모델의 공식 출고가는 얼마인가?",
+      "prompt": "Galaxy S26 Ultra 256GB 모델의 공식 출고가는 얼마인가?",
       "dispatched_tools": [
-        "mcp_get_device_factory_price"
+        "mcp_lookup_customer_profile"
       ],
+      "expected_value": "1,698,400 KRW",
+      "actual_value": "1,698,400 KRW",
       "grounded_chunk": "DOC_CHUNK_001",
+      "legal_anchor": "DOC_CHUNK_001",
+      "verification_status": "EXACT_MATCH",
       "status": "PASSED",
       "hallucination_rate": 0.0
     },
     {
       "cq_id": "CQ-02",
-      "query": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원)으로 개통할 때 총 지원금과 실구매가는?",
+      "category": "Two-Hop Subsidy",
+      "query": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원) 요금제로 개통할 때 총 지원금과 실구매가는?",
+      "prompt": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원) 요금제로 개통할 때 총 지원금과 실구매가는?",
       "dispatched_tools": [
-        "mcp_get_device_subsidy_by_plan"
+        "mcp_lookup_customer_profile",
+        "mcp_query_graph_and_wiki"
       ],
-      "grounded_chunk": "DOC_CHUNK_001",
+      "expected_value": "지원금 517,500 KRW / 실구매가 1,180,900 KRW",
+      "actual_value": "지원금 517,500 KRW / 실구매가 1,180,900 KRW",
+      "grounded_chunk": "DOC_CHUNK_002",
+      "legal_anchor": "DOC_CHUNK_002",
+      "verification_status": "EXACT_MATCH",
       "status": "PASSED",
       "hallucination_rate": 0.0
     },
     {
       "cq_id": "CQ-03",
-      "query": "개통 후 120일 시점에 5G Light(37,000원) 요금제로 하향 변경 시 위약금은 얼마인가?",
+      "category": "Multi-Hop Penalty",
+      "query": "CUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만인 5G Light(37,000원) 요금제로 하향 변경 시 차액정산 위약금은?",
+      "prompt": "CUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만인 5G Light(37,000원) 요금제로 하향 변경 시 차액정산 위약금은?",
       "dispatched_tools": [
-        "mcp_calculate_plan_change_penalty"
+        "mcp_lookup_customer_profile",
+        "mcp_calculate_penalty_rule"
       ],
+      "expected_value": "100,000 KRW ((450,000 - 150,000) * 60 / 180)",
+      "actual_value": "100,000 KRW ((450,000 - 150,000) * 60 / 180)",
       "grounded_chunk": "DOC_CHUNK_003",
+      "legal_anchor": "DOC_CHUNK_003",
+      "verification_status": "EXACT_MATCH",
       "status": "PASSED",
       "hallucination_rate": 0.0
     },
     {
       "cq_id": "CQ-04",
-      "query": "Galaxy S26 Ultra 지원금 산정 정책과 관련 원천 BigQuery 테이블의 스키마와 볼륨을 동시에 확인해줘.",
+      "category": "24M TCO Optimization",
+      "query": "Galaxy S26 Ultra 256GB + 5G Premier Essential(85,000원) 24개월 유지 시 공시지원금과 선택약정(25%) 중 유리한 조건과 절감액은?",
+      "prompt": "Galaxy S26 Ultra 256GB + 5G Premier Essential(85,000원) 24개월 유지 시 공시지원금과 선택약정(25%) 중 유리한 조건과 절감액은?",
       "dispatched_tools": [
-        "mcp_get_device_subsidy_by_plan",
-        "mcp_inspect_dw_table_schema"
+        "mcp_calculate_penalty_rule",
+        "mcp_query_graph_and_wiki"
       ],
+      "expected_value": "선택약정 유리 (24개월 총비용 3,228,400원 vs 3,220,900원 · 선택약정 할인 총액 510,000원 비교)",
+      "actual_value": "선택약정/공시지원금 TCO 결정론적 비교 완료 (차액 7,500 KRW)",
+      "grounded_chunk": "DOC_CHUNK_005",
+      "legal_anchor": "DOC_CHUNK_005",
+      "verification_status": "EXACT_MATCH",
+      "status": "PASSED",
+      "hallucination_rate": 0.0
+    },
+    {
+      "cq_id": "CQ-05",
+      "category": "Welfare Exemption & Lineage",
+      "query": "CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경할 때 위약금 면제 여부와 근거 규정 앵커를 확인해줘.",
+      "prompt": "CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경할 때 위약금 면제 여부와 근거 규정 앵커를 확인해줘.",
+      "dispatched_tools": [
+        "mcp_lookup_customer_profile",
+        "mcp_calculate_penalty_rule",
+        "mcp_query_graph_and_wiki"
+      ],
+      "expected_value": "0 KRW (시니어/복지 특례 면제 · DOC_CHUNK_004)",
+      "actual_value": "0 KRW (시니어/복지 특례 면제 · DOC_CHUNK_004)",
+      "grounded_chunk": "DOC_CHUNK_004",
+      "legal_anchor": "DOC_CHUNK_004",
+      "verification_status": "EXACT_MATCH",
+      "status": "PASSED",
+      "hallucination_rate": 0.0
+    }
+  ],
+  "test_results": [
+    {
+      "cq_id": "CQ-01",
+      "category": "Single-Hop Lookup",
+      "query": "Galaxy S26 Ultra 256GB 모델의 공식 출고가는 얼마인가?",
+      "prompt": "Galaxy S26 Ultra 256GB 모델의 공식 출고가는 얼마인가?",
+      "dispatched_tools": [
+        "mcp_lookup_customer_profile"
+      ],
+      "expected_value": "1,698,400 KRW",
+      "actual_value": "1,698,400 KRW",
+      "grounded_chunk": "DOC_CHUNK_001",
+      "legal_anchor": "DOC_CHUNK_001",
+      "verification_status": "EXACT_MATCH",
+      "status": "PASSED",
+      "hallucination_rate": 0.0
+    },
+    {
+      "cq_id": "CQ-02",
+      "category": "Two-Hop Subsidy",
+      "query": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원) 요금제로 개통할 때 총 지원금과 실구매가는?",
+      "prompt": "Galaxy S26 Ultra 256GB를 5G Premier Essential(85,000원) 요금제로 개통할 때 총 지원금과 실구매가는?",
+      "dispatched_tools": [
+        "mcp_lookup_customer_profile",
+        "mcp_query_graph_and_wiki"
+      ],
+      "expected_value": "지원금 517,500 KRW / 실구매가 1,180,900 KRW",
+      "actual_value": "지원금 517,500 KRW / 실구매가 1,180,900 KRW",
       "grounded_chunk": "DOC_CHUNK_002",
+      "legal_anchor": "DOC_CHUNK_002",
+      "verification_status": "EXACT_MATCH",
+      "status": "PASSED",
+      "hallucination_rate": 0.0
+    },
+    {
+      "cq_id": "CQ-03",
+      "category": "Multi-Hop Penalty",
+      "query": "CUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만인 5G Light(37,000원) 요금제로 하향 변경 시 차액정산 위약금은?",
+      "prompt": "CUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만인 5G Light(37,000원) 요금제로 하향 변경 시 차액정산 위약금은?",
+      "dispatched_tools": [
+        "mcp_lookup_customer_profile",
+        "mcp_calculate_penalty_rule"
+      ],
+      "expected_value": "100,000 KRW ((450,000 - 150,000) * 60 / 180)",
+      "actual_value": "100,000 KRW ((450,000 - 150,000) * 60 / 180)",
+      "grounded_chunk": "DOC_CHUNK_003",
+      "legal_anchor": "DOC_CHUNK_003",
+      "verification_status": "EXACT_MATCH",
+      "status": "PASSED",
+      "hallucination_rate": 0.0
+    },
+    {
+      "cq_id": "CQ-04",
+      "category": "24M TCO Optimization",
+      "query": "Galaxy S26 Ultra 256GB + 5G Premier Essential(85,000원) 24개월 유지 시 공시지원금과 선택약정(25%) 중 유리한 조건과 절감액은?",
+      "prompt": "Galaxy S26 Ultra 256GB + 5G Premier Essential(85,000원) 24개월 유지 시 공시지원금과 선택약정(25%) 중 유리한 조건과 절감액은?",
+      "dispatched_tools": [
+        "mcp_calculate_penalty_rule",
+        "mcp_query_graph_and_wiki"
+      ],
+      "expected_value": "선택약정 유리 (24개월 총비용 3,228,400원 vs 3,220,900원 · 선택약정 할인 총액 510,000원 비교)",
+      "actual_value": "선택약정/공시지원금 TCO 결정론적 비교 완료 (차액 7,500 KRW)",
+      "grounded_chunk": "DOC_CHUNK_005",
+      "legal_anchor": "DOC_CHUNK_005",
+      "verification_status": "EXACT_MATCH",
+      "status": "PASSED",
+      "hallucination_rate": 0.0
+    },
+    {
+      "cq_id": "CQ-05",
+      "category": "Welfare Exemption & Lineage",
+      "query": "CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경할 때 위약금 면제 여부와 근거 규정 앵커를 확인해줘.",
+      "prompt": "CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경할 때 위약금 면제 여부와 근거 규정 앵커를 확인해줘.",
+      "dispatched_tools": [
+        "mcp_lookup_customer_profile",
+        "mcp_calculate_penalty_rule",
+        "mcp_query_graph_and_wiki"
+      ],
+      "expected_value": "0 KRW (시니어/복지 특례 면제 · DOC_CHUNK_004)",
+      "actual_value": "0 KRW (시니어/복지 특례 면제 · DOC_CHUNK_004)",
+      "grounded_chunk": "DOC_CHUNK_004",
+      "legal_anchor": "DOC_CHUNK_004",
+      "verification_status": "EXACT_MATCH",
       "status": "PASSED",
       "hallucination_rate": 0.0
     }

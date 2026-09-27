@@ -16,7 +16,7 @@
 ```mermaid
 flowchart TD
     subgraph TrackA ["Track A: 비정형 지식 체계화 & 선행 4. Wiki Agent (Unstructured First on GCS)"]
-        RawDoc["1. Asset: 비정형 업무 가이드 & SOP<br/>(MHTML / PDF)"] --> OKF["2. OKF Layer: Karpathy 3-Layer LLM-Wiki<br/>(.okf.md & 담백한 원본 YAML Frontmatter)"]
+        RawDoc["1. Asset: 비정형 업무 가이드 & SOP<br/>(MHTML / PDF)"] --> OKF["2. Knowledge Viewer: Karpathy 3-Layer LLM-Wiki<br/>(.okf.md & 담백한 원본 YAML Frontmatter)"]
         OKF --> Semantic["3. Ontology Semantic: 5대 요소 추출 & 시맨틱 브릿지"]
         Semantic --> WikiAgent["4. Wiki Agent (선행 GCS 에이전트)<br/>DB 구축 없이 GCS 위키 기반 16대 규정/산식 CQ 즉시 추론"]
     end
@@ -42,7 +42,7 @@ flowchart TD
 ```
 
 #### 4대 진화 축 및 8단계 스튜디오(`Agentic Ontology Studio`, `1. Asset` ~ `8. AI FDE`) 흐름의 핵심 원리
-1. **비정형 우선 지식화 및 선행 `4. Wiki Agent` 구축 (`1. Asset` ➔ `2. OKF Layer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`)**:
+1. **비정형 우선 지식화 및 선행 `4. Wiki Agent` 구축 (`1. Asset` ➔ `2. Knowledge Viewer` ➔ `3. Ontology Semantic` ➔ `4. Wiki Agent`)**:
    - 비정형 업무 매뉴얼을 파싱하여 OKF(Open Knowledge Format v0.2)로 변환하고, 담백한 원본 YAML Frontmatter(`---\n...\n---`)와 Karpathy 3-Layer LLM-Wiki 구조로 재구성하여 GCS 버킷 상에 배포합니다.
    - 물리 그래프 DB 구축 전이라도, `3. Ontology Semantic` 정의 직후 **`4. Wiki Agent` (GCS 기반 선행 에이전트)**를 즉시 기동하여 위약금 산식·예외 조항 등 16대 규정 중심 CQ(`[GCS Preferred]`)를 1차 해결합니다.
 2. **정형 DW 원장 프루닝 및 `5. Bigquery Graph` 구축 (`Track B & C`)**:
@@ -69,7 +69,7 @@ flowchart TD
 | **Stage 2: 시맨틱 온톨로지 모델링 & LLM-Wiki** | [02_semantic_modeling_and_okf_ko.md](./02_semantic_modeling_and_okf_ko.md) | [02_semantic_modeling_and_okf_en.md](./02_semantic_modeling_and_okf_en.md) | 비정형 파싱, Karpathy 3-Layer LLM-Wiki, GCS 프로토타이핑, 2-Layer 안티 리던던시 |
 | **Stage 3: BigQuery 그래프 엔지니어링** | [03_property_graph_and_gql_ko.md](./03_property_graph_and_gql_ko.md) | [03_property_graph_and_gql_en.md](./03_property_graph_and_gql_en.md) | SQL:2023 Property Graph DDL, DW 노드 승격 & 청크/정책 브릿지, 다중 홉 GQL 템플릿 |
 | **Stage 4: 멀티도메인 MCP 스위트 구축** | [04_multi_domain_mcp_and_agent_ko.md](./04_multi_domain_mcp_and_agent_ko.md) | [04_multi_domain_mcp_and_agent_en.md](./04_multi_domain_mcp_and_agent_en.md) | 11종 MCP 도구셋(비즈니스/엔지니어링), 에이전트 추상화 계층, 동적 체이닝 시퀀스 |
-| **Stage 5: 스튜디오 구축 및 배포** | [05_enterprise_studio_and_deployment_ko.md](./05_enterprise_studio_and_deployment_ko.md) | [05_enterprise_studio_and_deployment_en.md](./05_enterprise_studio_and_deployment_en.md) | 5단계 E2E 데이터 라이프사이클 스튜디오(Overview/레지스트리/OKF 레이어/정형/하이브리드 BQG/AI FDE/CQ), 4-Tier 리니지, 무중단 배포 |
+| **Stage 5: 스튜디오 구축 및 배포** | [05_enterprise_studio_and_deployment_ko.md](./05_enterprise_studio_and_deployment_ko.md) | [05_enterprise_studio_and_deployment_en.md](./05_enterprise_studio_and_deployment_en.md) | 5단계 E2E 데이터 라이프사이클 스튜디오(Overview/레지스트리/Knowledge Viewer/정형/하이브리드 BQG/AI FDE/CQ), 4-Tier 리니지, 무중단 배포 |
 
 ### 3. GCP Native First 아키텍처 원칙 및 커스텀 확장 체계 (GCP Native First vs Custom Extension)
 

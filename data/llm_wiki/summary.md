@@ -1,9 +1,9 @@
 # Enterprise Knowledge Wiki: Executive Summary (Layer 1)
-- **Domain**: Telecom Terminal Subsidy, Tariff Plans & Commitment Management
-- **Target Framework**: OKF v0.2 & BigQuery SQL:2023 Property Graph
-- **Evolutionary Stage**: Track A Unstructured Prototyping & GCS Registry
-- **Total Parsed Chunks**: 3
+- **Domain**: Telecom Terminal Subsidy, Tariff Plans & Customer Commitment Management
+- **Target Framework**: OKF v0.2 & Dual Property Graph (BigQuery SQL:2023 / Cloud Spanner Graph)
+- **Total Parsed Chunks**: 5 (Across 2 Policy Guides)
+- **De-Identified DW Tables**: 4 Master Tables (`customer_contracts`, `devices`, `plans`, `subsidies`)
 
 ## Operational Philosophy
 This knowledge base unifies unstructured legal and customer service manuals with structured enterprise DW ledgers.
-It guarantees 0% hallucination by enforcing deterministic mathematical calculations and immutable hash grounding.
+By combining deterministic rule MCP execution with SHA-256 paragraph anchors, agents ground every numerical calculation in verifiable source evidence.

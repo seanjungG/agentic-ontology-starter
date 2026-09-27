@@ -90,14 +90,22 @@ sequenceDiagram
 - **중간 관측 (Intermediate Observation)**: 각 단계별 도구 실행 결과를 사용자 채팅 타임라인에 중간 과정으로 투명하게 표출하여, 블랙박스 문제를 완전히 해소합니다.
 
 ### 2.4 모호 및 권한 제한 질의 가드레일 (Safety Guardrails)
-1. **미지원 자산 (`[NOT_FOUND]`)**: 온톨로지 카탈로그에 없는 단말이나 요금제 문의 시, 임의 추측을 금지하고 근접 표준 어휘를 역제안.
-2. **권한 부족 (`[RESTRICTED]`)**: IAM 서비스 계정 권한이 없는 테이블 스캔 시도시, 에러 대신 필요한 IAM Role(`roles/bigquery.dataViewer`) 안내 가이드 제공.
+1. **미지원 자산 (`ENTITY_NOT_FOUND` / `INVALID_INPUT_BOUNDARY`)**: 온톨로지 카탈로그에 없는 단말이나 요금제 문의 시, 무음 기본값 대체(Silent Default Fallback)를 금지하고 허용된 표준 어휘 목록과 함께 명시적 구조화 오류를 반환.
+2. **도메인 외 거절 (`UNSUPPORTED_MODALITY_ABSTENTION`)**: 개통·장바구니·결제 실행 등 조회/검증 범위를 벗어난 요청은 명시적으로 거절.
+3. **보안 가드레일 (`SECURITY_GUARDRAIL_BLOCKED`)**: `DROP`/`DELETE`/`TRUNCATE`/`ALTER` 등 파괴적 GQL·DDL 인젝션 또는 스토리지 삭제 요청은 실행 전 차단.
+
+### 2.5 3대 MCP 계층(16종) 24대 경계값 검증 및 2단계 반복 고도화 프로토콜 (`scripts/evaluate_mcp_quality_suite.py`)
+- **검증 대상**: 비즈니스 MCP 5종(10 시나리오), BQ+KC 엔지니어링 MCP 6종(7 시나리오), 방법론 Stage MCP 5종(5 시나리오), AI FDE 라우터(2 시나리오) = 총 **24개 경계값 시나리오**.
+- **2단계 반복 고도화 (Round 1 ➔ Round 2)**:
+  - **Round 1 (Baseline)**: 초기 핸들러의 무음 기본값 대체 및 무조건적 `SUCCESS` 반환 결함을 적발 (**5 / 24 통과, 20.8%**).
+  - **Round 2 (Refined)**: 각 도구 핸들러에 입력 계약 검증·실제 레지스트리 대조·읽기 전용 GQL 정규식·Stage 품질 게이트 임계치 검사를 반영하여 재검증 (**24 / 24 통과, 100.0%, +79.2%p**).
 
 ---
 
 ## 3. Stage 4 품질 게이트 (Gate 4 Exit Checklist)
 
-- [ ] 11종 도메인 MCP 도구의 JSON Schema 인터페이스 검증이 완료되었는가?
-- [ ] 복합 질의에 대한 다중 하위 목표 분해(`Sub-Goals`)가 정상 작동하는가?
-- [ ] 선행 도구 출력 ➔ 후속 도구 입력으로 이어지는 컨텍스트 전달(Data Hand-off)이 실측 검증되었는가?
-- [ ] 미지원 및 권한 제한 질의에 대한 안전 가드레일이 정상 작동하는가?
+- [x] 16종 3대 계층 도메인 MCP 도구(비즈니스 5 · BQ+KC 6 · Stage 5)의 JSON Schema 인터페이스 검증이 완료되었는가?
+- [x] 복합 질의에 대한 다중 하위 목표 분해(`Sub-Goals`) 및 5-Stage 순차 체이닝이 정상 작동하는가?
+- [x] 선행 도구 출력 ➔ 후속 도구 입력으로 이어지는 컨텍스트 전달(Data Hand-off)이 실측 검증되었는가?
+- [x] 24대 경계값·계약·예외·인젝션 차단 검증 스위트(`evaluate_mcp_quality_suite.py`)에서 24/24(100.0%) 통과를 달성했는가?
+
