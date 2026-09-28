@@ -1,26 +1,26 @@
 # 5-Stage 에이전틱 온톨로지 구축 방법론 (`METHODOLOGY_KO.md`)
 
-> 라이브 스튜디오 [`Agentic Ontology Studio`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app) · [English](./METHODOLOGY_EN.md) · [Stage별 가이드 인덱스](./README.md) · [노트북 디렉터리](../notebooks/README.md)
+> 라이브 스튜디오 [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [English](./METHODOLOGY_EN.md) · [Stage별 가이드 인덱스](./README.md) · [노트북 디렉터리](../notebooks/README.md)
 
-## 1. 목적과 핵심 원칙
+## 1. 목적과 핵심 원칙 (8단계 엔지니어링 흐름)
 
-이 문서는 정형 데이터(BigQuery DW 테이블)와 비정형 정책 문서(업무 가이드·약관)를 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO GQL)**로 결합하고, **MCP 도구(8종)**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 근거 기반 답변을 제공하는 5-Stage 엔지니어링 절차를 정의한다.
+이 문서는 정형 데이터(BigQuery DW 테이블)와 비정형 정책 문서(업무 가이드·약관)를 **1. 준비(Prepare) → 2. 분석(Analyze) → 3. 파싱(Parse) → 4. 통합(Integrate) → 5. 구축(Build Graph) → 6. 에이전트 구축(Build Agent) → 7. 답변(Answer & GQL) → 8. 검증(Verify & Gate)**의 8단계 엔지니어링 흐름을 통해 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO GQL)**로 결합하고, **MCP 도구(8종)**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 근거 기반 답변을 제공하는 5-Stage 절차를 정의한다.
 
 1. **원문 해시 앵커 보존**: 비정형 문서는 문단별 SHA-256 해시(`anchor_<12hex>`)와 함께 `tb_doc_chunks`에 적재해 에이전트 답변에서 원문 문단까지 역추적한다.
-2. **Zero-ETL 그래프 투영**: 정형 원장(`tb_devices`, `tb_plans`, `tb_subsidies`, `tb_customer_contracts`)과 비정형 규칙·청크(`tb_domain_rules`, `tb_doc_chunks`)를 복제 없이 `CREATE OR REPLACE PROPERTY GRAPH`로 묶는다.
+2. **Zero-ETL 그래프 투영**: 정형 원장(`tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_customer_contract`)과 비정형 규칙·청크(`tb_domain_rules`, `tb_doc_chunks`)를 복제 없이 `CREATE OR REPLACE PROPERTY GRAPH`로 묶는다.
 3. **결정론적 산식 실행**: 위약금 일할 계산이나 24개월 총비용(TCO) 비교는 LLM 암산에 맡기지 않고 MCP 도구 내부 SQL/Python 산식으로 계산한다.
 4. **가드레일 상태 분리**: 근거 확인(`GROUNDED`), 조건 미일치(`MATCH_NOT_FOUND`), 필수 정보 부족(`INSUFFICIENT_PARAMETERS`), 쿼리 오류(`BQ_QUERY_ERROR`)를 명확히 구분한다.
 
-## 2. 5-Stage 라이프사이클 및 스튜디오 · MCP · 노트북 매핑
+## 2. 8단계 엔지니어링 흐름 & 5-Stage 라이프사이클 · 스튜디오 · MCP · 노트북 매핑
 
-| Stage | 단계명 | 스튜디오 탭 | Stage MCP 도구 (`src/agent/mcp_server.py`) | 산출물 ID | 상세 가이드 / 노트북 |
-| :---: | :--- | :--- | :--- | :---: | :--- |
-| **공통** | 아키텍처 개요 및 파이프라인 투어 | [`0. Overview`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=overview) | Stage 1~5 일괄/개별 실행 | - | [stage0_overview_walkthrough.ipynb](../notebooks/stage0_overview_walkthrough.ipynb) |
-| **Stage 1** | 자산 탐색 · 스코핑 · CQ 정의 | [`Stage 1. Asset`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage1) | `mcp_stage1_asset_discovery` | `D1.1`~`D1.4` | [가이드](./01_stage1_asset_and_cq_ko.md) · [노트북](../notebooks/stage1_asset_and_cq_ko.ipynb) |
-| **Stage 2** | 3-Layer 위키 · 시맨틱 그래프 | [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) | `mcp_stage2_wiki_and_semantic` | `D2.1`~`D2.6` | [가이드](./02_stage2_wiki_and_semantic_graph_ko.md) · [노트북](../notebooks/stage2_wiki_and_semantic_graph_ko.ipynb) |
-| **Stage 3** | Property Graph · ISO GQL | [`Stage 3. Property Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) | `mcp_stage3_property_graph` | `D3.1`~`D3.4` | [가이드](./03_stage3_property_graph_ko.md) · [노트북](../notebooks/stage3_property_graph_bigquery_spanner_ko.ipynb) |
-| **Stage 4** | MCP 스위트 · 에이전트 오케스트레이션 | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 런타임 3종 | `D4.1`~`D4.4` | [가이드](./04_stage4_agent_and_mcp_ko.md) · [노트북](../notebooks/stage4_agent_and_mcp_execution_ko.ipynb) |
-| **Stage 5** | 4계층 리니지 · 평가 · 배포 게이트 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`~`D5.5` | [가이드](./05_stage5_lineage_and_eval_ko.md) · [노트북](../notebooks/stage5_lineage_and_evaluation_ko.ipynb) |
+| 8단계 엔지니어링 흐름 | Stage | 단계명 | 스튜디오 탭 | Stage MCP 도구 (`src/agent/mcp_server.py`) | 산출물 ID | 상세 가이드 / 한·영 노트북 |
+| :--- | :---: | :--- | :--- | :--- | :---: | :--- |
+| **0. 전체 흐름 투어** | **공통** | 아키텍처 개요 및 파이프라인 투어 | [`0. Overview`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=overview) | Stage 1~5 일괄/개별 실행 | - | [KO 노트북](../notebooks/stage0_overview_walkthrough.ipynb) · [EN 노트북](../notebooks/stage0_overview_walkthrough_en.ipynb) |
+| **1. 준비 · 2. 분석** | **Stage 1** | 자산 탐색 · 스코핑 · CQ 정의 | [`Stage 1. Asset`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage1) | `mcp_stage1_asset_discovery` | `D1.1`~`D1.4` | [가이드](./01_stage1_asset_and_cq_ko.md) · [KO](../notebooks/stage1_asset_and_cq_ko.ipynb) · [EN](../notebooks/stage1_asset_and_cq_en.ipynb) |
+| **3. 파싱 · 4. 통합** | **Stage 2** | 3-Layer 위키 · 시맨틱 그래프 | [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage2) | `mcp_stage2_wiki_and_semantic` | `D2.1`~`D2.6` | [가이드](./02_stage2_wiki_and_semantic_graph_ko.md) · [KO](../notebooks/stage2_wiki_and_semantic_graph_ko.ipynb) · [EN](../notebooks/stage2_wiki_and_semantic_graph_en.ipynb) |
+| **5. 구축** | **Stage 3** | Property Graph · ISO GQL | [`Stage 3. Property Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage3) | `mcp_stage3_property_graph` | `D3.1`~`D3.4` | [가이드](./03_stage3_property_graph_ko.md) · [KO](../notebooks/stage3_property_graph_bigquery_spanner_ko.ipynb) · [EN](../notebooks/stage3_property_graph_bigquery_spanner_en.ipynb) |
+| **6. 에이전트 · 7. 답변** | **Stage 4** | MCP 스위트 · 에이전트 오케스트레이션 | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 런타임 3종 | `D4.1`~`D4.4` | [가이드](./04_stage4_agent_and_mcp_ko.md) · [KO](../notebooks/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](../notebooks/stage4_agent_and_mcp_execution_en.ipynb) |
+| **8. 검증** | **Stage 5** | 4계층 리니지 · 평가 · 배포 게이트 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`~`D5.5` | [가이드](./05_stage5_lineage_and_eval_ko.md) · [KO](../notebooks/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../notebooks/stage5_lineage_and_evaluation_en.ipynb) |
 
 ## 3. 도입 트랙 (3-Track Adoption Model)
 
@@ -38,9 +38,9 @@
 
 ### 4.1 BigQuery `starter_ontology_dw` (10개 테이블 + `STARTER_ONTOLOGY_GRAPH`)
 
-- **노드 테이블 6종**: `tb_devices`(5), `tb_plans`(5), `tb_subsidies`(7), `tb_customer_contracts`(5), `tb_domain_rules`(4), `tb_doc_chunks`(5)
-- **엣지 테이블 4종**: `edge_CoversDevice`(7), `edge_RequiresPlan`(7), `edge_GovernedByRule`(5), `edge_GroundedInChunk`(4)
-- **GCS 위키 버킷**: `gs://seanjung-poc-starter-ontology` (`llm_wiki/` 3-Layer 마크다운 및 매니페스트)
+- **노드 테이블 6종**: `tb_device_master`(4), `tb_plan_master`(6), `tb_subsidy_policy`(6), `tb_customer_contract`(6), `tb_domain_rules`(4), `tb_doc_chunks`(5)
+- **엣지 테이블 4종**: `edge_contract_device`(6), `edge_contract_plan`(6), `edge_subsidy_binding`(7), `edge_rule_applies_to_plan`(12)
+- **GCS 위키 버킷**: `gs://seanjung-poc-starter-ontology` (`raw/`, `parsed/`, `ontology/` 3-Layer 마크다운 및 매니페스트)
 
 ### 4.2 MCP 도구 8종 (`src/agent/mcp_server.py`)
 
@@ -57,8 +57,8 @@
 
 ## 5. Stage별 산출물 요약 (D1.1 ~ D5.5)
 
-- **Stage 1 (`D1.1`~`D1.4`)**: 테이블 스키마·행수 프로파일, 가이드 문서 인벤토리, 표준 용어사전(`sample_glossary.json`), Golden CQ 5건(`sample_cq_eval.json`).
+- **Stage 1 (`D1.1`~`D1.4`)**: 테이블 스키마·행수 프로파일, 가이드 문서 인벤토리, 표준 용어사전(`business_glossary.json`), Golden CQ 5건(`golden_competency_questions.json`) 및 경계값 10건(`boundary_cases.json`).
 - **Stage 2 (`D2.1`~`D2.6`)**: 3-Layer 위키(`data/llm_wiki/`), SHA-256 해시 앵커(`tb_doc_chunks`), JSON-LD 시맨틱 그래프(`data/output/ontology.jsonld`).
 - **Stage 3 (`D3.1`~`D3.4`)**: BigQuery Property Graph DDL(`create_property_graph.sql`), Spanner Graph DDL(`create_spanner_graph.sql`), GQL 탐색 패턴 검증.
 - **Stage 4 (`D4.1`~`D4.4`)**: MCP 8종 서버(`mcp_server.py`), 2-패스 Gemini 에이전트(`reasoning_engine.py`), 근거·가드레일 검증.
-- **Stage 5 (`D5.1`~`D5.5`)**: 4계층 리니지, Golden CQ 리포트(`validation_report.json`), 경계값 10×5 리포트(`boundary_eval_report.json`), Terraform·Cloud Run 배포 패키지.
+- **Stage 5 (`D5.1`~`D5.5`)**: 4계층 리니지, Golden CQ 리포트(`cq_benchmark_report.json`), 경계값 10×5 리포트(`boundary_benchmark_results.json`), Terraform·Cloud Run 배포 패키지.

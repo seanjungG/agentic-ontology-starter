@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Generates (and optionally executes) the 11 canonical starter notebooks (`stage0`..`stage5`, KO/EN)."""
+"""Generates (and optionally executes) the 12 canonical starter notebooks (`stage0`..`stage5`, KO/EN)."""
 import argparse
 import json
 import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from nb_specs_s0_s2 import build_stage0, build_stage1, build_stage2
@@ -13,7 +14,8 @@ from validate_and_pack_notebooks import pack_and_validate_all
 
 NB_DIR = Path(__file__).resolve().parent
 SPECS = {
-    "stage0_overview_walkthrough.ipynb": build_stage0,
+    "stage0_overview_walkthrough.ipynb": lambda: build_stage0("ko"),
+    "stage0_overview_walkthrough_en.ipynb": lambda: build_stage0("en"),
     "stage1_asset_and_cq_ko.ipynb": lambda: build_stage1("ko"),
     "stage1_asset_and_cq_en.ipynb": lambda: build_stage1("en"),
     "stage2_wiki_and_semantic_graph_ko.ipynb": lambda: build_stage2("ko"),
@@ -46,7 +48,7 @@ def write_notebook(filename: str, cells: list) -> Path:
     return out
 
 
-def execute_notebook(path: Path) -> None:
+def execute_notebook(path: Path) -> str:
     env = os.environ.copy()
     if Path("/etc/ssl/cert.pem").exists():
         env.setdefault("SSL_CERT_FILE", "/etc/ssl/cert.pem")
@@ -63,22 +65,30 @@ def execute_notebook(path: Path) -> None:
         "--ExecutePreprocessor.kernel_name=python3",
         str(path),
     ]
-    print(f"[EXEC] Running {path.name} ...")
+    print(f"[EXEC] Running {path.name} ...", flush=True)
     subprocess.run(cmd, cwd=str(NB_DIR), env=env, check=True)
+    print(f"[DONE] Finished {path.name}", flush=True)
+    return path.name
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true", help="Execute notebooks via nbconvert")
+    parser.add_argument("--workers", type=int, default=2, help="Parallel workers for notebook execution")
     parser.add_argument("--only", nargs="*", help="Filter notebook filenames")
     args = parser.parse_args()
 
     targets = [k for k in SPECS if not args.only or any(f in k for f in args.only)]
+    paths = []
     for fname in targets:
-        p = write_notebook(fname, SPECS[fname]())
-        print(f"[WRITE] {p.name} ({len(SPECS[fname]())} cells)")
-        if args.execute:
-            execute_notebook(p)
+        cells = SPECS[fname]()
+        p = write_notebook(fname, cells)
+        print(f"[WRITE] {p.name} ({len(cells)} cells)", flush=True)
+        paths.append(p)
+
+    if args.execute:
+        with ThreadPoolExecutor(max_workers=max(1, args.workers)) as ex:
+            list(ex.map(execute_notebook, paths))
 
     pack_and_validate_all()
 
