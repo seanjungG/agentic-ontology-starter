@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0",
-  "_readme": "이 파일은 스튜디오의 0. Overview 및 Stage 5. Lineage & Eval 화면 메타데이터를 정의합니다. Uplus Ontology Light Enterprise 디자인 토큰(#3b82f6, #0d9488, #6366f1, #7c3aed, #db2777)과 100% 동기화되어 있습니다.",
+  "_readme": "이 파일은 스튜디오의 0. Overview 및 Stage 5. Lineage & Eval 화면 메타데이터를 정의합니다. Light Enterprise 디자인 토큰(#3b82f6, #0d9488, #6366f1, #7c3aed, #db2777)과 동기화되어 있습니다.",
   "brand": {
     "product_name": "Agentic Ontology Studio",
     "edition": "Starter Pack v2.0",
@@ -14,13 +14,15 @@
   "overview": {
     "eyebrow": "SECTION 1 · 5-STAGE METHODOLOGY & MODULAR MCP PIPELINE",
     "title": "5-Stage 온톨로지 엔지니어링 방법론과 모듈형 Stage MCP 실행 보드",
-    "lead": "왼쪽에서 오른쪽으로 <b>STAGE 1 ➔ STAGE 5</b>가 진행되며, 각 Stage 상단의 <code>▶ Stage N MCP</code> 버튼을 클릭하면 해당 Stage의 세부 Step을 선택·단독 실행할 수 있습니다. 상단 컨트롤 바에서 고객사의 데이터 성숙도(Track 1~3)와 그래프 엔진(BigQuery / Spanner)을 실시간 전환해 보세요.",
+    "lead": "왼쪽에서 오른쪽으로 <b>STAGE 1 ➔ STAGE 5</b>가 진행되며, 각 Stage 상단의 <code>▶ Stage N MCP</code> 버튼을 클릭하면 해당 Stage의 세부 Step을 선택·단독 실행할 수 있습니다. 상단 컨트롤 바에서 데이터 성숙도 트랙(Lite 1→2→4 · Standard 1→2→3→4 · Full 1→5)과 그래프 엔진(BigQuery / Spanner)을 실시간 전환해 보세요.",
     "stages": [
       {
         "stage_id": "stage1",
         "chip": "STAGE 1",
         "name": "자산 탐색 · 스코핑 & 비식별화",
         "mcp_tool": "mcp_stage1_asset_discovery",
+        "methodology_doc": "methodology/01_stage1_asset_and_cq_ko.md",
+        "notebook": "notebooks/stage1_asset_and_cq_ko.ipynb",
         "accent": "#3b82f6",
         "steps": [
           {
@@ -52,6 +54,8 @@
         "chip": "STAGE 2",
         "name": "3-Layer Wiki & 시맨틱 그래프",
         "mcp_tool": "mcp_stage2_wiki_and_semantic",
+        "methodology_doc": "methodology/02_stage2_wiki_and_semantic_graph_ko.md",
+        "notebook": "notebooks/stage2_wiki_and_semantic_graph_ko.ipynb",
         "accent": "#0d9488",
         "steps": [
           {
@@ -61,7 +65,7 @@
             "bullets": [
               "원문 가이드 ➔ <code>DOC_CHUNK_001~005</code> 문단 청킹 및 SHA-256 해시 부여",
               "Layer 1(<code>summary.md</code>) · Layer 2(<code>entities.md</code>) · Layer 3(<code>concepts/rules.md</code>) 생성",
-              "Track 1(Lite) 고객은 물리 그래프 없이 이 단계에서 즉시 에이전트 구동"
+              "Track 1(Lite: Stage 1→2→4)은 물리 그래프 없이 Stage 4 에이전트로 직행"
             ],
             "deliverables": "D2.1 3-Layer LLM-Wiki · D2.2 doc_chunks.jsonl"
           },
@@ -83,6 +87,8 @@
         "chip": "STAGE 3",
         "name": "듀얼 Property Graph 엔지니어링",
         "mcp_tool": "mcp_stage3_property_graph",
+        "methodology_doc": "methodology/03_stage3_property_graph_ko.md",
+        "notebook": "notebooks/stage3_property_graph_bigquery_spanner_ko.ipynb",
         "accent": "#6366f1",
         "steps": [
           {
@@ -114,6 +120,8 @@
         "chip": "STAGE 4",
         "name": "에이전트 & 모듈형 MCP 오케스트레이션",
         "mcp_tool": "mcp_stage4_agent_orchestration",
+        "methodology_doc": "methodology/04_stage4_agent_and_mcp_ko.md",
+        "notebook": "notebooks/stage4_agent_and_mcp_execution_ko.ipynb",
         "accent": "#7c3aed",
         "steps": [
           {
@@ -144,6 +152,8 @@
         "chip": "STAGE 5",
         "name": "4-Tier 리니지 & 바운더리 평가",
         "mcp_tool": "mcp_stage5_lineage_and_eval",
+        "methodology_doc": "methodology/05_stage5_lineage_and_eval_ko.md",
+        "notebook": "notebooks/stage5_lineage_and_evaluation_ko.ipynb",
         "accent": "#db2777",
         "steps": [
           {

@@ -1,26 +1,41 @@
 {
   "schema_version": "2.0",
-  "project_id": "my-gcp-project",
+  "project_id": "seanjung-poc",
   "region": "asia-northeast3",
   "track": "full",
   "graph_engine": "bigquery",
   "supported_tracks": {
     "lite": {
       "label": "Track 1 · Lite (Unstructured Wiki Only)",
-      "description": "비정형 가이드·약관 문서만 존재하는 환경 — 3-Layer LLM-Wiki 및 시맨틱 그래프만으로 즉시 에이전트 구동",
-      "active_stages": ["STAGE 1", "STAGE 2", "STAGE 4", "STAGE 5"],
+      "description": "비정형 가이드·약관 문서 중심 환경 — Stage 1(자산·CQ) → Stage 2(3-Layer 위키·시맨틱 그래프) → Stage 4(에이전트·MCP) 빠른 구동 (물리 Property Graph 생략)",
+      "active_stages": [
+        1,
+        2,
+        4
+      ],
       "requires_graph_db": false
     },
     "standard": {
       "label": "Track 2 · Standard (Structured DW + Rules)",
-      "description": "정형 DW 테이블과 핵심 산식 위주 환경 — Zero-ETL 노드 승격 및 결정론적 산식 MCP 결합",
-      "active_stages": ["STAGE 1", "STAGE 3", "STAGE 4", "STAGE 5"],
+      "description": "정형 DW + 비정형 위키 + Property Graph 결합 환경 — Stage 1 → Stage 2 → Stage 3(BigQuery Property Graph) → Stage 4(에이전트·MCP)",
+      "active_stages": [
+        1,
+        2,
+        3,
+        4
+      ],
       "requires_graph_db": true
     },
     "full": {
       "label": "Track 3 · Full-Stack (Hybrid Wiki + Property Graph)",
-      "description": "비정형 규정 위키(OKF v0.2) + 정형 DW 원장 + Property Graph(BigQuery/Spanner) 전주기 통합",
-      "active_stages": ["STAGE 1", "STAGE 2", "STAGE 3", "STAGE 4", "STAGE 5"],
+      "description": "Stage 1~5 전주기 통합 — 3-Layer 위키 + BigQuery Property Graph + MCP 8종·에이전트 + 4계층 리니지·경계값 벤치마크(10×5)",
+      "active_stages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "requires_graph_db": true
     }
   },
@@ -28,14 +43,14 @@
     "bigquery": {
       "label": "BigQuery Property Graph (ISO SQL:2023)",
       "ddl_file": "data/output/create_property_graph.sql",
-      "query_syntax": "GRAPH_TABLE(my_dataset.ENTERPRISE_SUBSIDY_GRAPH MATCH ...)",
+      "query_syntax": "GRAPH_TABLE(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH` MATCH ...)",
       "recommended_for": "대규모 DW 원장 분석, Zero-ETL 뷰 투영, 배치·대화형 하이브리드 추론"
     },
     "spanner": {
       "label": "Cloud Spanner Graph (ISO GQL)",
       "ddl_file": "data/output/create_spanner_graph.sql",
       "query_syntax": "GRAPH EnterpriseSubsidyGraph MATCH (d:DeviceNode)<-[:COVERS_DEVICE]-(s:SubsidyNode)...",
-      "recommended_for": "초저지연 온라인 트랜잭션(OLTP), 실시간 다중 홉 탐색 및 고빈도 에이전트 서빙"
+      "recommended_for": "DDL 생성 지원 (`data/output/create_spanner_graph.sql`, 런타임 쿼리는 BigQuery Graph 사용)"
     },
     "none": {
       "label": "No Physical Graph (Track 1 Wiki Link Traversal)",
@@ -48,7 +63,7 @@
     "doc_source": "data/input/01_guides/",
     "table_source": "data/input/03_tables/",
     "wiki_uri": "data/llm_wiki/",
-    "bq_dataset": "my_project.telecom_ontology",
+    "bq_dataset": "seanjung-poc.starter_ontology_dw",
     "spanner_instance": "projects/my-project/instances/onto-inst/databases/onto-db"
   },
   "mcp_suite": {
@@ -57,31 +72,52 @@
         "name": "mcp_stage1_asset_discovery",
         "stage": "STAGE 1",
         "tab": "stage1",
-        "steps": ["profile_tables", "scan_guides", "prune_noise", "tag_pii_governance"]
+        "steps": [
+          "profile_tables",
+          "scan_guides",
+          "prune_noise",
+          "tag_pii_governance"
+        ]
       },
       {
         "name": "mcp_stage2_wiki_and_semantic",
         "stage": "STAGE 2",
         "tab": "stage2",
-        "steps": ["compile_3layer_wiki", "extract_hash_anchors", "bind_semantic_bridges"]
+        "steps": [
+          "compile_3layer_wiki",
+          "extract_hash_anchors",
+          "bind_semantic_bridges"
+        ]
       },
       {
         "name": "mcp_stage3_property_graph",
         "stage": "STAGE 3",
         "tab": "stage3",
-        "steps": ["promote_dw_nodes", "synthesize_graph_ddl", "verify_gql_templates"]
+        "steps": [
+          "promote_dw_nodes",
+          "synthesize_graph_ddl",
+          "verify_gql_templates"
+        ]
       },
       {
         "name": "mcp_stage4_agent_orchestration",
         "stage": "STAGE 4",
         "tab": "stage4",
-        "steps": ["decompose_subgoals", "dispatch_domain_mcps", "verify_grounding_anchors"]
+        "steps": [
+          "decompose_subgoals",
+          "dispatch_domain_mcps",
+          "verify_grounding_anchors"
+        ]
       },
       {
         "name": "mcp_stage5_lineage_and_eval",
         "stage": "STAGE 5",
         "tab": "stage5",
-        "steps": ["build_4tier_lineage", "run_golden_cq_suite", "diagnose_boundary_failures"]
+        "steps": [
+          "build_4tier_lineage",
+          "run_golden_cq_suite",
+          "diagnose_boundary_failures"
+        ]
       }
     ],
     "runtime_execution_mcps": [
