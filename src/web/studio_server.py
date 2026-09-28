@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Agentic Ontology Studio Server (Starter Pack v2.0)
-- 100% Design Parity with Uplus Ontology (`src/web/governanceStudio.py` & `05_DESIGN.md`):
+- Light Enterprise Design System (`05_DESIGN.md` & `methodology/METHODOLOGY_KO.md`):
   * Light Enterprise Theme (`--apple-bg-primary: #ffffff`, `--apple-bg-secondary: #f5f5f7`)
   * 44px Global Navigation Bar with Official Google 'G' Vector SVG + KOR/ENG Pill Switch
   * 52px Local Sub-navigation Bar (`.ac-localnav` + `.compact-pill-bar`) with 6 Compressed Stage Tabs:
       0. Overview | Stage 1. Asset | Stage 2. Wiki & Semantic Graph | Stage 3. Property Graph | Stage 4. Agent & MCP | Stage 5. Lineage & Eval
-  * TASK-093 Compliant Interactive vis-network Graphs (`Entity=Node`, `Concept=Edge`, Sky Blue/Teal Hubs, 1.15px Edges, Korean Business Labels)
-  * 3-Track Data Maturity & Dual Graph Engine Adapter (`BigQuery Property Graph` <-> `Cloud Spanner Graph`)
+  * Interactive vis-network Graphs (`Entity=Node`, `Concept=Edge`, Sky Blue/Teal Hubs, 1.15px Edges, Korean Business Labels)
+  * 3-Track Data Maturity (`lite: 1→2→4`, `standard: 1→2→3→4`, `full: 1→5`) & Dual Graph Engine Adapter (`BigQuery Property Graph` <-> `Cloud Spanner Graph`)
   * 8 Core Modular MCPs (5 Stage Pipeline MCPs with selectable `steps` + 3 Runtime Execution MCPs)
 """
 import os, sys, json, csv, http.server, socketserver
@@ -1121,7 +1121,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
   <main class="studio-container">
 
     <!-- =================================================================== -->
-    <!-- TAB 0: 0. OVERVIEW (Uplus Ontology Light Enterprise Parity)         -->
+    <!-- TAB 0: 0. OVERVIEW (Light Enterprise Architecture & 5-Stage Board)  -->
     <!-- =================================================================== -->
     <section class="tab-panel active" id="panel-overview">
       <div class="ov-scroll-wrap">
@@ -1130,7 +1130,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div class="ov-card ov-hero-card">
           <div class="ov-card-head">
             <span class="ov-eyebrow" data-ko="EXECUTIVE SUMMARY · AGENTIC ONTOLOGY STARTER PACK V2.0" data-en="EXECUTIVE SUMMARY · AGENTIC ONTOLOGY STARTER PACK V2.0">EXECUTIVE SUMMARY · AGENTIC ONTOLOGY STARTER PACK V2.0</span>
-            <span class="badge approved" data-ko="Uplus Ontology Light Enterprise 디자인 표준 100% 동기화" data-en="100% Synced with Uplus Ontology Light Enterprise Design">Uplus Ontology Light Enterprise 디자인 표준 100% 동기화</span>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <span class="badge approved" data-ko="5-Stage × 9-Step 표준 라이프사이클" data-en="5-Stage × 9-Step Canonical Lifecycle">5-Stage × 9-Step 표준 라이프사이클</span>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/METHODOLOGY_KO.md" target="_blank" rel="noopener">방법론 (METHODOLOGY_KO.md)</a>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/stage0_overview_walkthrough.ipynb" target="_blank" rel="noopener">노트북 (stage0_overview_walkthrough.ipynb)</a>
+            </div>
           </div>
           <h2 class="ov-h2" data-ko="기업 맞춤형 3-Track 온톨로지 방법론 & BigQuery / Spanner 듀얼 그래프 스타터팩" data-en="Configurable 3-Track Ontology Methodology & BigQuery / Spanner Dual Graph Starter Pack">기업 맞춤형 3-Track 온톨로지 방법론 &amp; BigQuery / Spanner 듀얼 그래프 스타터팩</h2>
           <p class="ov-lead" data-ko="본 스타터팩은 고객 식별자를 비식별화(<code>CUST_DEMO_*</code>)한 슬림 샘플 데이터(정형 원장 4종 + 정책 가이드 2종) 위에 <b>Stage 1~5 모듈형 파이프라인 MCP</b>와 <b>BigQuery Property Graph / Cloud Spanner Graph 듀얼 어댑터</b>를 결합한 참조 아키텍처입니다." data-en="This starter pack combines de-identified sample data (4 DW ledgers + 2 policy guides) with Stage 1~5 modular pipeline MCPs and a dual adapter for BigQuery Property Graph and Cloud Spanner Graph.">
@@ -1141,9 +1145,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:700; color:#1e293b;" data-ko="데이터 성숙도 트랙 (Track):" data-en="Data Maturity Track:">데이터 성숙도 트랙 (Track):</span>
               <div class="apple-segmented-control" id="ov-track-selector">
-                <button class="segment-btn" onclick="selectTrack('lite')">Track 1 · Lite (Wiki Only)</button>
-                <button class="segment-btn" onclick="selectTrack('standard')">Track 2 · Standard (DW + Rule)</button>
-                <button class="segment-btn active" onclick="selectTrack('full')">Track 3 · Full-Stack (Hybrid)</button>
+                <button class="segment-btn" onclick="selectTrack('lite')">Track 1 · Lite (Stage 1→2→4)</button>
+                <button class="segment-btn" onclick="selectTrack('standard')">Track 2 · Standard (Stage 1→2→3→4)</button>
+                <button class="segment-btn active" onclick="selectTrack('full')">Track 3 · Full-Stack (Stage 1→5)</button>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -1315,8 +1319,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <span class="badge human">STAGE 1 · ASSET DISCOVERY &amp; GOVERNANCE</span>
             <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="비식별화 정형 마스터 원장(4종) & 비정형 정책 가이드(2종) 통합 인벤토리" data-en="De-identified Structured DW Ledgers (4) & Unstructured Policy Guides (2) Inventory">비식별화 정형 마스터 원장(4종) &amp; 비정형 정책 가이드(2종) 통합 인벤토리</span>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="badge approved">PII De-identified (CUST_DEMO_*)</span>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/01_stage1_asset_and_cq_ko.md" target="_blank" rel="noopener">방법론 (Stage 1)</a>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/stage1_asset_and_cq_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 1)</a>
             <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage1_asset_discovery')">▶ Stage 1 MCP 실행</button>
           </div>
         </div>
@@ -1394,8 +1400,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <span class="badge llm">STAGE 2 · 3-LAYER LLM-WIKI &amp; SEMANTIC GRAPH</span>
             <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="Karpathy 3-Layer Wiki 컴파일러 & 시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)" data-en="Karpathy 3-Layer Wiki Compiler & Semantic Ontology Graph (Entity=Node, Concept=Edge)">Karpathy 3-Layer Wiki 컴파일러 &amp; 시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)</span>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="badge human">Track 1 (Lite) Exit Gate Ready</span>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="badge human">Track 1 (Lite: 1→2→4) Bridge</span>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/02_stage2_wiki_and_semantic_graph_ko.md" target="_blank" rel="noopener">방법론 (Stage 2)</a>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/stage2_wiki_and_semantic_graph_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 2)</a>
             <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage2_wiki_and_semantic')">▶ Stage 2 MCP 실행</button>
           </div>
         </div>
@@ -1445,11 +1453,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <span class="badge indigo">STAGE 3 · DUAL PROPERTY GRAPH ENGINEERING</span>
             <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="Zero-ETL 물리 그래프 토폴로지 & BigQuery / Spanner 듀얼 DDL 합성기" data-en="Zero-ETL Physical Graph Topology & BigQuery / Spanner Dual DDL Synthesizer">Zero-ETL 물리 그래프 토폴로지 &amp; BigQuery / Spanner 듀얼 DDL 합성기</span>
           </div>
-          <div style="display:flex; align-items:center; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <div class="apple-segmented-control">
               <button class="segment-btn active" id="st3-btn-bq" onclick="selectGraphEngine('bigquery')">BigQuery Property Graph (SQL:2023)</button>
               <button class="segment-btn" id="st3-btn-sp" onclick="selectGraphEngine('spanner')">Cloud Spanner Graph (ISO GQL)</button>
             </div>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/03_stage3_property_graph_ko.md" target="_blank" rel="noopener">방법론 (Stage 3)</a>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/stage3_property_graph_bigquery_spanner_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 3)</a>
             <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage3_property_graph')">▶ Stage 3 MCP 실행</button>
           </div>
         </div>
@@ -1521,7 +1531,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <span class="badge human" id="agent-mode-badge">STAGE 4 · AI FDE ORCHESTRATOR</span>
               <span style="font-size:13.5px; font-weight:800; color:var(--apple-text-primary); margin-left:6px;" id="agent-mode-title">동적 하위 목표 분해 &amp; 결정론적 MCP 체이닝 콘솔</span>
             </div>
-            <span class="badge approved" id="agent-engine-pill">Engine: BigQuery Graph</span>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 9px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/04_stage4_agent_and_mcp_ko.md" target="_blank" rel="noopener">방법론 (Stage 4)</a>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 9px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/stage4_agent_and_mcp_execution_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 4)</a>
+              <span class="badge approved" id="agent-engine-pill">Engine: BigQuery Graph</span>
+            </div>
           </div>
 
           <div class="quick-chip-bar" id="agent-sample-chips">
@@ -1562,8 +1576,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <span class="badge approved">STAGE 5 · 4-TIER DATA LINEAGE &amp; CLOSED-LOOP EVALUATION</span>
             <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">4-Tier 엔드투엔드 데이터 리니지 &amp; Golden CQ (5건) / 바운더리 질의 (10건) 통합 검증 리포트</span>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="badge human" id="lineage-latency-badge">Lineage Verified</span>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/05_stage5_lineage_and_eval_ko.md" target="_blank" rel="noopener">방법론 (Stage 5)</a>
+            <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/stage5_lineage_and_evaluation_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 5)</a>
             <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage5_lineage_and_eval')">▶ Stage 5 MCP 실행</button>
           </div>
         </div>
@@ -1724,9 +1740,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
   function selectTrack(trackKey) {
     activeTrack = trackKey;
     const labels = {
-      'lite': 'Track 1 · Lite (Wiki Only)',
-      'standard': 'Track 2 · Standard (DW + Rule)',
-      'full': 'Track 3 · Full-Stack'
+      'lite': 'Track 1 · Lite (1→2→4)',
+      'standard': 'Track 2 · Standard (1→2→3→4)',
+      'full': 'Track 3 · Full-Stack (1→5)'
     };
     document.getElementById('hdr-track-badge').textContent = labels[trackKey] || labels.full;
     document.querySelectorAll('#ov-track-selector .segment-btn').forEach((b, idx) => {
@@ -1781,6 +1797,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <button class="ov-stage-mcp-btn" onclick="openStageMcpModal('${esc(st.mcp_tool || 'mcp_stage1_asset_discovery')}')">▶ ${esc(st.chip)} MCP</button>
             </div>
             <div class="ov-stage-name">${esc(st.name)}</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:2px;">
+              ${st.methodology_doc ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.methodology_doc)}" target="_blank" rel="noopener">방법론</a>` : ""}
+              ${st.notebook ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.notebook)}" target="_blank" rel="noopener">노트북</a>` : ""}
+            </div>
             ${steps}
           </div>`;
       }).join('');

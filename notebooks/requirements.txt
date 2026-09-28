@@ -1,0 +1,6 @@
+# Notebook runtime (Python 3.10+). Install: pip install -r notebooks/requirements.txt
+# The starter pipeline and agent (src/, pipeline/) use only the Python standard library.
+bigframes>=2.38.0
+matplotlib>=3.8
+networkx>=3.2
+jupyterlab>=4.2
