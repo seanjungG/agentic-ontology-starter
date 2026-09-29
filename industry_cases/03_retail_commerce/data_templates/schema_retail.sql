@@ -1,9 +1,9 @@
 -- ============================================================================
 -- Retail & Commerce Domain Schema (BigQuery Compatible SQL DDL)
--- Focus: GS Retail Franchise Settlement & CJ Logistics Fulfillment SLA
+-- Focus: Convenience Franchise Corp Franchise Settlement & Fulfillment Logistics Fulfillment SLA
 -- ============================================================================
 
--- 1. Store Franchise Master (GS Retail)
+-- 1. Store Franchise Master (Convenience Franchise Corp)
 CREATE TABLE IF NOT EXISTS `retail_dw.TB_STORE_FRANCHISE` (
   store_code STRING NOT NULL,
   store_name STRING NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `retail_dw.TB_POS_MONTHLY` (
   order_compliance_rate FLOAT64
 );
 
--- 3. Logistics Order & Delivery Tracking (CJ)
+-- 3. Logistics Order & Delivery Tracking (풀필먼트)
 CREATE TABLE IF NOT EXISTS `retail_dw.TB_LOGISTICS_ORDER` (
   waybill_no STRING NOT NULL,
   order_type STRING NOT NULL, -- 'TODAY_FAST', 'NEXT_DAY'

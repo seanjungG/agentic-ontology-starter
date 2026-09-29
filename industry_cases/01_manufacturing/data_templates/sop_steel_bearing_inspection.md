@@ -1,6 +1,6 @@
-# POSCO-SOP-MECH-042: 열연 사상압연 롤러 베어링 예방보전 표준절차서
+# Smart Steel Corp-SOP-MECH-042: 열연 사상압연 롤러 베어링 예방보전 표준절차서
 
-- **관리번호**: POSCO-SOP-MECH-042
+- **관리번호**: Smart Steel Corp-SOP-MECH-042
 - **적용 설비**: 열연 1, 2공장 사상압연기 F1~F7 스탠드 하부 워크롤
 - **표준 규격**: ISO 10816 기계진동 평가 기준 Class II
 

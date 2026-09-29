@@ -2480,29 +2480,29 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
                     {
                         "id": "manufacturing", "name": "스마트 제조 (Manufacturing)",
                         "cases": [
-                            {"client": "포스코 (POSCO)", "status": "아키텍처 템플릿", "title": "스마트 제철 연속 공정 품질 & 설비 예방보전(PdM) 온톨로지", "file": "industry_cases/01_manufacturing/case_posco_smart_steel_mill.md"},
-                            {"client": "현대자동차 (Hyundai Motor)", "status": "아키텍처 템플릿", "title": "SDV 부품 BOM & 글로벌 공급망(SCM) 온톨로지", "file": "industry_cases/01_manufacturing/case_hyundai_motor_sdv_supply_chain.md"}
+                            {"client": "스마트 제철소 템플릿 A (Smart Steel Mill)", "status": "아키텍처 템플릿", "title": "스마트 제철 연속 공정 품질 & 설비 예방보전(PdM) 온톨로지", "file": "industry_cases/01_manufacturing/case_smart_steel_mill.md"},
+                            {"client": "완성차 SDV 템플릿 B (Automotive SDV)", "status": "아키텍처 템플릿", "title": "SDV 부품 BOM & 글로벌 공급망(SCM) 온톨로지", "file": "industry_cases/01_manufacturing/case_automotive_sdv_supply_chain.md"}
                         ]
                     },
                     {
                         "id": "finance", "name": "핀테크 & 뱅킹 (Fintech & Banking)",
                         "cases": [
-                            {"client": "카카오뱅크 (KakaoBank)", "status": "아키텍처 템플릿", "title": "비대면 여신 심사 & DSR 40% 온톨로지", "file": "industry_cases/02_finance/case_kakaobank_unattended_loan_dsr.md"},
-                            {"client": "토스 (TOSS)", "status": "아키텍처 템플릿", "title": "원앱 멀티금융 중개 & 마이데이터 온톨로지", "file": "industry_cases/02_finance/case_toss_oneapp_fintech_mydata.md"}
+                            {"client": "인터넷전문은행 템플릿 A (Digital Direct Bank)", "status": "아키텍처 템플릿", "title": "비대면 여신 심사 & DSR 40% 온톨로지", "file": "industry_cases/02_finance/case_digital_bank_unattended_loan_dsr.md"},
+                            {"client": "원앱 핀테크 템플릿 B (One-App Fintech)", "status": "아키텍처 템플릿", "title": "원앱 멀티금융 중개 & 마이데이터 온톨로지", "file": "industry_cases/02_finance/case_oneapp_fintech_mydata.md"}
                         ]
                     },
                     {
                         "id": "retail", "name": "유통 & 이커머스 (Retail & Commerce)",
                         "cases": [
-                            {"client": "GS리테일 (GS Retail)", "status": "아키텍처 템플릿", "title": "가맹계약 상생 정산 & 옴니채널 재고 온톨로지", "file": "industry_cases/03_retail_commerce/case_gs_retail_franchise_omnichannel.md"},
-                            {"client": "CJ대한통운 / 올리브영", "status": "아키텍처 템플릿", "title": "풀필먼트 SLA & 브랜드 정산 온톨로지", "file": "industry_cases/03_retail_commerce/case_cj_logistics_oliveyoung_sla.md"}
+                            {"client": "편의점·수퍼 가맹 템플릿 A (Convenience Franchise)", "status": "아키텍처 템플릿", "title": "가맹계약 상생 정산 & 옴니채널 재고 온톨로지", "file": "industry_cases/03_retail_commerce/case_convenience_franchise_omnichannel.md"},
+                            {"client": "옴니채널 풀필먼트 템플릿 B (Omnichannel Fulfillment)", "status": "아키텍처 템플릿", "title": "풀필먼트 SLA & 브랜드 정산 온톨로지", "file": "industry_cases/03_retail_commerce/case_omnichannel_fulfillment_sla.md"}
                         ]
                     },
                     {
                         "id": "telecom", "name": "통신 & 미디어 (Telecommunications)",
                         "cases": [
-                            {"client": "통신 구독 결합 템플릿 A", "status": "아키텍처 템플릿", "title": "구독 결합 & 멤버십 위약금 온톨로지", "file": "industry_cases/04_telecommunications/case_skt_subscription_membership.md"},
-                            {"client": "유무선 결합 템플릿 B", "status": "아키텍처 템플릿", "title": "유무선 결합 해지 방어 & B2B 회선 SLA 온톨로지", "file": "industry_cases/04_telecommunications/case_kt_wired_wireless_bundle_sla.md"}
+                            {"client": "모바일 구독 결합 템플릿 A (Mobile Subscription)", "status": "아키텍처 템플릿", "title": "구독 결합 & 멤버십 위약금 온톨로지", "file": "industry_cases/04_telecommunications/case_mobile_subscription_membership.md"},
+                            {"client": "유무선 결합·전용회선 템플릿 B (Converged B2B SLA)", "status": "아키텍처 템플릿", "title": "유무선 결합 해지 방어 & B2B 회선 SLA 온톨로지", "file": "industry_cases/04_telecommunications/case_converged_bundle_enterprise_sla.md"}
                         ]
                     }
                 ]
