@@ -1,0 +1,6 @@
+{
+  "extractor": "pipeline/extract_docs.py",
+  "status": "OK",
+  "documents": [],
+  "needs_ocr": []
+}

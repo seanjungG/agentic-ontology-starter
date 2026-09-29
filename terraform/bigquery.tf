@@ -86,11 +86,16 @@ resource "google_bigquery_table" "tb_doc_chunks" {
 
   schema = jsonencode([
     { name = "chunk_id",       type = "STRING", mode = "REQUIRED", description = "문서 청크 ID (PK)" },
-    { name = "source_file",    type = "STRING", mode = "REQUIRED", description = "원천 가이드 파일명" },
+    { name = "source_file",    type = "STRING", mode = "REQUIRED", description = "원천 가이드 파일명 (data/input/01_guides/*.md)" },
     { name = "section_title",  type = "STRING", mode = "REQUIRED", description = "섹션 제목" },
     { name = "content",        type = "STRING", mode = "REQUIRED", description = "청크 원문 텍스트" },
     { name = "content_sha256", type = "STRING", mode = "REQUIRED", description = "SHA-256 무결성 해시 앵커" },
-    { name = "trust_tier",     type = "STRING", mode = "REQUIRED", description = "신뢰 등급 (GOLDEN_VERIFIED)" }
+    { name = "trust_tier",     type = "STRING", mode = "REQUIRED", description = "출처 (EXTRACTED / CUSTOMER_PROVIDED / SYNTHETIC_DEMO)" },
+    { name = "source_doc",     type = "STRING", mode = "NULLABLE", description = "고객 원본 파일명 (customer_doc/, pipeline/extract_docs.py)" },
+    { name = "source_sha256",  type = "STRING", mode = "NULLABLE", description = "고객 원본 파일 SHA-256" },
+    { name = "page_from",      type = "INTEGER", mode = "NULLABLE", description = "원본 시작 쪽" },
+    { name = "page_to",        type = "INTEGER", mode = "NULLABLE", description = "원본 끝 쪽" },
+    { name = "article_no",     type = "STRING", mode = "NULLABLE", description = "조문 번호 (조문 구조 문서만, 예: 제15조)" }
   ])
 }
 
