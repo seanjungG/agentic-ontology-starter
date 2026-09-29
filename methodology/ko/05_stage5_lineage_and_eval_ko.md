@@ -1,6 +1,6 @@
 # Stage 5. 리니지·평가·배포 게이트
 
-> 스튜디오 [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) · MCP `mcp_stage5_lineage_and_eval` · 노트북 [stage5_lineage_and_evaluation_ko.ipynb](../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [English](./05_stage5_lineage_and_eval_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
+> 스튜디오 [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) · MCP `mcp_stage5_lineage_and_eval` · 노트북 [stage5_lineage_and_evaluation_ko.ipynb](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [English](../en/05_stage5_lineage_and_eval_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
 
 ## 목적
 
@@ -58,7 +58,7 @@
 
 ## 노트북
 
-[stage5_lineage_and_evaluation_ko.ipynb](../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [English Notebook](../notebooks/en/stage5_lineage_and_evaluation_en.ipynb)
+[stage5_lineage_and_evaluation_ko.ipynb](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [English Notebook](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb)
 
 ## 내 데이터에 적용하기
 

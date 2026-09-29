@@ -1,6 +1,6 @@
 # Stage 3. Property Graph·GQL
 
-> 스튜디오 [`Stage 3. Property Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) · MCP `mcp_stage3_property_graph` · 노트북 [stage3_property_graph_bigquery_spanner_ko.ipynb](../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) · [English](./03_stage3_property_graph_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
+> 스튜디오 [`Stage 3. Property Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) · MCP `mcp_stage3_property_graph` · 노트북 [stage3_property_graph_bigquery_spanner_ko.ipynb](../../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) · [English](../en/03_stage3_property_graph_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
 
 ## 목적
 
@@ -95,7 +95,7 @@ Stage 1·2에서 적재한 테이블을 복사하지 않고 그대로 그래프�
 
 ## 노트북
 
-[stage3_property_graph_bigquery_spanner_ko.ipynb](../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb)
+[stage3_property_graph_bigquery_spanner_ko.ipynb](../../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb)
 
 ## 내 데이터에 적용하기
 

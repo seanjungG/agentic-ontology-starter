@@ -1,6 +1,6 @@
 # Stage 4. MCP and Agent Orchestration
 
-> Studio [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) · MCP `mcp_stage4_agent_orchestration` + 3 runtime MCPs · Notebook [stage4_agent_and_mcp_execution_en.ipynb](../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) · [한국어](./04_stage4_agent_and_mcp_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
+> Studio [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) · MCP `mcp_stage4_agent_orchestration` + 3 runtime MCPs · Notebook [stage4_agent_and_mcp_execution_en.ipynb](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) · [Korean (KO)](../ko/04_stage4_agent_and_mcp_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
 
 ## Purpose
 
@@ -88,7 +88,7 @@ Each question calls Gemini twice, and the result records the token count and the
 
 ## Notebook
 
-[stage4_agent_and_mcp_execution_en.ipynb](../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb)
+[stage4_agent_and_mcp_execution_en.ipynb](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb)
 
 ## Apply to your data
 

@@ -1,0 +1,22 @@
+# Enterprise Knowledge Wiki: Codified Business Rules (Layer 3)
+Generated from `data/input/03_tables/domain_rules.csv` (BigQuery `tb_domain_rules`).
+
+### `RULE_SUBSIDY_CAP` · 공시지원금 및 유통망 추가지원금(15%) 합산 규칙 (`DOC_CHUNK_001`)
+- **Condition**: `contract_type == 'PUBLIC_SUBSIDY'`
+- **Formula**: `total_subsidy = base_subsidy_krw + additional_subsidy_cap_krw; net_principal = factory_price_krw - total_subsidy`
+- 유통망 추가지원금은 공시지원금의 최대 15%까지 지급되며, 실구매 원금은 출고가에서 총 지원금을 차감하여 산정함.
+
+### `RULE_SIX_PLAN_180D` · 180일 기준선(45,000원) 의무유지 및 일할 차액위약금 규칙 (`DOC_CHUNK_003`)
+- **Condition**: `elapsed_days < 180 AND target_plan_monthly_fee < 45000`
+- **Formula**: `penalty = ROUND((initial_base_subsidy - lower_tier_base_subsidy) * (180 - elapsed_days) / 180)`
+- 개통 후 180일 이내에 월정액 45,000원 미만 요금제로 하향 변경 시, 기본 공시지원금 차액에 잔여일수 비율((180-유지일수)/180)을 곱한 일할 위약금이 부과됨. 180일 경과 시 위약금 0원.
+
+### `RULE_WELFARE_EXEMPT` · 시니어·복지 요금제 전환 및 군입대 장기정지 위약금 면제 특례 (`DOC_CHUNK_004`)
+- **Condition**: `welfare_status IN ('SENIOR_EXEMPT', 'MILITARY_PAUSE_ELIGIBLE')`
+- **Formula**: `penalty = 0 (SENIOR_EXEMPT) OR pause_commitment_counter (MILITARY_PAUSE_ELIGIBLE)`
+- 만 65세 이상 시니어 복지 특례(SENIOR_EXEMPT) 대상자가 시니어/복지 요금제로 전환 시 180일 이내라도 차액정산 위약금을 100% 면제(0원)함.
+
+### `RULE_TCO_24M` · 24개월 공시지원금 vs 25% 선택약정 총비용(TCO) 비교 규칙 (`DOC_CHUNK_005`)
+- **Condition**: `commitment_months == 24`
+- **Formula**: `subsidy_24m_tco = (factory_price_krw - total_subsidy) + (monthly_fee_krw * 24); selective_24m_tco = factory_price_krw + (monthly_fee_krw * 0.75 * 24)`
+- 24개월 총소유비용(TCO) 비교 시 공시지원금 총액과 24개월 25% 요금할인 총액(월정액×0.25×24)을 비교하여 유리한 약정을 추천함.
