@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generates (and optionally executes) the 12 canonical starter notebooks (`stage0`..`stage5`, KO/EN)."""
+"""Generates (and optionally executes) the 12 canonical starter notebooks in `notebooks/ko/` and `notebooks/en/`."""
 import argparse
 import json
 import os
@@ -14,22 +14,22 @@ from validate_and_pack_notebooks import pack_and_validate_all
 
 NB_DIR = Path(__file__).resolve().parent
 SPECS = {
-    "stage0_overview_walkthrough.ipynb": lambda: build_stage0("ko"),
-    "stage0_overview_walkthrough_en.ipynb": lambda: build_stage0("en"),
-    "stage1_asset_and_cq_ko.ipynb": lambda: build_stage1("ko"),
-    "stage1_asset_and_cq_en.ipynb": lambda: build_stage1("en"),
-    "stage2_wiki_and_semantic_graph_ko.ipynb": lambda: build_stage2("ko"),
-    "stage2_wiki_and_semantic_graph_en.ipynb": lambda: build_stage2("en"),
-    "stage3_property_graph_bigquery_spanner_ko.ipynb": lambda: build_stage3("ko"),
-    "stage3_property_graph_bigquery_spanner_en.ipynb": lambda: build_stage3("en"),
-    "stage4_agent_and_mcp_execution_ko.ipynb": lambda: build_stage4("ko"),
-    "stage4_agent_and_mcp_execution_en.ipynb": lambda: build_stage4("en"),
-    "stage5_lineage_and_evaluation_ko.ipynb": lambda: build_stage5("ko"),
-    "stage5_lineage_and_evaluation_en.ipynb": lambda: build_stage5("en"),
+    "ko/stage0_overview_walkthrough_ko.ipynb": lambda: build_stage0("ko"),
+    "ko/stage1_asset_and_cq_ko.ipynb": lambda: build_stage1("ko"),
+    "ko/stage2_wiki_and_semantic_graph_ko.ipynb": lambda: build_stage2("ko"),
+    "ko/stage3_property_graph_bigquery_spanner_ko.ipynb": lambda: build_stage3("ko"),
+    "ko/stage4_agent_and_mcp_execution_ko.ipynb": lambda: build_stage4("ko"),
+    "ko/stage5_lineage_and_evaluation_ko.ipynb": lambda: build_stage5("ko"),
+    "en/stage0_overview_walkthrough_en.ipynb": lambda: build_stage0("en"),
+    "en/stage1_asset_and_cq_en.ipynb": lambda: build_stage1("en"),
+    "en/stage2_wiki_and_semantic_graph_en.ipynb": lambda: build_stage2("en"),
+    "en/stage3_property_graph_bigquery_spanner_en.ipynb": lambda: build_stage3("en"),
+    "en/stage4_agent_and_mcp_execution_en.ipynb": lambda: build_stage4("en"),
+    "en/stage5_lineage_and_evaluation_en.ipynb": lambda: build_stage5("en"),
 }
 
 
-def write_notebook(filename: str, cells: list) -> Path:
+def write_notebook(rel_path: str, cells: list) -> Path:
     for idx, c in enumerate(cells):
         c["id"] = f"cell-{idx:02d}"
     nb = {
@@ -41,7 +41,8 @@ def write_notebook(filename: str, cells: list) -> Path:
         "nbformat": 4,
         "nbformat_minor": 5,
     }
-    out = NB_DIR / filename
+    out = NB_DIR / rel_path
+    out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump(nb, f, ensure_ascii=False, indent=2)
         f.write("\n")
@@ -65,25 +66,26 @@ def execute_notebook(path: Path) -> str:
         "--ExecutePreprocessor.kernel_name=python3",
         str(path),
     ]
-    print(f"[EXEC] Running {path.name} ...", flush=True)
+    rel = path.relative_to(NB_DIR)
+    print(f"[EXEC] Running {rel} ...", flush=True)
     subprocess.run(cmd, cwd=str(NB_DIR), env=env, check=True)
-    print(f"[DONE] Finished {path.name}", flush=True)
-    return path.name
+    print(f"[DONE] Finished {rel}", flush=True)
+    return str(rel)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true", help="Execute notebooks via nbconvert")
     parser.add_argument("--workers", type=int, default=2, help="Parallel workers for notebook execution")
-    parser.add_argument("--only", nargs="*", help="Filter notebook filenames")
+    parser.add_argument("--only", nargs="*", help="Filter notebook relative paths")
     args = parser.parse_args()
 
     targets = [k for k in SPECS if not args.only or any(f in k for f in args.only)]
     paths = []
-    for fname in targets:
-        cells = SPECS[fname]()
-        p = write_notebook(fname, cells)
-        print(f"[WRITE] {p.name} ({len(cells)} cells)", flush=True)
+    for rel_path in targets:
+        cells = SPECS[rel_path]()
+        p = write_notebook(rel_path, cells)
+        print(f"[WRITE] {rel_path} ({len(cells)} cells)", flush=True)
         paths.append(p)
 
     if args.execute:

@@ -1,6 +1,6 @@
 # Stage 5. Lineage, Evaluation & Deployment Gate
 
-> Studio [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) · MCP `mcp_stage5_lineage_and_eval` · Notebook [stage5_lineage_and_evaluation_en.ipynb](../notebooks/stage5_lineage_and_evaluation_en.ipynb) · [한국어](./05_stage5_lineage_and_eval_ko.md) · [Full Methodology](./METHODOLOGY_EN.md)
+> Studio [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) · MCP `mcp_stage5_lineage_and_eval` · Notebook [stage5_lineage_and_evaluation_en.ipynb](../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) · [한국어](./05_stage5_lineage_and_eval_ko.md) · [Full Methodology](./METHODOLOGY_EN.md)
 
 ## Purpose
 
@@ -57,7 +57,7 @@ Trace 4-tier data lineage from raw files (CSVs and policy guides) through BigQue
 
 ## Notebook
 
-[stage5_lineage_and_evaluation_en.ipynb](../notebooks/stage5_lineage_and_evaluation_en.ipynb) · [한국어 노트북](../notebooks/stage5_lineage_and_evaluation_ko.ipynb)
+[stage5_lineage_and_evaluation_en.ipynb](../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) · [한국어 노트북](../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb)
 
 ## Adapting to Your Data
 

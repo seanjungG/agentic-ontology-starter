@@ -1,6 +1,6 @@
 # Stage 1. Asset Discovery, Scoping and CQ Definition
 
-> Studio [`Stage 1. Asset`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage1) · MCP `mcp_stage1_asset_discovery` · Notebook [stage1_asset_and_cq_en.ipynb](../notebooks/stage1_asset_and_cq_en.ipynb) · [한국어](./01_stage1_asset_and_cq_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
+> Studio [`Stage 1. Asset`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage1) · MCP `mcp_stage1_asset_discovery` · Notebook [stage1_asset_and_cq_en.ipynb](../notebooks/en/stage1_asset_and_cq_en.ipynb) · [한국어](./01_stage1_asset_and_cq_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
 
 ## Purpose
 
@@ -77,7 +77,7 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 
 ## Notebook
 
-[stage1_asset_and_cq_en.ipynb](../notebooks/stage1_asset_and_cq_en.ipynb)
+[stage1_asset_and_cq_en.ipynb](../notebooks/en/stage1_asset_and_cq_en.ipynb)
 
 ## Apply to your data
 

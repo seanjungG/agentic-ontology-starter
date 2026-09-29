@@ -494,21 +494,21 @@ class DomainMcpServer:
             where.append(f"g.plan_name = {_lit(p['plan_name'])}")
         if p["monthly_fee_krw"] is not None:
             where.append(f"g.monthly_fee_krw = {p['monthly_fee_krw']}")
-        rows = self._run(f"""
-            SELECT g.*, ch.section_title, ch.content_sha256 AS anchor, ch.content AS chunk_text
-            FROM GRAPH_TABLE(`{self.graph}`
-              MATCH {match}
-              COLUMNS ({cols} d.device_name AS device_name, d.factory_price_krw AS factory_price_krw,
-                       p.plan_name AS plan_name, p.monthly_fee_krw AS monthly_fee_krw,
-                       r.rule_id AS rule_id, r.rule_name AS rule_name,
-                       ap.relation_label_ko AS relation_label_ko, ap.source_chunk_id AS source_chunk_id)) g
-            LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = g.source_chunk_id
-            WHERE {' AND '.join(where) or 'TRUE'}
-            ORDER BY g.device_name, g.monthly_fee_krw DESC, g.rule_id""", jobs)
+        gql_stmt = f"""SELECT g.*, ch.section_title, ch.content_sha256 AS anchor, ch.content AS chunk_text
+FROM GRAPH_TABLE(`{self.graph}`
+  MATCH {match}
+  COLUMNS ({cols} d.device_name AS device_name, d.factory_price_krw AS factory_price_krw,
+           p.plan_name AS plan_name, p.monthly_fee_krw AS monthly_fee_krw,
+           r.rule_id AS rule_id, r.rule_name AS rule_name,
+           ap.relation_label_ko AS relation_label_ko, ap.source_chunk_id AS source_chunk_id)) g
+LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = g.source_chunk_id
+WHERE {' AND '.join(where) or 'TRUE'}
+ORDER BY g.device_name, g.monthly_fee_krw DESC, g.rule_id"""
+        rows = self._run(gql_stmt, jobs)
         nodes = {("D", r["device_name"]) for r in rows} | {("P", r["plan_name"]) for r in rows} | {("R", r["rule_id"]) for r in rows}
         anchors = sorted({f"{r['source_chunk_id']} ({r['section_title']}, {r['anchor']})" for r in rows if r.get("source_chunk_id")})
         return {"status": "SUCCESS" if rows else "MATCH_NOT_FOUND", "applied_params": p,
                 "graph_engine": args.get("engine", "bigquery"), "graph_name": self.graph,
-                "gql_path": match, "traversal_hops": 3 if p["customer_id"] else 2,
+                "gql_path": match, "executed_gql": gql_stmt, "traversal_hops": 3 if p["customer_id"] else 2,
                 "matched_graph_paths_count": len(rows), "matched_nodes": len(nodes),
                 "matched_graph_paths": rows, "grounded_anchors": anchors}
