@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Manufacturing Domain Schema (BigQuery Compatible SQL DDL)
--- Focus: POSCO Steel Mill & Hyundai Motor Automotive BOM/SCM
+-- Focus: Smart Steel Corp Steel Mill & Mobility OEM Corp Automotive BOM/SCM
 -- ============================================================================
 
 -- 1. Equipment Master

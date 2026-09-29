@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Telecommunications Domain Schema (BigQuery Compatible SQL DDL)
--- Focus: SK Telecom Subscription / Penalty & KT Combined Bundle / SLA
+-- Focus: Mobile Carrier A Subscription / Penalty & 유무선 통신사 B Combined Bundle / SLA
 -- ============================================================================
 
 -- 1. Subscriber Line Status Master
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `telecom_dw.TB_PLAN_TIER` (
   is_safe_lower_bound STRING NOT NULL
 );
 
--- 3. KT Bundle Group Master
+-- 3. 유무선 통신사 B Bundle Group Master
 CREATE TABLE IF NOT EXISTS `telecom_dw.TB_KT_BUNDLE_GROUP` (
   bundle_id STRING NOT NULL,
   bundle_type STRING NOT NULL,

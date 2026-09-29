@@ -72,7 +72,7 @@
   },
   {
     "case_id": "BQ-09",
-    "query": "법인 명의로 개통한 회선도 180일 식스플랜 룰이 똑같이 적용되나요?",
+    "query": "법인 명의로 개통한 회선도 180일 의무유지 기준선 룰이 똑같이 적용되나요?",
     "missing_context": "법인(Corporate_B2B) 세그먼트 정책 매핑",
     "root_cause_code": "MISSING_ENTITY",
     "expected_behavior": "세그먼트별 예외 규칙 존재 여부를 도구 결과로 밝히고 RULE_SIX_PLAN_180D 근거를 인용",

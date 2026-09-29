@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Finance & Fintech Domain Schema (BigQuery Compatible SQL DDL)
--- Focus: KakaoBank Unattended Loan / DSR & Toss One-App Settlement
+-- Focus: Digital Direct Bank Unattended Loan / DSR & OneApp Fintech One-App Settlement
 -- ============================================================================
 
 -- 1. Customer Credit & Income Ledger
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `finance_dw.TB_COLLATERAL_VAL` (
   market_price INT64 NOT NULL
 );
 
--- 4. Merchant Payment & Settlement Ledger (Toss)
+-- 4. Merchant Payment & Settlement Ledger (OneApp Fintech)
 CREATE TABLE IF NOT EXISTS `finance_dw.TB_MERCHANT_SETTLE` (
   merchant_id STRING NOT NULL,
   merchant_name STRING NOT NULL,

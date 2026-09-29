@@ -258,7 +258,7 @@
     },
     {
       "case_id": "BQ-09",
-      "query": "법인 명의로 개통한 회선도 180일 식스플랜 룰이 똑같이 적용되나요?",
+      "query": "법인 명의로 개통한 회선도 180일 의무유지 기준선 룰이 똑같이 적용되나요?",
       "missing_context": "법인(Corporate_B2B) 세그먼트 정책 매핑",
       "root_cause_code": "MISSING_ENTITY",
       "expected_behavior": "세그먼트별 예외 규칙 존재 여부를 도구 결과로 밝히고 RULE_SIX_PLAN_180D 근거를 인용",
@@ -276,7 +276,7 @@
       "failure_reasons": [],
       "verification_sql_values": null,
       "verification_job_id": null,
-      "sample_answer": "### **결론**\nBigQuery 온톨로지 데이터베이스(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`) 규정상 공시지원금을 지급받은 가입자(Subscribers receiving public device subsidies) 전체에 대해 180일 기준선 의무유지 규칙이 적용됩니다. 별도의 법인 명의 예외 조항은 규정되어 있지 않으며, 면제 특례는 시니어(만 65세 이상), 복지, 청소년, 군입대 장기정지에 한정됩니다. 따라서 법인 명의 회선도 공시지원금을 받았다면 **180일 식스플랜 룰(`RULE_SIX_PLAN_180D`)이 동일하게 적용**됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **기준 요금제(Baseline Plan Threshold)**: \n  - 5G: 월 45,000원 (`5G Slim (Baseline Threshold)`)\n  - LTE: 월 26,400원\n- **위약금 산식 (DOC_CHUNK_003)**:\n  $$\\text{차액정산금(Penalty)} = (\\text{Initial Granted Subsidy} - \\text{Lower Tier Subs",
+      "sample_answer": "### **결론**\nBigQuery 온톨로지 데이터베이스(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`) 규정상 공시지원금을 지급받은 가입자(Subscribers receiving public device subsidies) 전체에 대해 180일 기준선 의무유지 규칙이 적용됩니다. 별도의 법인 명의 예외 조항은 규정되어 있지 않으며, 면제 특례는 시니어(만 65세 이상), 복지, 청소년, 군입대 장기정지에 한정됩니다. 따라서 법인 명의 회선도 공시지원금을 받았다면 **180일 의무유지 기준선 룰(`RULE_SIX_PLAN_180D`)이 동일하게 적용**됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **기준 요금제(Baseline Plan Threshold)**: \n  - 5G: 월 45,000원 (`5G Slim (Baseline Threshold)`)\n  - LTE: 월 26,400원\n- **위약금 산식 (DOC_CHUNK_003)**:\n  $$\\text{차액정산금(Penalty)} = (\\text{Initial Granted Subsidy} - \\text{Lower Tier Subs",
       "sample_bq_job_ids": [
         "job_6iW6uRLNMyzsMdTFfViL9BXWiNuV",
         "job_rI7H_lOuG4opPAkvQdbXldCzEaGb"
