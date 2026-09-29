@@ -16,6 +16,7 @@
   - **툴별 에이전트 가드레일**: [**Antigravity (`GEMINI.md`)**](./GEMINI.md) · [**Cursor (`.cursorrules`)**](./.cursorrules) · [**Claude Code (`CLAUDE.md` / `AGENTS.md`)**](./CLAUDE.md)
   - [**4대 산업군 8종 비식별 레퍼런스 템플릿 (`industry_cases/README.md`)**](./industry_cases/README.md) — 제조 · 금융 · 리테일 · 통신 스키마/규칙/CQ 샘플
 - **방법론 마스터 가이드**: [한국어 (`METHODOLOGY_KO.md`)](./methodology/ko/METHODOLOGY_KO.md) · [English (`METHODOLOGY_EN.md`)](./methodology/en/METHODOLOGY_EN.md)
+- **교육용 Google Workspace Slides 덱 (18슬라이드 · `ko/` 국문 + `en/` 영문)**: [슬라이드 허브 (`slides/README.md`)](./slides/README.md) · [국문 `.pptx`](./slides/ko/agentic_ontology_methodology_training_ko.pptx) · [English `.pptx`](./slides/en/agentic_ontology_methodology_training_en.pptx) · [국문 웹 슬라이드 뷰어 (`.html`)](./slides/ko/agentic_ontology_methodology_slides_ko.html) · [English Web Slide Viewer (`.html`)](./slides/en/agentic_ontology_methodology_slides_en.html)
 - **실행형 Jupyter 노트북 (12종 · `ko/` 국문 6종 + `en/` 영문 6종 분리)**: [노트북 허브 (`notebooks/README.md`)](./notebooks/README.md) · [전체 흐름 초기 노트북 (`ko/`)](./notebooks/ko/stage0_overview_walkthrough_ko.ipynb) · [English Overview Notebook (`en/`)](./notebooks/en/stage0_overview_walkthrough_en.ipynb)
 
 ---

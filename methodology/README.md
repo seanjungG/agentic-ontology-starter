@@ -14,6 +14,7 @@ This directory organizes the **5-Stage Agentic Ontology Engineering Methodology*
 
 - **🇰🇷 한국어 방법론 폴더 (`methodology/ko/`)**: [ko/METHODOLOGY_KO.md](./ko/METHODOLOGY_KO.md) + Stage 1~5 상세 가이드 5종
 - **🇺🇸 English Methodology Folder (`methodology/en/`)**: [en/METHODOLOGY_EN.md](./en/METHODOLOGY_EN.md) + Stage 1~5 Detailed Guides (100% English)
+- **📊 교육용 Google Workspace Slides (18슬라이드 · `slides/ko/` & `slides/en/`)**: [slides/README.md](../slides/README.md) · [국문 `.pptx`](../slides/ko/agentic_ontology_methodology_training_ko.pptx) · [English `.pptx`](../slides/en/agentic_ontology_methodology_training_en.pptx) · [국문 HTML5 뷰어](../slides/ko/agentic_ontology_methodology_slides_ko.html) · [English HTML5 Viewer](../slides/en/agentic_ontology_methodology_slides_en.html)
 
 ---
 
