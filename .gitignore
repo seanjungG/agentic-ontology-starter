@@ -7,3 +7,7 @@ venv/
 .DS_Store
 .ipynb_checkpoints/
 terraform/last_terraform_apply.log
+
+# Customer / data-domain projects stay local (new_project.py); only the template is tracked
+projects/*
+!projects/_template/

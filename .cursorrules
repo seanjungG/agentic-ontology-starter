@@ -18,3 +18,4 @@ Before making ANY architectural, pipeline, agent, or UI changes, you MUST read:
    - Step 4: Keep the 5 Stage MCP tools intact in `src/agent/mcp_server.py` and adapt the 3 Runtime MCP tools + slot extraction in `src/agent/reasoning_engine.py` to the new domain tables.
    - Step 5: Update UI labels and sample queries in `config/portal_profile.json` and run `python3 pipeline/validator.py`.
 5. Keep all reports and documentation objective and concise without exaggerated adjectives ('완벽한', '무결점', '무손실') or decorative emojis.
+6. New customer data or a separate data domain goes into `projects/<id>/`, created by `python3 new_project.py <id> --name "<name>"`; never overwrite the root sample. Put schema-specific code in project files referenced by `project.json` (`mcp_module`, `engine_module`, `ingest_module`, `graph_module`, `validator_module`) instead of adding per-project `if` branches to shared code. See `projects/_template/README.md`.

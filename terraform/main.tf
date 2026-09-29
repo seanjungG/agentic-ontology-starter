@@ -55,3 +55,22 @@ resource "google_storage_bucket_iam_member" "runtime_sa_gcs_viewer" {
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.runtime_service_account}"
 }
+
+resource "google_project_service" "slides_api" {
+  project            = var.project_id
+  service            = "slides.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "drive_api" {
+  project            = var.project_id
+  service            = "drive.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_service_account_iam_member" "admin_token_creator_on_seanjung_admin" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/seanjung-admin@${var.project_id}.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "user:admin@seanjung.altostrat.com"
+}
+

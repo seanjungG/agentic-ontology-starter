@@ -161,6 +161,20 @@ terraform init
 terraform apply
 ```
 
+### 3.4 고객·데이터 영역별 프로젝트 추가
+
+기본 샘플(저장소 루트)은 그대로 두고, 새 고객 데이터는 `projects/<id>/`에 넣습니다. 스튜디오 상단 `PROJECT` 선택기에 자동으로 나타납니다.
+
+```bash
+python3 new_project.py acme-claims --name "Acme Claims" --customer "Acme" --domain "Claims review"
+# projects/acme-claims/data/input/ 에 가이드·CSV·CQ 배치, config/lineage_spec.json 작성
+python3 run_pipeline.py --project acme-claims   # 이 프로젝트의 데이터셋·버킷 대상 (Terraform으로 먼저 생성)
+python3 -m src.web.studio_server                # http://127.0.0.1:8080/?project=acme-claims
+```
+
+- `projects/*`는 `.gitignore` 대상(`projects/_template/` 제외)이라 고객 데이터가 공개 저장소에 올라가지 않습니다.
+- 스키마가 샘플과 다르면 공용 코드를 고치지 않고 `project.json`의 `*_module`로 프로젝트 전용 구현을 지정합니다. 상세: [`projects/_template/README.md`](projects/_template/README.md)
+
 ---
 
 ## 4. 디렉터리 구조
@@ -172,13 +186,18 @@ agentic-ontology-starter/
 ├── PROTOTYPING_PLAYBOOK.md          # 4대 상황별 빠른 프로토타이핑 레시피 & 에이전트 프롬프트
 ├── GEMINI.md / CLAUDE.md / AGENTS.md / .cursorrules # Antigravity · Cursor · Claude Code 자동 로드 가드레일
 ├── DESIGN.md                        # Apple/Google Enterprise 라이트 테마 UI 디자인 표준
+├── new_project.py                   # 고객·데이터 영역별 프로젝트 생성 (projects/_template/ 복사)
+├── run_pipeline.py                  # Stage 1~5 파이프라인 일괄 실행 (--project <id>)
 ├── config/
+│   ├── project.json                 # 기본 샘플 프로젝트 메타 (PROJECT 선택기 첫 항목)
+│   ├── lineage_spec.json            # Stage 5 리니지 DAG 스펙 (카테고리·노드·엣지)
 │   ├── starter_config.json          # 3-Track 설정, 그래프 엔진, MCP 8종 정의
 │   └── portal_profile.json          # 스튜디오 프로필 및 산업군 쇼케이스(Telecom/Retail/Finance/Manufacturing)
 ├── data/
 │   ├── input/                       # Stage 1 입력: 01_guides(2), 03_tables(CSV 6), 04_cq(CQ 5, 경계값 10), 05_glossary
 │   ├── llm_wiki/                    # Stage 2 산출물: 3-Layer OKF 위키 (summary.md, entities.md, concepts.md, rules.md)
 │   └── output/                      # Stage 2~5 산출물: ontology.jsonld, BQ/Spanner Graph DDL, 평가 리포트 JSON
+├── projects/_template/              # 프로젝트 폴더 템플릿 (projects/<id>/는 .gitignore 대상)
 ├── industry_cases/                  # 4대 산업군(제조·금융·리테일·통신) 8종 비식별 참조 아키텍처 및 데이터 템플릿
 ├── methodology/                     # 5-Stage 방법론 마스터(KO/EN) 및 Stage 1~5 한/영 상세 가이드 (13개 파일)
 ├── notebooks/                       # 8단계 흐름 기반 한/영 실습 노트북 12종(ko/ 6종, en/ 6종) + nb_helpers.py
@@ -188,6 +207,8 @@ agentic-ontology-starter/
 │   └── validator.py                 # Stage 5 Golden CQ 5건 검증 및 경계값 10건×5회 반복 평가 엔진
 ├── src/
 │   ├── gcp_client.py                # BigQuery REST/GQL, GCS 업로드, Vertex AI Gemini 호출 클라이언트
+│   ├── project_context.py           # 프로젝트 해석 및 프로젝트별 MCP·에이전트 엔진 (선택적 *_module 오버라이드)
+│   ├── lineage/lineage_engine.py    # Stage 5 리니지 DAG 엔진 (BigQuery __TABLES__ 실측 행 수)
 │   ├── agent/mcp_server.py          # Stage MCP 5종 + Runtime MCP 3종 (총 8종)
 │   ├── agent/reasoning_engine.py    # 2-패스 Gemini 목표 분해 · MCP 호출 · 근거 합성 에이전트 엔진
 │   └── web/studio_server.py         # 6-Tab Agentic Ontology Studio 웹 서버

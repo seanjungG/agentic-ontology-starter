@@ -1,0 +1,19 @@
+{
+  "_readme": "Filled by new_project.py; edit freely. gcp: this project's BigQuery dataset and GCS bucket (provision with Terraform). Optional overrides for a schema that differs from the sample (paths relative to this folder): mcp_module / engine_module expose class DomainMcpServer / AiFdeAgentEngine; ingest_module / graph_module / validator_module expose run_ingest / build_graph / run_validation.",
+  "project_id": "",
+  "project_name": "",
+  "customer_org": "",
+  "domain": "",
+  "track": "full",
+  "graph_engine": "bigquery",
+  "gcp": {
+    "project_id": "",
+    "dataset_id": "",
+    "gcs_bucket": ""
+  },
+  "mcp_module": "",
+  "engine_module": "",
+  "ingest_module": "",
+  "graph_module": "",
+  "validator_module": ""
+}

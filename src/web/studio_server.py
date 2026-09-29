@@ -14,58 +14,66 @@ Agentic Ontology Studio Server (Starter Pack v2.0)
   * 3-Track Data Maturity (`lite: 1→2→4`, `standard: 1→2→3→4`, `full: 1→5`) & Dual Graph Engine Adapter (`BigQuery Property Graph` <-> `Cloud Spanner Graph`)
   * 8 Core Modular MCPs (5 Stage Pipeline MCPs with selectable `steps` + 3 Runtime Execution MCPs)
 """
-import os, sys, json, csv, http.server, socketserver
+import os, sys, json, csv, glob, http.server, socketserver
 from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, BASE_DIR)
 
-from src.agent.reasoning_engine import AiFdeAgentEngine
+from src.lineage.lineage_engine import LineageEngine
+from src.project_context import cached, get_engine, get_project, list_projects
 
 PORT = int(os.environ.get("PORT", 8080))
-engine = AiFdeAgentEngine()
 
 PORTAL_PROFILE_PATH = "config/portal_profile.json"
 STARTER_CONFIG_PATH = "config/starter_config.json"
 EVAL_RUBRIC_PATH = "config/eval_rubric.json"
+LINEAGE_SPEC_PATH = "config/lineage_spec.json"
 CQ_REPORT_PATH = "data/output/cq_benchmark_report.json"
 BOUNDARY_REPORT_PATH = "data/output/boundary_benchmark_results.json"
 
 
-def load_text_file(rel_path, default=""):
-    p = os.path.join(BASE_DIR, rel_path)
+def load_text_file(rel_path, default="", root=BASE_DIR):
+    p = os.path.join(root, rel_path)
     if os.path.exists(p):
         with open(p, "r", encoding="utf-8") as f:
             return f.read()
     return default
 
 
-def load_json_file(rel_path, default=None):
-    p = os.path.join(BASE_DIR, rel_path)
+def load_json_file(rel_path, default=None, root=BASE_DIR):
+    p = os.path.join(root, rel_path)
     if os.path.exists(p):
         with open(p, "r", encoding="utf-8") as f:
             return json.load(f)
     return default if default is not None else {}
 
 
-def load_csv_table(rel_path):
-    p = os.path.join(BASE_DIR, rel_path)
-    if not os.path.exists(p):
-        return {"headers": [], "rows": []}
-    with open(p, "r", encoding="utf-8") as f:
+def load_csv_table(path):
+    with open(path, "r", encoding="utf-8") as f:
         reader = list(csv.reader(f))
         if not reader:
             return {"headers": [], "rows": []}
         return {"headers": reader[0], "rows": reader[1:]}
 
 
-def build_eval_summary():
-    profile = load_json_file(PORTAL_PROFILE_PATH, {})
-    ev_cfg = profile.get("evaluation", {})
-    rubric = load_json_file(EVAL_RUBRIC_PATH, {})
+def get_lineage(project):
+    def build(p):
+        eng = get_engine(p)
+        srv = eng.server
+        return LineageEngine(os.path.join(p["root"], LINEAGE_SPEC_PATH), {
+            "project_id": srv.project_id, "fq": srv.fq, "dataset_id": srv.fq.split(".", 1)[1],
+            "bucket": srv.gcs_bucket, "model": eng.model_name})
+    return cached(project, "lineage", build)
 
-    cq_exists = os.path.exists(os.path.join(BASE_DIR, CQ_REPORT_PATH))
-    cq_raw = load_json_file(CQ_REPORT_PATH, {}) if cq_exists else {}
+
+def build_eval_summary(root=BASE_DIR):
+    profile = load_json_file(PORTAL_PROFILE_PATH, {}, root)
+    ev_cfg = profile.get("evaluation", {})
+    rubric = load_json_file(EVAL_RUBRIC_PATH, {}, root)
+
+    cq_exists = os.path.exists(os.path.join(root, CQ_REPORT_PATH))
+    cq_raw = load_json_file(CQ_REPORT_PATH, {}, root) if cq_exists else {}
     cq_items = cq_raw.get("evaluation_details") or cq_raw.get("test_results") or []
     cq_total = cq_raw.get("total_cqs", len(cq_items)) if cq_exists else 0
     cq_passed = cq_raw.get(
@@ -74,14 +82,14 @@ def build_eval_summary():
     ) if cq_exists else 0
     cq_rate = round((cq_passed / cq_total) * 100, 1) if cq_total else None
 
-    bd_exists = os.path.exists(os.path.join(BASE_DIR, BOUNDARY_REPORT_PATH))
-    bd_raw = load_json_file(BOUNDARY_REPORT_PATH, {}) if bd_exists else {}
+    bd_exists = os.path.exists(os.path.join(root, BOUNDARY_REPORT_PATH))
+    bd_raw = load_json_file(BOUNDARY_REPORT_PATH, {}, root) if bd_exists else {}
     bd_cases = bd_raw.get("cases", []) if bd_exists else []
 
     file_state = {
         "cq_report": cq_exists,
         "boundary": bd_exists,
-        "rubric": os.path.exists(os.path.join(BASE_DIR, EVAL_RUBRIC_PATH)),
+        "rubric": os.path.exists(os.path.join(root, EVAL_RUBRIC_PATH)),
     }
     sources = []
     for s in ev_cfg.get("sources", []):
@@ -1073,6 +1081,65 @@ HTML_PAGE = r"""<!DOCTYPE html>
     flex-direction: column;
     overflow: hidden;
   }
+  /* Project selector (top bar) */
+  .hdr-project-select-wrap { display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 999px; padding: 2px 10px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+  .hdr-project-label { font-size: 10.5px; font-weight: 700; color: var(--apple-text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
+  .hdr-project-select { border: none; background: transparent; font-family: var(--font-sans); font-size: 12px; font-weight: 700; color: var(--apple-blue); cursor: pointer; outline: none; padding: 2px 4px; max-width: 340px; }
+
+  /* Stage 5 Enterprise Data Lineage DAG (same layout as the main studio lineage view) */
+  .lineage-toolbar-island { background: var(--apple-bg-secondary); border: 1px solid var(--apple-border-subtle); border-radius: 14px; padding: 8px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .lineage-presets { display: inline-flex; background: rgba(0, 0, 0, 0.04); padding: 3px; border-radius: 10px; gap: 3px; flex-wrap: wrap; }
+  .lineage-preset-btn { background: transparent; border: 1px solid transparent; padding: 5px 12px; font-size: 11.5px; font-weight: 600; color: var(--apple-text-secondary); border-radius: 8px; cursor: pointer; transition: all 0.16s ease; font-family: inherit; }
+  .lineage-preset-btn:hover { color: var(--apple-text-primary); background: rgba(0, 0, 0, 0.04); }
+  .lineage-preset-btn.active { background: var(--apple-bg-primary); color: var(--apple-blue); border-color: rgba(0, 113, 227, 0.2); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); font-weight: 700; }
+  .lineage-icon-btn { height: 30px; min-width: 30px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border-radius: 8px; }
+  #btn-toggle-pii.pii-on { background: rgba(225, 29, 72, 0.12); color: #e11d48; border-color: #e11d48; }
+  .lineage-canvas-viewport { position: relative; height: 640px; overflow: hidden; cursor: grab; border: 1px solid var(--apple-border-subtle); border-radius: 14px; background-color: #edf0f5; background-image: radial-gradient(rgba(203, 213, 225, 0.6) 1px, transparent 1px); background-size: 20px 20px; user-select: none; }
+  .lineage-canvas-viewport:active { cursor: grabbing; }
+  #lineage-world-container { position: absolute; top: 0; left: 0; width: 3400px; height: 1400px; transform-origin: 0 0; }
+  #lineage-edges-svg, #lineage-nodes-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  #lineage-edges-svg { z-index: 10; }
+  #lineage-nodes-layer { z-index: 20; }
+  .lineage-empty { position: absolute; top: 40px; left: 40px; font-size: 13px; color: var(--apple-text-secondary); pointer-events: auto; }
+  .lineage-node-card { position: absolute; width: 290px; height: 52px; background: #ffffff; border: 1.2px solid rgba(15, 23, 42, 0.18); border-radius: 6px; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1); display: flex; align-items: center; padding: 0 8px 0 0; cursor: pointer; pointer-events: auto; transition: box-shadow 0.15s ease, opacity 0.2s, border-color 0.15s; }
+  .lineage-node-card:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16); border-color: var(--apple-blue); z-index: 50; }
+  .lineage-node-card.active-target { box-shadow: 0 0 0 2px var(--apple-blue), 0 8px 20px rgba(0, 113, 227, 0.35) !important; border-color: var(--apple-blue) !important; z-index: 60; }
+  .lineage-node-card.highlighted { box-shadow: 0 0 0 1.5px var(--apple-blue), 0 4px 12px rgba(0, 113, 227, 0.25) !important; border-color: var(--apple-blue) !important; z-index: 45; }
+  .lineage-node-card.dimmed { opacity: 0.14; filter: grayscale(85%); }
+  .lineage-color-strip { width: 6px; height: 100%; border-top-left-radius: 5px; border-bottom-left-radius: 5px; margin-right: 8px; flex-shrink: 0; }
+  .lineage-card-icon { font-size: 9.5px; font-weight: 700; margin-right: 6px; letter-spacing: -0.02em; flex-shrink: 0; }
+  .lineage-card-label { flex: 1; min-width: 0; font-size: 11.5px; font-weight: 700; color: #0f172a; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; letter-spacing: -0.01em; }
+  .lineage-card-badge { font-size: 9.5px; font-weight: 600; color: #475569; background: rgba(0, 0, 0, 0.05); padding: 2px 6px; border-radius: 4px; margin-left: 6px; flex-shrink: 0; white-space: nowrap; border: 1px solid rgba(0, 0, 0, 0.08); }
+  .lineage-card-badge.live { color: #047857; background: #ecfdf5; border-color: #a7f3d0; }
+  .lineage-spline-edge { fill: none; stroke: #64748b; stroke-width: 1.6; opacity: 0.75; transition: stroke 0.25s, stroke-width 0.25s, opacity 0.25s; }
+  .lineage-spline-edge.highlighted { stroke: var(--apple-blue); stroke-width: 2.4; opacity: 1; filter: drop-shadow(0 0 4px rgba(0, 113, 227, 0.6)); }
+  .lineage-spline-edge.dimmed { opacity: 0.06; }
+  .lineage-floating-legend { position: absolute; top: 14px; right: 14px; width: 250px; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--apple-border-subtle); border-radius: 10px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.10); z-index: 80; display: flex; flex-direction: column; overflow: hidden; }
+  .lineage-legend-hdr { padding: 8px 12px; background: rgba(0, 0, 0, 0.03); border-bottom: 1px solid var(--apple-border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--apple-text-primary); }
+  .lineage-legend-body { padding: 8px 12px; display: flex; flex-direction: column; gap: 5px; max-height: 290px; overflow-y: auto; }
+  .lineage-legend-row { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--apple-text-primary); cursor: pointer; padding: 3px 6px; border-radius: 4px; }
+  .lineage-legend-row:hover { background: rgba(0, 113, 227, 0.08); }
+  .lineage-legend-swatch { width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
+  .lineage-legend-count { font-size: 10px; font-weight: 600; color: var(--apple-text-secondary); }
+  .lineage-minimap-panel { position: absolute; bottom: 14px; left: 14px; width: 180px; height: 100px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--apple-border-subtle); border-radius: 10px; z-index: 80; overflow: hidden; }
+  .lineage-minimap-indicator { position: absolute; border: 1.5px solid var(--apple-blue); background: rgba(0, 113, 227, 0.18); border-radius: 2px; pointer-events: none; }
+  .lineage-drawer { position: absolute; top: 0; right: 0; width: 410px; height: 100%; background: var(--apple-bg-primary); border-left: 1px solid var(--apple-border-subtle); box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12); z-index: 120; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
+  .lineage-drawer.open { transform: translateX(0); }
+  .lineage-drawer-header { padding: 14px 18px; border-bottom: 1px solid var(--apple-border-subtle); display: flex; align-items: center; justify-content: space-between; background: var(--apple-bg-secondary); }
+  .lineage-drawer-title { font-size: 13px; font-weight: 700; color: var(--apple-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lineage-drawer-close { background: transparent; border: none; font-size: 14px; color: var(--apple-text-secondary); cursor: pointer; padding: 4px; border-radius: 4px; }
+  .lineage-drawer-close:hover { background: rgba(0, 0, 0, 0.06); color: var(--apple-text-primary); }
+  .lineage-drawer-body { padding: 16px 18px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  .lineage-drawer-section { background: var(--apple-bg-secondary); border: 1px solid var(--apple-border-subtle); border-radius: 8px; padding: 12px 14px; }
+  .lineage-drawer-sec-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--apple-text-secondary); margin-bottom: 8px; }
+  .lineage-drawer-prop-row { display: grid; grid-template-columns: 85px 1fr; row-gap: 5px; font-size: 11px; }
+  .lineage-prop-k { color: var(--apple-text-secondary); }
+  .lineage-prop-v { color: var(--apple-text-primary); font-weight: 500; word-break: break-all; }
+  .lineage-link-row { background: var(--apple-bg-primary); padding: 5px 8px; border-radius: 4px; border: 1px solid var(--apple-border-subtle); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .lineage-agent-card { background: rgba(0, 113, 227, 0.06); border: 1px solid rgba(0, 113, 227, 0.2); border-radius: 8px; padding: 12px 14px; }
+  .lineage-citation-text { font-size: 11.5px; color: var(--apple-blue); line-height: 1.5; white-space: pre-wrap; }
+  .lineage-btn-ask-agent { width: 100%; margin-top: 10px; background: var(--apple-blue); color: #ffffff; border: none; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .lineage-btn-ask-agent:hover { background: var(--apple-blue-hover); }
 </style>
 </head>
 <body>
@@ -1090,6 +1157,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
           </svg>
           <span>Agentic Ontology Studio</span>
         </a>
+        <div class="hdr-project-select-wrap" title="고객·데이터 영역별 프로젝트 전환 (projects/<id>/)">
+          <span class="hdr-project-label">Project</span>
+          <select id="hdr-project-select" class="hdr-project-select" onchange="switchProject(this.value)"></select>
+        </div>
         <span class="hdr-meta-badge">Starter Pack v2.0</span>
         <span class="hdr-meta-badge teal" id="hdr-track-badge">Track 3 · Full-Stack</span>
         <span class="hdr-meta-badge indigo" id="hdr-engine-badge">BigQuery Property Graph</span>
@@ -1571,14 +1642,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </section>
 
     <!-- =================================================================== -->
-    <!-- TAB 5: STAGE 5. LINEAGE & EVAL (4-Tier Lineage + Golden/Boundary)   -->
+    <!-- TAB 5: STAGE 5. LINEAGE & EVAL (Lineage DAG + Golden/Boundary)      -->
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage5">
       <div class="ov-scroll-wrap">
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge approved">STAGE 5 · 4-TIER DATA LINEAGE &amp; CLOSED-LOOP EVALUATION</span>
-            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">4-Tier 엔드투엔드 데이터 리니지 &amp; Golden CQ (5건) / 바운더리 질의 (10건) 통합 검증 리포트</span>
+            <span class="badge approved">STAGE 5 · DATA LINEAGE &amp; CLOSED-LOOP EVALUATION</span>
+            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">엔드투엔드 데이터 리니지 DAG &amp; Golden CQ / 바운더리 질의 통합 검증 리포트</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="badge human" id="lineage-latency-badge">Lineage Verified</span>
@@ -1588,20 +1659,51 @@ HTML_PAGE = r"""<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- Part A: 4-Tier Enterprise Data Lineage -->
+        <!-- Part A: Enterprise Data Lineage DAG (spec: config/lineage_spec.json) -->
         <div class="ov-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow teal">PART A · 4-TIER END-TO-END ENTERPRISE DATA LINEAGE</span>
+            <span class="ov-eyebrow teal">PART A · ENTERPRISE DATA LINEAGE (CONNECTION &rarr; RAW &rarr; TRANSFORM &rarr; SEMANTIC &rarr; MCP &rarr; AGENT)</span>
           </div>
-          <h2 class="ov-h2">Tier 1 (Raw DW/Guides) &rarr; Tier 2 (OKF v0.2 Wiki) &rarr; Tier 3 (Dual Property Graph) &rarr; Tier 4 (Agent &amp; CQ)</h2>
           <div class="ov-metric-grid" id="lineage-kpis" style="margin-bottom:14px;"></div>
-          <div id="lineage-tiers" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:14px;"></div>
-          <table class="ov-gap-table">
-            <thead>
-              <tr><th>Source Vertex</th><th>Semantic / Relational Edge</th><th>Target Vertex</th><th>Bridge Type</th></tr>
-            </thead>
-            <tbody id="lineage-edge-tbody"></tbody>
-          </table>
+          <div class="lineage-toolbar-island">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:12.5px; font-weight:700;" data-ko="엔터프라이즈 리니지:" data-en="Enterprise Lineage:">엔터프라이즈 리니지:</span>
+              <div class="lineage-presets" id="lineage-presets"></div>
+              <span class="hdr-meta-badge" id="lineage-node-count">0 Nodes</span>
+              <span class="hdr-meta-badge teal" id="lineage-edge-count">0 Edges</span>
+              <span class="hdr-meta-badge indigo" id="lineage-cat-count">0 Categories</span>
+              <button type="button" class="subnav-action-btn" id="btn-toggle-pii" onclick="toggleLineagePii()">PII 숨김됨</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="zoomLineageBy(0.85)" title="Zoom Out">&minus;</button>
+              <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="zoomLineageBy(1.18)" title="Zoom In">+</button>
+              <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="fitLineageView()" data-ko="맞춤" data-en="Fit">맞춤</button>
+              <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="untangleLineageLayout()" data-ko="정렬" data-en="Align">정렬</button>
+              <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="resetLineageHighlight(); fetchLineageGraphData();" data-ko="초기화" data-en="Reset">초기화</button>
+              <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="toggleLineageLegend()" data-ko="범례" data-en="Legend">범례</button>
+            </div>
+          </div>
+          <div class="lineage-canvas-viewport" id="lineage-viewport">
+            <div id="lineage-world-container">
+              <svg id="lineage-edges-svg"></svg>
+              <div id="lineage-nodes-layer"></div>
+            </div>
+            <div class="lineage-floating-legend" id="lineage-legend-panel">
+              <div class="lineage-legend-hdr"><span data-ko="카테고리 범례" data-en="Legend by color">카테고리 범례</span><span style="cursor:pointer; color:var(--apple-text-secondary);" onclick="toggleLineageLegend()">&times;</span></div>
+              <div class="lineage-legend-body" id="lineage-legend-body"></div>
+            </div>
+            <div class="lineage-minimap-panel" id="lineage-minimap">
+              <svg id="lineage-minimap-svg" width="180" height="100"></svg>
+              <div class="lineage-minimap-indicator" id="lineage-minimap-indicator"></div>
+            </div>
+            <aside class="lineage-drawer" id="lineage-drawer">
+              <div class="lineage-drawer-header">
+                <div class="lineage-drawer-title" id="lineage-drawer-title">Node Inspector</div>
+                <button class="lineage-drawer-close" onclick="closeLineageDrawer()" title="Close (Esc)">&times;</button>
+              </div>
+              <div class="lineage-drawer-body" id="lineage-drawer-body"></div>
+            </aside>
+          </div>
         </div>
 
         <!-- Part B: Evaluation KPI & Golden CQ Matrix -->
@@ -1686,6 +1788,49 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   function esc(s) { return (s === null || s === undefined) ? '' : String(s); }
 
+  // 0. Project context: config/project.json (sample) + projects/<id>/project.json. Every /api call carries ?project=.
+  let activeProject = new URLSearchParams(location.search).get('project') || '';
+  let projectList = [];
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (url, opts) => {
+    if (activeProject && typeof url === 'string' && url.startsWith('/api/')) {
+      url += (url.includes('?') ? '&' : '?') + 'project=' + encodeURIComponent(activeProject);
+    }
+    return nativeFetch(url, opts);
+  };
+
+  async function loadProjects() {
+    projectList = await (await nativeFetch('/api/projects')).json();
+    if (!projectList.some(p => p.project_id === activeProject)) activeProject = (projectList[0] || {}).project_id || '';
+    const sel = document.getElementById('hdr-project-select');
+    sel.innerHTML = projectList.map(p => `<option value="${esc(p.project_id)}">${esc(p.project_name || p.project_id)}</option>`).join('');
+    sel.value = activeProject;
+    applyProjectMeta();
+  }
+
+  function applyProjectMeta() {
+    const p = projectList.find(x => x.project_id === activeProject) || {};
+    selectTrack(p.track || 'full');
+    selectGraphEngine(p.graph_engine || 'bigquery');
+    const chips = document.getElementById('agent-sample-chips');  // sample-specific questions
+    if (chips) chips.style.display = (p.root_dir && p.root_dir !== '.') ? 'none' : '';
+  }
+
+  function switchProject(id) {
+    activeProject = id;
+    document.getElementById('hdr-project-select').value = id;
+    const u = new URL(location.href);
+    u.searchParams.set('project', id);
+    history.replaceState(null, '', u);
+    globalAssets = null; globalGraph = null; globalCatalog = []; lineageGraph = null; lineageActiveTrace = null;
+    closeLineageDrawer();
+    applyProjectMeta();
+    loadPortalProfile();
+    loadCatalog();
+    const active = document.querySelector('#main-tab-ribbon .view-mode-pill.active');
+    switchTab(active ? active.getAttribute('data-tab') : 'overview');
+  }
+
   // 1. Tab Routing (Supports 6 Primary Stage Tabs + Legacy Deep-Link Aliases)
   const TAB_ALIAS_MAP = {
     'overview': 'overview',
@@ -1738,6 +1883,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
       renderPropertyGraph();
     }
     if (globalCatalog.length) renderMcpCatalog();
+    if (lineageGraph) {
+      updatePiiButton();
+      renderLineageAll();
+      if (lineageActiveTrace) selectLineageNode(lineageActiveTrace.selected_node.id);
+    }
   }
 
   // 3. Track & Graph Engine Selectors
@@ -1851,6 +2001,15 @@ HTML_PAGE = r"""<!DOCTYPE html>
     { id: 'guide_welfare', name: '시니어·복지 위약금 면제 특례 및 24M TCO 가이드 (sample_welfare_exemption_guide.md)', type: 'doc', doc: 'sample_welfare_exemption_guide.md', status: 'SHA-256 Anchored', badge: 'llm' }
   ];
 
+  function stage1Catalog() {
+    const a = globalAssets || {}, tables = a.tables || {};
+    const docs = [...new Set((a.chunks || []).map(c => c.source_doc).filter(Boolean))];
+    const curated = STAGE1_CATALOG.filter(i => i.type === 'dw' ? tables[i.id] : docs.includes(i.doc));
+    if (curated.length) return curated;
+    return Object.keys(tables).map(t => ({ id: t, short: t, name: `${t}.csv`, type: 'dw', pk: tables[t].headers[0] || '-', status: 'CSV Source', badge: 'human' }))
+      .concat(docs.map((d, i) => ({ id: `doc_${i + 1}`, name: d, type: 'doc', doc: d, status: 'SHA-256 Anchored', badge: 'llm' })));
+  }
+
   // Counts come from /api/assets (repo CSVs + data/output/doc_chunks.jsonl), not from fixed values.
   function stage1Table(id) { return ((globalAssets || {}).tables || {})[id] || { headers: [], rows: [] }; }
   function stage1Chunks(doc) { return ((globalAssets || {}).chunks || []).filter(c => !doc || c.source_doc === doc).map(c => c.chunk_id); }
@@ -1861,9 +2020,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   function renderStage1Kpis() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    const dw = STAGE1_CATALOG.filter(i => i.type === 'dw');
-    set('st1-kpi-assets', `${STAGE1_CATALOG.length} Assets`);
-    set('st1-kpi-assets-sub', `DW 마스터 테이블 ${dw.length}종 + 정책 가이드 ${STAGE1_CATALOG.length - dw.length}종`);
+    const cat = stage1Catalog(), dw = cat.filter(i => i.type === 'dw');
+    set('st1-kpi-assets', `${cat.length} Assets`);
+    set('st1-kpi-assets-sub', `DW 마스터 테이블 ${dw.length}종 + 정책 가이드 ${cat.length - dw.length}종`);
+    set('st1-filter-all', `전체 자산 (${cat.length})`);
+    set('st1-filter-dw', `정형 DW 마스터 원장 (${dw.length})`);
+    set('st1-filter-doc', `비정형 정책 가이드 (${cat.length - dw.length})`);
     set('st1-kpi-rows', `${dw.reduce((s, i) => s + stage1Table(i.id).rows.length, 0)} Rows`);
     set('st1-kpi-rows-sub', dw.map(i => `${i.short} ${stage1Table(i.id).rows.length}`).join(' · '));
     const ids = stage1Chunks();
@@ -1886,7 +2048,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const tbody = document.getElementById('stage1-asset-tbody');
     if (!tbody) return;
     renderStage1Kpis();
-    const rows = STAGE1_CATALOG.filter(item => stage1Filter === 'all' || item.type === stage1Filter);
+    const rows = stage1Catalog().filter(item => stage1Filter === 'all' || item.type === stage1Filter);
     tbody.innerHTML = rows.map((item, idx) => `
       <tr id="st1-row-${item.id}" onclick="inspectStage1Asset('${item.id}')">
         <td><code style="font-weight:700; color:var(--apple-blue);">${item.id}</code></td>
@@ -1904,7 +2066,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const activeRow = document.getElementById('st1-row-' + assetId);
     if (activeRow) activeRow.classList.add('selected');
 
-    const item = STAGE1_CATALOG.find(x => x.id === assetId);
+    const item = stage1Catalog().find(x => x.id === assetId);
     if (!item || !globalAssets) return;
     document.getElementById('st1-insp-kicker').textContent = item.type === 'dw' ? 'STRUCTURED DW TABLE PREVIEW' : 'UNSTRUCTURED POLICY CHUNKS';
     document.getElementById('st1-insp-title').textContent = item.name;
@@ -1927,7 +2089,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         </div>
       `;
     } else {
-      const docName = assetId === 'guide_policy' ? 'sample_policy_guide.md' : 'sample_welfare_exemption_guide.md';
+      const docName = item.doc;
       const chunks = (globalAssets.chunks || []).filter(c => !c.source_doc || c.source_doc === docName);
       body.innerHTML = chunks.map(c => `
         <div class="chunk-card-light">
@@ -2206,59 +2368,29 @@ HTML_PAGE = r"""<!DOCTYPE html>
   // 9. Stage 5 Lineage & Evaluation
   async function loadLineageAndEvaluation() {
     const t0 = performance.now();
-    const [aRes, gRes, eRes, s3Res] = await Promise.all([
-      fetch('/api/assets'),
-      fetch('/api/graph'),
-      fetch('/api/eval/summary'),
+    if (!lineageInitialized) { lineageInitialized = true; setupLineagePanZoom(); }
+    const [lg, ev, s3] = await Promise.all([
+      fetchLineageGraphData(),
+      fetch('/api/eval/summary').then(r => r.json()),
       fetch('/api/mcp/execute', { method: 'POST', headers: {'Content-Type': 'application/json'},
                                   body: JSON.stringify({ tool_name: 'mcp_stage3_property_graph', args: {} }) })
+        .then(r => r.json()).catch(e => ({ status: 'ERROR', error: e.message }))
     ]);
-    const assets = await aRes.json();
-    const graph = await gRes.json();
-    const ev = await eRes.json();
-    const s3 = await s3Res.json();
     const elapsed = Math.round(performance.now() - t0);
     document.getElementById('lineage-latency-badge').textContent = `Lineage Loaded in ${elapsed} ms`;
 
-    const topo = graph.topology || {};
-    const chunks = assets.chunks || [];
-    const wikiFiles = Object.keys(assets.wiki || {});
-    const tableNames = Object.keys(assets.tables || {});
-    const dwNodes = topo.structured_dw_nodes || [];
-    const unNodes = topo.unstructured_pruned_nodes || [];
-    const edges = topo.edge_tables || [];
-    const bridges = topo.semantic_bridges || [];
-    const g0 = ev.golden || {}, b0 = ev.boundary || {};
-
+    const md = (lg || {}).metadata || {}, st = (lg || {}).stats || {};
+    const bq = md.bq_status === 'SUCCESS' ? [`${md.live_nodes} / ${md.bq_nodes}`, esc(md.bq_job_id)]
+      : (md.bq_nodes ? ['조회 실패', esc(md.bq_error || md.bq_status)] : ['-', 'bq_table 지정 노드 없음']);
+    // A project's own stage3 MCP may not return duplicate_keys_total; show N/A instead of "undefined".
+    const dup = Number.isFinite(s3.duplicate_keys_total) ? [`${s3.duplicate_keys_total}건`, esc(s3.bq_job_id)]
+      : (s3.status === 'SUCCESS' ? ['N/A', 'stage3 MCP가 duplicate_keys_total을 반환하지 않음'] : ['조회 실패', esc(s3.status || s3.error)]);
     document.getElementById('lineage-kpis').innerHTML = [
-      ['추적 대상 아티팩트', (tableNames.length + chunks.length + wikiFiles.length + dwNodes.length + unNodes.length) + '개', 'var(--apple-blue)'],
-      ['Property Graph Vertex / Edge', (dwNodes.length + unNodes.length) + ' Nodes / ' + edges.length + ' Edges', 'var(--apple-indigo)'],
-      ['노드 테이블 중복 키 (BigQuery 실측)', s3.status === 'SUCCESS' ? `${s3.duplicate_keys_total}건 · ${esc(s3.bq_job_id || '')}` : `조회 실패 (${esc(s3.status)})`, 'var(--apple-emerald)'],
-      ['계보 집계 응답 지연', elapsed + ' ms', 'var(--apple-teal)']
-    ].map(([k, v, c]) => `<div class="metric-box"><div class="metric-title">${k}</div><div class="metric-value" style="color:${c};">${v}</div></div>`).join('');
-
-    const tiers = [
-      { n: 'TIER 1 · RAW SOURCE', name: 'DW Ledgers & Guides', color: '#3b82f6', items: [`정형 마스터 테이블 ${tableNames.length}종 (21 rows)`, `비정형 정책 가이드 2종`, tableNames.map(t => `<code>${t}</code>`).join(' · ')] },
-      { n: 'TIER 2 · OKF WIKI', name: '3-Layer Wiki & Anchors', color: '#0d9488', items: [`SHA-256 해시 앵커 청크 ${chunks.length}개`, `Karpathy 3-Layer Wiki (${wikiFiles.length} files)`, `<code>DOC_CHUNK_001 ~ 005</code>`] },
-      { n: 'TIER 3 · GRAPH', name: 'BigQuery & Spanner Graph', color: '#6366f1', items: [`정형 승격 노드 ${dwNodes.length}종 + 비정형 노드 ${unNodes.length}종`, `듀얼 DDL (SQL:2023 & ISO GQL)`, `<code>${esc(topo.graph_name || '-')}</code>`] },
-      { n: 'TIER 4 · AGENT & EVAL', name: '8 MCPs & Closed-Loop Eval', color: '#db2777', items: [`Stage MCP 5종 + Runtime MCP 3종`, `Golden CQ ${g0.passed ?? '-'}/${g0.total ?? '-'} (실측 ${esc(g0.evaluated_at || '미측정')})`, `Boundary ${b0.case_count || 0}건 · 성공률 ${b0.avg_success_rate ?? '-'}%`] }
-    ];
-    document.getElementById('lineage-tiers').innerHTML = tiers.map(tr => `
-      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-top:3px solid ${tr.color}; border-radius:10px; padding:14px;">
-        <div style="font-size:11px; font-weight:800; color:${tr.color};">${tr.n}</div>
-        <div style="font-size:14px; font-weight:800; color:#0f172a; margin:3px 0 8px 0;">${tr.name}</div>
-        ${tr.items.map(i => `<div style="font-size:12px; color:#334155; line-height:1.6;">&bull; ${i}</div>`).join('')}
-      </div>
-    `).join('');
-
-    document.getElementById('lineage-edge-tbody').innerHTML = bridges.map(b => `
-      <tr>
-        <td><code>${esc(b.source)}</code></td>
-        <td><span class="badge indigo">${esc(b.edge)}</span></td>
-        <td><code>${esc(b.target)}</code></td>
-        <td>${esc(b.type)}</td>
-      </tr>
-    `).join('');
+      ['리니지 노드 / 엣지 / 카테고리', [`${st.total_nodes ?? 0} / ${st.total_edges ?? 0} / ${st.total_categories ?? 0}`, `${esc(md.fq)} · PII ${st.pii_layer_visible ? '표시' : '숨김'}`], 'var(--apple-blue)'],
+      ['BigQuery 실측 노드 (__TABLES__)', bq, 'var(--apple-indigo)'],
+      ['노드 테이블 중복 키 (BigQuery 실측)', dup, 'var(--apple-emerald)'],
+      ['계보 집계 응답 지연', [elapsed + ' ms', 'graph + eval + stage3 MCP 병렬 조회'], 'var(--apple-teal)']
+    ].map(([k, [v, cap], c]) => `<div class="metric-box"><div class="metric-title">${k}</div><div class="metric-value" style="color:${c};">${v}</div><div class="ov-metric-cap">${cap}</div></div>`).join('');
 
     // Evaluation Summary
     document.getElementById('ev-intro').innerHTML = esc(ev.intro);
@@ -2317,6 +2449,315 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <td>${esc(x.fix)}</td>
       </tr>
     `).join('');
+  }
+
+  // 9-A. Enterprise Data Lineage DAG (spec: <project>/config/lineage_spec.json, API: /api/lineage/*)
+  const LN_W = 290, LN_H = 52;
+  let lineageGraph = null, lineageActiveTrace = null, lineageInitialized = false, lineageIncludePii = false, lineagePreset = 'ALL';
+  let lineageScale = 0.85, lineagePanX = 30, lineagePanY = 30, lineagePan = null, lineageDrag = null;
+
+  function lineageNode(id) { return ((lineageGraph || {}).nodes || []).find(n => n.id === id); }
+  function lineageBounds() {
+    const ns = (lineageGraph || {}).nodes || [];
+    return { maxX: Math.max(2600, ...ns.map(n => n.x + LN_W + 60)), maxY: Math.max(1100, ...ns.map(n => n.y + LN_H + 60)) };
+  }
+
+  async function fetchLineageGraphData() {
+    try {
+      const g = await (await fetch(`/api/lineage/graph?include_pii=${lineageIncludePii}`)).json();
+      if (!g.nodes) throw new Error(g.error || 'invalid response');
+      lineageGraph = g;
+    } catch (e) {
+      lineageGraph = null;
+      document.getElementById('lineage-nodes-layer').innerHTML = `<div class="lineage-empty">Lineage API error: ${esc(e.message)}</div>`;
+      return null;
+    }
+    lineageActiveTrace = null;
+    lineagePreset = 'ALL';
+    document.getElementById('lineage-node-count').textContent = `${lineageGraph.nodes.length} Nodes`;
+    document.getElementById('lineage-edge-count').textContent = `${lineageGraph.edges.length} Edges`;
+    document.getElementById('lineage-cat-count').textContent = `${lineageGraph.categories.length} Categories`;
+    renderLineageAll();
+    setTimeout(fitLineageView, 200);
+    return lineageGraph;
+  }
+
+  function renderLineageAll() {
+    renderLineagePresets();
+    renderLineageLegend();
+    renderLineageNodes();
+    renderLineageEdges();
+    updateLineageTransform();
+  }
+
+  function renderLineagePresets() {
+    const en = studioLang === 'en';
+    const items = [{ id: 'ALL', label: '전체 토폴로지', label_en: 'Full Topology' }].concat(lineageGraph.presets || []);
+    document.getElementById('lineage-presets').innerHTML = items.map(p =>
+      `<button type="button" class="lineage-preset-btn${p.id === lineagePreset ? ' active' : ''}" onclick="filterLineageCategory('${esc(p.id)}')">${esc(en ? (p.label_en || p.label) : p.label)}</button>`).join('');
+  }
+
+  function renderLineageLegend() {
+    const counts = (lineageGraph.stats || {}).category_counts || {};
+    document.getElementById('lineage-legend-body').innerHTML = lineageGraph.categories.map(c => `
+      <div class="lineage-legend-row" onclick="filterLineageByCategory('${esc(c.id)}')">
+        <div style="display:flex; align-items:center;"><span class="lineage-legend-swatch" style="background-color:${esc(c.color)};"></span><span>${esc(studioLang === 'en' ? c.name : (c.name_ko || c.name))}</span></div>
+        <span class="lineage-legend-count">(${counts[c.id] || 0})</span>
+      </div>`).join('');
+  }
+
+  function renderLineageNodes() {
+    const layer = document.getElementById('lineage-nodes-layer');
+    const cats = Object.fromEntries(lineageGraph.categories.map(c => [c.id, c]));
+    const en = studioLang === 'en';
+    const root = (projectList.find(p => p.project_id === activeProject) || {}).root_dir || '.';
+    const spec = (root === '.' ? '' : root + '/') + 'config/lineage_spec.json';
+    layer.innerHTML = lineageGraph.nodes.length ? '' : `<div class="lineage-empty">${en
+      ? `${spec} has no nodes yet (see projects/_template/README.md).`
+      : `${spec}에 노드가 없습니다 (projects/_template/README.md 참고).`}</div>`;
+    lineageGraph.nodes.forEach(node => {
+      const cat = cats[node.cat] || { color: '#64748b', tag: node.cat };
+      const title = (en && node.title_en) || node.title;
+      const vol = (en && node.volume_en) || node.volume || '';
+      const card = document.createElement('div');
+      card.className = 'lineage-node-card';
+      card.id = 'lineage-card-' + node.id;
+      card.dataset.id = node.id;
+      card.style.left = node.x + 'px';
+      card.style.top = node.y + 'px';
+      card.innerHTML = `
+        <div class="lineage-color-strip" style="background-color:${esc(cat.color)};"></div>
+        <span class="lineage-card-icon" style="color:${esc(cat.color)};">[${esc(cat.tag || node.cat)}]</span>
+        <span class="lineage-card-label" title="${esc(title)}">${esc(title)}</span>
+        ${vol ? `<span class="lineage-card-badge${node.live ? ' live' : ''}">${esc(vol)}</span>` : ''}`;
+      card.addEventListener('mousedown', e => { e.stopPropagation(); startLineageNodeDrag(node, card, e); });
+      card.addEventListener('click', e => { e.stopPropagation(); selectLineageNode(node.id); });
+      layer.appendChild(card);
+    });
+  }
+
+  function renderLineageEdges() {
+    const b = lineageBounds(), world = document.getElementById('lineage-world-container');
+    world.style.width = Math.max(3400, b.maxX) + 'px';
+    world.style.height = Math.max(1400, b.maxY) + 'px';
+    const nm = Object.fromEntries(lineageGraph.nodes.map(n => [n.id, n]));
+    const hl = lineageActiveTrace ? new Set(lineageActiveTrace.highlighted_edges.map(e => e.source + '>' + e.target)) : null;
+    document.getElementById('lineage-edges-svg').innerHTML = lineageGraph.edges.map(e => {
+      const s = nm[e.source], t = nm[e.target];
+      if (!s || !t) return '';
+      const x1 = s.x + LN_W, y1 = s.y + LN_H / 2, x2 = t.x, y2 = t.y + LN_H / 2, dx = Math.max(40, Math.abs(x2 - x1) * 0.5);
+      const cls = hl ? (hl.has(e.source + '>' + e.target) ? ' highlighted' : ' dimmed') : '';
+      return `<path class="lineage-spline-edge${cls}" d="M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}"></path>`;
+    }).join('');
+  }
+
+  async function selectLineageNode(nodeId) {
+    const t = await (await fetch(`/api/lineage/trace?node_id=${encodeURIComponent(nodeId)}&include_pii=${lineageIncludePii}`)).json();
+    if (t.error) return;
+    lineageActiveTrace = t;
+    const hl = new Set(t.highlighted_nodes);
+    document.querySelectorAll('.lineage-node-card').forEach(card => {
+      card.classList.remove('active-target', 'highlighted', 'dimmed');
+      card.classList.add(card.dataset.id === nodeId ? 'active-target' : (hl.has(card.dataset.id) ? 'highlighted' : 'dimmed'));
+    });
+    renderLineageEdges();
+    openLineageDrawer(nodeId);
+  }
+
+  function resetLineageHighlight() {
+    lineageActiveTrace = null;
+    document.querySelectorAll('.lineage-node-card').forEach(c => c.classList.remove('active-target', 'highlighted', 'dimmed'));
+    if (lineageGraph) renderLineageEdges();
+    closeLineageDrawer();
+  }
+
+  async function openLineageDrawer(nodeId) {
+    const node = lineageNode(nodeId);
+    if (!node) return;
+    const en = studioLang === 'en';
+    document.getElementById('lineage-drawer-title').textContent = (en ? 'Node: ' : '노드 상세: ') + ((en && node.title_en) || node.title);
+    let explanation;
+    try {
+      explanation = (await (await fetch(`/api/lineage/explain?node_id=${encodeURIComponent(nodeId)}&include_pii=${lineageIncludePii}&lang=${studioLang}`)).json()).explanation;
+    } catch (e) {
+      explanation = en ? 'Summary unavailable.' : '요약을 불러오지 못했습니다.';
+    }
+    const t = lineageActiveTrace || { highlighted_edges: [], upstream: { count: 0 }, downstream: { count: 0 } };
+    const ups = t.highlighted_edges.filter(e => e.target === nodeId);
+    const downs = t.highlighted_edges.filter(e => e.source === nodeId);
+    const md = lineageGraph.metadata || {};
+    const volSrc = node.live ? `BigQuery __TABLES__ (${esc(md.bq_job_id || '-')})` : (en ? 'lineage_spec.json value' : 'lineage_spec.json 기재값');
+    const link = (id, label) => `<div class="lineage-link-row" onclick="selectLineageNode('${esc(id)}')"><strong style="color:var(--apple-blue);">${esc(id)}</strong><span style="font-size:10px; color:var(--apple-text-secondary);">${esc(label)}</span></div>`;
+    const sec = (label, rows, emptyText) => `<div class="lineage-drawer-section"><div class="lineage-drawer-sec-label">${label}</div>
+      <div style="font-size:11px; display:flex; flex-direction:column; gap:5px;">${rows.length ? rows.join('') : `<span style="color:var(--apple-text-secondary);">${emptyText}</span>`}</div></div>`;
+    document.getElementById('lineage-drawer-body').innerHTML = `
+      <div class="lineage-drawer-section">
+        <div class="lineage-drawer-sec-label">${en ? 'RESOURCE METADATA' : '리소스 메타데이터 (Resource Metadata)'}</div>
+        <div class="lineage-drawer-prop-row">
+          <span class="lineage-prop-k">Category</span><span class="lineage-prop-v">${esc(node.cat)}</span>
+          <span class="lineage-prop-k">Resource</span><span class="lineage-prop-v" style="font-family:var(--font-mono); font-size:10.5px; color:var(--apple-blue);">${esc(node.resource)}</span>
+          <span class="lineage-prop-k">Volume</span><span class="lineage-prop-v">${esc((en && node.volume_en) || node.volume || '-')}</span>
+          <span class="lineage-prop-k">${en ? 'Volume source' : '볼륨 출처'}</span><span class="lineage-prop-v">${volSrc}</span>
+          <span class="lineage-prop-k">Description</span><span class="lineage-prop-v">${esc((en && node.desc_en) || node.desc || '')}</span>
+        </div>
+      </div>
+      ${sec(en ? `UPSTREAM DEPENDENCIES (${ups.length})` : `상류 원천 의존도 (Upstream Dependencies: ${ups.length}개)`, ups.map(e => link(e.source, e.label)),
+            en ? 'Root node (no upstream)' : '최초 원천 노드 (상류 없음)')}
+      ${sec(en ? `DOWNSTREAM IMPACTS (${downs.length})` : `하류 파생 영향도 (Downstream Impacts: ${downs.length}개)`, downs.map(e => link(e.target, e.label)),
+            en ? 'Terminal node (no downstream)' : '최종 소비 노드 (하류 없음)')}
+      <div class="lineage-agent-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:11.5px; color:var(--apple-blue);">${en ? 'Lineage Summary (rule-based)' : '리니지 요약 (규칙 기반)'}</strong>
+          <span class="badge human">${en ? 'Upstream' : '상류'} ${t.upstream.count} · ${en ? 'Downstream' : '하류'} ${t.downstream.count}</span>
+        </div>
+        <div class="lineage-citation-text">${esc(explanation)}</div>
+        <button class="lineage-btn-ask-agent" onclick="askAgentLineage('${esc(node.id)}')">${en ? 'Ask the Stage 4 agent about this lineage chain' : '이 리니지 체인으로 Stage 4 에이전트에 질의하기'}</button>
+      </div>`;
+    document.getElementById('lineage-drawer').classList.add('open');
+  }
+
+  function closeLineageDrawer() { document.getElementById('lineage-drawer').classList.remove('open'); }
+
+  function askAgentLineage(nodeId) {
+    applySample(studioLang === 'en'
+      ? `Explain the facts of lineage asset [${nodeId}] based on its upstream sources and downstream paths.`
+      : `리니지 항목 [${nodeId}]의 원천과 파생 경로를 기반으로 사실관계를 설명해줘`);
+  }
+
+  function setupLineagePanZoom() {
+    const vp = document.getElementById('lineage-viewport');
+    vp.addEventListener('mousedown', e => {
+      if (e.target.closest('.lineage-node-card, #lineage-legend-panel, #lineage-drawer, #lineage-minimap')) return;
+      lineagePan = { x: e.clientX - lineagePanX, y: e.clientY - lineagePanY };
+    });
+    window.addEventListener('mousemove', e => {
+      if (lineagePan) {
+        lineagePanX = e.clientX - lineagePan.x;
+        lineagePanY = e.clientY - lineagePan.y;
+        updateLineageTransform();
+      } else if (lineageDrag) {
+        const r = document.getElementById('lineage-world-container').getBoundingClientRect();
+        lineageDrag.node.x = Math.round((e.clientX - r.left) / lineageScale - lineageDrag.dx);
+        lineageDrag.node.y = Math.round((e.clientY - r.top) / lineageScale - lineageDrag.dy);
+        lineageDrag.el.style.left = lineageDrag.node.x + 'px';
+        lineageDrag.el.style.top = lineageDrag.node.y + 'px';
+        renderLineageEdges();
+        updateLineageMinimap();
+      }
+    });
+    window.addEventListener('mouseup', () => { lineagePan = null; lineageDrag = null; });
+    vp.addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = vp.getBoundingClientRect();
+      zoomLineageAt(e.deltaY < 0 ? 1.08 : 1 / 1.08, e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+  }
+
+  function startLineageNodeDrag(node, el, e) {
+    const r = el.getBoundingClientRect();
+    lineageDrag = { node, el, dx: (e.clientX - r.left) / lineageScale, dy: (e.clientY - r.top) / lineageScale };
+  }
+
+  function zoomLineageAt(factor, cx, cy) {
+    const prev = lineageScale;
+    lineageScale = Math.max(0.2, Math.min(2.5, lineageScale * factor));
+    lineagePanX = cx - (cx - lineagePanX) * (lineageScale / prev);
+    lineagePanY = cy - (cy - lineagePanY) * (lineageScale / prev);
+    updateLineageTransform();
+  }
+
+  function zoomLineageBy(factor) {
+    const vp = document.getElementById('lineage-viewport');
+    zoomLineageAt(factor, vp.clientWidth / 2, vp.clientHeight / 2);
+  }
+
+  function updateLineageTransform() {
+    document.getElementById('lineage-world-container').style.transform = `translate(${lineagePanX}px, ${lineagePanY}px) scale(${lineageScale})`;
+    updateLineageMinimap();
+  }
+
+  function updateLineageMinimap() {
+    if (!lineageGraph) return;
+    const vp = document.getElementById('lineage-viewport'), ind = document.getElementById('lineage-minimap-indicator');
+    const b = lineageBounds(), mw = 180, mh = 100;
+    const colors = Object.fromEntries(lineageGraph.categories.map(c => [c.id, c.color]));
+    document.getElementById('lineage-minimap-svg').innerHTML = lineageGraph.nodes.map(n =>
+      `<rect x="${n.x / b.maxX * mw}" y="${n.y / b.maxY * mh}" width="5" height="3" rx="1" fill="${esc(colors[n.cat] || '#64748b')}"></rect>`).join('');
+    const x = Math.max(0, Math.min(mw, -lineagePanX / (b.maxX * lineageScale) * mw));
+    const y = Math.max(0, Math.min(mh, -lineagePanY / (b.maxY * lineageScale) * mh));
+    ind.style.left = x + 'px';
+    ind.style.top = y + 'px';
+    ind.style.width = Math.max(10, Math.min(mw - x, vp.clientWidth / (b.maxX * lineageScale) * mw)) + 'px';
+    ind.style.height = Math.max(10, Math.min(mh - y, vp.clientHeight / (b.maxY * lineageScale) * mh)) + 'px';
+  }
+
+  function fitLineageView() {
+    const vp = document.getElementById('lineage-viewport'), ns = (lineageGraph || {}).nodes || [];
+    if (!vp.clientWidth) return;
+    if (!ns.length) { lineageScale = 1; lineagePanX = 0; lineagePanY = 0; updateLineageTransform(); return; }
+    const minX = Math.min(...ns.map(n => n.x)), minY = Math.min(...ns.map(n => n.y));
+    const maxX = Math.max(...ns.map(n => n.x + LN_W)), maxY = Math.max(...ns.map(n => n.y + LN_H));
+    const pad = 60, w = maxX - minX + pad * 2, h = maxY - minY + pad * 2;
+    const vw = vp.clientWidth - (document.getElementById('lineage-legend-panel').style.display === 'none' ? 0 : 270);
+    lineageScale = Math.min(1, vw / w, vp.clientHeight / h);
+    lineagePanX = (vw - w * lineageScale) / 2 - (minX - pad) * lineageScale;
+    lineagePanY = (vp.clientHeight - h * lineageScale) / 2 - (minY - pad) * lineageScale;
+    updateLineageTransform();
+  }
+
+  // Same column layout as src/lineage/lineage_engine.py (restores positions after node drags)
+  function untangleLineageLayout() {
+    if (!lineageGraph) return;
+    lineageGraph.categories.forEach((c, col) => {
+      const ns = lineageGraph.nodes.filter(n => n.cat === c.id);
+      ns.forEach((n, i) => {
+        n.x = 80 + col * 380;
+        n.y = 60 + i * (ns.length > 8 ? 72 : 92);
+        const el = document.getElementById('lineage-card-' + n.id);
+        if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
+      });
+    });
+    renderLineageEdges();
+    fitLineageView();
+  }
+
+  function toggleLineageLegend() {
+    const p = document.getElementById('lineage-legend-panel');
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  function filterLineageCategory(presetId) {
+    if (!lineageGraph) return;
+    lineagePreset = presetId;
+    renderLineagePresets();
+    const cats = ((lineageGraph.presets || []).find(p => p.id === presetId) || {}).cats;
+    document.querySelectorAll('.lineage-node-card').forEach(card => {
+      const n = lineageNode(card.dataset.id);
+      card.classList.remove('highlighted');
+      card.classList.toggle('dimmed', !!cats && !(n && cats.includes(n.cat)));
+    });
+    if (!cats) document.querySelectorAll('.lineage-spline-edge').forEach(e => e.classList.remove('dimmed'));
+  }
+
+  function filterLineageByCategory(catId) {
+    document.querySelectorAll('.lineage-node-card').forEach(card => {
+      const on = (lineageNode(card.dataset.id) || {}).cat === catId;
+      card.classList.toggle('highlighted', on);
+      card.classList.toggle('dimmed', !on);
+    });
+  }
+
+  function updatePiiButton() {
+    const btn = document.getElementById('btn-toggle-pii');
+    btn.classList.toggle('pii-on', lineageIncludePii);
+    btn.textContent = studioLang === 'en' ? (lineageIncludePii ? 'PII Visible' : 'PII Hidden') : (lineageIncludePii ? 'PII 표시중' : 'PII 숨김됨');
+  }
+
+  async function toggleLineagePii() {
+    lineageIncludePii = !lineageIncludePii;
+    updatePiiButton();
+    closeLineageDrawer();
+    await fetchLineageGraphData();
   }
 
   // 10. Stage Pipeline MCP Modal Runner
@@ -2382,167 +2823,135 @@ HTML_PAGE = r"""<!DOCTYPE html>
     document.getElementById('industry-modal').classList.remove('open');
   }
 
-  // Init
-  loadPortalProfile();
-  loadCatalog();
-  (function applyTabFromQuery() {
+  // Init (project list first so every /api call carries the resolved project)
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLineageDrawer(); });
+  loadProjects().catch(console.error).finally(() => {
+    loadPortalProfile();
+    loadCatalog();
     const requested = new URLSearchParams(window.location.search).get('tab');
     if (requested) switchTab(requested);
-  })();
+  });
 </script>
 </body>
 </html>
 """
 
 
+INDUSTRY_CASES = {
+    "segments": [
+        {
+            "id": "manufacturing", "name": "스마트 제조 (Manufacturing)",
+            "cases": [
+                {"client": "스마트 제철소 템플릿 A (Smart Steel Mill)", "status": "아키텍처 템플릿", "title": "스마트 제철 연속 공정 품질 & 설비 예방보전(PdM) 온톨로지", "file": "industry_cases/01_manufacturing/case_smart_steel_mill.md"},
+                {"client": "완성차 SDV 템플릿 B (Automotive SDV)", "status": "아키텍처 템플릿", "title": "SDV 부품 BOM & 글로벌 공급망(SCM) 온톨로지", "file": "industry_cases/01_manufacturing/case_automotive_sdv_supply_chain.md"}
+            ]
+        },
+        {
+            "id": "finance", "name": "핀테크 & 뱅킹 (Fintech & Banking)",
+            "cases": [
+                {"client": "인터넷전문은행 템플릿 A (Digital Direct Bank)", "status": "아키텍처 템플릿", "title": "비대면 여신 심사 & DSR 40% 온톨로지", "file": "industry_cases/02_finance/case_digital_bank_unattended_loan_dsr.md"},
+                {"client": "원앱 핀테크 템플릿 B (One-App Fintech)", "status": "아키텍처 템플릿", "title": "원앱 멀티금융 중개 & 마이데이터 온톨로지", "file": "industry_cases/02_finance/case_oneapp_fintech_mydata.md"}
+            ]
+        },
+        {
+            "id": "retail", "name": "유통 & 이커머스 (Retail & Commerce)",
+            "cases": [
+                {"client": "편의점·수퍼 가맹 템플릿 A (Convenience Franchise)", "status": "아키텍처 템플릿", "title": "가맹계약 상생 정산 & 옴니채널 재고 온톨로지", "file": "industry_cases/03_retail_commerce/case_convenience_franchise_omnichannel.md"},
+                {"client": "옴니채널 풀필먼트 템플릿 B (Omnichannel Fulfillment)", "status": "아키텍처 템플릿", "title": "풀필먼트 SLA & 브랜드 정산 온톨로지", "file": "industry_cases/03_retail_commerce/case_omnichannel_fulfillment_sla.md"}
+            ]
+        },
+        {
+            "id": "telecom", "name": "통신 & 미디어 (Telecommunications)",
+            "cases": [
+                {"client": "모바일 구독 결합 템플릿 A (Mobile Subscription)", "status": "아키텍처 템플릿", "title": "구독 결합 & 멤버십 위약금 온톨로지", "file": "industry_cases/04_telecommunications/case_mobile_subscription_membership.md"},
+                {"client": "유무선 결합·전용회선 템플릿 B (Converged B2B SLA)", "status": "아키텍처 템플릿", "title": "유무선 결합 해지 방어 & B2B 회선 SLA 온톨로지", "file": "industry_cases/04_telecommunications/case_converged_bundle_enterprise_sla.md"}
+            ]
+        }
+    ]
+}
+
+
 class StudioHandler(http.server.BaseHTTPRequestHandler):
+    def _json(self, obj, code=200):
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(json.dumps(obj, ensure_ascii=False).encode("utf-8"))
+
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path in ("/", "/index.html"):
+        path, qs = parsed.path, parse_qs(parsed.query)
+        arg = lambda k, d="": (qs.get(k) or [d])[0]  # noqa: E731
+        if path in ("/", "/index.html"):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(HTML_PAGE.encode("utf-8"))
+            return
+        if path == "/api/config":
+            return self._json(load_json_file(STARTER_CONFIG_PATH, {}))
+        if path == "/api/industry_cases":
+            return self._json(INDUSTRY_CASES)
+        if path == "/api/projects":
+            return self._json([{k: v for k, v in p.items() if k != "root"} for p in list_projects()])
+        try:
+            proj = get_project(arg("project") or None)
+        except KeyError as e:
+            return self._json({"error": str(e)}, 404)
+        root = proj["root"]
 
-        elif parsed.path == "/api/config":
-            cfg = load_json_file(STARTER_CONFIG_PATH, {})
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(cfg, ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/catalog":
-            catalog = engine.server.get_tool_catalog()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(catalog, ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/assets":
-            chunks = []
-            chunk_file = os.path.join(BASE_DIR, "data/output/doc_chunks.jsonl")
+        if path == "/api/catalog":
+            self._json(get_engine(proj).server.get_tool_catalog())
+        elif path == "/api/assets":
+            chunks, wiki = [], {}
+            chunk_file = os.path.join(root, "data/output/doc_chunks.jsonl")
             if os.path.exists(chunk_file):
                 with open(chunk_file, "r", encoding="utf-8") as f:
-                    for line in f:
-                        if line.strip():
-                            chunks.append(json.loads(line))
-
-            wiki = {}
-            wiki_dir = os.path.join(BASE_DIR, "data/llm_wiki")
-            if os.path.exists(wiki_dir):
-                for fname in os.listdir(wiki_dir):
-                    fpath = os.path.join(wiki_dir, fname)
-                    if os.path.isfile(fpath):
-                        with open(fpath, "r", encoding="utf-8") as f:
-                            wiki[fname] = json.load(f) if fname.endswith(".json") else f.read()
-
-            tables = {
-                "customer_contracts": load_csv_table("data/input/03_tables/customer_contracts.csv"),
-                "devices": load_csv_table("data/input/03_tables/devices.csv"),
-                "plans": load_csv_table("data/input/03_tables/plans.csv"),
-                "subsidies": load_csv_table("data/input/03_tables/subsidies.csv"),
-            }
-
-            resp_data = {"chunks": chunks, "wiki": wiki, "tables": tables}
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(resp_data, ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/graph":
-            ddl = load_text_file("data/output/create_property_graph.sql", "-- BigQuery DDL not yet generated")
-            spanner_ddl = load_text_file("data/output/create_spanner_graph.sql", "-- Spanner DDL not yet generated")
-            topo = load_json_file("data/output/graph_topology.json", {})
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps({"ddl": ddl, "spanner_ddl": spanner_ddl, "topology": topo}, ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/cq":
-            cq = load_json_file(CQ_REPORT_PATH, {"test_results": []})
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(cq, ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/portal/profile":
-            profile = load_json_file(PORTAL_PROFILE_PATH, {})
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(profile, ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/eval/summary":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(build_eval_summary(), ensure_ascii=False).encode("utf-8"))
-
-        elif parsed.path == "/api/industry_cases":
-            cases_data = {
-                "segments": [
-                    {
-                        "id": "manufacturing", "name": "스마트 제조 (Manufacturing)",
-                        "cases": [
-                            {"client": "스마트 제철소 템플릿 A (Smart Steel Mill)", "status": "아키텍처 템플릿", "title": "스마트 제철 연속 공정 품질 & 설비 예방보전(PdM) 온톨로지", "file": "industry_cases/01_manufacturing/case_smart_steel_mill.md"},
-                            {"client": "완성차 SDV 템플릿 B (Automotive SDV)", "status": "아키텍처 템플릿", "title": "SDV 부품 BOM & 글로벌 공급망(SCM) 온톨로지", "file": "industry_cases/01_manufacturing/case_automotive_sdv_supply_chain.md"}
-                        ]
-                    },
-                    {
-                        "id": "finance", "name": "핀테크 & 뱅킹 (Fintech & Banking)",
-                        "cases": [
-                            {"client": "인터넷전문은행 템플릿 A (Digital Direct Bank)", "status": "아키텍처 템플릿", "title": "비대면 여신 심사 & DSR 40% 온톨로지", "file": "industry_cases/02_finance/case_digital_bank_unattended_loan_dsr.md"},
-                            {"client": "원앱 핀테크 템플릿 B (One-App Fintech)", "status": "아키텍처 템플릿", "title": "원앱 멀티금융 중개 & 마이데이터 온톨로지", "file": "industry_cases/02_finance/case_oneapp_fintech_mydata.md"}
-                        ]
-                    },
-                    {
-                        "id": "retail", "name": "유통 & 이커머스 (Retail & Commerce)",
-                        "cases": [
-                            {"client": "편의점·수퍼 가맹 템플릿 A (Convenience Franchise)", "status": "아키텍처 템플릿", "title": "가맹계약 상생 정산 & 옴니채널 재고 온톨로지", "file": "industry_cases/03_retail_commerce/case_convenience_franchise_omnichannel.md"},
-                            {"client": "옴니채널 풀필먼트 템플릿 B (Omnichannel Fulfillment)", "status": "아키텍처 템플릿", "title": "풀필먼트 SLA & 브랜드 정산 온톨로지", "file": "industry_cases/03_retail_commerce/case_omnichannel_fulfillment_sla.md"}
-                        ]
-                    },
-                    {
-                        "id": "telecom", "name": "통신 & 미디어 (Telecommunications)",
-                        "cases": [
-                            {"client": "모바일 구독 결합 템플릿 A (Mobile Subscription)", "status": "아키텍처 템플릿", "title": "구독 결합 & 멤버십 위약금 온톨로지", "file": "industry_cases/04_telecommunications/case_mobile_subscription_membership.md"},
-                            {"client": "유무선 결합·전용회선 템플릿 B (Converged B2B SLA)", "status": "아키텍처 템플릿", "title": "유무선 결합 해지 방어 & B2B 회선 SLA 온톨로지", "file": "industry_cases/04_telecommunications/case_converged_bundle_enterprise_sla.md"}
-                        ]
-                    }
-                ]
-            }
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(cases_data, ensure_ascii=False).encode("utf-8"))
+                    chunks = [json.loads(line) for line in f if line.strip()]
+            wiki_dir = os.path.join(root, "data/llm_wiki")
+            for fname in (os.listdir(wiki_dir) if os.path.isdir(wiki_dir) else []):
+                fpath = os.path.join(wiki_dir, fname)
+                if os.path.isfile(fpath) and not fname.startswith("."):
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        wiki[fname] = json.load(f) if fname.endswith(".json") else f.read()
+            tables = {os.path.splitext(os.path.basename(t))[0]: load_csv_table(t)
+                      for t in sorted(glob.glob(os.path.join(root, "data/input/03_tables/*.csv")))}
+            self._json({"chunks": chunks, "wiki": wiki, "tables": tables})
+        elif path == "/api/graph":
+            self._json({
+                "ddl": load_text_file("data/output/create_property_graph.sql", "-- BigQuery DDL not yet generated", root),
+                "spanner_ddl": load_text_file("data/output/create_spanner_graph.sql", "-- Spanner DDL not yet generated", root),
+                "topology": load_json_file("data/output/graph_topology.json", {}, root),
+            })
+        elif path == "/api/cq":
+            self._json(load_json_file(CQ_REPORT_PATH, {"test_results": []}, root))
+        elif path == "/api/portal/profile":
+            self._json(load_json_file(PORTAL_PROFILE_PATH, {}, root))
+        elif path == "/api/eval/summary":
+            self._json(build_eval_summary(root))
+        elif path == "/api/lineage/graph":
+            self._json(get_lineage(proj).build_graph(arg("include_pii") == "true"))
+        elif path == "/api/lineage/trace":
+            self._json(get_lineage(proj).trace(arg("node_id"), arg("include_pii") == "true"))
+        elif path == "/api/lineage/explain":
+            self._json(get_lineage(proj).explain(arg("node_id"), arg("include_pii") == "true", arg("lang", "ko")))
         else:
             self.send_response(404)
             self.end_headers()
 
     def do_POST(self):
-        if self.path == "/api/query":
-            length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(length).decode("utf-8")
-            data = json.loads(body) if body else {}
-            query = data.get("query", "")
-            eng = data.get("engine", "bigquery")
-            res = engine.execute_cycle(query, engine=eng)
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
-
-        elif self.path == "/api/mcp/execute":
-            length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(length).decode("utf-8")
-            data = json.loads(body) if body else {}
-            tool_name = data.get("tool_name", "mcp_stage1_asset_discovery")
-            args = data.get("args", {})
-            res = engine.server.execute_tool(tool_name, args)
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+        parsed = urlparse(self.path)
+        length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(length).decode("utf-8")
+        data = json.loads(body) if body else {}
+        try:
+            eng = get_engine(get_project((parse_qs(parsed.query).get("project") or [None])[0]))
+        except KeyError as e:
+            return self._json({"error": str(e)}, 404)
+        if parsed.path == "/api/query":
+            self._json(eng.execute_cycle(data.get("query", ""), engine=data.get("engine", "bigquery")))
+        elif parsed.path == "/api/mcp/execute":
+            self._json(eng.server.execute_tool(data.get("tool_name", "mcp_stage1_asset_discovery"), data.get("args", {})))
         else:
             self.send_response(404)
             self.end_headers()

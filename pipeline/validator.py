@@ -19,13 +19,14 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DATA_ROOT = os.environ.get("STARTER_PROJECT_ROOT", BASE_DIR)  # project data root (run_pipeline.py --project)
 sys.path.insert(0, BASE_DIR)
 from src.agent.reasoning_engine import AiFdeAgentEngine  # noqa: E402
 from src.gcp_client import execute_bq_sql  # noqa: E402
 
-CQ_PATH = os.path.join(BASE_DIR, "data/input/04_cq/golden_competency_questions.json")
-BOUNDARY_PATH = os.path.join(BASE_DIR, "data/input/04_cq/boundary_cases.json")
-OUT_DIR = os.path.join(BASE_DIR, "data/output")
+CQ_PATH = os.path.join(DATA_ROOT, "data/input/04_cq/golden_competency_questions.json")
+BOUNDARY_PATH = os.path.join(DATA_ROOT, "data/input/04_cq/boundary_cases.json")
+OUT_DIR = os.path.join(DATA_ROOT, "data/output")
 FOOTER = "\n\n---\n- LLM:"  # telemetry footer appended by the engine (excluded from checks)
 
 

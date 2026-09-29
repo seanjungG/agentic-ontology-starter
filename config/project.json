@@ -1,0 +1,10 @@
+{
+  "_readme": "Project metadata for the bundled sample (repository root). Added projects live in projects/<id>/project.json (see new_project.py). Empty gcp values fall back to src/gcp_client.py defaults (env GCP_PROJECT_ID, BQ_DATASET_ID, GCS_WIKI_BUCKET).",
+  "project_id": "starter-telecom-sample",
+  "project_name": "Telecom Subsidy & Contract (De-identified Sample)",
+  "customer_org": "Sample",
+  "domain": "Device subsidy, plan-change penalty, 24-month TCO",
+  "track": "full",
+  "graph_engine": "bigquery",
+  "gcp": {"project_id": "", "dataset_id": "", "gcs_bucket": ""}
+}

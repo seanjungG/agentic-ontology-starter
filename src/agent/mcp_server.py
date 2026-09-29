@@ -45,9 +45,10 @@ def _lit(s: str) -> str:
 
 class DomainMcpServer:
     def __init__(self, project_id: str = DEFAULT_PROJECT_ID, dataset_id: str = DEFAULT_DATASET_ID,
-                 gcs_bucket: str = DEFAULT_GCS_BUCKET, **_ignored):
+                 gcs_bucket: str = DEFAULT_GCS_BUCKET, root_dir: Optional[str] = None, **_ignored):
         self.project_id = project_id
         self.gcs_bucket = gcs_bucket
+        self.root_dir = root_dir or os.environ.get("STARTER_PROJECT_ROOT") or BASE_DIR  # project data root
         self.fq = f"{project_id}.{dataset_id}"
         self.graph = f"{self.fq}.STARTER_ONTOLOGY_GRAPH"
         self._catalog: Optional[Dict[str, Any]] = None
@@ -317,7 +318,7 @@ class DomainMcpServer:
             LEFT JOIN `{self.fq}.edge_rule_applies_to_plan` e ON e.plan_id = c.plan_id
             LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = e.source_chunk_id
             ORDER BY c.contract_id, e.rule_id""", jobs)
-        report, rp = {}, os.path.join(BASE_DIR, "data/output/cq_benchmark_report.json")
+        report, rp = {}, os.path.join(self.root_dir, "data/output/cq_benchmark_report.json")
         if os.path.exists(rp):
             with open(rp, "r", encoding="utf-8") as f:
                 r = json.load(f)

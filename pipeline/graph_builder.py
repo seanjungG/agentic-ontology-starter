@@ -17,6 +17,7 @@ import os
 import sys
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DATA_ROOT = os.environ.get("STARTER_PROJECT_ROOT", BASE_DIR)  # project data root (run_pipeline.py --project)
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
@@ -33,7 +34,7 @@ def build_graph(
     output_dir: str = "data/output",
     deploy_live_bq: bool = True,
 ):
-    abs_output_dir = os.path.join(BASE_DIR, output_dir)
+    abs_output_dir = os.path.join(DATA_ROOT, output_dir)
     os.makedirs(abs_output_dir, exist_ok=True)
     graph_fqn = f"`{project_id}.{dataset_id}.STARTER_ONTOLOGY_GRAPH`"
 

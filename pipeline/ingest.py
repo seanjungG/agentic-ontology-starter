@@ -20,6 +20,7 @@ import sys
 from datetime import datetime
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DATA_ROOT = os.environ.get("STARTER_PROJECT_ROOT", BASE_DIR)  # project data root (run_pipeline.py --project)
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
@@ -48,7 +49,7 @@ def _lit(v) -> str:
 
 
 def _read_csv(rel_path: str):
-    full = os.path.join(BASE_DIR, rel_path)
+    full = os.path.join(DATA_ROOT, rel_path)
     with open(full, "r", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
@@ -59,9 +60,9 @@ def run_ingest(
     wiki_dir: str = "data/llm_wiki",
     sync_gcp: bool = True,
 ):
-    abs_guide_dir = os.path.join(BASE_DIR, guide_dir)
-    abs_output_dir = os.path.join(BASE_DIR, output_dir)
-    abs_wiki_dir = os.path.join(BASE_DIR, wiki_dir)
+    abs_guide_dir = os.path.join(DATA_ROOT, guide_dir)
+    abs_output_dir = os.path.join(DATA_ROOT, output_dir)
+    abs_wiki_dir = os.path.join(DATA_ROOT, wiki_dir)
     os.makedirs(abs_output_dir, exist_ok=True)
     os.makedirs(abs_wiki_dir, exist_ok=True)
 

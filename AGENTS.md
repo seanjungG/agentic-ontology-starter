@@ -14,3 +14,4 @@
 3. **실데이터 원칙**: Mock SQLite나 가짜 하드코딩 응답을 만들지 말고 `src/gcp_client.py`로 실제 BigQuery·GCS·Vertex AI(`gemini-3.8-flash`)를 호출하십시오.
 4. **라이트 테마 UI 유지**: `DESIGN.md`에 정의된 Apple/Google Enterprise 라이트 테마(`#f5f5f7` 배경, Pretendard 폰트, 44px 글로벌 탑바, 52px 6-Tab 서브바, `#0284c7` 시맨틱 허브 노드)를 100% 유지하십시오.
 5. **보안 및 배포**: API 키(Google API Key)나 로컬 절대 경로(로컬 사용자 홈 경로)를 절대 커밋하지 마십시오. GitHub 배포 시 작업 브랜치(`feat/...`) 푸시 후 `main --no-ff` 머지 절차를 따르십시오.
+6. **고객·데이터 영역별 프로젝트**: 새 고객 데이터는 `python3 new_project.py <id>`로 만든 `projects/<id>/`에 두고 루트 샘플을 덮어쓰지 마십시오. 도메인 코드 차이는 `project.json`의 `*_module` 오버라이드로 처리합니다 ([`projects/_template/README.md`](projects/_template/README.md)).

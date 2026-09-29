@@ -21,6 +21,10 @@
 5. **Terraform(IaC) 및 2단계 Git 브랜치 배포 원칙**:
    - GCP 리소스 생성·수정은 `terraform/` 선언적 구성을 기본으로 합니다.
    - GitHub 푸시 시 `main` 브랜치에 직접 커밋하지 말고, 작업 브랜치(`feat/...` 또는 `proto/...`)에 먼저 커밋·푸시한 뒤 `main`으로 `--no-ff` 머지하여 푸시하십시오.
+6. **고객·데이터 영역별 프로젝트 분리 (Multi-Project)**:
+   - 새 고객 데이터나 별도 데이터 영역은 루트 샘플을 덮어쓰지 말고 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 만들어 그 안에 둡니다. 스튜디오 상단 `PROJECT` 선택기에 자동 표시됩니다.
+   - 스키마가 샘플과 다르면 공용 파일을 프로젝트 폴더에 복사해 수정하고 `project.json`의 `mcp_module`·`engine_module`·`ingest_module`·`graph_module`·`validator_module`로 지정합니다. 공용 서버·파이프라인 코드에 프로젝트별 `if` 분기를 추가하지 않습니다.
+   - Stage 5 리니지는 프로젝트의 `config/lineage_spec.json`에 실제 자산만 적습니다. 볼륨은 `bq_table` 실측값을 쓰고 추정치를 적지 않습니다.
 
 ---
 
@@ -37,6 +41,7 @@
 - `industry_cases/` 폴더에 유사 산업군 참조 템플릿(제조·금융·리테일·통신 8종)이 있으므로, 가장 가까운 템플릿을 참고하여 스키마와 규칙을 설계합니다.
 
 ### Step 1. 입력 데이터 배치 (`data/input/`)
+- 신규 고객·데이터 영역이면 아래 경로 앞에 `projects/<id>/`를 붙입니다 (Golden Rule 6).
 - `data/input/01_guides/`: 도메인 정책·업무 매뉴얼 마크다운 파일 배치
 - `data/input/03_tables/`: 정형 마스터·트랜잭션 CSV 배치 (Track 1 Lite에서는 생략 가능)
 - `data/input/04_cq/`: `golden_cqs.json`(핵심 검증 질의 5건) 및 `boundary_cases.json`(모호·정보부족·카탈로그 외 경계 케이스 10건) 작성
