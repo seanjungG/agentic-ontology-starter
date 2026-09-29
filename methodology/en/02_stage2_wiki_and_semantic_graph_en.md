@@ -1,6 +1,6 @@
 # Stage 2. OKF Wiki and Semantic Modeling
 
-> Studio [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) · MCP `mcp_stage2_wiki_and_semantic` · Notebook [stage2_wiki_and_semantic_graph_en.ipynb](../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) · [한국어](./02_stage2_wiki_and_semantic_graph_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
+> Studio [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) · MCP `mcp_stage2_wiki_and_semantic` · Notebook [stage2_wiki_and_semantic_graph_en.ipynb](../../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) · [Korean (KO)](../ko/02_stage2_wiki_and_semantic_graph_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
 
 ## Purpose
 
@@ -70,7 +70,7 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 
 ## Notebook
 
-[stage2_wiki_and_semantic_graph_en.ipynb](../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb)
+[stage2_wiki_and_semantic_graph_en.ipynb](../../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb)
 
 ## Apply to your data
 

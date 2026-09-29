@@ -16,6 +16,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
+from src.agent.i18n_en import is_english_mode, localize_en_obj
 from src.gcp_client import (
     DEFAULT_DATASET_ID,
     DEFAULT_GCS_BUCKET,
@@ -105,7 +106,8 @@ class DomainMcpServer:
         plan_hits.sort()
 
         fees = [int(m.replace(",", "")) for m in re.findall(r"(\d{1,3}(?:,\d{3})+|\d{4,7})\s*(?:원|krw)", q, re.I)]
-        days = [int(m) for m in re.findall(r"(\d{1,4})\s*일", q)]
+        days = [int(m) for m in re.findall(r"(\d{1,4})\s*(?:일|(?:elapsed\s+)?days?\b)", q, re.I)]
+        days += [int(m) for m in re.findall(r"\bday\s*(\d{1,4})\b", q, re.I) if int(m) not in days]
         windows = {p["extra"] for p in cat["plans"] if p.get("extra")}  # live min_maintenance_days
         storage = re.findall(r"(\d{3,4})\s*gb", q, re.I)
         return {
@@ -198,6 +200,7 @@ class DomainMcpServer:
     # ------------------------------------------------------------------ dispatch
     def execute_tool(self, tool_name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         args = args or {}
+        en = is_english_mode(args.get("lang"), args.get("query"))
         aliases = {
             "mcp_get_device_factory_price": "mcp_lookup_customer_profile",
             "mcp_get_device_subsidy_by_plan": "mcp_lookup_customer_profile",
@@ -218,6 +221,8 @@ class DomainMcpServer:
         except BqQueryError as e:
             out = {"status": "BQ_QUERY_ERROR", "error": str(e.res.get("error", ""))[:1500],
                    "http_code": e.res.get("http_code")}
+        if en:
+            out = localize_en_obj(out)
         out.update({
             "tool": name,
             "bq_jobs": jobs,
@@ -233,16 +238,24 @@ class DomainMcpServer:
 
     # ------------------------------------------------------------------ stage MCPs
     def _mcp_stage1_asset_discovery(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         tables = self._run(f"SELECT table_id, row_count, size_bytes FROM `{self.fq}.__TABLES__` ORDER BY table_id", jobs)
         pii = self._run(f"""
             SELECT COUNT(*) AS contracts,
                    COUNTIF(NOT REGEXP_CONTAINS(customer_id, r'^CUST_DEMO_[0-9]{{3}}$')) AS non_deidentified_ids
             FROM `{self.fq}.tb_customer_contract`""", jobs)[0]
+        summary = (
+            f"BigQuery `{self.fq}`: {len(tables)} tables ({sum(t['row_count'] for t in tables)} rows measured) · "
+            f"{pii['non_deidentified_ids']} PII de-identification rule violations"
+            if en else
+            f"BigQuery `{self.fq}` 테이블 {len(tables)}개, 총 {sum(t['row_count'] for t in tables)}행 실측 · "
+            f"비식별 규칙 위반 고객 ID {pii['non_deidentified_ids']}건"
+        )
         return {"status": "SUCCESS", "stage": "STAGE 1", "table_inventory": tables, "pii_check": pii,
-                "summary": f"BigQuery `{self.fq}` 테이블 {len(tables)}개, 총 {sum(t['row_count'] for t in tables)}행 실측 · "
-                           f"비식별 규칙 위반 고객 ID {pii['non_deidentified_ids']}건"}
+                "summary": summary}
 
     def _mcp_stage2_wiki_and_semantic(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         rows = self._run(f"""
             SELECT ch.chunk_id, ch.source_file, ch.section_title, ch.content_sha256 AS anchor, ch.trust_tier,
                    r.rule_id, r.rule_name, r.formula_expr
@@ -250,11 +263,14 @@ class DomainMcpServer:
             LEFT JOIN `{self.fq}.tb_domain_rules` r ON r.source_chunk_id = ch.chunk_id
             ORDER BY ch.chunk_id, r.rule_id""", jobs)
         objs = [f"gs://{self.gcs_bucket}/{o['name']}" for o in list_gcs_objects(bucket=self.gcs_bucket)]
-        return {"status": "SUCCESS", "stage": "STAGE 2", "gcs_objects": objs, "anchored_chunks": rows,
-                "anchor_format": "anchor_ + SHA-256 hex 앞 12자리 (pipeline/ingest.py)",
-                "summary": f"GCS 객체 {len(objs)}개 · 청크/규칙 조인 {len(rows)}행"}
+        return {
+            "status": "SUCCESS", "stage": "STAGE 2", "gcs_objects": objs, "anchored_chunks": rows,
+            "anchor_format": "anchor_ + first 12 SHA-256 hex chars (pipeline/ingest.py)" if en else "anchor_ + SHA-256 hex 앞 12자리 (pipeline/ingest.py)",
+            "summary": f"{len(objs)} GCS objects · {len(rows)} chunk-to-rule joined rows" if en else f"GCS 객체 {len(objs)}개 · 청크/규칙 조인 {len(rows)}행",
+        }
 
     def _mcp_stage3_property_graph(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         dup = self._run(f"""
             SELECT 'tb_device_master' AS node_table, COUNT(*) AS row_count, COUNT(*) - COUNT(DISTINCT device_id) AS duplicate_keys FROM `{self.fq}.tb_device_master`
             UNION ALL SELECT 'tb_plan_master', COUNT(*), COUNT(*) - COUNT(DISTINCT plan_id) FROM `{self.fq}.tb_plan_master`
@@ -268,19 +284,29 @@ class DomainMcpServer:
               MATCH (d:DeviceNode)-[hs:HAS_SUBSIDY_POLICY]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)
               COLUMNS (hs.policy_id AS policy_id))""", jobs)[0]
         total_dup = sum(r["duplicate_keys"] for r in dup)
-        return {"status": "SUCCESS", "stage": "STAGE 3", "engine": args.get("engine", "bigquery"),
-                "graph_id": self.graph, "node_tables": dup, "duplicate_keys_total": total_dup, "gql_paths": paths,
-                "summary": f"노드 테이블 중복 키 {total_dup}건 · GQL 경로(Device→Plan←Rule) {paths['device_plan_rule_paths']}개"}
+        return {
+            "status": "SUCCESS", "stage": "STAGE 3", "engine": args.get("engine", "bigquery"),
+            "graph_id": self.graph, "node_tables": dup, "duplicate_keys_total": total_dup, "gql_paths": paths,
+            "summary": (
+                f"{total_dup} duplicate keys across node tables · {paths['device_plan_rule_paths']} GQL paths (Device→Plan←Rule)"
+                if en else
+                f"노드 테이블 중복 키 {total_dup}건 · GQL 경로(Device→Plan←Rule) {paths['device_plan_rule_paths']}개"
+            ),
+        }
 
     def _mcp_stage4_agent_orchestration(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         rules = self._run(f"""
             SELECT r.rule_id, r.rule_name, r.rule_category, r.condition_expr, r.formula_expr, r.source_chunk_id, ch.content_sha256 AS anchor
             FROM `{self.fq}.tb_domain_rules` r LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = r.source_chunk_id
             ORDER BY r.rule_id""", jobs)
-        return {"status": "SUCCESS", "stage": "STAGE 4", "active_rules": rules,
-                "summary": f"도메인 규칙 {len(rules)}개와 근거 청크 앵커 조회"}
+        return {
+            "status": "SUCCESS", "stage": "STAGE 4", "active_rules": rules,
+            "summary": f"Retrieved {len(rules)} codified domain rules and grounding chunk anchors" if en else f"도메인 규칙 {len(rules)}개와 근거 청크 앵커 조회",
+        }
 
     def _mcp_stage5_lineage_and_eval(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         rows = self._run(f"""
             SELECT c.contract_id, c.customer_id, d.device_name, p.plan_name, s.policy_id,
                    e.rule_id, e.source_chunk_id, ch.content_sha256 AS anchor, ch.source_file
@@ -296,11 +322,18 @@ class DomainMcpServer:
             with open(rp, "r", encoding="utf-8") as f:
                 r = json.load(f)
             report = {k: r.get(k) for k in ("evaluated_at", "total_cqs", "passed", "accuracy_rate", "method")}
-        return {"status": "SUCCESS", "stage": "STAGE 5", "lineage_records": rows, "latest_validation_report": report,
-                "summary": f"리니지 조인 {len(rows)}행 · 최근 검증 리포트: {report or '없음'}"}
+        return {
+            "status": "SUCCESS", "stage": "STAGE 5", "lineage_records": rows, "latest_validation_report": report,
+            "summary": (
+                f"{len(rows)} lineage join rows · Latest validation report: {report or 'None'}"
+                if en else
+                f"리니지 조인 {len(rows)}행 · 최근 검증 리포트: {report or '없음'}"
+            ),
+        }
 
     # ------------------------------------------------------------------ runtime MCPs
     def _mcp_lookup_customer_profile(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         p = self.resolve_params(args)
         where = []
         if p["customer_id"]:
@@ -342,8 +375,12 @@ class DomainMcpServer:
         if rows:
             return {"status": "SUCCESS", **base}
         if p.get("unknown_customer_id") or not where:
-            base["mismatch_reason"] = (f"고객 ID `{p.get('unknown_customer_id')}`가 tb_customer_contract에 없음"
-                                       if p.get("unknown_customer_id") else "조회 조건 없음")
+            if en:
+                base["mismatch_reason"] = (f"Customer ID `{p.get('unknown_customer_id')}` not found in tb_customer_contract"
+                                           if p.get("unknown_customer_id") else "No filter criteria provided")
+            else:
+                base["mismatch_reason"] = (f"고객 ID `{p.get('unknown_customer_id')}`가 tb_customer_contract에 없음"
+                                           if p.get("unknown_customer_id") else "조회 조건 없음")
         diag = []
         if p["plan_name"]:
             diag.append(f"SELECT 'plan_name_only' AS check_type, plan_name AS name, monthly_fee_krw AS value FROM `{self.fq}.tb_plan_master` WHERE plan_name = {_lit(p['plan_name'])}")
@@ -362,12 +399,17 @@ class DomainMcpServer:
             JOIN `{self.fq}.tb_device_master` d ON d.device_id = s.device_id
             JOIN `{self.fq}.tb_plan_master` p ON p.plan_id = s.plan_id
             {pol_where} ORDER BY d.device_name, p.monthly_fee_krw DESC""", jobs)
+        default_mismatch = (
+            f"0 rows matched criteria {json.dumps({k: v for k, v in p.items() if v is not None}, ensure_ascii=False)}"
+            if en else
+            f"조건 {json.dumps({k: v for k, v in p.items() if v is not None}, ensure_ascii=False)}과 일치하는 행 0건"
+        )
         return {"status": "MATCH_NOT_FOUND", **base, "diagnostic_checks": checks,
                 "available_plans_in_bq": plans, "available_subsidy_policies_in_bq": policies,
-                "mismatch_reason": base.get("mismatch_reason") or
-                f"조건 {json.dumps({k: v for k, v in p.items() if v is not None}, ensure_ascii=False)}과 일치하는 행 0건"}
+                "mismatch_reason": base.get("mismatch_reason") or default_mismatch}
 
     def _mcp_calculate_penalty_rule(self, args, jobs):
+        en = is_english_mode(args.get("lang"), args.get("query"))
         p = self.resolve_params(args)
         rules = self._run(f"""
             SELECT r.rule_id, r.rule_name, r.condition_expr, r.formula_expr, r.source_chunk_id, r.description_ko,
@@ -380,11 +422,11 @@ class DomainMcpServer:
         if p["target_monthly_fee_krw"] is not None:
             tf.append(f"monthly_fee_krw = {p['target_monthly_fee_krw']}")
         if not p["customer_id"] and not p["device_name"]:
-            missing = ["customer_id 또는 단말기(+가입 요금제)"]
+            missing = ["customer_id or device_name (+ subscribed plan_name)" if en else "customer_id 또는 단말기(+가입 요금제)"]
             if p["elapsed_days"] is None:
-                missing.append("개통 후 경과일수")
+                missing.append("elapsed_days since activation" if en else "개통 후 경과일수")
             if not tf:
-                missing.append("변경 희망 요금제")
+                missing.append("target_plan_name (or target_monthly_fee_krw)" if en else "변경 희망 요금제")
             out = {"status": "INSUFFICIENT_PARAMETERS", "applied_params": p, "missing_slots": missing, "domain_rules": rules}
             if p["elapsed_days"] is not None or tf:  # rule-only check that needs no contract data
                 tw = " AND ".join(tf) or "FALSE"
@@ -471,15 +513,25 @@ class DomainMcpServer:
         base = {"applied_params": p, "matched_rows_count": len(rows), "calculations": rows, "domain_rules": rules,
                 "target_requested": target_requested}
         if not rows:
-            return {"status": "MATCH_NOT_FOUND", **base,
-                    "mismatch_reason": "초기 계약(고객 또는 단말+요금제) 조건과 일치하는 공시지원금 정책/약정이 BigQuery에 없음"}
+            return {
+                "status": "MATCH_NOT_FOUND", **base,
+                "mismatch_reason": (
+                    "No matching initial contract or public subsidy policy found in BigQuery"
+                    if en else
+                    "초기 계약(고객 또는 단말+요금제) 조건과 일치하는 공시지원금 정책/약정이 BigQuery에 없음"
+                ),
+            }
         for r in rows:
             if r.get("public_subsidy_24m_tco_krw") is not None and r.get("selective_24m_tco_krw") is not None:
                 diff = r["selective_24m_tco_krw"] - r["public_subsidy_24m_tco_krw"]
                 r["tco_recommendation"] = "PUBLIC_SUBSIDY" if diff > 0 else ("SELECTIVE_25PCT" if diff < 0 else "EQUAL")
                 r["tco_savings_krw"] = abs(diff)
             if r.get("target_base_subsidy_krw") is None and r.get("target_plan_id"):
-                r["target_subsidy_note"] = "대상 요금제의 공시지원금 정책이 tb_subsidy_policy에 없어 0원으로 계산"
+                r["target_subsidy_note"] = (
+                    "No public subsidy policy entry for target plan in tb_subsidy_policy; computed with 0 KRW target subsidy"
+                    if en else
+                    "대상 요금제의 공시지원금 정책이 tb_subsidy_policy에 없어 0원으로 계산"
+                )
         return {"status": "SUCCESS", **base}
 
     def _mcp_query_graph_and_wiki(self, args, jobs):

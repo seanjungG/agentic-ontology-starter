@@ -21,7 +21,7 @@
         "chip": "STAGE 1",
         "name": "자산 탐색 · 스코핑 & 비식별화",
         "mcp_tool": "mcp_stage1_asset_discovery",
-        "methodology_doc": "methodology/01_stage1_asset_and_cq_ko.md",
+        "methodology_doc": "methodology/ko/01_stage1_asset_and_cq_ko.md",
         "notebook": "notebooks/ko/stage1_asset_and_cq_ko.ipynb",
         "accent": "#3b82f6",
         "steps": [
@@ -54,7 +54,7 @@
         "chip": "STAGE 2",
         "name": "3-Layer Wiki & 시맨틱 그래프",
         "mcp_tool": "mcp_stage2_wiki_and_semantic",
-        "methodology_doc": "methodology/02_stage2_wiki_and_semantic_graph_ko.md",
+        "methodology_doc": "methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md",
         "notebook": "notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb",
         "accent": "#0d9488",
         "steps": [
@@ -87,7 +87,7 @@
         "chip": "STAGE 3",
         "name": "듀얼 Property Graph 엔지니어링",
         "mcp_tool": "mcp_stage3_property_graph",
-        "methodology_doc": "methodology/03_stage3_property_graph_ko.md",
+        "methodology_doc": "methodology/ko/03_stage3_property_graph_ko.md",
         "notebook": "notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb",
         "accent": "#6366f1",
         "steps": [
@@ -120,7 +120,7 @@
         "chip": "STAGE 4",
         "name": "에이전트 & 모듈형 MCP 오케스트레이션",
         "mcp_tool": "mcp_stage4_agent_orchestration",
-        "methodology_doc": "methodology/04_stage4_agent_and_mcp_ko.md",
+        "methodology_doc": "methodology/ko/04_stage4_agent_and_mcp_ko.md",
         "notebook": "notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb",
         "accent": "#7c3aed",
         "steps": [
@@ -152,7 +152,7 @@
         "chip": "STAGE 5",
         "name": "4-Tier 리니지 & 바운더리 평가",
         "mcp_tool": "mcp_stage5_lineage_and_eval",
-        "methodology_doc": "methodology/05_stage5_lineage_and_eval_ko.md",
+        "methodology_doc": "methodology/ko/05_stage5_lineage_and_eval_ko.md",
         "notebook": "notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb",
         "accent": "#db2777",
         "steps": [

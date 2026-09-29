@@ -8,7 +8,7 @@
   - 상황별 프로토타이핑 레시피: [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)
   - AI 에이전트 부트스트랩 지침: [`GEMINI.md`](GEMINI.md) · [`CLAUDE.md`](CLAUDE.md) · [`AGENTS.md`](AGENTS.md) · [`.cursorrules`](.cursorrules)
   - 웹 UI 디자인 시스템 표준: [`DESIGN.md`](DESIGN.md)
-  - 5-Stage 방법론 상세: [`methodology/METHODOLOGY_KO.md`](methodology/METHODOLOGY_KO.md) · [`methodology/METHODOLOGY_EN.md`](methodology/METHODOLOGY_EN.md)
+  - 5-Stage 방법론 상세: [`methodology/ko/METHODOLOGY_KO.md`](methodology/ko/METHODOLOGY_KO.md) · [`methodology/en/METHODOLOGY_EN.md`](methodology/en/METHODOLOGY_EN.md)
   - 8단계 실습 노트북 허브: [`notebooks/README.md`](notebooks/README.md)
 
 ---

@@ -231,6 +231,16 @@ slot_rows = []
 for q in sample_queries:
     resolved = server.resolve_params({"query": q})
     slot_rows.append({"query": q, **{k: v for k, v in resolved.items()}})
+H.show(pd.DataFrame(slot_rows))""" if ko else """sample_queries = [
+    "If customer CUST_DEMO_001 downgrades to 5G Light (37,000 KRW) on day 120, what is the penalty?",
+    "When activating the AlphaPhone 16 Pro 256GB on the 5G Signature 115 plan, what are the subsidy and net price?",
+    "What is the penalty if customer CUST_NOT_EXIST_999 switches to a 99,000 KRW plan on a QuantumFold 99 device?",
+    "I just activated my line—what is the penalty if I downgrade to the 37,000 KRW plan?",
+]
+slot_rows = []
+for q in sample_queries:
+    resolved = server.resolve_params({"query": q})
+    slot_rows.append({"query": q, **{k: v for k, v in resolved.items()}})
 H.show(pd.DataFrame(slot_rows))"""),
         md(f"### 3. {'[Phase 6c: 런타임 도메인 MCP 3종 직접 호출 및 GQL 문장/변수 확인] 고객 프로필 · 위약금/24개월 TCO 산식 · 그래프/위키 탐색(`executed_gql`) 및 180일 위약금 곡선' if ko else '[Phase 6c: Direct Execution of 3 Runtime Domain MCP Tools] Customer Profile, Penalty/24M TCO Math, Graph Traversal (`executed_gql` + Bound Variables) & 180-Day Penalty Curve'}"),
         code("""r_prof = server.execute_tool("mcp_lookup_customer_profile", {"customer_id": "CUST_DEMO_001"})
@@ -255,6 +265,22 @@ H.line(df_curve, "elapsed_days", "penalty_krw",
     ("CQ-03 (Welfare Exemption)", "국가유공자 복지감면 등록 고객인 CUST_DEMO_002가 개통 95일 만에 하위 요금제로 변경할 때 위약금이 면제되나요?"),
     ("BC-PARAM (Missing Customer/Device)", "방금 개통한 고객인데 지금 5G Lite 37 요금제로 내리면 위약금이 얼마인가요?"),
     ("BC-NOTFOUND (Unknown Entity)", "CUST_NOT_EXIST_999 고객이 QuantumFold 99 단말기로 요금제를 변경할 때 위약금을 계산해 주세요."),
+]
+runs = []
+for qid, q in prompts:
+    res = agent.execute_cycle(q)
+    H.show_agent(res, title=qid)
+    runs.append(H.agent_row(res, qid.split()[0]))
+df_runs = pd.DataFrame(runs)
+H.show(df_runs)
+H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
+              H.t("질의 시나리오별 Gemini 2-Pass 추론 시간 vs BigQuery SQL/GQL 실행 시간 (ms)",
+                  "Gemini 2-Pass LLM Inference vs. BigQuery SQL/GQL Latency by Scenario (ms)"))""" if ko else """prompts = [
+    ("CQ-01 (Subsidy & Net Price)", "When activating the AlphaPhone 16 Pro 256GB on the 5G Signature 115 plan, what are the public subsidy, retail additional subsidy cap, total subsidy, and net purchase price?"),
+    ("CQ-02 (120d Prorated Penalty)", "If customer CUST_DEMO_001 downgrades to the 37,000 KRW monthly plan (5G Lite 37) on day 120 after activation, what is the prorated difference penalty?"),
+    ("CQ-03 (Welfare Exemption)", "Is customer CUST_DEMO_002 (registered under National Merit Welfare) exempt from penalty charges when downgrading to a lower plan on day 95?"),
+    ("BC-PARAM (Missing Customer/Device)", "I am a newly activated subscriber—what is the penalty if I downgrade to the 5G Lite 37 plan right now?"),
+    ("BC-NOTFOUND (Unknown Entity)", "Please calculate the penalty when customer CUST_NOT_EXIST_999 changes plans with a QuantumFold 99 device."),
 ]
 runs = []
 for qid, q in prompts:

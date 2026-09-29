@@ -1,6 +1,11 @@
+# Copyright (c) 2026 Sean Jung (seanjung@google.com). All Rights Reserved.
+# Non-Commercial Use Only: Methodology & Docs under CC BY-NC-ND 4.0; Source Code under PolyForm Noncommercial License 1.0.0.
+# Commercial use, paid consulting/SI/PoC delivery, or production deployment requires prior written permission from seanjung@google.com.
+
 # -*- coding: utf-8 -*-
 """Generates (and optionally executes) the 12 canonical starter notebooks in `notebooks/ko/` and `notebooks/en/`."""
 import argparse
+import ast
 import json
 import os
 import subprocess
@@ -29,9 +34,41 @@ SPECS = {
 }
 
 
+def _resolve_ht(src: str, lang: str) -> str:
+    """Resolves H.t(ko_str, en_str) calls at notebook generation time so EN notebooks contain 0 Korean literals."""
+    if src.lstrip().startswith("%%"):
+        return src
+    lines = src.splitlines(keepends=True)
+    prefix = ""
+    body = src
+    if lines and lines[0].lstrip().startswith("%"):
+        prefix = lines[0]
+        body = "".join(lines[1:])
+    try:
+        tree = ast.parse(body)
+    except SyntaxError:
+        return src
+    replacements = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name) and node.func.value.id == "H"
+                and node.func.attr == "t" and len(node.args) == 2):
+            chosen = node.args[0 if lang == "ko" else 1]
+            seg = ast.get_source_segment(body, chosen)
+            full_seg = ast.get_source_segment(body, node)
+            if seg and full_seg:
+                replacements.append((full_seg, seg))
+    for old, new in replacements:
+        body = body.replace(old, new)
+    return prefix + body
+
+
 def write_notebook(rel_path: str, cells: list) -> Path:
+    lang = "en" if rel_path.startswith("en/") else "ko"
     for idx, c in enumerate(cells):
         c["id"] = f"cell-{idx:02d}"
+        if c.get("cell_type") == "code" and isinstance(c.get("source"), str):
+            c["source"] = _resolve_ht(c["source"], lang)
     nb = {
         "cells": cells,
         "metadata": {

@@ -32,6 +32,7 @@ import pandas as pd  # noqa: E402
 from IPython.display import Markdown, display  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
 
+from src.agent.i18n_en import localize_en_obj, localize_en_str  # noqa: E402
 from src.gcp_client import (DEFAULT_DATASET_ID, DEFAULT_GEMINI_MODEL, DEFAULT_LOCATION,  # noqa: E402
                             DEFAULT_PROJECT_ID, call_vertex_gemini, execute_bq_sql, get_gcp_token)
 
@@ -49,6 +50,7 @@ def setup(lang="ko"):
     """Sets BigFrames project/location/credentials, chart style and a CJK font; returns the runtime settings."""
     global LANG
     LANG = lang
+    os.environ["STARTER_LANG"] = lang
     warnings.filterwarnings("ignore")
     import bigframes.pandas as bpd
     from google.oauth2.credentials import Credentials
@@ -73,7 +75,13 @@ def t(ko, en):
 
 def pdf(df):
     """BigFrames or pandas -> small pandas frame for display/plots (starter tables have < 20 rows)."""
-    return df.to_pandas() if hasattr(df, "to_pandas") else pd.DataFrame(df)
+    d = df.to_pandas() if hasattr(df, "to_pandas") else pd.DataFrame(df)
+    if LANG == "en" and len(d):
+        d = d.copy()
+        for col in d.columns:
+            if d[col].dtype == object or str(d[col].dtype).startswith(("string", "category")):
+                d[col] = d[col].map(lambda x: localize_en_obj(x) if isinstance(x, (str, list, dict)) else x)
+    return d
 
 
 def md(text):
@@ -94,7 +102,8 @@ def show_md_file(path, max_lines=40):
 
 def read_json(rel):
     with open(ROOT / rel, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    return localize_en_obj(data) if LANG == "en" else data
 
 
 def sql(query):
@@ -103,7 +112,8 @@ def sql(query):
     meta = {k: r.get(k) for k in ("status", "job_id", "elapsed_ms", "total_bytes_processed")}
     if r.get("status") != "SUCCESS":
         meta["error"] = str(r.get("error", ""))[:400]
-    return pd.DataFrame(r.get("rows", [])), meta
+    rows = localize_en_obj(r.get("rows", [])) if LANG == "en" else r.get("rows", [])
+    return pd.DataFrame(rows), meta
 
 
 # ------------------------------------------------------------------ methodology & pipeline helpers
@@ -152,15 +162,16 @@ def parse_guides_live_demo():
             clean = body.strip()
             anchor = "anchor_" + hashlib.sha256(body.encode("utf-8")).hexdigest()[:12]
             bq_anchor = bq_map.get(cid, {}).get("content_sha256")
+            disp_body = localize_en_str(clean) if LANG == "en" else clean
             rows.append({
                 "chunk_id": cid,
                 "source_file": gpath.name,
-                "section_title": title.strip(),
+                "section_title": localize_en_str(title.strip()) if LANG == "en" else title.strip(),
                 "chars": len(clean),
                 "computed_anchor": anchor,
                 "bq_stored_anchor": bq_anchor,
                 "sha256_match": anchor == bq_anchor,
-                "excerpt": clean.splitlines()[0][:75] if clean else "",
+                "excerpt": disp_body.splitlines()[0][:75] if disp_body else "",
             })
     return pd.DataFrame(rows)
 
@@ -175,8 +186,11 @@ def wiki_compilation_summary():
         ("Layer 3 (Codified Rules)", "rules.md", "Deterministic business rules with condition_expr, formula_expr & chunk anchors"),
     ]
     rows = []
+    wiki_dir = ROOT / "data/llm_wiki" / ("en" if LANG == "en" else "ko")
+    if not wiki_dir.exists():
+        wiki_dir = ROOT / "data/llm_wiki"
     for layer_name, fname, role in layers:
-        p = ROOT / "data/llm_wiki" / fname
+        p = wiki_dir / fname
         lines = p.read_text(encoding="utf-8").splitlines() if p.exists() else []
         gcs_uri = f"{manifest.get('gcs_uri', '')}ontology/{fname}"
         rows.append({"wiki_layer": layer_name, "file": fname, "lines": len(lines), "gcs_object_uri": gcs_uri, "role": role})
@@ -683,7 +697,7 @@ def show_tool(res, table_key=None, cols=None):
     full_md = head + ("\n\n" + "\n\n".join(extra_blocks) if extra_blocks else "") + ("\n\n" + job_list if job_list else "")
     md(full_md)
     if table_key and res.get(table_key):
-        d = pd.DataFrame(res[table_key])
+        d = pdf(pd.DataFrame(res[table_key]))
         display(d[cols] if cols else d)
 
 

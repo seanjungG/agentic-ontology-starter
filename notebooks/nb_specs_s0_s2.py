@@ -13,22 +13,22 @@ STUDIO_URL = "https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app"
 STAGE_NAV = [
     (0, "0. 전체 흐름 개요", "0. End-to-End Overview",
      "stage0_overview_walkthrough_ko.ipynb", "stage0_overview_walkthrough_en.ipynb",
-     "../../methodology/METHODOLOGY_KO.md", "../../methodology/METHODOLOGY_EN.md", "overview"),
+     "../../methodology/ko/METHODOLOGY_KO.md", "../../methodology/en/METHODOLOGY_EN.md", "overview"),
     (1, "Stage 1 · 준비·분석", "Stage 1 · Prepare & Analyze",
      "stage1_asset_and_cq_ko.ipynb", "stage1_asset_and_cq_en.ipynb",
-     "../../methodology/01_stage1_asset_and_cq_ko.md", "../../methodology/01_stage1_asset_and_cq_en.md", "stage1"),
+     "../../methodology/ko/01_stage1_asset_and_cq_ko.md", "../../methodology/en/01_stage1_asset_and_cq_en.md", "stage1"),
     (2, "Stage 2 · 파싱·통합", "Stage 2 · Parse & Integrate",
      "stage2_wiki_and_semantic_graph_ko.ipynb", "stage2_wiki_and_semantic_graph_en.ipynb",
-     "../../methodology/02_stage2_wiki_and_semantic_graph_ko.md", "../../methodology/02_stage2_wiki_and_semantic_graph_en.md", "stage2"),
+     "../../methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md", "../../methodology/en/02_stage2_wiki_and_semantic_graph_en.md", "stage2"),
     (3, "Stage 3 · 그래프 구축", "Stage 3 · Build Property Graph",
      "stage3_property_graph_bigquery_spanner_ko.ipynb", "stage3_property_graph_bigquery_spanner_en.ipynb",
-     "../../methodology/03_stage3_property_graph_ko.md", "../../methodology/03_stage3_property_graph_en.md", "stage3"),
+     "../../methodology/ko/03_stage3_property_graph_ko.md", "../../methodology/en/03_stage3_property_graph_en.md", "stage3"),
     (4, "Stage 4 · 에이전트·답변", "Stage 4 · Build Agent & Answer",
      "stage4_agent_and_mcp_execution_ko.ipynb", "stage4_agent_and_mcp_execution_en.ipynb",
-     "../../methodology/04_stage4_agent_and_mcp_ko.md", "../../methodology/04_stage4_agent_and_mcp_en.md", "stage4"),
+     "../../methodology/ko/04_stage4_agent_and_mcp_ko.md", "../../methodology/en/04_stage4_agent_and_mcp_en.md", "stage4"),
     (5, "Stage 5 · 리니지·검증", "Stage 5 · Verify & Evaluate",
      "stage5_lineage_and_evaluation_ko.ipynb", "stage5_lineage_and_evaluation_en.ipynb",
-     "../../methodology/05_stage5_lineage_and_eval_ko.md", "../../methodology/05_stage5_lineage_and_eval_en.md", "stage5"),
+     "../../methodology/ko/05_stage5_lineage_and_eval_ko.md", "../../methodology/en/05_stage5_lineage_and_eval_en.md", "stage5"),
 ]
 
 
@@ -69,7 +69,7 @@ def nav_header(stage: int, lang: str = "ko") -> str:
             items.append(f"[{label}](./{target})")
     bar_str = " → ".join(items)
     lang_switch = (f"**🇰🇷 한국어 (현재 폴더: `notebooks/ko/`)** · [🇺🇸 English (`notebooks/en/{nb_en}`)](../en/{nb_en})" if ko
-                   else f"[🇰🇷 한국어 (`notebooks/ko/{nb_ko}`)](../ko/{nb_ko}) · **🇺🇸 English (Current Folder: `notebooks/en/`)**")
+                   else f"[🇰🇷 Korean (`notebooks/ko/{nb_ko}`)](../ko/{nb_ko}) · **🇺🇸 English (Current Folder: `notebooks/en/`)**")
     doc_link = f"[{'방법론 가이드 (Methodology Doc)' if ko else 'Methodology Guide'}]({doc_ko if ko else doc_en})"
     idx_link = f"[{'노트북 전체 인덱스 (README)' if ko else 'Notebook Index (README)'}](../README.md)"
     studio_link = f"[{'라이브 스튜디오 탭 열기' if ko else 'Open Live Studio Tab'}]({STUDIO_URL}/?tab={tab})"
@@ -88,7 +88,7 @@ def nav_footer(stage: int, lang: str, qa_items: list, findings: list, next_steps
     nav_parts.append(f"[🏠 {'0. 전체 흐름 초기 화면' if ko else '0. Overview Home'}](./{STAGE_NAV[0][3] if ko else STAGE_NAV[0][4]})")
     if next_s:
         nav_parts.append(f"[➡️ {next_s[1] if ko else next_s[2]}](./{next_s[3] if ko else next_s[4]})")
-    nav_parts.append(f"[🌐 {'English Version' if ko else '한국어 버전'}]({'../en/' + nb_en if ko else '../ko/' + nb_ko})")
+    nav_parts.append(f"[🌐 {'English Version' if ko else 'Korean Version'}]({'../en/' + nb_en if ko else '../ko/' + nb_ko})")
     nav_parts.append(f"[📖 {'방법론 문서' if ko else 'Methodology Doc'}]({doc_ko if ko else doc_en})")
 
     qa_block = "\n".join(f"- **Q.** {q}\n  - **A.** {a}" for q, a in qa_items)
@@ -197,14 +197,14 @@ nodes, edges = H.paths_to_graph(H.pdf(df_paths)["path"])
 H.md(H.t(f"**실측 추출된 물리 그래프 노드 `{{len(nodes)}}`개 · 엣지 `{{len(edges)}}`개**", f"**Extracted physical graph nodes: `{{len(nodes)}}` · edges: `{{len(edges)}}`**"))
 H.draw_graph(nodes, edges, H.t("STARTER_ONTOLOGY_GRAPH 전체 인스턴스 토폴로지 (5계층 레이어 배치)", "Full Instance Topology of STARTER_ONTOLOGY_GRAPH (5-Column Layered Layout)"), legend=H.LABEL_COLORS)"""),
         md(f"### 5. {'[Phase 6~7 · Stage 4: 에이전트 구축 & 답변] 2-Pass 에이전트 설계도 · 실시간 NL-to-GQL 생성 · Golden CQ 추론 실행' if ko else '[Phase 6–7 · Stage 4: Build Agent & Answer] 2-Pass Agent Blueprint, Live NL-to-GQL & Golden CQ Execution'}"),
-        code("""H.draw_agent_architecture()
+        code(f"""H.draw_agent_architecture()
 node_labels, edge_labels, _ = H.graph_metadata()
 schema_str = H.schema_text(node_labels, edge_labels)
 _ = H.nl2gql(H.t("각 고객이 사용 중인 단말기명과 가입 요금제명, 월정액을 고객 ID 순으로 보여줘",
                  "Show each customer's device name, subscribed plan name, and monthly fee ordered by customer ID"), schema_str)
-H.show_agent(agent.execute_cycle("CUST_DEMO_001 고객이 개통 120일 시점에 5G Light(37,000원)로 하향 시 위약금과 근거 앵커는?"),
+H.show_agent(agent.execute_cycle({"'CUST_DEMO_001 고객이 개통 120일 시점에 5G Light(37,000원)로 하향 시 위약금과 근거 앵커는?'" if ko else "'If customer CUST_DEMO_001 downgrades to 5G Light (37,000 KRW) on day 120, what is the penalty and grounded anchor?'"}),
              H.t("Golden CQ-03 · 120일 일할 차액정산 위약금 산출", "Golden CQ-03 · 120-Day Prorated Penalty Calculation"))
-H.show_agent(agent.execute_cycle("CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경 시 위약금 면제 여부와 그래프 경로 확인해줘"),
+H.show_agent(agent.execute_cycle({"'CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경 시 위약금 면제 여부와 그래프 경로 확인해줘'" if ko else "'If customer CUST_DEMO_003 (Senior Welfare Eligible) switches to a senior plan on day 88, is the penalty exempted and what is the graph path?'"}),
              H.t("Golden CQ-05 · 시니어 복지 면제 & 멀티홉 그래프 경로", "Golden CQ-05 · Senior Welfare Exemption & Multi-Hop Graph Path"))"""),
         md(f"### 6. {'[Phase 8 · Stage 5: 검증 & 배포 게이트] 4-Tier 리니지 요약 및 Gate 1 ~ Gate 5 통합 통과 현황' if ko else '[Phase 8 · Stage 5: Verify & Release Gate] 4-Tier Lineage Summary & Gate 1–5 Readiness Verdict'}"),
         code("""res_s5 = server.execute_tool("mcp_stage5_lineage_and_eval")
@@ -311,13 +311,13 @@ H.heatmap(d_sub.pivot(index="device_name", columns="plan_name", values="net_pric
 SELECT t.term, c.chunk_id, ARRAY_LENGTH(REGEXP_EXTRACT_ALL(c.content, t.pat)) AS hits
 FROM `{FQ}.tb_doc_chunks` c,
 UNNEST([
-  STRUCT({'\"공시지원금 (Subsidy)\"' if ko else '\"Public Subsidy\"'} AS term, r'(?i)subsidy|공시지원금' AS pat),
-  STRUCT({'\"유통망 상한 (15% Cap)\"' if ko else '\"15% Retail Cap\"'}, r'(?i)15%|additional|유통망'),
-  STRUCT({'\"180일 의무유지 (180d)\"' if ko else '\"180-Day Rule\"'}, r'(?i)180-day|180 days|180일'),
-  STRUCT({'\"일할 차액정산 (Prorated)\"' if ko else '\"Prorated Clawback\"'}, r'(?i)formula|prorated|일할|차액정산'),
-  STRUCT({'\"위약금 (Penalty)\"' if ko else '\"Penalty Settlement\"'}, r'(?i)penalty|위약금'),
-  STRUCT({'\"선택약정 25% (Selective)\"' if ko else '\"25% Selective Discount\"'}, r'(?i)selective|25%|선택약정'),
-  STRUCT({'\"복지 면제 (Welfare)\"' if ko else '\"Welfare Exemption\"'}, r'(?i)welfare|exempt|복지|면제')
+  STRUCT({'\"공시지원금 (Subsidy)\" AS term, r\'(?i)subsidy|공시지원금\' AS pat' if ko else '\"Public Subsidy\" AS term, r\'(?i)subsidy|subsidies\' AS pat'}),
+  STRUCT({'\"유통망 상한 (15% Cap)\", r\'(?i)15%|additional|유통망\'' if ko else '\"15% Retail Cap\", r\'(?i)15%|additional|total subsidy\''}),
+  STRUCT({'\"180일 의무유지 (180d)\", r\'(?i)180-day|180 days|180일\'' if ko else '\"180-Day Rule\", r\'(?i)180-day|180 days|180\''}),
+  STRUCT({'\"일할 차액정산 (Prorated)\", r\'(?i)formula|prorated|일할|차액정산\'' if ko else '\"Prorated Clawback\", r\'(?i)formula|prorated|difference\''}),
+  STRUCT({'\"위약금 (Penalty)\", r\'(?i)penalty|위약금\'' if ko else '\"Penalty Settlement\", r\'(?i)penalty|penalties\''}),
+  STRUCT({'\"선택약정 25% (Selective)\", r\'(?i)selective|25%|선택약정\'' if ko else '\"25% Selective Discount\", r\'(?i)selective|25%\''}),
+  STRUCT({'\"복지 면제 (Welfare)\", r\'(?i)welfare|exempt|복지|면제\'' if ko else '\"Welfare Exemption\", r\'(?i)welfare|exempt\''})
 ]) AS t
 ORDER BY t.term, c.chunk_id"""),
         code("""glossary = H.read_json("data/input/05_glossary/business_glossary.json")
@@ -377,29 +377,33 @@ def build_stage2(lang="ko"):
 H.show(df_parsed)"""),
         code(f"""%%bqsql df_bq_chunks
 SELECT chunk_id, source_file, section_title, trust_tier, content_sha256,
-       CHAR_LENGTH(content) AS char_len, SUBSTR(content, 1, 85) AS content_preview
+       CHAR_LENGTH(content) AS char_len, {"SUBSTR(content, 1, 85)" if ko else r"REGEXP_REPLACE(SUBSTR(content, 1, 85), r'\s*\([^)]*[^\x00-\x7F][^)]*\)', '')"} AS content_preview
 FROM `{FQ}.tb_doc_chunks`
 ORDER BY chunk_id"""),
         code("""H.show(df_bq_chunks)"""),
         md(f"### 2. {'[Phase 3b: 위키 컴파일 & GCS 동기화] Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) 및 `mcp_stage2_wiki_and_semantic` 실행' if ko else '[Phase 3b: Wiki Compilation & GCS Sync] Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) & `mcp_stage2_wiki_and_semantic`'}"),
-        code("""df_wiki, manifest = H.wiki_compilation_summary()
-H.md(f"**GCS Manifest Status**: `{manifest['status']}` · Bucket `{manifest['gcs_uri']}` · Uploaded Objects `{len(manifest['uploaded_gcs_objects'])}` · Loaded BQ Tables `{manifest['validation']['bigquery_tables_loaded']}`")
+        code(f"""df_wiki, manifest = H.wiki_compilation_summary()
+H.md(f"**GCS Manifest Status**: `{{manifest['status']}}` · Bucket `{{manifest['gcs_uri']}}` · Uploaded Objects `{{len(manifest['uploaded_gcs_objects'])}}` · Loaded BQ Tables `{{manifest['validation']['bigquery_tables_loaded']}}`")
 H.show(df_wiki)
 for fname in ("summary.md", "entities.md", "concepts.md", "rules.md"):
-    H.show_md_file(H.ROOT / "data/llm_wiki" / fname, max_lines=22)
-res_s2 = server.execute_tool("mcp_stage2_wiki_and_semantic", {"steps": ["compile_3layer_wiki", "extract_hash_anchors", "bind_semantic_bridges"]})
+    H.show_md_file(H.ROOT / "data/llm_wiki/{'ko' if ko else 'en'}" / fname, max_lines=22)
+res_s2 = server.execute_tool("mcp_stage2_wiki_and_semantic", {{"steps": ["compile_3layer_wiki", "extract_hash_anchors", "bind_semantic_bridges"]}})
 H.show_tool(res_s2, "anchored_chunks")"""),
         md(f"### 3. {'[Phase 4a: 시맨틱 통합 (Integration)] Vertex AI Gemini(`gemini-3.8-flash`) 기반 후보 트리플 추출 및 도메인 규칙 ↔ 요금제 시맨틱 브릿지 테이블 확인 (`%%bqsql`)' if ko else '[Phase 4a: Semantic Integration] Live Gemini (`gemini-3.8-flash`) Candidate Triple Extraction & Rule-to-Plan Semantic Bridge Tables (`%%bqsql`)'}"),
         code("""triples = H.propose_triples(["DOC_CHUNK_001", "DOC_CHUNK_003", "DOC_CHUNK_004"])
 H.show(triples)"""),
         code(f"""%%bqsql df_rules
-SELECT r.rule_id, r.rule_name, r.rule_category, r.condition_expr, r.formula_expr,
+SELECT r.rule_id,
+       {"r.rule_name" if ko else "CASE r.rule_id WHEN 'RULE_SUBSIDY_CAP' THEN 'Public Subsidy & 15% Retail Additional Subsidy Cap Rule' WHEN 'RULE_PENALTY_180D' THEN '180-Day Baseline (45,000 KRW) Mandatory Retention & Prorated Penalty Rule' WHEN 'RULE_WELFARE_EXEMPT' THEN 'Senior, Youth & Welfare Downgrade Penalty Exemption Rule' WHEN 'RULE_TCO_24M' THEN '24-Month Public Subsidy vs. 25% Selective Contract TCO Comparison Rule' ELSE r.rule_id END"} AS rule_name,
+       r.rule_category, r.condition_expr, r.formula_expr,
        r.source_chunk_id, c.section_title, c.content_sha256
 FROM `{FQ}.tb_domain_rules` r
 JOIN `{FQ}.tb_doc_chunks` c ON c.chunk_id = r.source_chunk_id
 ORDER BY r.rule_id"""),
         code(f"""%%bqsql df_rule_plan
-SELECT e.edge_id, e.rule_id, e.plan_id, p.plan_name, p.monthly_fee_krw, e.relation_label_ko, e.source_chunk_id
+SELECT e.edge_id, e.rule_id, e.plan_id, p.plan_name, p.monthly_fee_krw,
+       {"e.relation_label_ko" if ko else "CASE e.rule_id WHEN 'RULE_SUBSIDY_CAP' THEN 'Public & 15% Additional Subsidy Cap Applied' WHEN 'RULE_PENALTY_180D' THEN '180-Day Baseline Retention Mandatory' WHEN 'RULE_WELFARE_EXEMPT' THEN 'Senior/Welfare Penalty Exemption Target' WHEN 'RULE_TCO_24M' THEN '24M Subsidy vs. Selective Contract TCO Applied' ELSE 'APPLIES_TO_PLAN' END"} AS relation_label_ko,
+       e.source_chunk_id
 FROM `{FQ}.edge_rule_applies_to_plan` e
 JOIN `{FQ}.tb_plan_master` p USING (plan_id)
 ORDER BY e.rule_id, p.monthly_fee_krw DESC"""),
