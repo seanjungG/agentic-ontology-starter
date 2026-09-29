@@ -14,18 +14,18 @@ python3 run_pipeline.py --project acme-claims
 - 기본 GCP 리소스 이름: 데이터셋 `acme_claims_dw`, 버킷 `<GCP 프로젝트>-acme-claims`. Terraform으로 먼저 생성합니다. 생성 전에는 MCP 호출 결과가 `BQ_QUERY_ERROR`로 표시됩니다.
 - `projects/*`는 `.gitignore` 대상입니다(`_template` 제외). 고객 데이터가 공개 저장소에 올라가지 않도록 기본 차단합니다.
 
-## 2. 폴더 구성 (루트 샘플과 같은 구조)
+## 2. 폴더 구성 (루트 샘플과 같은 구조 · 예측 불가능한 고객 입력 대응)
 
 | 경로 | 내용 |
 | :--- | :--- |
 | `project.json` | 이름·고객·도메인·트랙(`auto`)·그래프 엔진·GCP(`project_id`, `dataset_id`, `gcs_bucket`), `tables`(고객 테이블 CSV 목록), `synthetic.allowed`(기본 `false`), 선택 항목 `*_module` (아래) |
-| `customer_doc/` | 고객 원본 문서(PDF·DOCX·MD·TXT). `pipeline/extract_docs.py`가 `data/input/01_guides/`에 원문 변환본을 만든다 |
+| `customer_doc/` | 고객 원본 문서(PDF·DOCX·MD·TXT). `pipeline/extract_docs.py`가 `data/input/01_guides/`에 원문 변환본(`<!-- provenance: ... -->`, `<!-- page: N -->`)을 만들고 `gate0_report.json`(`>= 95%`)을 검증한다 |
 | `config/portal_profile.json`, `config/eval_rubric.json` | 샘플에서 복사됨. 도메인에 맞게 수정 |
 | `config/lineage_spec.json` | Stage 5 리니지 스펙 (3절) |
 | `data/input/01_guides` · `03_tables` · `04_cq` · `05_glossary` | 원문 변환본(직접 쓰지 않음) · 고객이 준 CSV(행마다 `provenance`·`source_ref`) · Golden CQ/바운더리 질의(`evidence_type` sql 또는 citation) · 용어집 |
-| `data/output`, `data/llm_wiki` | 파이프라인 산출물 (`input_manifest.json`, `gate0_report.json` 포함) |
+| `data/output`, `data/llm_wiki` | 파이프라인 산출물 (`input_manifest.json`, `gate0_report.json`, `doc_chunks.jsonl`, `wiki_extraction.json`, `entities.md`, `concepts.md` 포함) |
 
-`tables`가 비어 있으면 트랙은 lite로 정해지고 테이블 없이 문서만 적재합니다. 고객이 주지 않은 테이블은 만들지 않습니다(`AGENTS.md` 고객 데이터 원칙).
+`tables`가 비어 있으면 트랙은 `lite`로 정해지고 테이블 없이 문서만 적재합니다(`extract_docs.py` → `extract_wiki.py` → `execute_lite_doc_cycle`). 고객이 주지 않은 테이블은 만들지 않습니다(`AGENTS.md` 고객 데이터 원칙).
 
 도메인 스키마가 샘플과 다르면 공용 코드(`pipeline/`, `src/agent/`)를 고치지 말고, 공용 파일을 이 폴더에 복사해 수정한 뒤 `project.json`에 경로(프로젝트 폴더 기준)를 적습니다. 서버 코드에 프로젝트별 `if` 분기를 추가하지 않습니다.
 
@@ -34,6 +34,26 @@ python3 run_pipeline.py --project acme-claims
 | `mcp_module` | `src/agent/mcp_server.py` | 클래스 `DomainMcpServer` |
 | `engine_module` | `src/agent/reasoning_engine.py` | 클래스 `AiFdeAgentEngine` |
 | `ingest_module` / `graph_module` / `validator_module` | `pipeline/ingest.py` / `graph_builder.py` / `validator.py` | 함수 `run_ingest` / `build_graph` / `run_validation` |
+
+### `project.json` 설정 예시 (문서 전용 `lite` vs 커스텀 도메인 `standard`)
+
+```json
+{
+  "id": "acme-claims",
+  "name": "Acme 보험금 심사",
+  "customer": "Acme",
+  "domain": "보험금 청구·심사",
+  "track": "auto",
+  "graph_engine": "bigquery",
+  "gcp": {
+    "project_id": "seanjung-poc",
+    "dataset_id": "acme_claims_dw",
+    "gcs_bucket": "seanjung-poc-acme-claims"
+  },
+  "tables": {},
+  "synthetic": { "allowed": false }
+}
+```
 
 - 복사한 파이프라인은 데이터 경로를 환경변수 `STARTER_PROJECT_ROOT`(= 이 폴더, `run_pipeline.py --project`가 설정) 기준으로 읽습니다.
 - Stage 5 KPI는 stage3 MCP의 `duplicate_keys_total`(숫자)을 읽습니다. 반환하지 않으면 `N/A`로 표시됩니다.

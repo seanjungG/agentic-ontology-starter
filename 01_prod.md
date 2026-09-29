@@ -1,8 +1,8 @@
 # Agentic Ontology Starter — 마스터 제품·아키텍처 헌장 (`01_prod.md`)
 
-- **역할**: 이 스타터팩을 클론하여 새로운 도메인/고객사 프로토타입을 구축할 때, **사람(FDE·엔지니어)과 AI 코딩 에이전트(Jetski / Antigravity / Cursor / Claude Code)가 공통으로 준수해야 하는 최상위 기준 문서**입니다.
+- **역할 및 위상**: 이 저장소(`agentic-ontology-starter`)는 특정 고객사의 프로덕션 비즈니스·데이터를 담고 있지 않은 **교육용 · 테스트용 · 신규 프로젝트 부트스트랩용 심플 레퍼런스 레포지토리**입니다. 반입될 외부 고객 비즈니스와 데이터 형태(문서만 있는 경우, 일부 테이블만 있는 경우, 전혀 다른 산업군 스키마가 들어오는 경우 등)가 완전히 예측 불가능한 상황에서도 유연하게 적응하도록 설계되었으며, 사람(FDE·엔지니어)과 AI 코딩 에이전트(Jetski / Antigravity / Cursor / Claude Code)가 공통으로 준수해야 하는 최상위 기준 문서입니다.
 - **라이선스 및 상업적 이용 제한 (`LICENSE`)**: 본 저장소의 핵심인 **5-Stage 온톨로지 엔지니어링 방법론·노트북·문서(`CC BY-NC-ND 4.0`)** 및 **소스 코드(`PolyForm Noncommercial 1.0.0`)**는 비영리 목적으로만 제공됩니다. 유상 컨설팅·SI·PoC 납품 및 상용 서비스 탑재를 금지하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([`LICENSE`](LICENSE))
-- **핵심 원칙**: 이 저장소는 백지상태에서 코드를 새로 짜는 보일러플레이트가 아니라, **이미 동작이 검증된 5-Stage 온톨로지 파이프라인·8종 MCP·2-Pass 에이전트·6-Tab 라이트 스튜디오를 그대로 유지한 채 데이터와 도메인 규칙만 빠르게 교체(Swap)하여 프로토타이핑**하는 레퍼런스 엔진입니다.
+- **핵심 원칙**: 이 저장소는 백지상태에서 코드를 새로 짜는 보일러플레이트가 아니라, **동작이 검증된 5-Stage 온톨로지 파이프라인·8종 MCP·2-Pass/Lite 에이전트·6-Tab 라이트 스튜디오 골격을 그대로 유지한 채, 예측 불가능한 외부 고객 문서·데이터를 `projects/<id>/` 단위로 격리 인입하고 트랙(`auto`/`lite`/`standard`/`full`)과 모듈 오버라이드(`*_module`)로 유연하게 부트스트랩**하는 레퍼런스 엔진입니다.
 - **관련 문서**:
   - 비영리 듀얼 라이선스 (KO / EN): [`LICENSE`](LICENSE)
   - 상황별 프로토타이핑 레시피: [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)
@@ -20,26 +20,37 @@
 | 번호 | 불변 아키텍처 요소 | 기준 명세 및 파일 위치 | 금지 행위 (Anti-Patterns) |
 | :---: | :--- | :--- | :--- |
 | **1** | **5-Stage × 8단계 엔지니어링 흐름 & 6-Tab 스튜디오** | `0. Overview` · `Stage 1. Asset` · `Stage 2. Wiki & Semantic Graph` · `Stage 3. Property Graph` · `Stage 4. Agent & MCP` · `Stage 5. Lineage & Eval` (`src/web/studio_server.py`) | 탭 구조를 임의로 쪼개거나 별도 React/Streamlit 서버·다중 포트를 새로 띄우는 행위 금지 |
-| **2** | **3-Track 도입 설정 (`starter_config.json`)** | `lite`(`Stage 1→2→4`, 물리 그래프 없음) · `standard`(`Stage 1→2→3→4`, BigQuery/Spanner Graph) · `full`(`Stage 1→2→3→4→5`, 리니지·50회 경계 평가·배포 게이트) | 설정 파일을 무시하고 코드에 특정 트랙 분기를 하드코딩하는 행위 금지 |
-| **3** | **정형 DW 원장 + 비정형 3-Layer OKF 위키 이중 근거 구조** | 정형 마스터/트랜잭션은 BigQuery 테이블 노드로 적재하고, 비정형 문서는 `data/llm_wiki/`(`summary.md`, `entities.md`, `concepts.md`, `rules.md`)와 `tb_doc_chunks`(SHA-256 해시)·`tb_domain_rules`로 적재 (`pipeline/ingest.py`) | 문서를 단순 벡터 청크로만 쪼개고 도메인 규칙(`tb_domain_rules`)과 출처 해시(`sha256_hash`) 연결을 생략하는 행위 금지 |
-| **4** | **Stage MCP 5종 + Runtime MCP 3종 (총 8종 표면)** | Stage 1~5 파이프라인 검증용 MCP 5종 고정 유지 + 도메인 런타임 도구 3종(`src/agent/mcp_server.py`) | 기존 MCP 인터페이스를 깨뜨리고 에이전트 내부에 SQL을 직접 인라인 작성하는 행위 금지 |
-| **5** | **2-Pass Gemini 추론 엔진 & 3상태 판정** | 1회차(카탈로그 기반 슬롯 추출·도구 선택) → MCP 실행 → 2회차(근거 합성 및 `GROUNDED` / `MATCH_NOT_FOUND` / `INSUFFICIENT_PARAMETERS` 판정, `src/agent/reasoning_engine.py`) | 카탈로그에 없는 상품을 임의 추측해 답하거나 필수 조건 누락 시 역질문(`INSUFFICIENT_PARAMETERS`) 없이 답변을 생성하는 행위 금지 |
-| **6** | **실데이터(BigQuery · GCS · Vertex AI) 및 디자인 표준 준수** | `src/gcp_client.py`를 통한 실제 GCP 리소스 연동, `DESIGN.md`의 Apple/Google Enterprise 라이트 테마(`#f5f5f7`, Pretendard, 44px+52px 바) 준수 | 샘플 SQLite/인메모리 Mock DB로 실제 BigQuery가 도는 것처럼 위장하거나 다크 테마·장식 이모지를 넣는 행위 금지 |
+| **2** | **입력 자산 기반 트랙 자동 결정 (`project.json` `track: "auto"`)** | `tables`가 비어 있으면 `lite`(`Stage 1→2→4→5(citation)`, 물리 그래프 생략), 고객 CSV가 등록되어 있으면 `standard`/`full`(`Stage 1→2→3→4→5`)로 자동 분기하고 사유를 `input_manifest.json`에 기록 | 고객 테이블이 없는데 샘플/가짜 CSV를 합성해 넣거나 코드에 특정 트랙 분기를 하드코딩하는 행위 금지 |
+| **3** | **코드 기반 원문 추출(Gate 0) + 3-Layer 위키 이중 근거 구조** | 고객 원본 문서(`customer_doc/`)는 `pipeline/extract_docs.py`로 원문 변환 후 Gate 0(글자 보존율·12자 조각 일치율 `>= 95%`) 통과 시에만 `tb_doc_chunks`(출처 5컬럼 + SHA-256 해시)에 적재하고, `pipeline/extract_wiki.py`가 청크 인용 검증(`<=300`자) 기반으로 `entities.md`(Node)·`concepts.md`(Edge) 추출 | LLM으로 원본 문서를 요약·개작해 `01_guides/`에 넣거나, `DOC_CHUNK` 주석을 수동 삽입하거나, 원문에 없는 엔티티를 환각 생성하는 행위 금지 |
+| **4** | **Stage MCP 5종 + Runtime MCP 3종 (총 8종 표면) 및 모듈 오버라이드** | Stage 1~5 검증용 MCP 5종 고정 유지 + 도메인 런타임 도구 3종(`src/agent/mcp_server.py`). 스키마가 다른 커스텀 도메인은 `project.json`의 `*_module` 오버라이드로 분리 주입 | 공용 서버/파이프라인 코드에 프로젝트별 `if` 분기를 난립시키거나 에이전트 내부에 SQL을 인라인 하드코딩하는 행위 금지 |
+| **5** | **2-Pass MCP 추론(`full`) & 1-Pass 청크 인용 추론(`lite`)** | `full` 트랙은 2-Pass(`GROUNDED` / `MATCH_NOT_FOUND` / `INSUFFICIENT_PARAMETERS`), `lite` 트랙은 `execute_lite_doc_cycle`(`300,000`자 청크 컨텍스트 + `[DOC_CHUNK_XXX]` 인용 검증: `GROUNDED` / `NO_CITATION` / `INVALID_CITATION` / `CONTEXT_LIMIT`, `src/agent/reasoning_engine.py`) | 카탈로그·문서에 없는 상품/수치를 임의 추측해 답하거나 출처 청크 인용 없이 답변을 생성하는 행위 금지 |
+| **6** | **3등급 데이터 출처(`provenance`) 구분 및 디자인 표준 준수** | 모든 행·청크에 `CUSTOMER_PROVIDED` / `EXTRACTED` / `SYNTHETIC_DEMO` 출처 기록, `pipeline/validator.py` 실측 리포트(`input_manifest_sha256` 포함) 생성, `DESIGN.md` 라이트 테마 준수 | 샘플 SQLite/인메모리 Mock DB로 실제 BigQuery를 위장하거나, 실행하지 않은 평가 점수를 수기로 작성하는 행위 금지 |
 
 ---
 
-## 2. 상황별 빠른 프로토타이핑 진입점 (`PROTOTYPING_PLAYBOOK.md` 요약)
+## 2. 예측 불가능한 외부 고객 입력 시나리오별 프로토타이핑 진입점 (`PROTOTYPING_PLAYBOOK.md` 요약)
 
-신규 도메인 프로토타이핑 시 모든 코드를 다 고치지 말고, 아래 **4가지 상황(Scenario A~D)** 중 하나를 선택한 뒤 **교체 대상 5개 지점**만 수정합니다. 상세 가이드와 복사 가능한 프롬프트는 [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)를 참조하십시오.
+신규 고객·데이터 영역을 부트스트랩할 때는 루트 샘플을 덮어쓰지 않고 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 생성한 뒤, 반입된 고객 자산 형태에 따라 아래 시나리오로 대응합니다. 상세 가이드와 복사 가능한 프롬프트는 [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)를 참조하십시오.
 
-| 상황 (Scenario) | 보유 데이터 및 목표 | 선택 트랙 (`active_track`) | 수정할 핵심 파일 (5-File Swap) |
+| 상황 (Scenario) | 고객 투입 자산 및 목표 | 트랙 (`project.json` `track`) | 파이프라인 동작 및 수정 지점 |
 | :--- | :--- | :---: | :--- |
-| **Scenario A**<br>비정형 규정·매뉴얼 문서만 있는 경우 | 사내 규정집, SOP, 약관 Markdown/PDF만으로 빠르게 위키 + 규칙 계산 + 에이전트 Q&A 프로토타이핑 | **`lite`**<br>(`Stage 1 → 2 → 4`) | ① `data/input/01_guides/*.md`<br>② `config/starter_config.json` (`"active_track": "lite"`)<br>③ `pipeline/ingest.py` (`DOMAIN_RULES` 규칙 추출부)<br>④ `src/agent/mcp_server.py` (규칙 계산 MCP 1종)<br>⑤ `config/portal_profile.json` (스튜디오 타이틀·시나리오 문구) |
-| **Scenario B**<br>정형 DW 테이블 + 비정형 정책 문서를 결합하는 경우 *(기본 권장)* | 마스터/트랜잭션 CSV·BigQuery 테이블과 정책 문서를 결합해 ISO GQL 다중 홉 그래프 추론 + 에이전트 구축 | **`standard`**<br>(`Stage 1 → 2 → 3 → 4`) | ① `data/input/01_guides/*.md` & `03_tables/*.csv`<br>② `config/starter_config.json` (`"active_track": "standard"`, `"graph_engine": "bigquery"`)<br>③ `pipeline/ingest.py` & `pipeline/graph_builder.py` (노드·엣지 DDL)<br>④ `src/agent/mcp_server.py` (런타임 MCP 3종 쿼리)<br>⑤ `config/portal_profile.json` |
-| **Scenario C**<br>저지연 운영 트랜잭션 그래프가 필요한 경우 | 실시간 이상거래 탐지(FDS), 설비 인터락 등 밀리초 단위 온라인 그래프 탐색용 DDL 산출 | **`standard`** + Spanner DDL<br>(`Stage 1 → 2 → 3 → 4`) | Scenario B와 동일 + `pipeline/graph_builder.py`의 `create_spanner_graph.sql` 스키마 매핑 (`INTERLEAVE IN PARENT`) |
-| **Scenario D**<br>감사 추적·정량 릴리스 게이트까지 검증하는 경우 | 4계층 데이터 리니지 시각화 + Golden CQ 정합성 검증 + 경계값 10건×5회(50회) 벤치마크 통과 후 Cloud Run 배포 | **`full`**<br>(`Stage 1 → 2 → 3 → 4 → 5`) | Scenario B 전체 + `data/input/04_cq/golden_cqs.json` & `boundary_cases.json` + `pipeline/validator.py` + `terraform/terraform.tfvars` |
+| **Scenario A (`lite`)**<br>비정형 규정·약관·매뉴얼 문서만 있는 경우 | 고객 정형 테이블 없이 PDF/DOCX/MD 원본 문서만으로 원문 청크 + 위키(Entity/Concept) + `[DOC_CHUNK_XXX]` 인용 Q&A 및 Citation CQ 평가 구축 | **`lite`** (`"track": "auto"`, `"tables": {}`) | ① `customer_doc/*` 원본 배치 → `extract_docs.py` (Gate 0 `>=95%`)<br>② `extract_wiki.py` (`entities.md`, `concepts.md` 인용 검증 생성)<br>③ Stage 3 물리 그래프 생략 → Stage 4 `execute_lite_doc_cycle`<br>④ `04_cq/golden_competency_questions.json` (`"evidence_type": "citation"`) |
+| **Scenario A2 (그래프 요청 시 중단)**<br>문서만 있는데 그래프·SQL 평가를 요청한 경우 | 고객 테이블이 없는데 Stage 3 Property Graph나 SQL 평가를 강제 요청(`track: "full"` 또는 `--stage 3`)한 경우 | **즉시 중단 및 선택지 안내** | 가짜 CSV를 합성하지 않고 즉시 멈춘 뒤 사용자에게 확인:<br>(a) 고객 정형 CSV(`03_tables/`) 추가 제공 요청<br>(b) `track: "lite"`(문서 전용 트랙)로 전환<br>(c) 데모 목적 합성 데이터 명시 승인(`synthetic.allowed: true`, `SYNTHETIC_DEMO`) |
+| **Scenario B (표준 / 부분 테이블)**<br>정형 DW 테이블 + 비정형 정책 문서를 결합하는 경우 | 마스터/트랜잭션 CSV(전체 또는 일부)와 정책 문서를 결합해 ISO GQL 다중 홉 그래프 추론 + 2-Pass 에이전트 구축 | **`standard`** (`"track": "auto"`, `"graph_engine": "bigquery"`) | 고객이 실제로 제공한 테이블만 `project.json` `tables`에 등록·적재(`CUSTOMER_PROVIDED`)하고, 미제공 테이블은 빈 상태(0행)로 유지(샘플 데이터 혼합 금지) |
+| **Scenario C (커스텀 도메인 스키마 / Spanner)**<br>통신 외 타 산업군 커스텀 테이블 또는 Spanner DDL 확장 | 샘플 6종 CSV와 전혀 다른 도메인 스키마(제조·금융·유통·의료 등)를 연결하거나 `create_spanner_graph.sql` 이중 DDL 산출 | **`standard`** + `*_module` 오버라이드 | 공용 코드를 수정하지 않고 프로젝트 폴더 내 모듈을 `project.json`의 `"ingest_module"`, `"graph_module"`, `"mcp_module"`, `"engine_module"`로 지정 + `projects/<id>/config/lineage_spec.json` 작성 |
+| **Scenario D (`full`)**<br>감사 추적 리니지 & 50회 경계값 배포 게이트 완결 | 4계층 데이터 리니지 DAG + Golden CQ(`sql`/`citation`) + 경계값 10건×5회(50회) 벤치마크 통과 후 Cloud Run 배포 | **`full`** (`Stage 1 → 2 → 3 → 4 → 5`) | Scenario B/C 전체 + `04_cq/golden_competency_questions.json` & `boundary_cases.json` + `pipeline/validator.py` 실측(`input_manifest_sha256` 기록) + `terraform/terraform.tfvars` |
 
-**고객·데이터 영역별 프로젝트 (기본 동작)**: 새 고객 데이터는 루트 샘플을 덮어쓰지 않고 `python3 new_project.py <id>`로 만든 `projects/<id>/`에 넣습니다. 5-File Swap은 그 폴더의 `project.json`·`config/*`·`data/input/*`와 `project.json`의 `*_module` 오버라이드로 진행하고, 스튜디오 상단 `PROJECT` 선택기(`?project=<id>`)로 전환합니다. 공용 서버·파이프라인 코드에 프로젝트별 `if` 분기를 넣지 않습니다. 상세: [`projects/_template/README.md`](projects/_template/README.md)
+### 2.1 최신 문서 변환 · 위키 추출 · CQ 검증 핵심 산출물 예시
+
+1. **원문 변환 (`pipeline/extract_docs.py` → `01_guides/*.md`) 및 Gate 0 (`data/output/gate0_report.json`)**:
+   - 모든 변환 마크다운 상단에 `<!-- provenance: source_file=customer_doc/... sha256=... extracted_at=... -->` 및 페이지 경계 `<!-- page: N -->` 기록.
+   - `gate0_report.json`에서 문서별 `char_retention_ratio >= 0.95`, `empty_pages: []`, `placeholder_detected: false` 통과 필수.
+2. **문서 청크 (`data/output/doc_chunks.jsonl`) 5대 출처 컬럼**:
+   - `origin_type`(`EXTRACTED` / `CUSTOMER_PROVIDED`), `source_doc`, `source_sha256`, `extract_method`, `source_locator`(`page=1#article=18`) 및 `content_sha256`(`anchor_<12hex>`).
+3. **문서 기반 위키 추출 (`pipeline/extract_wiki.py` → `03_wiki/entities.md`, `concepts.md`, `data/output/wiki_extraction.json`)**:
+   - `entities.md`는 핵심 비즈니스 엔티티(Node 후보), `concepts.md`는 엔티티 간 사전/사후 조건·제약 관계(`-[PRECONDITION|POSTCONDITION|CONSTRAINT]->`, Edge 후보)로 구조화하며, 각 항목의 `quote`(`<=300`자)가 실제 청크 원문에 존재하는지 대조해 불일치 항목은 자동 폐기(`entities_dropped_unverified_quote`, `concepts_dropped_unverified_quote` 기록).
+4. **Golden CQ (`04_cq/golden_competency_questions.json`) 및 평가 리포트 (`data/output/cq_benchmark_report.json`)**:
+   - `evidence_type: "sql"`(`verification_sql` + `expected_math` + `grounded_chunk`)과 `evidence_type: "citation"`(`expected_keywords` + `grounded_chunk`)을 구분 채점하며, 리포트에 `run_id`, `input_manifest_sha256`, `evidence_provenance`, `synthetic_basis`, `unconfirmed_cq_count`를 기록.
 
 ---
 
@@ -64,20 +75,22 @@
 | 경로 | 역할 | 프로토타이핑 시 수정 여부 |
 | :--- | :--- | :---: |
 | [`01_prod.md`](01_prod.md) | 마스터 제품·아키텍처 헌장 (현재 문서) | 도메인 요약만 갱신 |
-| [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md) | 4대 시나리오별 빠른 프로토타이핑 가이드 & 프롬프트 레시피 | 참조용 (수정 불필요) |
-| [`GEMINI.md`](GEMINI.md) / [`AGENTS.md`](AGENTS.md) / [`.cursorrules`](.cursorrules) | Jetski·Antigravity·Cursor·Claude Code용 에이전트 부트스트랩 규칙 | 참조용 (수정 불필요) |
+| [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md) | 시나리오별 빠른 프로토타이핑 가이드 & 프롬프트 레시피 | 참조용 (수정 불필요) |
+| [`GEMINI.md`](GEMINI.md) / [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) / [`.cursorrules`](.cursorrules) | Jetski·Antigravity·Cursor·Claude Code용 에이전트 부트스트랩 규칙 | 참조용 (수정 불필요) |
 | [`DESIGN.md`](DESIGN.md) | Apple/Google Enterprise 라이트 테마 디자인 토큰 및 UI 규칙 | 참조용 (수정 불필요) |
-| [`config/starter_config.json`](config/starter_config.json) | 3-Track 활성 단계, 그래프 엔진, MCP 도구 목록 정의 | **수정 (Step 1)** |
-| [`config/portal_profile.json`](config/portal_profile.json) | 스튜디오 헤더 타이틀, 도메인 배지, Stage별 설명, 샘플 질의 정의 | **수정 (Step 5)** |
-| [`config/project.json`](config/project.json) · [`projects/_template/`](projects/_template/README.md) | 기본 샘플 프로젝트 메타 · 고객/데이터 영역별 프로젝트 템플릿 (`new_project.py`로 생성) | 새 고객은 `projects/<id>/`에서 수정 |
-| [`config/lineage_spec.json`](config/lineage_spec.json) | Stage 5 리니지 DAG 스펙 (카테고리·노드·엣지, `bq_table` 실측 행 수) | 도메인 자산에 맞게 수정 |
-| [`data/input/`](data/input/) | `01_guides/`(문서), `03_tables/`(CSV), `04_cq/`(CQ·경계값), `05_glossary/`(용어사전) | **수정 (Step 2)** |
-| [`industry_cases/`](industry_cases/README.md) | 제조·금융·리테일·통신 4대 산업군 8종 비식별 참조 스키마·규칙 템플릿 | 참조·복사원본 |
-| [`pipeline/ingest.py`](pipeline/ingest.py) | 마크다운 청킹, 3-Layer 위키 생성, BigQuery 테이블·엣지 적재 | **수정 (Step 3)** |
-| [`pipeline/graph_builder.py`](pipeline/graph_builder.py) | BigQuery `CREATE OR REPLACE PROPERTY GRAPH` 및 Spanner DDL 생성·실행 | **수정 (Step 3)** |
-| [`src/agent/mcp_server.py`](src/agent/mcp_server.py) | Stage MCP 5종 + 도메인 Runtime MCP 3종 | **수정 (Step 4)** |
-| [`src/agent/reasoning_engine.py`](src/agent/reasoning_engine.py) | 2-Pass Gemini 에이전트 (슬롯 추출 → MCP 호출 → 근거 합성) | 카탈로그 슬롯만 조정 |
-| [`pipeline/validator.py`](pipeline/validator.py) | Golden CQ 5건 SQL 대조 및 경계값 10건×5회 라이브 벤치마크 | CQ 변경 시 쿼리 조정 |
+| [`config/project.json`](config/project.json) · [`projects/_template/`](projects/_template/README.md) | 기본 샘플 프로젝트 메타 · 고객/데이터 영역별 프로젝트 템플릿 (`new_project.py`로 생성) | 새 고객은 `projects/<id>/project.json`에서 수정 |
+| [`config/starter_config.json`](config/starter_config.json) | 3-Track 활성 단계, 그래프 엔진, MCP 도구 목록 정의 | 기본 유지 (`project.json` 우선) |
+| [`config/portal_profile.json`](config/portal_profile.json) | 스튜디오 헤더 타이틀, 도메인 배지, Stage별 설명, 샘플 질의 정의 | `projects/<id>/config/portal_profile.json` 수정 |
+| [`config/lineage_spec.json`](config/lineage_spec.json) | Stage 5 리니지 DAG 스펙 (카테고리·노드·엣지, `bq_table` 실측 행 수) | `projects/<id>/config/lineage_spec.json` 수정 |
+| [`data/input/`](data/input/) | `01_guides/`(원문 변환본), `03_tables/`(CSV), `04_cq/`(CQ·경계값), `05_glossary/`(용어사전) | `projects/<id>/customer_doc/` 및 `data/input/`에 배치 |
+| [`industry_cases/`](industry_cases/README.md) | 제조·금융·리테일·통신 4대 산업군 8종 비식별 참조 스키마·규칙 템플릿 | 스키마·규칙 설계 참조용 |
+| [`pipeline/extract_docs.py`](pipeline/extract_docs.py) | `customer_doc/` 원본(PDF/DOCX/MD/TXT) 원문 변환, 반복 머리글 제거, 조문/문단 청킹 및 Gate 0(`gate0_report.json`) 검증 | 코어 유지 |
+| [`pipeline/extract_wiki.py`](pipeline/extract_wiki.py) | 문서 청크 기반 `entities.md`(Node)·`concepts.md`(Edge) 추출 및 원문 인용(`<=300`자) 검증(`wiki_extraction.json`) | 코어 유지 |
+| [`pipeline/ingest.py`](pipeline/ingest.py) | 마크다운 청킹, 3-Layer 위키 생성, BigQuery 테이블·엣지 적재 (`ingest_module` 오버라이드 지원) | 커스텀 스키마 시 프로젝트 모듈로 오버라이드 |
+| [`pipeline/graph_builder.py`](pipeline/graph_builder.py) | BigQuery `CREATE OR REPLACE PROPERTY GRAPH` 및 Spanner DDL 생성·실행 (`graph_module` 오버라이드 지원) | 커스텀 스키마 시 프로젝트 모듈로 오버라이드 |
+| [`src/agent/mcp_server.py`](src/agent/mcp_server.py) | Stage MCP 5종 + 도메인 Runtime MCP 3종 (`mcp_module` 오버라이드 지원) | 커스텀 스키마 시 프로젝트 모듈로 오버라이드 |
+| [`src/agent/reasoning_engine.py`](src/agent/reasoning_engine.py) | 2-Pass MCP 에이전트(`full`) 및 1-Pass 문서 청크 인용 에이전트(`lite` `execute_lite_doc_cycle`) | 커스텀 스키마 시 `engine_module` 오버라이드 |
+| [`pipeline/validator.py`](pipeline/validator.py) | Golden CQ(`sql`/`citation` 분기) 및 경계값 10건×5회 라이브 벤치마크 (`input_manifest_sha256` 기록) | 코어 유지 (`validator_module` 오버라이드 지원) |
 | [`src/project_context.py`](src/project_context.py) · [`src/lineage/lineage_engine.py`](src/lineage/lineage_engine.py) | 프로젝트 해석·프로젝트별 엔진 캐시 · 리니지 DAG 엔진 | 코어 유지 |
 | [`src/web/studio_server.py`](src/web/studio_server.py) | 6-Tab 통합 웹 스튜디오 서버 (`config/portal_profile.json` 기반 렌더링) | 코어 레이아웃 유지 |
 | [`notebooks/ko/`](notebooks/ko/) · [`notebooks/en/`](notebooks/en/) | Stage 0~5 국문(6종) · 영문(6종) 실행형 노트북 및 `nb_helpers.py` | 필요 시 쿼리만 갱신 |

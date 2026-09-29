@@ -92,3 +92,65 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 3. **CQs**: write document-based CQs with `evidence_type: citation` and table-based CQs with `evidence_type: sql`. IDs and names used in questions must exist in the chunks or tables. A person confirms each answer and is recorded in `answer_confirmed_by`.
 4. **De-identification rule**: if your customer IDs use another format, change the regular expression (`^CUST_DEMO_[0-9]{3}$`) in `mcp_stage1_asset_discovery`.
 5. **Run**: run `python3 run_pipeline.py --project <id>`. It converts the source documents and runs Gate 0 first; if Gate 0 fails, nothing is loaded.
+
+### Conversion Output Examples (`extract_docs.py`, `gate0_report.json`, `golden_competency_questions.json`)
+
+#### 1) Verbatim Document Extraction (`01_guides/01_telecom_terms.md`)
+```markdown
+<!-- provenance: source_file=customer_doc/telecom_service_terms.pdf sha256=8f9d2a1c4b... extracted_at=2026-09-29T12:00:00Z -->
+# Mobile Service Terms and Conditions
+
+<!-- page: 1 -->
+Article 1 (Purpose) These Terms govern the rights, obligations, and responsibilities between the company and subscribers.
+
+Article 18 (Subsidy Clawback and Exemptions)
+1. If a subscriber lowers the rate plan before 180 days of mandatory retention, a prorated penalty is charged on the subsidy difference.
+2. Subscribers aged 65 or older (SENIOR_EXEMPT) or enlisting for mandatory military service are exempt from the clawback penalty (0 KRW).
+```
+
+#### 2) Gate 0 Fidelity Report (`data/output/gate0_report.json`)
+```json
+{
+  "project_id": "my_project",
+  "checked_at": "2026-09-29T12:00:02+09:00",
+  "gate0_passed": true,
+  "threshold_ratio": 0.95,
+  "documents": [
+    {
+      "source_file": "customer_doc/telecom_service_terms.pdf",
+      "output_markdown": "01_guides/01_telecom_terms.md",
+      "source_chars": 48210,
+      "extracted_chars": 47950,
+      "char_retention_ratio": 0.9946,
+      "empty_pages": [],
+      "placeholder_detected": false,
+      "status": "PASS"
+    }
+  ]
+}
+```
+
+#### 3) Golden CQ Schema Examples (`sql` Track vs `citation` Track)
+```json
+[
+  {
+    "cq_id": "CQ-02",
+    "evidence_type": "sql",
+    "status": "CONFIRMED",
+    "answer_confirmed_by": "domain_lead@example.com",
+    "query": "If customer CUST_DEMO_001 switches from 5G Signature (130,000 KRW) to 5G Slim (55,000 KRW) at 90 days, what is the penalty?",
+    "expected_math": { "penalty": 150000 },
+    "verification_sql": "SELECT CAST(ROUND((500000 - 200000) * (180 - 90) / 180.0) AS INT64) AS penalty",
+    "grounded_chunk": "DOC_CHUNK_002"
+  },
+  {
+    "cq_id": "CQ-LITE-01",
+    "evidence_type": "citation",
+    "status": "CONFIRMED",
+    "answer_confirmed_by": "policy_owner@example.com",
+    "query": "Under what conditions is a subscriber exempt from the 180-day subsidy clawback penalty?",
+    "expected_keywords": ["65", "SENIOR_EXEMPT", "0 KRW"],
+    "grounded_chunk": "DOC_CHUNK_004"
+  }
+]
+```

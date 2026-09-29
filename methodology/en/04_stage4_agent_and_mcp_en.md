@@ -53,6 +53,8 @@ The 24-month cost is computed for both paths: public subsidy `(factory price - t
 
 ## Procedure (`AiFdeAgentEngine.execute_cycle()` in `src/agent/reasoning_engine.py`)
 
+### 1) `full` Track (2-Pass MCP Orchestration)
+
 1. **Catalog**: read the device, plan and customer lists from BigQuery (5-minute cache).
 2. **Decomposition (Gemini call 1)**: turn the question into parameter JSON and sub-goals (tool choices). Only catalog names are allowed.
 3. **Validation**: fees and day counts must be numbers written in the question. Names not in the catalog are dropped. If the Gemini call fails, rule-based extraction is used instead.
@@ -61,6 +63,17 @@ The 24-month cost is computed for both paths: public subsidy `(factory price - t
 6. **Answer (Gemini call 2)**: uses only the tool result JSON as evidence. Order: conclusion → evidence data → rules and chunks → execution info (job IDs).
 
 Each question calls Gemini twice, and the result records the token count and the BigQuery job IDs.
+
+### 2) `lite` Track (1-Pass Document-Chunk Context Runtime: `execute_lite_doc_cycle()`)
+
+For document-only projects (`track: "lite"`) without structured customer tables, the engine bypasses BigQuery SQL MCPs and answers directly from the project's `doc_chunks.jsonl` and `03_wiki/entities.md` · `concepts.md` context (up to `300,000` characters).
+
+- **Mandatory Citation**: Every factual claim in the response must cite a valid chunk ID in `[DOC_CHUNK_XXX]` format.
+- **Citation Verification Statuses**:
+  - `GROUNDED`: Every cited `[DOC_CHUNK_XXX]` exists in the project's `doc_chunks.jsonl`.
+  - `NO_CITATION`: The response failed to include any `[DOC_CHUNK_XXX]` citation.
+  - `INVALID_CITATION`: The response cited a chunk ID that does not exist in `doc_chunks.jsonl`.
+  - `CONTEXT_LIMIT`: Total document chunk characters exceeded the `300,000`-character context limit.
 
 ## Deliverables
 
@@ -74,7 +87,7 @@ Each question calls Gemini twice, and the result records the token count and the
 ## Gate (Gate 4)
 
 - [ ] `get_tool_catalog()` returns 8 tools (the studio catalog shows 8).
-- [ ] Golden CQ questions end with answer status `GROUNDED`, and the answer contains the evidence chunk ID and a BigQuery job ID.
+- [ ] Golden CQ questions end with answer status `GROUNDED`, and the answer contains the evidence chunk ID and a BigQuery job ID (`full` track) or verified `[DOC_CHUNK_XXX]` citations (`lite` track).
 - [ ] Questions with missing information end with `INSUFFICIENT_PARAMETERS` and no invented numbers.
 - [ ] When no data matches, the first sentence of the answer states `MATCH_NOT_FOUND` (0 rows).
 
@@ -92,7 +105,7 @@ Each question calls Gemini twice, and the result records the token count and the
 
 ## Apply to your data
 
-1. **Tool SQL**: if table or column names change, edit the SQL of the 3 runtime MCPs, `get_live_catalog()` and `extract_params_from_text()`.
-2. **Customer ID extraction**: the regular expression that finds a customer ID in the question is `CUST_[A-Z]+_\d{3}` (`extract_params_from_text()`).
-3. **Prompts**: the agent prompts (`DECOMPOSE_SYS`, `SYNTH_SYS`) are written for the sample domain (telecom subsidy and penalty). Change that wording for another domain.
+1. **Document-only projects (`lite` track)**: `execute_lite_doc_cycle()` automatically reads `doc_chunks.jsonl` and `03_wiki/` without SQL edits and enforces `[DOC_CHUNK_XXX]` citations.
+2. **Custom domain tables (Scenario C)**: when your table schema differs from the 6-table telecom sample, set `"mcp_module"` and `"engine_module"` in `project.json` to inject domain-specific MCP handlers and agent prompts.
+3. **Tool SQL and regex**: if modifying the default template, edit the SQL of the 3 runtime MCPs, `get_live_catalog()`, `extract_params_from_text()` (customer ID regex `CUST_[A-Z]+_\d{3}`), and prompts (`DECOMPOSE_SYS`, `SYNTH_SYS`).
 4. **Model**: set it with `VERTEX_GEMINI_MODEL`.

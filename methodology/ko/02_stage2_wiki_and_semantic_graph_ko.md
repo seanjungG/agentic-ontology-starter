@@ -42,30 +42,52 @@
 4. **적재·업로드**: 청크는 `tb_doc_chunks`, 규칙은 `tb_domain_rules`, 규칙→요금제 연결은 `edge_rule_applies_to_plan`에 적재한다. 가이드 원문(`raw/`), 청크(`parsed/`), Wiki와 JSON-LD(`ontology/`)는 GCS에 올린다. 결과는 `data/llm_wiki/gcs_prototype_manifest.json`에 남는다.
 5. **시맨틱 그래프**: 스튜디오 그래프는 `data/output/graph_topology.json`의 `vis_semantic_graph`(노드 11, 엣지 13)를 그린다. 이 파일은 Stage 3의 `build_graph()`가 쓰며, 노드와 라벨은 `pipeline/graph_builder.py`에 정의되어 있다. 원칙은 엔티티 = 노드, 관계(개념) = 엣지다.
 
-### lite 트랙: 문서 기반 위키 (고객 테이블이 없는 프로젝트)
+### lite 트랙 및 외부 문서 유입 시: 문서 기반 위키 추출 (고객 테이블이 없는 프로젝트)
 
-1. **청크**: `extract_docs.py`가 만든 원문 `01_guides/*.md`를 조문(`제N조(`) 또는 제목·문단 단위(상한 1,500자)로 나눈다. 청크마다 `source_doc`, `source_sha256`, `page_from`, `page_to`, `article_no`를 기록하고 `trust_tier`는 `EXTRACTED`다.
-2. **위키 추출**: `pipeline/extract_wiki.py`가 청크에서 entity(주요 업무 단위)를 노드로, concept(엔티티 사이의 사전조건·사후조건·제약조건)를 엣지(`-[PRECONDITION|POSTCONDITION|CONSTRAINT]->`)로 뽑는다. Gemini를 쓰고 모델명을 기록한다.
-3. **인용 검사**: 항목마다 `source_chunk_id`와 300자 이하 인용을 붙인다. 인용이 청크에 없으면(공백 차이만 무시) 제외하고 제외 건수를 `data/output/wiki_extraction.json`에 남긴다.
-4. **결과**: `data/llm_wiki/entities.md`, `concepts.md`를 GCS `ontology/`에 올린다. 물리 그래프 적재(Stage 3)는 하지 않는다. 같은 입력이라도 Gemini 출력에 따라 항목 수가 달라질 수 있다.
+1. **결정론적 청크 분할 (`pipeline/ingest.py`)**: `extract_docs.py`가 만든 원문 `01_guides/*.md`를 조문(`제N조(`) 또는 제목·문단 단위(상한 1,500자)로 나눈다. 청크마다 출처 5컬럼(`source_doc`, `source_sha256`, `page_from`, `page_to`, `article_no`)을 기록하고 `trust_tier`는 `EXTRACTED`다.
+2. **인용 검증 기반 위키 추출 (`pipeline/extract_wiki.py`)**: 청크에서 주요 업무 단위를 `Entity`(Node)로, 엔티티 사이의 사전조건·사후조건·제약조건을 `Concept`(`-[PRECONDITION|POSTCONDITION|CONSTRAINT]->` Edge)로 추출한다.
+3. **인용구 코드 대조**: 항목마다 `source_chunk_id`와 300자 이하 원문 인용구(`quote`)를 붙인다. 인용구가 실제 청크 원문에 없으면(공백 차이만 무시) 즉시 제외하고 제외 건수(`dropped_count`)를 `data/output/wiki_extraction.json`에 남긴다.
+4. **결과**: `data/llm_wiki/entities.md`, `concepts.md`를 생성하고 GCS `ontology/`에 올린다. 정형 테이블이 없으므로 물리 그래프 적재(Stage 3)는 생략한다.
+
+#### 실제 변환·추출 산출물 샘플 (`doc_chunks.jsonl`, `entities.md`, `concepts.md`)
+
+`data/output/doc_chunks.jsonl` (출처 5컬럼 포함):
+```json
+{"chunk_id": "DOC_CHUNK_001", "doc_name": "01_service_terms.md", "section_title": "제1조(목적)", "chunk_text": "제1조(목적) 본 약관은 서비스 이용 조건 및 해지 시 반환금 산정 기준을 규정함을 목적으로 한다.", "trust_tier": "EXTRACTED", "source_doc": "customer_doc/01_service_terms.pdf", "source_sha256": "0004623c1b39ebfd821ef3db6ca1eb8c94fb596094997a5e8f8b2d5a42efac61", "page_from": 1, "page_to": 1, "article_no": "제1조"}
+{"chunk_id": "DOC_CHUNK_002", "doc_name": "01_service_terms.md", "section_title": "제2조(의무 유지 기간)", "chunk_text": "제2조(의무 유지 기간) 할인 반환금 면제를 위한 최소 유지 기간은 개통일로부터 180일로 한다.", "trust_tier": "EXTRACTED", "source_doc": "customer_doc/01_service_terms.pdf", "source_sha256": "0004623c1b39ebfd821ef3db6ca1eb8c94fb596094997a5e8f8b2d5a42efac61", "page_from": 1, "page_to": 1, "article_no": "제2조"}
+```
+
+`data/llm_wiki/entities.md` (Node) 및 `concepts.md` (Edge):
+```markdown
+## E001: 서비스 이용 조건 및 반환금 기준
+- **Node Type**: `Entity`
+- **Source Chunk**: `DOC_CHUNK_001` (`customer_doc/01_service_terms.pdf`, p.1, 제1조)
+- **Quote**: "제1조(목적) 본 약관은 서비스 이용 조건 및 해지 시 반환금 산정 기준을 규정함을 목적으로 한다."
+
+## C001: 할인 반환금 면제 최소 유지 조건
+- **Edge**: `E001 -[PRECONDITION]-> E002`
+- **Condition Type**: `PRECONDITION`
+- **Source Chunk**: `DOC_CHUNK_002` (`customer_doc/01_service_terms.pdf`, p.1, 제2조)
+- **Quote**: "제2조(의무 유지 기간) 할인 반환금 면제를 위한 최소 유지 기간은 개통일로부터 180일로 한다."
+```
 
 ## 산출물
 
 | ID | 산출물 | 스타터에서 |
 | :--- | :--- | :--- |
 | `D2.1` | OKF v0.2 도메인 온톨로지 명세서 | `data/output/ontology.jsonld` (도메인 노드 + 청크 노드) |
-| `D2.2` | Karpathy 3-Layer LLM-Wiki 디렉토리 | `data/llm_wiki/summary.md`, `entities.md`, `concepts.md`, `rules.md` |
+| `D2.2` | Karpathy 3-Layer LLM-Wiki 디렉토리 | `data/llm_wiki/summary.md`, `entities.md`, `concepts.md`, `rules.md` (문서 전용 프로젝트는 `extract_wiki.py` 생성분 + `wiki_extraction.json`) |
 | `D2.3` | GCS 온톨로지 프로토타입 레지스트리 | `data/llm_wiki/gcs_prototype_manifest.json`, GCS `raw/` · `parsed/` · `ontology/` |
-| `D2.4` | 비정형 텍스트 청크 및 해시 앵커 매니페스트 | `data/output/doc_chunks.jsonl`, BigQuery `tb_doc_chunks` |
-| `D2.5` | 결정론적 비즈니스 규칙 레지스트리 | `domain_rules.csv` → BigQuery `tb_domain_rules` |
-| `D2.6` | 시맨틱 브릿지 매핑 매트릭스 | `rule_plan_edges.csv` → BigQuery `edge_rule_applies_to_plan` |
+| `D2.4` | 비정형 텍스트 청크 및 해시 앵커 매니페스트 | `data/output/doc_chunks.jsonl` (출처 5컬럼 포함), BigQuery `tb_doc_chunks` |
+| `D2.5` | 결정론적 비즈니스 규칙 레지스트리 | `domain_rules.csv` → BigQuery `tb_domain_rules` (`standard`/`full` 트랙) |
+| `D2.6` | 시맨틱 브릿지 매핑 매트릭스 | `rule_plan_edges.csv` → BigQuery `edge_rule_applies_to_plan` (`standard`/`full` 트랙) |
 
 ## 게이트 (Gate 2)
 
-- [ ] 모든 청크에 앵커가 있고 서로 겹치지 않는다.
-- [ ] `tb_domain_rules.source_chunk_id`가 모두 `tb_doc_chunks`에 있다. Stage 2 MCP 결과 `anchored_chunks`에서 규칙이 붙은 청크를 확인한다.
-- [ ] manifest의 `status`가 `LIVE_GCP_SYNCED`이고 `validation.bigquery_tables_loaded`가 10이다.
-- [ ] Lite 트랙은 이 게이트를 통과하면 Stage 4로 넘어간다.
+- [ ] 모든 청크에 앵커(`content_sha256`)와 출처 5컬럼(`source_doc`, `source_sha256`, `page_from`, `page_to`, `article_no`)이 있고 서로 겹치지 않는다.
+- [ ] 문서 기반 위키(`extract_wiki.py`) 추출 항목의 모든 `quote`가 원문 청크에 실제 존재한다(불일치 항목은 자동 폐기됨).
+- [ ] 정형 테이블이 있는 프로젝트는 `tb_domain_rules.source_chunk_id`가 모두 `tb_doc_chunks`에 있다.
+- [ ] Lite 트랙은 이 게이트를 통과하면 Stage 3를 건너뛰고 Stage 4로 넘어간다.
 
 ## 스튜디오에서 보기
 
@@ -82,6 +104,6 @@
 ## 내 데이터에 적용하기
 
 1. **청크 경계**: 고객 문서의 청크 경계는 코드가 정한다(`extract_docs.py` 변환본의 조문·제목·문단). `<!-- DOC_CHUNK_NNN: 제목 -->` 주석은 샘플 전용이며 고객 문서에 직접 넣지 않는다.
-2. **규칙**: `domain_rules.csv`에 원문 조항을 인용해 규칙을 쓰고 `source_chunk_id`에 근거 청크 ID를 적는다. 규칙 ID 4개는 `src/agent/mcp_server.py`의 SQL이 이름으로 참조하므로, ID를 바꾸면 그 SQL도 고친다.
-3. **규칙-테이블 연결**: `rule_plan_edges.csv`에 규칙이 적용되는 `plan_id`를 연결한다.
-4. **그래프 뷰**: 시맨틱 그래프의 노드·라벨을 바꾸려면 `pipeline/graph_builder.py`의 `vis_semantic_graph`를 고친다. Wiki의 관계 설명은 `pipeline/ingest.py`의 `concepts.md` 부분에 있다.
+2. **문서 기반 위키 추출**: 정형 테이블 없이 문서만 있거나 신규 도메인 문서가 들어오면 `python3 pipeline/extract_wiki.py --project <id>`가 청크에서 `Entity`(Node)와 `Concept`(`PRECONDITION`/`POSTCONDITION`/`CONSTRAINT` Edge)을 인용구 검증과 함께 추출한다.
+3. **규칙 및 테이블 연결 (정형 테이블 보유 시)**: `domain_rules.csv`에 원문 조항을 인용해 규칙을 쓰고 `source_chunk_id`에 근거 청크 ID를 적으며, `rule_plan_edges.csv`에 적용 대상을 연결한다.
+4. **그래프 뷰**: 시맨틱 그래프의 노드·라벨을 바꾸려면 프로젝트 전용 `graph_module`(`project.json`) 또는 `pipeline/graph_builder.py`의 `vis_semantic_graph`를 고친다.

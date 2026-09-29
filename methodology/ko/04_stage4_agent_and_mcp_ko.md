@@ -53,6 +53,8 @@ BigQuery 오류는 모든 도구에서 `BQ_QUERY_ERROR`로 반환한다 (0건으
 
 ## 절차 (`src/agent/reasoning_engine.py`의 `AiFdeAgentEngine.execute_cycle()`)
 
+### 1) `full` 트랙 (2-Pass MCP 오케스트레이션)
+
 1. **카탈로그 조회**: BigQuery에서 단말·요금제·고객 목록을 읽는다 (5분 캐시).
 2. **분해 (Gemini 1회차)**: 질문을 파라미터 JSON과 하위 목표(도구 선택)로 바꾼다. 이름은 카탈로그 값만 허용한다.
 3. **검증**: 요금·일수는 질문에 실제로 적힌 숫자만 쓴다. 카탈로그에 없는 이름은 버린다. Gemini 호출이 실패하면 규칙 기반 추출로 대신한다.
@@ -61,6 +63,17 @@ BigQuery 오류는 모든 도구에서 `BQ_QUERY_ERROR`로 반환한다 (0건으
 6. **답변 (Gemini 2회차)**: 도구 결과 JSON만 근거로 쓴다. 순서는 결론 → 근거 데이터 → 규칙·청크 → 실행 정보(Job ID)다.
 
 질문 하나에 Gemini를 2번 호출하며, 결과에 토큰 수와 BigQuery Job ID가 기록된다.
+
+### 2) `lite` 트랙 (문서 전용 1-Pass 청크 컨텍스트 런타임: `execute_lite_doc_cycle()`)
+
+고객이 정형 CSV 없이 문서(`01_raw_docs/`, `03_wiki/`)만 투입한 프로젝트(`track: "lite"`)에서는 BigQuery SQL MCP 대신 추출된 `doc_chunks.jsonl` 및 `entities.md`/`concepts.md` 컨텍스트(최대 `300,000`자 한도)를 기반으로 1-Pass 응답을 생성한다.
+
+- **인용 강제**: 모든 답변 문장은 반드시 출처 청크 ID를 `[DOC_CHUNK_XXX]` 형식으로 인용해야 한다.
+- **인용 검증 상태**:
+  - `GROUNDED`: 답변 내 `[DOC_CHUNK_XXX]` 인용이 실제 프로젝트 `doc_chunks.jsonl`에 존재하는 유효한 청크 ID임이 확인된 상태.
+  - `NO_CITATION`: 답변에 `[DOC_CHUNK_XXX]` 인용이 누락된 상태.
+  - `INVALID_CITATION`: 실제 `doc_chunks.jsonl`에 존재하지 않는 청크 ID를 환각 인용한 상태.
+  - `CONTEXT_LIMIT`: 문서 청크 텍스트 합계가 `300,000`자를 초과하여 컨텍스트 주입이 제한된 상태.
 
 ## 산출물
 
@@ -74,7 +87,7 @@ BigQuery 오류는 모든 도구에서 `BQ_QUERY_ERROR`로 반환한다 (0건으
 ## 게이트 (Gate 4)
 
 - [ ] `get_tool_catalog()`에 8종이 있다 (스튜디오 `전체 (8)`).
-- [ ] Golden CQ 질문의 응답 상태가 `GROUNDED`이고, 답변에 근거 청크 ID와 BigQuery Job ID가 있다.
+- [ ] Golden CQ 질문의 응답 상태가 `GROUNDED`이고, 답변에 근거 청크 ID와 BigQuery Job ID(`full` 트랙) 또는 유효한 `[DOC_CHUNK_XXX]` 인용(`lite` 트랙)이 있다.
 - [ ] 정보가 부족한 질문은 `INSUFFICIENT_PARAMETERS`로 끝나고 수치를 지어내지 않는다.
 - [ ] 조건에 맞는 데이터가 없으면 답변 첫 문장에서 `MATCH_NOT_FOUND`(0건)를 밝힌다.
 
@@ -92,7 +105,7 @@ BigQuery 오류는 모든 도구에서 `BQ_QUERY_ERROR`로 반환한다 (0건으
 
 ## 내 데이터에 적용하기
 
-1. **도구 SQL**: 테이블·열 이름이 바뀌면 런타임 MCP 3종의 SQL, `get_live_catalog()`, `extract_params_from_text()`를 고친다.
-2. **고객 ID 추출**: 질문에서 고객 ID를 찾는 정규식은 `CUST_[A-Z]+_\d{3}`이다 (`extract_params_from_text()`).
-3. **프롬프트**: 에이전트 프롬프트(`DECOMPOSE_SYS`, `SYNTH_SYS`)는 샘플 도메인(통신 지원금·위약금) 문구로 되어 있다. 도메인이 다르면 이 문구를 바꾼다.
+1. **문서 전용 프로젝트 (`lite` 트랙)**: 별도 코드 수정 없이 `execute_lite_doc_cycle()`이 자동으로 `doc_chunks.jsonl`과 `03_wiki/`를 읽어 `[DOC_CHUNK_XXX]` 인용 기반으로 동작한다.
+2. **커스텀 도메인 테이블 (Scenario C)**: 샘플 6종 CSV와 다른 도메인 테이블 스키마를 쓸 경우, `project.json`에 `"mcp_module"`과 `"engine_module"`을 지정하여 도메인 전용 MCP 핸들러와 에이전트 엔진을 주입한다.
+3. **도구 SQL 및 정규식 수정**: 기본 템플릿을 수정할 경우 런타임 MCP 3종의 SQL, `get_live_catalog()`, `extract_params_from_text()`(고객 ID 정규식 `CUST_[A-Z]+_\d{3}`), 프롬프트(`DECOMPOSE_SYS`, `SYNTH_SYS`)를 도메인에 맞게 변경한다.
 4. **모델**: `VERTEX_GEMINI_MODEL`로 지정한다.

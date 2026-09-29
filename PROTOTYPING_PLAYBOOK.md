@@ -1,21 +1,21 @@
 # 상황별 빠른 프로토타이핑 플레이북 (`PROTOTYPING_PLAYBOOK.md`)
 
-> **목적**: 이 스타터팩을 다른 프로젝트로 클론했을 때, 백과사전식 온톨로지 이론을 처음부터 공부하거나 코드를 새로 짜지 않고 **현재 가진 데이터 상황(4가지 시나리오)에 맞춰 핵심 파일 5개만 교체(Swap)하여 30분~반나절 안에 동작하는 도메인 프로토타입(파이프라인 + BigQuery Graph + 8종 MCP + 6-Tab 스튜디오)을 완성**하기 위한 실전 가이드입니다.
+> **목적 및 위상**: 이 스타터팩(`agentic-ontology-starter`)은 특정 고객사 프로덕션 코드베이스가 아닌 **교육용 · 테스트용 · 신규 프로젝트 부트스트랩용 심플 레퍼런스 레포지토리**입니다. 고객 비즈니스와 데이터 형태(문서만 있는 경우, 일부 테이블만 있는 경우, 전혀 다른 산업군 스키마가 들어오는 경우 등)가 완전히 예측 불가능한 상황에서도, 코드를 처음부터 새로 짜지 않고 **`projects/<id>/` 격리 폴더와 시나리오별 교체(Swap)·모듈 오버라이드(`*_module`)만으로 30분~반나절 안에 동작하는 도메인 프로토타입(파이프라인 + BigQuery Graph + 8종 MCP + 6-Tab 스튜디오)을 완성**하기 위한 실전 가이드입니다.
 > **AI 코딩 에이전트(Jetski / Antigravity / Cursor / Claude Code) 사용자**: 아래 시나리오 중 본인 상황에 맞는 **복사-붙여넣기 부트스트랩 프롬프트**를 에이전트에게 그대로 전달하십시오.
 
 ---
 
 ## 0. 고객·데이터 영역별 프로젝트로 시작하기 (기본 동작)
 
-루트 샘플은 그대로 두고 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 만든 뒤, 아래 5-File Swap을 그 폴더 안에서 진행합니다. 스튜디오 상단 `PROJECT` 선택기(`?project=<id>`)로 샘플과 전환하며 비교합니다.
+루트 샘플은 그대로 두고 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 만든 뒤, 아래 교체를 그 폴더 안에서 진행합니다. 스튜디오 상단 `PROJECT` 선택기(`?project=<id>`)로 샘플과 전환하며 비교합니다.
 
-| 5-File Swap 대상 | 프로젝트에서 수정할 위치 |
+| 교체·설정 대상 | 프로젝트에서 수정할 위치 |
 | :--- | :--- |
-| ① `config/starter_config.json` (트랙·엔진) | `projects/<id>/project.json` (`track`, `graph_engine`, `gcp`) |
-| ② `data/input/*` | `projects/<id>/data/input/*` |
-| ③ `pipeline/ingest.py` · ④ `pipeline/graph_builder.py` | 복사본을 `projects/<id>/`에 두고 `project.json`의 `ingest_module` · `graph_module`로 지정 |
-| ⑤ `src/agent/mcp_server.py` · `config/portal_profile.json` | `mcp_module` 지정 · `projects/<id>/config/portal_profile.json` |
-| Stage 5 리니지 | `projects/<id>/config/lineage_spec.json` |
+| ① 트랙·엔진·테이블 목록 | `projects/<id>/project.json` (`track`: 기본 `"auto"`, `graph_engine`, `gcp`, `tables`, `synthetic.allowed`) |
+| ② 고객 원본 문서 & 입력 자산 | `projects/<id>/customer_doc/*` (`extract_docs.py`가 `01_guides/*.md`로 원문 변환 후 Gate 0 `>=95%` 검증) · `data/input/03_tables/*` (고객 CSV만, `provenance` 필수) · `data/input/04_cq/*` (`sql` 또는 `citation`) |
+| ③ 문서 기반 위키 / 인제스트·그래프 | `lite` 트랙은 `extract_wiki.py`가 `entities.md`(Node)·`concepts.md`(Edge) 자동 추출(`<=300`자 인용 검증). 커스텀 스키마는 복사본을 `projects/<id>/`에 두고 `project.json`의 `ingest_module` · `graph_module`로 지정 |
+| ④ 에이전트 런타임 & 화면 프로필 | `lite` 트랙은 `execute_lite_doc_cycle`(`[DOC_CHUNK_XXX]` 인용 강제) 자동 실행. 커스텀 스키마는 `mcp_module` · `engine_module` 지정 + `projects/<id>/config/portal_profile.json` 수정 |
+| ⑤ Stage 5 리니지 & 평가 | `projects/<id>/config/lineage_spec.json` 작성 + `python3 pipeline/validator.py --project <id>` (`input_manifest_sha256` 기록) |
 
 실행: `python3 run_pipeline.py --project <id>` (데이터셋·버킷은 Terraform으로 먼저 생성). 상세: [`projects/_template/README.md`](projects/_template/README.md)
 

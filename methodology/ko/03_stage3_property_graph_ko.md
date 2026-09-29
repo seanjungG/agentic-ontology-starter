@@ -97,9 +97,13 @@ Stage 1·2에서 적재한 테이블을 복사하지 않고 그대로 그래프�
 
 [stage3_property_graph_bigquery_spanner_ko.ipynb](../../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb)
 
-## 내 데이터에 적용하기
+## 내 데이터에 적용하기 (정형 테이블 유무 및 타 도메인 스키마 대응)
 
-1. **테이블**: 노드·엣지로 쓸 테이블을 `terraform/bigquery.tf`에 정의한다. 엣지 테이블에는 양 끝 노드의 키 열이 있어야 한다.
-2. **DDL**: `pipeline/graph_builder.py`의 BigQuery DDL(노드 레이블, 키, 속성, 엣지)을 새 테이블에 맞게 고친다. Spanner DDL도 같은 파일에 있다.
-3. **질의**: `src/agent/mcp_server.py`의 `MATCH` 패턴과 열 이름을 새 레이블에 맞게 고친다.
-4. **그래프 이름**: 이름을 바꾸려면 `DomainMcpServer`의 `self.graph`와 `build_graph()`의 `graph_fqn`을 함께 바꾼다.
+1. **정형 테이블이 없는 문서 전용 프로젝트 (`lite` 트랙)**:
+   - 고객이 정형 테이블(`03_tables/*.csv`)을 주지 않았을 때는 Stage 3 물리 Property Graph 생성을 실행하지 않고 건너뛴다(Stage 2에서 추출한 `entities.md`·`concepts.md`가 시맨틱 관계를 담당).
+   - 만약 정형 테이블이 없는 상태에서 사용자가 `track: "standard"/"full"`이나 Stage 3 실행을 요청하면, `run_pipeline.py`와 `graph_builder.py`는 가짜 테이블을 만들지 않고 즉시 중단하여 **(a) 고객 정형 테이블 CSV 추가 제공, (b) 문서 기반 물리 그래프(별도 설계), (c) 합성 데모 시드 사용(승인 필요)** 또는 **`lite` 트랙 전환**을 확인받는다.
+2. **타 산업·신규 스키마의 정형 테이블이 유입된 경우 (`graph_module` 오버라이드)**:
+   - 루트 공용 `pipeline/graph_builder.py`를 직접 수정하지 않고, `projects/<id>/project.json`에 `"graph_module": "projects.<id>.custom_graph"`를 지정해 해당 도메인 테이블에 맞는 `CREATE OR REPLACE PROPERTY GRAPH`와 `vis_property_graph`를 생성한다.
+3. **테이블 및 DDL 정의**:
+   - 노드·엣지로 쓸 테이블을 `terraform/bigquery.tf`(또는 프로젝트별 BigQuery 데이터셋)에 정의한다. 엣지 테이블에는 양 끝 노드의 키 열이 있어야 한다.
+   - 그래프 이름을 바꾸려면 `project.json`의 `bq_graph` 설정을 함께 변경한다.

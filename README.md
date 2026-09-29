@@ -7,11 +7,12 @@
 > **비영리 라이선스 및 방법론 지식재산권 고지 (Non-Commercial License Notice)**:
 > 본 저장소의 핵심인 **5-Stage 에이전틱 온톨로지 엔지니어링 방법론(`methodology/`)·실습 노트북(`notebooks/`)·산업군 아키텍처 템플릿(`industry_cases/`)**은 **CC BY-NC-ND 4.0**으로, **소스 코드(`src/`, `pipeline/`, `terraform/`)**는 **PolyForm Noncommercial 1.0.0**으로 보호됩니다. 개인 학습 및 비상업적 기술 검증 외에 **상용 서비스 탑재, 타 기업/고객사 대상 유상 컨설팅·SI·PoC 딜리버리 활용을 엄격히 금지**하며, 상업적/엔터프라이즈 활용이 필요한 경우 반드시 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([상세 라이선스 안내 (KO / EN)](#5-라이선스-및-상업적-이용-제한-안내--license--commercial-use-restriction-ko--en) · [`LICENSE`](./LICENSE))
 
-정형 데이터(BigQuery DW)와 비정형 정책 문서(업무 가이드·약관·SOP)를 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO SQL:2023 GQL)**로 결합하고, **8종 MCP 도구**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 검증·서빙하는 **5-Stage 엔터프라이즈 온톨로지 스타터 팩**입니다.
+정형 데이터(BigQuery DW)와 비정형 정책 문서(업무 가이드·약관·SOP)를 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO SQL:2023 GQL)**로 결합하고, **8종 MCP 도구**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 검증·서빙하는 **5-Stage 에이전틱 온톨로지 교육 · 테스트 · 부트스트랩용 심플 레퍼런스 스타터 팩**입니다.
 
+- **저장소 위상 및 유연성**: 특정 고객사의 프로덕션 비즈니스나 실데이터를 담고 있지 않으며, 향후 유입될 외부 고객 비즈니스와 데이터 형태(문서만 있는 경우 `lite`, 일부 테이블만 있는 경우, 전혀 다른 도메인 테이블 스키마가 들어오는 경우 `*_module` 오버라이드 등)가 완전히 예측 불가능한 상황에서도 `projects/<id>/` 격리 구조와 자동 트랙 판별(`track: "auto"`)로 즉시 부트스트랩할 수 있도록 설계되었습니다.
 - **라이브 스튜디오 (Cloud Run)**: [https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app)
 - **빠른 프로토타이핑 & AI 에이전트 부트스트랩 문서**:
-  - [**상황별 빠른 프로토타이핑 플레이북 (`PROTOTYPING_PLAYBOOK.md`)**](./PROTOTYPING_PLAYBOOK.md) — 4대 데이터 상황별 5-File Swap 레시피
+  - [**상황별 빠른 프로토타이핑 플레이북 (`PROTOTYPING_PLAYBOOK.md`)**](./PROTOTYPING_PLAYBOOK.md) — 시나리오별(Scenario A / A2 / B / C / D) 도메인 이식 레시피
   - [**마스터 제품·아키텍처 헌장 (`01_prod.md`)**](./01_prod.md) · [**UI 디자인 표준 (`DESIGN.md`)**](./DESIGN.md)
   - **툴별 에이전트 가드레일**: [**Antigravity (`GEMINI.md`)**](./GEMINI.md) · [**Cursor (`.cursorrules`)**](./.cursorrules) · [**Claude Code (`CLAUDE.md` / `AGENTS.md`)**](./CLAUDE.md)
   - [**4대 산업군 8종 비식별 레퍼런스 템플릿 (`industry_cases/README.md`)**](./industry_cases/README.md) — 제조 · 금융 · 리테일 · 통신 스키마/규칙/CQ 샘플
@@ -201,9 +202,11 @@ agentic-ontology-starter/
 ├── methodology/                     # 5-Stage 방법론 마스터(KO/EN) 및 Stage 1~5 한/영 상세 가이드 (13개 파일)
 ├── notebooks/                       # 8단계 흐름 기반 한/영 실습 노트북 12종(ko/ 6종, en/ 6종) + nb_helpers.py
 ├── pipeline/
+│   ├── extract_docs.py              # Stage 1 고객 원본 문서(PDF/DOCX/MD/TXT) 원문 변환 및 Gate 0 검증
 │   ├── ingest.py                    # Stage 1~2 데이터 파싱·위키 컴파일·BigQuery/GCS 적재 파이프라인
+│   ├── extract_wiki.py              # Stage 2 문서 청크 기반 Entity(Node)·Concept(Edge) 인용 검증 추출
 │   ├── graph_builder.py             # Stage 3 BigQuery/Spanner Property Graph DDL 합성 및 배포
-│   └── validator.py                 # Stage 5 Golden CQ 5건 검증 및 경계값 10건×5회 반복 평가 엔진
+│   └── validator.py                 # Stage 5 Golden CQ(sql/citation) 검증 및 경계값 10건×5회 반복 평가 엔진
 ├── src/
 │   ├── gcp_client.py                # BigQuery REST/GQL, GCS 업로드, Vertex AI Gemini 호출 클라이언트
 │   ├── project_context.py           # 프로젝트 해석 및 프로젝트별 MCP·에이전트 엔진 (선택적 *_module 오버라이드)

@@ -34,14 +34,38 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 ## Procedure (`pipeline/validator.py`)
 
 1. **4-Tier Lineage Mapping**:
-   - Tier 0 (Raw Files): `sample_policy_guide.md`, `sample_welfare_exemption_guide.md`, 6 CSV files
-   - Tier 1 (Anchored Chunks): `tb_doc_chunks` (`DOC_CHUNK_001`–`005`, `content_sha256`)
-   - Tier 2 (Domain Rules & Bridges): `tb_domain_rules`, `edge_rule_applies_to_plan`
+   - Tier 0 (Raw Files): `sample_policy_guide.md`, `sample_welfare_exemption_guide.md`, 6 CSV files (or external customer documents/tables)
+   - Tier 1 (Anchored Chunks): `tb_doc_chunks` (`DOC_CHUNK_001`–`005`, `content_sha256`, `origin_type`, `extract_method`, `source_locator`)
+   - Tier 2 (Domain Rules & Bridges): `tb_domain_rules`, `edge_rule_applies_to_plan` (or `03_wiki/entities.md`, `concepts.md`)
    - Tier 3 (Contracts & Property Graph): `tb_customer_contract` and `STARTER_ONTOLOGY_GRAPH`
    - Tier 4 (Golden CQ Answers): `CQ-01`–`CQ-05` agent responses and grounded citations
-2. **Golden CQ Validation (`run_validation`)**:
-   - Verifies that independent BigQuery `verification_sql` matches `expected_math` and that the live agent answer (`AiFdeAgentEngine`) contains the exact numbers and `grounded_chunk`, writing `data/output/cq_benchmark_report.json`.
-3. **Boundary Benchmark (`run_boundary`)**:
+2. **Golden CQ Validation (`run_validation`) — `evidence_type` Branching**:
+   - **`evidence_type: "sql"` (`full` track)**: Verifies that independent BigQuery `verification_sql` matches `expected_math` and that the live agent answer (`AiFdeAgentEngine.execute_cycle`) contains the exact numbers and `grounded_chunk`.
+   - **`evidence_type: "citation"` (`lite` track)**: Verifies that the document-context agent answer (`execute_lite_doc_cycle`) cites `grounded_chunk` (`DOC_CHUNK_XXX`) and includes at least one keyword from `expected_keywords`.
+   - **`status: "UNCONFIRMED"` CQs**: Questions without customer-confirmed ground truth are counted separately in `unconfirmed_cq_count` rather than being auto-passed as 100%.
+3. **Execution Provenance Metadata (`cq_benchmark_report.json`)**:
+   - Every validation report records the input file hash (`input_manifest_sha256`), provenance tier (`evidence_provenance`), synthetic data flag (`synthetic_basis`), and unconfirmed CQ count (`unconfirmed_cq_count`).
+   ```json
+   {
+     "run_id": "val_20260929_143012",
+     "project_id": "telecom_sample",
+     "track": "full",
+     "evaluated_at": "2026-09-29T14:30:12+09:00",
+     "input_manifest_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "evidence_provenance": "CUSTOMER_PROVIDED",
+     "synthetic_basis": false,
+     "unconfirmed_cq_count": 0,
+     "total_cqs": 5,
+     "passed": 5,
+     "accuracy_rate": 100.0
+   }
+   ```
+4. **Studio Evaluation Badge States**:
+   - **`NOT_EVALUATED`**: No report file or missing `run_id`.
+   - **`STALE_EVALUATION` (Re-evaluation required after input change)**: Current project input file SHA-256 differs from `input_manifest_sha256` in the report.
+   - **`SYNTHETIC_BASIS: NN%`**: When `SYNTHETIC_DEMO` rows are present (`synthetic_basis: true`), the score is explicitly badged so demo scores are never mistaken for customer production data.
+   - **`UNCONFIRMED: N cases`**: Displays confirmed CQ pass rate separately from `unconfirmed_cq_count`.
+5. **Boundary Benchmark (`run_boundary`)**:
    - Executes 10 boundary questions (`GROUNDED`, `MATCH_NOT_FOUND`, `INSUFFICIENT_PARAMETERS`) for 5 iterations (50 live runs) and records `avg_success_rate`, `avg_consistency_rate`, and `avg_intent_stability` in `data/output/boundary_benchmark_results.json`.
 
 ## Deliverables
@@ -50,13 +74,13 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 | :--- | :--- | :--- |
 | `D5.1` | End-to-End Data Lineage & Impact Map | Studio `Stage 5. Lineage & Eval` lineage DAG (`config/lineage_spec.json`) and `mcp_stage5_lineage_and_eval` (`lineage_records`) |
 | `D5.2` | PII Masking & Access Governance Policy | Pseudonymous contract IDs (`CUST_DEMO_001`–`006`) in `tb_customer_contract` |
-| `D5.3` | Golden CQ Validation Report | `data/output/cq_benchmark_report.json` (5/5 pass, 100.0%) |
+| `D5.3` | Golden CQ Validation Report | `data/output/cq_benchmark_report.json` (with `input_manifest_sha256` and `synthetic_basis`) |
 | `D5.4` | Boundary & Consistency Benchmark Report | `data/output/boundary_benchmark_results.json` (10 cases × 5 runs = 50 live executions) |
 | `D5.5` | Production Deployment Package (Docker & Terraform) | `Dockerfile` and `terraform/` (`main.tf`, `bigquery.tf`, `storage.tf`, `iam.tf`, `cloud_run.tf`) |
 
 ## Gate 5 (Production Release Gate)
 
-- [ ] Golden CQ 5/5 pass rate (`100.0%` in `cq_benchmark_report.json`).
+- [ ] Confirmed Golden CQs achieve `100.0%` pass rate and `input_manifest_sha256` matches current inputs (`cq_benchmark_report.json`).
 - [ ] Boundary benchmark (`10 × 5`) verifies `GROUNDED`, `MATCH_NOT_FOUND`, and `INSUFFICIENT_PARAMETERS` guardrails in `boundary_benchmark_results.json`.
 - [ ] Zero hardcoded secrets (`AIza...`), customer identifiers, or local paths (`/<local-home>/`).
 - [ ] `terraform apply` succeeds and Cloud Run `/api/portal/profile` returns HTTP 200.
@@ -71,6 +95,6 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 
 ## Adapting to Your Data
 
-1. Define your domain's Golden CQs (`expected_math`, `verification_sql`, `grounded_chunk`) in `data/input/04_cq/golden_competency_questions.json`.
+1. Define your domain's Golden CQs in `data/input/04_cq/golden_competency_questions.json` (`"evidence_type": "sql"`, `"verification_sql"`, `"expected_math"` for `full` track; `"evidence_type": "citation"`, `"expected_keywords"`, `"grounded_chunk"` for `lite` track).
 2. Add boundary test cases (`GROUNDED`, `MATCH_NOT_FOUND`, `INSUFFICIENT_PARAMETERS`) in `data/input/04_cq/boundary_cases.json`.
-3. Run `python3 pipeline/validator.py` to regenerate both reports.
+3. Run `python3 pipeline/validator.py --project <id>` to regenerate the evaluation reports.
