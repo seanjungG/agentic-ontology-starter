@@ -24,11 +24,13 @@ This guide defines the 5-Stage engineering workflow — structured across **1. P
 | **6. Build Agent · 7. Answer** | **Stage 4** | MCP Suite & Agent Orchestration | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 3 Runtime MCPs | `D4.1`–`D4.4` | [Guide](./04_stage4_agent_and_mcp_en.md) · [KO](../../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
 | **8. Verify & Gate** | **Stage 5** | 4-Tier Lineage, Evaluation & Gate | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`–`D5.5` | [Guide](./05_stage5_lineage_and_eval_en.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
 
-## 3. 3-Track Adoption Model (`config/starter_config.json`)
+## 3. 3-Track Adoption Model (`project.json` `track`)
+
+The default `auto` selects Standard when `tables` lists customer table CSV files, otherwise Lite. Customer documents are converted verbatim by `pipeline/extract_docs.py` and loaded only after Gate 0 passes (source character ratio of 95% or more per document, among other checks). Tables the customer did not provide are not created.
 
 | Track | Active Stages | Graph Engine | Target Scenario |
 | :--- | :---: | :---: | :--- |
-| **Track 1 · Lite** | `Stage 1 → 2 → 4` | `none` | Unstructured policy documents only — rapid 3-Layer Wiki and agent validation |
+| **Track 1 · Lite** | `Stage 1 → 2 → 4` | `none` | Source documents only, no customer tables. The agent answers with chunk ID citations and citation CQs are scored |
 | **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (or Spanner DDL) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and GQL |
 | **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` | Full lifecycle including 4-tier lineage, Golden CQ 5, boundary benchmark (10×5), and Terraform Cloud Run deployment |
 

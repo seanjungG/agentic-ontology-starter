@@ -5,6 +5,7 @@
 ## Purpose
 
 Decide first which questions (CQ, Competency Questions) the agent must answer, then load only the documents and tables those answers need into BigQuery.
+Scope is chosen per file. Sentences inside a chosen file are not shortened or edited.
 Writing the expected answer and an answer-check SQL for every CQ gives Stage 5 its scoring criteria directly.
 
 ## Inputs
@@ -20,13 +21,17 @@ Writing the expected answer and an answer-check SQL for every CQ gives Stage 5 i
 | `04_cq/boundary_cases.json` | 10 boundary questions (`BQ-01`–`BQ-10`, used in Stage 5) |
 | `05_glossary/business_glossary.json` | 4 terms. The current pipeline code does not read it |
 
-Customer IDs are synthetic identifiers in the form `CUST_DEMO_001`–`CUST_DEMO_006`.
+Customer IDs are synthetic identifiers in the form `CUST_DEMO_001`–`CUST_DEMO_006`. Every row of the sample CSV files has `provenance=SYNTHETIC_DEMO` and `source_ref=project.json#synthetic`.
 
 Fields of one CQ:
 
 | Field | Use |
 | :--- | :--- |
-| `query` | Question sent to the agent |
+| `query` | Question sent to the agent. IDs and quoted names in it must exist in the chunks or tables |
+| `evidence_type` | `sql` (table evidence) or `citation` (document evidence) |
+| `expected_citation` | For citation CQs: the evidence `chunk_id` and the source passage `quote`. The quote must appear in the chunk verbatim |
+| `expected_facts` | For citation CQs: source expressions the answer must contain |
+| `answer_confirmed_by`, `confirmed_at` | Person and time that confirmed the answer. Empty means "answer not confirmed" |
 | `expected_value` | Human-readable description of the answer |
 | `expected_math` | Answer values used for scoring (e.g. `{"penalty": 100000}`) |
 | `verification_sql` | BigQuery SQL that computes the answer independently of the agent. `{fq}` is replaced with `project.dataset` |
@@ -46,8 +51,8 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 
 ## Procedure
 
-1. **Set the scope**: keep only the documents and tables needed to answer the CQs. The starter begins with 2 guides and 6 CSV files.
-2. **Write the CQs**: fill `expected_math`, `verification_sql` and `grounded_chunk` for every CQ. A person confirms the answers.
+1. **Set the scope**: choose the documents and tables needed to answer the CQs, per file. Do not shorten or edit sentences inside a file. The starter begins with 2 guides and 6 CSV files.
+2. **Write the CQs**: fill `expected_math`, `verification_sql` and `grounded_chunk` for sql CQs, and `expected_citation` and `expected_facts` for citation CQs. A person confirms the answers and is recorded in `answer_confirmed_by`.
 3. **Prepare the tables**: the BigQuery dataset and its 10 tables are created with Terraform (`terraform/bigquery.tf`).
 4. **Load**: `run_ingest()` reads the 6 CSV files and the guide chunks, empties the 10 tables (`TRUNCATE`) and refills them (`INSERT`). Each table is one transaction; any failure stops the pipeline. Values come only from the CSV files, not from code.
 5. **Check**: run `mcp_stage1_asset_discovery` to confirm row counts and the number of de-identification violations.
@@ -63,8 +68,9 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 
 ## Gate (Gate 1)
 
-- [ ] Every CQ has `expected_math`, `verification_sql` and `grounded_chunk`.
-- [ ] The `verification_sql` result equals `expected_math`. The Stage 5 report records it as `SQL_MATCH` in `verification_status`.
+- [ ] If customer documents exist, Gate 0 (`data/output/gate0_report.json`) is `PASS`.
+- [ ] Every CQ has `evidence_type` `sql` or `citation`. sql CQs have `expected_math`, `verification_sql` and `grounded_chunk`; citation CQs have an `expected_citation` that appears verbatim in the chunk. `load_cqs()` in `pipeline/validator.py` checks this.
+- [ ] For sql CQs, the `verification_sql` result equals `expected_math`. The Stage 5 report records it as `SQL_MATCH` in `verification_status`.
 - [ ] `pii_check.non_deidentified_ids` is 0.
 - [ ] Row counts in `table_inventory` equal the CSV row counts.
 
@@ -81,8 +87,8 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 
 ## Apply to your data
 
-1. **Documents**: replace the `.md` files in `data/input/01_guides/`. Mark chunk boundaries with `<!-- DOC_CHUNK_001: Title -->` comments. Without them, the text is split at `## ` headings.
-2. **Tables**: if you keep the file names and column names, replacing the CSV rows is enough. File and column names are fixed in `pipeline/ingest.py`. To change the schema, edit `terraform/bigquery.tf`, `pipeline/ingest.py`, `pipeline/graph_builder.py` and `src/agent/mcp_server.py` together.
-3. **CQs**: rewrite `golden_competency_questions.json` with the same fields.
+1. **Documents**: put the originals (PDF, DOCX) in `customer_doc/` and run `python3 pipeline/extract_docs.py --project <id>`. The full source text is converted to `01_guides/*.md`, and chunks are split automatically by article, heading or paragraph (max 1,500 characters). Do not summarize or rewrite the source. Gate 0: source character ratio of 95% or more per document. `DOC_CHUNK` comments are for the sample only.
+2. **Tables**: put only tables the customer provided in `03_tables/` and register them in `tables` of `project.json`. Every row has `provenance` and `source_ref`. If there are no customer tables, leave the folder empty and use the lite track. Do not fill it with sample or synthetic data. If the schema differs from the sample, change `terraform/bigquery.tf` and the `*_module` overrides in `project.json` together.
+3. **CQs**: write document-based CQs with `evidence_type: citation` and table-based CQs with `evidence_type: sql`. IDs and names used in questions must exist in the chunks or tables. A person confirms each answer and is recorded in `answer_confirmed_by`.
 4. **De-identification rule**: if your customer IDs use another format, change the regular expression (`^CUST_DEMO_[0-9]{3}$`) in `mcp_stage1_asset_discovery`.
-5. **Run**: set the environment variables `GCP_PROJECT_ID`, `BQ_DATASET_ID` and `GCS_WIKI_BUCKET`, then run `python3 run_pipeline.py`.
+5. **Run**: run `python3 run_pipeline.py --project <id>`. It converts the source documents and runs Gate 0 first; if Gate 0 fails, nothing is loaded.

@@ -42,6 +42,13 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 4. **Load and upload**: chunks go to `tb_doc_chunks`, rules to `tb_domain_rules`, rule-to-plan links to `edge_rule_applies_to_plan`. The raw guides (`raw/`), chunks (`parsed/`), Wiki and JSON-LD (`ontology/`) are uploaded to GCS. The result is recorded in `data/llm_wiki/gcs_prototype_manifest.json`.
 5. **Semantic graph**: the studio graph draws `vis_semantic_graph` (11 nodes, 13 edges) from `data/output/graph_topology.json`. That file is written by `build_graph()` in Stage 3, and its nodes and labels are defined in `pipeline/graph_builder.py`. The rule is entity = node, relation (concept) = edge.
 
+### Lite track: document-based Wiki (projects without customer tables)
+
+1. **Chunks**: the source `01_guides/*.md` files written by `extract_docs.py` are split by article (lines that start with a Korean statute article heading, pattern `ARTICLE_RE` in `pipeline/extract_docs.py`) or by heading and paragraph (max 1,500 characters). Each chunk records `source_doc`, `source_sha256`, `page_from`, `page_to` and `article_no`; `trust_tier` is `EXTRACTED`.
+2. **Wiki extraction**: `pipeline/extract_wiki.py` extracts entities (main business units) as nodes and concepts (pre-conditions, post-conditions and constraints between entities) as edges (`-[PRECONDITION|POSTCONDITION|CONSTRAINT]->`) from the chunks. It uses Gemini and records the model name.
+3. **Quote check**: every item carries a `source_chunk_id` and a quote of at most 300 characters. Items whose quote is not in the chunk (whitespace differences ignored) are dropped, and the drop counts are written to `data/output/wiki_extraction.json`.
+4. **Result**: `data/llm_wiki/entities.md` and `concepts.md` are uploaded to GCS `ontology/`. No physical graph is loaded (Stage 3 is skipped). Item counts can vary between runs with the same input because Gemini output varies.
+
 ## Deliverables
 
 | ID | Deliverable | In the starter |
@@ -74,7 +81,7 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 
 ## Apply to your data
 
-1. **Chunk boundaries**: put `<!-- DOC_CHUNK_NNN: Title -->` comments in your guides to choose the evidence units yourself. Rules and CQs refer to chunk IDs, so keep the IDs when you edit a document.
-2. **Rules**: write rules in `domain_rules.csv` and put the evidence chunk ID in `source_chunk_id`. The SQL in `src/agent/mcp_server.py` refers to the 4 rule IDs by name, so update that SQL if you change the IDs.
+1. **Chunk boundaries**: for customer documents, code sets the chunk boundaries (articles, headings and paragraphs of the `extract_docs.py` output). `<!-- DOC_CHUNK_NNN: Title -->` comments are for the sample only; do not add them to customer documents.
+2. **Rules**: write rules in `domain_rules.csv` by quoting the source clause, and put the evidence chunk ID in `source_chunk_id`. The SQL in `src/agent/mcp_server.py` refers to the 4 rule IDs by name, so update that SQL if you change the IDs.
 3. **Rule-to-table links**: link each rule to the `plan_id` values it applies to in `rule_plan_edges.csv`.
 4. **Graph view**: to change the nodes and labels of the semantic graph, edit `vis_semantic_graph` in `pipeline/graph_builder.py`. The relation text of the Wiki is in the `concepts.md` part of `pipeline/ingest.py`.

@@ -42,6 +42,13 @@
 4. **적재·업로드**: 청크는 `tb_doc_chunks`, 규칙은 `tb_domain_rules`, 규칙→요금제 연결은 `edge_rule_applies_to_plan`에 적재한다. 가이드 원문(`raw/`), 청크(`parsed/`), Wiki와 JSON-LD(`ontology/`)는 GCS에 올린다. 결과는 `data/llm_wiki/gcs_prototype_manifest.json`에 남는다.
 5. **시맨틱 그래프**: 스튜디오 그래프는 `data/output/graph_topology.json`의 `vis_semantic_graph`(노드 11, 엣지 13)를 그린다. 이 파일은 Stage 3의 `build_graph()`가 쓰며, 노드와 라벨은 `pipeline/graph_builder.py`에 정의되어 있다. 원칙은 엔티티 = 노드, 관계(개념) = 엣지다.
 
+### lite 트랙: 문서 기반 위키 (고객 테이블이 없는 프로젝트)
+
+1. **청크**: `extract_docs.py`가 만든 원문 `01_guides/*.md`를 조문(`제N조(`) 또는 제목·문단 단위(상한 1,500자)로 나눈다. 청크마다 `source_doc`, `source_sha256`, `page_from`, `page_to`, `article_no`를 기록하고 `trust_tier`는 `EXTRACTED`다.
+2. **위키 추출**: `pipeline/extract_wiki.py`가 청크에서 entity(주요 업무 단위)를 노드로, concept(엔티티 사이의 사전조건·사후조건·제약조건)를 엣지(`-[PRECONDITION|POSTCONDITION|CONSTRAINT]->`)로 뽑는다. Gemini를 쓰고 모델명을 기록한다.
+3. **인용 검사**: 항목마다 `source_chunk_id`와 300자 이하 인용을 붙인다. 인용이 청크에 없으면(공백 차이만 무시) 제외하고 제외 건수를 `data/output/wiki_extraction.json`에 남긴다.
+4. **결과**: `data/llm_wiki/entities.md`, `concepts.md`를 GCS `ontology/`에 올린다. 물리 그래프 적재(Stage 3)는 하지 않는다. 같은 입력이라도 Gemini 출력에 따라 항목 수가 달라질 수 있다.
+
 ## 산출물
 
 | ID | 산출물 | 스타터에서 |
@@ -74,7 +81,7 @@
 
 ## 내 데이터에 적용하기
 
-1. **청크 경계**: 가이드에 `<!-- DOC_CHUNK_NNN: 제목 -->` 주석을 넣어 근거 단위를 직접 정한다. 규칙과 CQ가 청크 ID를 참조하므로 문서를 고쳐도 ID는 유지한다.
-2. **규칙**: `domain_rules.csv`에 규칙을 쓰고 `source_chunk_id`에 근거 청크 ID를 적는다. 규칙 ID 4개는 `src/agent/mcp_server.py`의 SQL이 이름으로 참조하므로, ID를 바꾸면 그 SQL도 고친다.
+1. **청크 경계**: 고객 문서의 청크 경계는 코드가 정한다(`extract_docs.py` 변환본의 조문·제목·문단). `<!-- DOC_CHUNK_NNN: 제목 -->` 주석은 샘플 전용이며 고객 문서에 직접 넣지 않는다.
+2. **규칙**: `domain_rules.csv`에 원문 조항을 인용해 규칙을 쓰고 `source_chunk_id`에 근거 청크 ID를 적는다. 규칙 ID 4개는 `src/agent/mcp_server.py`의 SQL이 이름으로 참조하므로, ID를 바꾸면 그 SQL도 고친다.
 3. **규칙-테이블 연결**: `rule_plan_edges.csv`에 규칙이 적용되는 `plan_id`를 연결한다.
 4. **그래프 뷰**: 시맨틱 그래프의 노드·라벨을 바꾸려면 `pipeline/graph_builder.py`의 `vis_semantic_graph`를 고친다. Wiki의 관계 설명은 `pipeline/ingest.py`의 `concepts.md` 부분에 있다.

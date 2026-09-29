@@ -5,6 +5,7 @@
 ## 목적
 
 에이전트가 답해야 할 질문(CQ, Competency Question)을 먼저 정하고, 답에 필요한 문서와 테이블만 골라 BigQuery에 적재한다.
+범위는 파일 단위로 정한다. 고른 파일 안의 문장은 줄이거나 고치지 않는다.
 CQ마다 정답과 정답 검증 SQL을 함께 적어 두면 Stage 5에서 그대로 채점 기준이 된다.
 
 ## 입력
@@ -20,13 +21,17 @@ CQ마다 정답과 정답 검증 SQL을 함께 적어 두면 Stage 5에서 그�
 | `04_cq/boundary_cases.json` | 경계값 질의 10개 (`BQ-01`~`BQ-10`, Stage 5에서 사용) |
 | `05_glossary/business_glossary.json` | 용어 4개. 현재 파이프라인 코드는 읽지 않는다 |
 
-고객 ID는 `CUST_DEMO_001`~`CUST_DEMO_006` 형식의 합성 식별자다.
+고객 ID는 `CUST_DEMO_001`~`CUST_DEMO_006` 형식의 합성 식별자다. 샘플 CSV의 모든 행은 `provenance=SYNTHETIC_DEMO`, `source_ref=project.json#synthetic`이다.
 
 CQ 한 건의 필드:
 
 | 필드 | 용도 |
 | :--- | :--- |
-| `query` | 에이전트에 보낼 질문 |
+| `query` | 에이전트에 보낼 질문. 질문 속 ID·따옴표 고유명사는 청크나 테이블에 있어야 한다 |
+| `evidence_type` | `sql`(테이블 근거) 또는 `citation`(문서 근거) |
+| `expected_citation` | citation CQ의 근거 `chunk_id`와 원문 구절 `quote`. 구절은 청크에 그대로 있어야 한다 |
+| `expected_facts` | citation CQ 답변에 들어가야 하는 원문 표현 목록 |
+| `answer_confirmed_by`, `confirmed_at` | 정답을 확정한 사람과 시각. 비어 있으면 '정답 미확정' |
 | `expected_value` | 사람이 읽는 정답 설명 |
 | `expected_math` | 채점에 쓰는 정답 값 (예: `{"penalty": 100000}`) |
 | `verification_sql` | 에이전트와 별도로 정답을 계산하는 BigQuery SQL. `{fq}`는 `프로젝트.데이터셋`으로 바뀐다 |
@@ -46,8 +51,8 @@ CQ 한 건의 필드:
 
 ## 절차
 
-1. **범위 정하기**: CQ에 답하는 데 필요한 문서·테이블만 남긴다. 스타터는 가이드 2개, CSV 6개로 시작한다.
-2. **CQ 작성**: CQ마다 `expected_math`, `verification_sql`, `grounded_chunk`를 채운다. 정답은 사람이 확정한다.
+1. **범위 정하기**: CQ에 답하는 데 필요한 문서·테이블을 파일 단위로 고른다. 파일 안의 문장은 줄이거나 고치지 않는다. 스타터는 가이드 2개, CSV 6개로 시작한다.
+2. **CQ 작성**: sql CQ는 `expected_math`, `verification_sql`, `grounded_chunk`를, citation CQ는 `expected_citation`, `expected_facts`를 채운다. 정답은 사람이 확정하고 `answer_confirmed_by`에 기록한다.
 3. **테이블 준비**: BigQuery 데이터셋과 테이블 10개는 Terraform(`terraform/bigquery.tf`)으로 만든다.
 4. **적재**: `run_ingest()`가 CSV 6개와 가이드 청크를 읽어 테이블 10개를 비우고(`TRUNCATE`) 다시 채운다(`INSERT`). 테이블마다 한 트랜잭션이며, 하나라도 실패하면 파이프라인이 멈춘다. 값은 코드에 쓰지 않고 CSV에서만 읽는다.
 5. **확인**: `mcp_stage1_asset_discovery`로 행 수와 비식별 규칙 위반 건수를 확인한다.
@@ -63,8 +68,9 @@ CQ 한 건의 필드:
 
 ## 게이트 (Gate 1)
 
-- [ ] CQ마다 `expected_math`, `verification_sql`, `grounded_chunk`가 있다.
-- [ ] `verification_sql` 결과가 `expected_math`와 같다. Stage 5 리포트의 `verification_status`에 `SQL_MATCH`로 남는다.
+- [ ] 고객 문서가 있으면 Gate 0(`data/output/gate0_report.json`)가 `PASS`다.
+- [ ] CQ마다 `evidence_type`이 `sql` 또는 `citation`이다. sql CQ는 `expected_math`, `verification_sql`, `grounded_chunk`가, citation CQ는 청크에 그대로 있는 `expected_citation`이 있다. `pipeline/validator.py`의 `load_cqs()`가 검사한다.
+- [ ] sql CQ의 `verification_sql` 결과가 `expected_math`와 같다. Stage 5 리포트의 `verification_status`에 `SQL_MATCH`로 남는다.
 - [ ] `pii_check.non_deidentified_ids`가 0이다.
 - [ ] `table_inventory`의 행 수가 CSV 행 수와 같다.
 
@@ -81,8 +87,8 @@ CQ 한 건의 필드:
 
 ## 내 데이터에 적용하기
 
-1. **문서**: `data/input/01_guides/`의 `.md` 파일을 바꾼다. 청크 경계는 `<!-- DOC_CHUNK_001: 제목 -->` 주석으로 표시한다. 주석이 없으면 `## ` 제목 단위로 나뉜다.
-2. **테이블**: 파일명과 열 이름을 유지하면 CSV 행만 바꿔도 적재된다. 파일명·열 이름은 `pipeline/ingest.py`에 고정되어 있다. 스키마를 바꾸려면 `terraform/bigquery.tf`, `pipeline/ingest.py`, `pipeline/graph_builder.py`, `src/agent/mcp_server.py`를 함께 고친다.
-3. **CQ**: `golden_competency_questions.json`을 같은 필드 구조로 다시 쓴다.
+1. **문서**: 원본(PDF·DOCX)을 `customer_doc/`에 넣고 `python3 pipeline/extract_docs.py --project <id>`를 실행한다. 원문 전체가 `01_guides/*.md`로 변환되고, 청크는 조문·제목·문단 단위로 자동으로 나뉜다(상한 1,500자). 원문을 요약하거나 다시 쓰지 않는다. Gate 0: 문서별 원문 비율 95% 이상. `DOC_CHUNK` 주석 방식은 샘플 전용이다.
+2. **테이블**: 고객이 준 테이블만 `03_tables/`에 두고 `project.json`의 `tables`에 등록한다. 모든 행에 `provenance`와 `source_ref`를 둔다. 고객 테이블이 없으면 비워 두고 lite 트랙으로 진행한다. 샘플이나 합성 데이터로 채우지 않는다. 스키마가 샘플과 다르면 `terraform/bigquery.tf`와 `project.json`의 `*_module` 오버라이드를 함께 고친다.
+3. **CQ**: 문서 근거 CQ는 `evidence_type: citation`, 테이블 근거 CQ는 `evidence_type: sql`로 쓴다. 질문에 쓰는 ID·이름은 청크나 테이블에 있어야 한다. 정답은 사람이 확정하고 `answer_confirmed_by`에 기록한다.
 4. **비식별 규칙**: 고객 ID 형식이 다르면 `mcp_stage1_asset_discovery`의 정규식(`^CUST_DEMO_[0-9]{3}$`)을 바꾼다.
-5. **실행**: 환경 변수 `GCP_PROJECT_ID`, `BQ_DATASET_ID`, `GCS_WIKI_BUCKET`을 설정하고 `python3 run_pipeline.py`를 실행한다.
+5. **실행**: `python3 run_pipeline.py --project <id>`를 실행한다. 원문 변환과 Gate 0를 먼저 하고, 실패하면 적재하지 않는다.

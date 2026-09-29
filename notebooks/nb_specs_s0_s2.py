@@ -140,7 +140,7 @@ def build_stage0(lang="ko"):
 
 | {"트랙 (Track)" if ko else "Track"} | {"활성 Stage" if ko else "Active Stages"} | {"물리 그래프 엔진" if ko else "Graph Engine"} | {"적용 목적 및 권장 시나리오" if ko else "Target Scenario"} |
 | :--- | :--- | :--- | :--- |
-| **Track 1 · Lite** | `Stage 1 → Stage 2 → Stage 4` | `none` | {"비정형 정책 문서 위키(3-Layer LLM-Wiki)와 도메인 규칙 테이블만으로 빠르게 에이전트를 기동할 때" if ko else "Fast-track deployment using 3-Layer LLM-Wiki and codified rule tables without a physical property graph"} |
+| **Track 1 · Lite** | `Stage 1 → Stage 2 → Stage 4` | `none` | {"고객 테이블 없이 원본 문서만 있을 때. 원문 청크와 문서 기반 위키로 에이전트가 청크 ID를 인용해 답하고 citation CQ로 채점한다" if ko else "Source documents only, no customer tables. The agent answers from source chunks and the document-based Wiki with chunk ID citations; citation CQs are scored"} |
 | **Track 2 · Standard** | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `bigquery` / `spanner` | {"정형 DW 원장 4종과 비정형 규칙을 Zero-ETL Property Graph로 결합해 다중 홉 ISO GQL 추론을 수행할 때" if ko else "Unifying 4 structured DW ledgers and unstructured rules into a Zero-ETL Property Graph for multi-hop ISO GQL"} |
 | **Track 3 · Full-Stack** | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `bigquery` | {"4-Tier 데이터 리니지, Golden CQ 5건(100%), 경계값 10건×5회(50회) 벤치마크 및 Cloud Run 배포 게이트까지 운영할 때" if ko else "Full lifecycle operation including 4-Tier lineage, 5 Golden CQs, 50-trial boundary benchmark, and Cloud Run release gates"} |"""),
         code(_bootstrap_code(lang, with_agent=True)),
@@ -247,9 +247,9 @@ def build_stage1(lang="ko"):
 # {"Stage 1. [준비 & 분석] 원천 자산 준비 · 테이블 스키마 설계 · 데이터 탐색 및 Golden CQ 정의" if ko else "Stage 1. [Prepare & Analyze] Raw Asset Preparation, Schema Design, Data Profiling & Golden CQ Definition"}
 ## {"Step 1.1 정형/비정형 자산 스코핑 및 스키마 블루프린트 · Step 1.2 데이터 탐색 및 Golden CQ 5종 / Boundary 10건 설계" if ko else "Step 1.1 Structured/Unstructured Asset Scoping & Schema Blueprint · Step 1.2 Data Profiling & 5 Golden CQs / 10 Boundary Cases"}
 
-{("Stage 1은 온톨로지 구축의 **Phase 1(준비)**과 **Phase 2(분석)**를 수행합니다. 에이전트가 답해야 할 핵심 역량 질문(**Golden CQ 5종**)과 경계 조건(**Boundary 10건**)을 먼저 확정하고, 이에 필요한 정형 CSV 6종과 비정형 가이드 2종을 스코핑하여 Terraform으로 프로비저닝된 BigQuery 10개 테이블(`starter_ontology_dw`)에 적재·검증합니다."
+{("Stage 1은 온톨로지 구축의 **Phase 1(준비)**과 **Phase 2(분석)**를 수행합니다. 에이전트가 답해야 할 핵심 역량 질문(**Golden CQ 5종**)과 경계 조건(**Boundary 10건**)을 먼저 확정하고, 이에 필요한 정형 CSV 6종과 비정형 가이드 2종을 스코핑하여 Terraform으로 프로비저닝된 BigQuery 10개 테이블(`starter_ontology_dw`)에 적재·검증합니다. 샘플 CSV는 합성 데이터(`provenance=SYNTHETIC_DEMO`)입니다. 고객 데이터에 적용할 때는 범위를 파일 단위로 정하고, 원본 문서는 `pipeline/extract_docs.py`로 원문 그대로 변환하며, 고객이 준 테이블만 씁니다."
   if ko else
-  "Stage 1 executes **Phase 1 (Preparation)** and **Phase 2 (Analysis)** of the methodology. We first define the target **5 Golden Competency Questions (CQs)** and **10 Boundary Cases**, scope the required 6 structured CSVs and 2 unstructured policy guides, and validate the 10 Terraform-provisioned BigQuery tables (`starter_ontology_dw`).")}
+  "Stage 1 executes **Phase 1 (Preparation)** and **Phase 2 (Analysis)** of the methodology. We first define the target **5 Golden Competency Questions (CQs)** and **10 Boundary Cases**, scope the required 6 structured CSVs and 2 unstructured policy guides, and validate the 10 Terraform-provisioned BigQuery tables (`starter_ontology_dw`). The sample CSV files are synthetic data (`provenance=SYNTHETIC_DEMO`). For customer data, scope is chosen per file, source documents are converted verbatim by `pipeline/extract_docs.py`, and only tables the customer provided are used.")}
 
 ![Stage 1 Prepare and Analyze Architecture Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=False)),

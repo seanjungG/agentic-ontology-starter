@@ -57,18 +57,17 @@
 ```
 
 #### [Step 2 명령] 내 도메인 데이터 인입 (Stage 1 Asset & Stage 2 3-Layer Wiki 구축) 요청
-> **언제 쓰는가**: 내가 준비한 정책/매뉴얼 문서(MD/PDF 텍스트)와 정형 테이블(CSV 또는 기존 BigQuery 테이블)을 넣어서 **Stage 1(자산 등록·CQ 정의) ~ Stage 2(문단 청킹·SHA-256 해시·3-Layer OKF 위키·도메인 규칙 테이블 적재)**까지 수행할 때.
+> **언제 쓰는가**: 고객 원본 문서(PDF·DOCX·MD·TXT)와 고객이 준 테이블(CSV)을 넣어서 **Stage 1(자산 등록·CQ 정의) ~ Stage 2(문단 청킹·SHA-256 해시·3-Layer OKF 위키·도메인 규칙 테이블 적재)**까지 수행할 때.
 
 ```text
 @01_prod.md @GEMINI.md @PROTOTYPING_PLAYBOOK.md 를 준수해서 내 도메인 데이터를 인입(Stage 1 ~ Stage 2)해줘.
-코어 프레임워크는 절대 재작성하지 말고 아래 데이터에 맞춰 인입 파이프라인만 교체해줘:
+코어 프레임워크는 절대 재작성하지 말고, AGENTS.md의 고객 데이터 원칙을 지켜줘:
 1. 도메인 개요: [예: 사내 구매/계약 승인 규정 / 스마트팩토리 설비 보전 SOP / 금융 대출 심사 규정]
-   (유사한 구조가 필요하면 industry_cases/ 하위 템플릿을 참고해줘.)
-2. 입력 데이터 구성 (data/input/):
-   - 비정형 가이드 문서(01_guides/): [내가 넣은 마크다운/문서 파일 경로 또는 생성할 도메인 규정 설명]
-   - 정형 마스터/트랜잭션 테이블(03_tables/): [내가 넣은 CSV 파일 경로 또는 스키마 설명]
-   - 핵심 검증 질문(04_cq/golden_cqs.json 5건, boundary_cases.json 10건)과 용어사전(05_glossary/business_glossary.json)도 이 도메인에 맞게 구성해줘.
-3. pipeline/ingest.py 의 테이블 적재 목록, DOMAIN_RULES(핵심 판정/계산 규칙), compile_3layer_wiki() 요약을 이 도메인에 맞게 수정하고, 실제로 python3 pipeline/ingest.py 를 실행해서 data/llm_wiki/*.md 와 BigQuery 테이블(tb_doc_chunks, tb_domain_rules 및 마스터 테이블)에 적재된 행 수를 확인해줘. /goal
+2. 입력 데이터 (projects/<id>/):
+   - 고객 원본 문서(customer_doc/): [내가 넣은 파일 목록]. python3 pipeline/extract_docs.py --project <id> 로 원문 그대로 변환하고 요약하거나 다시 쓰지 마.
+   - 고객 테이블(data/input/03_tables/): [내가 넣은 CSV 목록, 없으면 "없음"]. project.json tables에 등록하고 행마다 provenance를 채워줘. 없으면 만들지 말고 lite로 진행해줘.
+   - CQ(04_cq/)는 문서·테이블에 있는 내용으로만 쓰고, CQ마다 근거 청크와 원문 구절 또는 검증 SQL을 붙여줘.
+3. python3 run_pipeline.py --project <id> 를 실행해서 Gate 0 결과(문서별 원문 비율, 청크 수, 누락 쪽), 트랙 결정 이유, BigQuery 적재 행 수를 보고하고, 마지막에 데이터 출처 요약을 붙여줘. /goal
 ```
 
 #### [Step 3 명령] 온톨로지 Property Graph 구축 · MCP 에이전트 연결 · 6-Tab 스튜디오 구동 요청
@@ -89,7 +88,7 @@
 
 | 시나리오 | 보유 데이터 및 목표 | 설정 트랙 (`starter_config.json`) | 실행 Stage | 교체 대상 (`5-File Swap`) |
 | :--- | :--- | :---: | :---: | :--- |
-| **Scenario A · 문서 전용 퀵스타트** | 정형 DW 테이블 없이 **업무 규정·약관·매뉴얼 문서(MD)**와 계산 규칙만으로 위키 + 에이전트 Q&A 구축 | `lite` | `Stage 1 → 2 → 4` | `data/input/01_guides/*`, `starter_config.json`, `pipeline/ingest.py`, `mcp_server.py`, `portal_profile.json` |
+| **Scenario A · 문서 전용 퀵스타트** | 고객 테이블 없이 **원본 문서(PDF·DOCX·MD·TXT)**만으로 원문 청크 + 문서 기반 위키 + 청크 인용 에이전트 Q&A 구축. 그래프·SQL 평가를 요청받으면 테이블을 만들지 않고 멈춰서 묻는다 | `lite` (`project.json` `track: auto`) | `Stage 1 → 2 → 4` | `customer_doc/*`, `04_cq/*` (citation CQ), `portal_profile.json` |
 | **Scenario B · DW + 문서 하이브리드** *(기본 권장)* | **마스터/트랜잭션 CSV(DW 테이블) + 정책 문서**를 결합해 **BigQuery Property Graph(`ISO GQL`) 다중 홉 추론** 수행 | `standard` (`bigquery`) | `Stage 1 → 2 → 3 → 4` | `data/input/*`, `starter_config.json`, `ingest.py` + `graph_builder.py`, `mcp_server.py`, `portal_profile.json` |
 | **Scenario C · 저지연 운영 그래프 확장** | Scenario B + 실시간 이상거래(FDS)/설비 인터락용 **Cloud Spanner Graph DDL(`INTERLEAVE`)** 동시 생성 | `standard` (`bigquery` + Spanner DDL) | `Stage 1 → 2 → 3 → 4` | Scenario B + `pipeline/graph_builder.py` (`create_spanner_graph.sql`) |
 | **Scenario D · 감사 리니지 & 배포 게이트** | **4계층 리니지 시각화 + Golden CQ 5건 + 경계값 50회 라이브 평가 게이트** 통과 및 Cloud Run 배포 | `full` | `Stage 1 → 2 → 3 → 4 → 5` | Scenario B + `data/input/04_cq/*`, `pipeline/validator.py`, `terraform/terraform.tfvars` |

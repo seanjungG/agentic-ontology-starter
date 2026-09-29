@@ -18,11 +18,14 @@ python3 run_pipeline.py --project acme-claims
 
 | 경로 | 내용 |
 | :--- | :--- |
-| `project.json` | 이름·고객·도메인·트랙·그래프 엔진·GCP(`project_id`, `dataset_id`, `gcs_bucket`), 선택 항목 `*_module` (아래) |
+| `project.json` | 이름·고객·도메인·트랙(`auto`)·그래프 엔진·GCP(`project_id`, `dataset_id`, `gcs_bucket`), `tables`(고객 테이블 CSV 목록), `synthetic.allowed`(기본 `false`), 선택 항목 `*_module` (아래) |
+| `customer_doc/` | 고객 원본 문서(PDF·DOCX·MD·TXT). `pipeline/extract_docs.py`가 `data/input/01_guides/`에 원문 변환본을 만든다 |
 | `config/portal_profile.json`, `config/eval_rubric.json` | 샘플에서 복사됨. 도메인에 맞게 수정 |
 | `config/lineage_spec.json` | Stage 5 리니지 스펙 (3절) |
-| `data/input/01_guides` · `03_tables` · `04_cq` · `05_glossary` | 가이드 문서 · 정형 CSV · Golden CQ/바운더리 질의 · 용어집 |
-| `data/output`, `data/llm_wiki` | 파이프라인 산출물 |
+| `data/input/01_guides` · `03_tables` · `04_cq` · `05_glossary` | 원문 변환본(직접 쓰지 않음) · 고객이 준 CSV(행마다 `provenance`·`source_ref`) · Golden CQ/바운더리 질의(`evidence_type` sql 또는 citation) · 용어집 |
+| `data/output`, `data/llm_wiki` | 파이프라인 산출물 (`input_manifest.json`, `gate0_report.json` 포함) |
+
+`tables`가 비어 있으면 트랙은 lite로 정해지고 테이블 없이 문서만 적재합니다. 고객이 주지 않은 테이블은 만들지 않습니다(`AGENTS.md` 고객 데이터 원칙).
 
 도메인 스키마가 샘플과 다르면 공용 코드(`pipeline/`, `src/agent/`)를 고치지 말고, 공용 파일을 이 폴더에 복사해 수정한 뒤 `project.json`에 경로(프로젝트 폴더 기준)를 적습니다. 서버 코드에 프로젝트별 `if` 분기를 추가하지 않습니다.
 

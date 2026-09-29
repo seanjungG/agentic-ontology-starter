@@ -26,11 +26,11 @@
 
 ## 3. 도입 트랙 (3-Track Adoption Model)
 
-조직의 데이터 준비도에 따라 `config/starter_config.json`에서 3가지 트랙을 선택할 수 있다.
+트랙은 프로젝트 `project.json`의 `track`으로 정한다. 기본값 `auto`는 `tables`에 등록된 고객 테이블 CSV가 있으면 Standard, 없으면 Lite다. 고객 문서는 `pipeline/extract_docs.py`로 원문 그대로 변환하고, Gate 0(문서별 원문 비율 95% 이상 등)을 통과해야 적재한다. 고객이 주지 않은 테이블은 만들지 않는다.
 
 | 트랙 | 활성 Stage | 물리 그래프 엔진 | 적용 환경 |
 | :--- | :---: | :---: | :--- |
-| **Track 1 · Lite** | `Stage 1 → 2 → 4` | `none` (위키·규칙 조회) | 비정형 정책 가이드 문서 위주 환경에서 빠르게 위키·에이전트를 검증할 때 |
+| **Track 1 · Lite** | `Stage 1 → 2 → 4` | `none` (청크·문서 기반 위키) | 고객 테이블 없이 원본 문서만 있을 때. 에이전트는 청크 ID를 인용해 답하고 citation CQ로 채점한다 |
 | **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (또는 Spanner DDL) | 정형 DW 원장과 비정형 위키를 Property Graph로 통합해 다중 홉 GQL 추론을 수행할 때 |
 | **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` | 4계층 리니지, Golden CQ 5건, 경계값 벤치마크(10건×5회) 및 Terraform Cloud Run 배포까지 전주기를 운영할 때 |
 
