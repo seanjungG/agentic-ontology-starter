@@ -97,14 +97,33 @@ def try_convert_to_google_workspace_slides() -> dict:
         }
         r = requests.post(
             "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",
-            headers={"Authorization": f"Bearer {token}"},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "x-goog-user-project": "seanjung-poc",
+            },
             files=files,
             timeout=60,
         )
         if r.status_code in (200, 201):
             res = r.json()
-            print(f"[GOOGLE SLIDES CREATED] {res.get('name')}: {res.get('webViewLink')}")
-            created.append({"lang": lang, "id": res.get("id"), "url": res.get("webViewLink")})
+            fid = res.get("id")
+            web_url = res.get("webViewLink") or f"https://docs.google.com/presentation/d/{fid}/edit"
+            for share_email in ("seanjung@google.com", "admin@seanjung.altostrat.com"):
+                try:
+                    requests.post(
+                        f"https://www.googleapis.com/drive/v3/files/{fid}/permissions",
+                        headers={
+                            "Authorization": f"Bearer {token}",
+                            "Content-Type": "application/json",
+                            "x-goog-user-project": "seanjung-poc",
+                        },
+                        json={"role": "writer", "type": "user", "emailAddress": share_email},
+                        timeout=15,
+                    )
+                except Exception:
+                    pass
+            print(f"[GOOGLE SLIDES CREATED] {res.get('name')}: {web_url}")
+            created.append({"lang": lang, "id": fid, "url": web_url})
         else:
             print(f"[WARN] Drive upload returned {r.status_code}: {r.text[:200]}")
 

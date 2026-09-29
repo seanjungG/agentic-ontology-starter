@@ -21,6 +21,16 @@ Trace 4-tier data lineage from raw files (CSVs and policy guides) through BigQue
 | `run_golden_cq_suite` | Reads and summarizes the 5 Golden CQ validation results from `data/output/cq_benchmark_report.json` |
 | `diagnose_boundary_failures` | Inspects pass rate, consistency rate, intent stability, and per-case diagnostics from `data/output/boundary_benchmark_results.json` |
 
+## Studio Lineage DAG (`config/lineage_spec.json`)
+
+Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio lineage view (`src/lineage/lineage_engine.py`, `/api/lineage/{graph,trace,explain}`).
+
+- Spec: category columns (data connection → raw sources → transformations → PII and validation rules → ontology semantic → MCP → agents), presets, nodes, and edges. The sample has 36 nodes and 53 edges.
+- Volume: nodes with `bq_table` show the live BigQuery `__TABLES__` row count (green badge); other nodes show the value written in the spec.
+- The PII column is hidden by default; edges through hidden nodes are drawn from upstream to downstream (sample: hidden 31/45, shown 36/53).
+- Clicking a node highlights its upstream and downstream paths (BFS) and opens a detail panel (metadata, volume source, direct upstream and downstream, rule-based summary) with a link to the Stage 4 agent.
+- Per-project specs live in `projects/<id>/config/lineage_spec.json` (see [`projects/_template/README.md`](../../projects/_template/README.md)).
+
 ## Procedure (`pipeline/validator.py`)
 
 1. **4-Tier Lineage Mapping**:
@@ -38,7 +48,7 @@ Trace 4-tier data lineage from raw files (CSVs and policy guides) through BigQue
 
 | ID | Deliverable | In This Starter |
 | :--- | :--- | :--- |
-| `D5.1` | End-to-End Data Lineage & Impact Map | Studio `Stage 5. Lineage & Eval` lineage view and `mcp_stage5_lineage_and_eval` (`lineage_records`) |
+| `D5.1` | End-to-End Data Lineage & Impact Map | Studio `Stage 5. Lineage & Eval` lineage DAG (`config/lineage_spec.json`) and `mcp_stage5_lineage_and_eval` (`lineage_records`) |
 | `D5.2` | PII Masking & Access Governance Policy | Pseudonymous contract IDs (`CUST_DEMO_001`–`006`) in `tb_customer_contract` |
 | `D5.3` | Golden CQ Validation Report | `data/output/cq_benchmark_report.json` (5/5 pass, 100.0%) |
 | `D5.4` | Boundary & Consistency Benchmark Report | `data/output/boundary_benchmark_results.json` (10 cases × 5 runs = 50 live executions) |

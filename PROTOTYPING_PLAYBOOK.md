@@ -5,6 +5,22 @@
 
 ---
 
+## 0. 고객·데이터 영역별 프로젝트로 시작하기 (기본 동작)
+
+루트 샘플은 그대로 두고 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 만든 뒤, 아래 5-File Swap을 그 폴더 안에서 진행합니다. 스튜디오 상단 `PROJECT` 선택기(`?project=<id>`)로 샘플과 전환하며 비교합니다.
+
+| 5-File Swap 대상 | 프로젝트에서 수정할 위치 |
+| :--- | :--- |
+| ① `config/starter_config.json` (트랙·엔진) | `projects/<id>/project.json` (`track`, `graph_engine`, `gcp`) |
+| ② `data/input/*` | `projects/<id>/data/input/*` |
+| ③ `pipeline/ingest.py` · ④ `pipeline/graph_builder.py` | 복사본을 `projects/<id>/`에 두고 `project.json`의 `ingest_module` · `graph_module`로 지정 |
+| ⑤ `src/agent/mcp_server.py` · `config/portal_profile.json` | `mcp_module` 지정 · `projects/<id>/config/portal_profile.json` |
+| Stage 5 리니지 | `projects/<id>/config/lineage_spec.json` |
+
+실행: `python3 run_pipeline.py --project <id>` (데이터셋·버킷은 Terraform으로 먼저 생성). 상세: [`projects/_template/README.md`](projects/_template/README.md)
+
+---
+
 ## 1. 내 프로젝트는 어디에 해당하는가? (4대 프로토타이핑 시나리오 선택)
 
 | 시나리오 | 어떤 상황인가? (보유 자산 & 목표) | 설정 트랙 (`active_track`) | 실행 Stage | 수정할 파일 수 |
@@ -148,4 +164,6 @@ python3 pipeline/validator.py
 
 # 4. 6-Tab 통합 웹 스튜디오 구동 및 UI 확인 (http://127.0.0.1:8080)
 python3 -m src.web.studio_server 8080
+
+# (추가 프로젝트) 1~3을 한 번에: python3 run_pipeline.py --project <id> → http://127.0.0.1:8080/?project=<id>
 ```

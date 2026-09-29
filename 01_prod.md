@@ -39,6 +39,8 @@
 | **Scenario C**<br>저지연 운영 트랜잭션 그래프가 필요한 경우 | 실시간 이상거래 탐지(FDS), 설비 인터락 등 밀리초 단위 온라인 그래프 탐색용 DDL 산출 | **`standard`** + Spanner DDL<br>(`Stage 1 → 2 → 3 → 4`) | Scenario B와 동일 + `pipeline/graph_builder.py`의 `create_spanner_graph.sql` 스키마 매핑 (`INTERLEAVE IN PARENT`) |
 | **Scenario D**<br>감사 추적·정량 릴리스 게이트까지 검증하는 경우 | 4계층 데이터 리니지 시각화 + Golden CQ 정합성 검증 + 경계값 10건×5회(50회) 벤치마크 통과 후 Cloud Run 배포 | **`full`**<br>(`Stage 1 → 2 → 3 → 4 → 5`) | Scenario B 전체 + `data/input/04_cq/golden_cqs.json` & `boundary_cases.json` + `pipeline/validator.py` + `terraform/terraform.tfvars` |
 
+**고객·데이터 영역별 프로젝트 (기본 동작)**: 새 고객 데이터는 루트 샘플을 덮어쓰지 않고 `python3 new_project.py <id>`로 만든 `projects/<id>/`에 넣습니다. 5-File Swap은 그 폴더의 `project.json`·`config/*`·`data/input/*`와 `project.json`의 `*_module` 오버라이드로 진행하고, 스튜디오 상단 `PROJECT` 선택기(`?project=<id>`)로 전환합니다. 공용 서버·파이프라인 코드에 프로젝트별 `if` 분기를 넣지 않습니다. 상세: [`projects/_template/README.md`](projects/_template/README.md)
+
 ---
 
 ## 3. 런타임 기준값 및 환경 변수
@@ -67,6 +69,8 @@
 | [`DESIGN.md`](DESIGN.md) | Apple/Google Enterprise 라이트 테마 디자인 토큰 및 UI 규칙 | 참조용 (수정 불필요) |
 | [`config/starter_config.json`](config/starter_config.json) | 3-Track 활성 단계, 그래프 엔진, MCP 도구 목록 정의 | **수정 (Step 1)** |
 | [`config/portal_profile.json`](config/portal_profile.json) | 스튜디오 헤더 타이틀, 도메인 배지, Stage별 설명, 샘플 질의 정의 | **수정 (Step 5)** |
+| [`config/project.json`](config/project.json) · [`projects/_template/`](projects/_template/README.md) | 기본 샘플 프로젝트 메타 · 고객/데이터 영역별 프로젝트 템플릿 (`new_project.py`로 생성) | 새 고객은 `projects/<id>/`에서 수정 |
+| [`config/lineage_spec.json`](config/lineage_spec.json) | Stage 5 리니지 DAG 스펙 (카테고리·노드·엣지, `bq_table` 실측 행 수) | 도메인 자산에 맞게 수정 |
 | [`data/input/`](data/input/) | `01_guides/`(문서), `03_tables/`(CSV), `04_cq/`(CQ·경계값), `05_glossary/`(용어사전) | **수정 (Step 2)** |
 | [`industry_cases/`](industry_cases/README.md) | 제조·금융·리테일·통신 4대 산업군 8종 비식별 참조 스키마·규칙 템플릿 | 참조·복사원본 |
 | [`pipeline/ingest.py`](pipeline/ingest.py) | 마크다운 청킹, 3-Layer 위키 생성, BigQuery 테이블·엣지 적재 | **수정 (Step 3)** |
@@ -74,6 +78,7 @@
 | [`src/agent/mcp_server.py`](src/agent/mcp_server.py) | Stage MCP 5종 + 도메인 Runtime MCP 3종 | **수정 (Step 4)** |
 | [`src/agent/reasoning_engine.py`](src/agent/reasoning_engine.py) | 2-Pass Gemini 에이전트 (슬롯 추출 → MCP 호출 → 근거 합성) | 카탈로그 슬롯만 조정 |
 | [`pipeline/validator.py`](pipeline/validator.py) | Golden CQ 5건 SQL 대조 및 경계값 10건×5회 라이브 벤치마크 | CQ 변경 시 쿼리 조정 |
+| [`src/project_context.py`](src/project_context.py) · [`src/lineage/lineage_engine.py`](src/lineage/lineage_engine.py) | 프로젝트 해석·프로젝트별 엔진 캐시 · 리니지 DAG 엔진 | 코어 유지 |
 | [`src/web/studio_server.py`](src/web/studio_server.py) | 6-Tab 통합 웹 스튜디오 서버 (`config/portal_profile.json` 기반 렌더링) | 코어 레이아웃 유지 |
 | [`notebooks/ko/`](notebooks/ko/) · [`notebooks/en/`](notebooks/en/) | Stage 0~5 국문(6종) · 영문(6종) 실행형 노트북 및 `nb_helpers.py` | 필요 시 쿼리만 갱신 |
 | [`terraform/`](terraform/) | BigQuery, GCS, IAM, Cloud Run 선언적 IaC | `terraform.tfvars`만 수정 |

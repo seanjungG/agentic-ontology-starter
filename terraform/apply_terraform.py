@@ -89,7 +89,7 @@ def run_via_cloud_build(token: str) -> dict:
             {
                 "name": "hashicorp/terraform:1.8.5",
                 "entrypoint": "sh",
-                "env": [f"{k}={v}" for k, v in sorted(os.environ.items()) if k.startswith("TF_VAR_")],
+                "env": [f"GOOGLE_OAUTH_ACCESS_TOKEN={token}"] + [f"{k}={v}" for k, v in sorted(os.environ.items()) if k.startswith("TF_VAR_")],
                 "args": [
                     "-c",
                     (

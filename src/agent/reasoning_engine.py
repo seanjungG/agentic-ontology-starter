@@ -13,7 +13,7 @@ No hardcoded answers or data values in code or prompts.
 """
 import json
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.agent.i18n_en import is_english_mode, localize_en_obj
 from src.agent.mcp_server import DomainMcpServer
@@ -82,10 +82,11 @@ def _strip_sql(obj: Any) -> Any:
 
 
 class AiFdeAgentEngine:
-    def __init__(self, project_id: str = DEFAULT_PROJECT_ID, model_name: str = DEFAULT_GEMINI_MODEL):
+    def __init__(self, project_id: str = DEFAULT_PROJECT_ID, model_name: str = DEFAULT_GEMINI_MODEL,
+                 server: Optional[DomainMcpServer] = None):
         self.project_id = project_id
         self.model_name = model_name
-        self.server = DomainMcpServer(project_id=project_id)
+        self.server = server or DomainMcpServer(project_id=project_id)
 
     def _merge_params(self, query: str, llm: Dict[str, Any], det: Dict[str, Any], cat: Dict[str, Any], en: bool = False) -> Tuple[Dict[str, Any], List[str]]:
         notes: List[str] = []
