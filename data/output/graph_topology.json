@@ -5,13 +5,13 @@
   "live_bigquery_deployment": {
     "ddl_execution": {
       "status": "SUCCESS",
-      "job_id": "job_nBBW1fgB6YUph_kWgESR0etv7pBv",
-      "elapsed_ms": 822.9
+      "job_id": "job_YF1SPysPgrIHm2ov-z9CgtDSzpJ9",
+      "elapsed_ms": 753.61
     },
     "gql_verification_probe": {
       "status": "SUCCESS",
-      "job_id": "job_j_416xz_oEkoWkSEAFllC6Y5kXZs",
-      "elapsed_ms": 663.94,
+      "job_id": "job_ClXd3PnOJnPlHu724zLw-naEKVI0",
+      "elapsed_ms": 582.18,
       "row_count": 10,
       "sample_rows": [
         {
@@ -45,7 +45,7 @@
     },
     "node_table_stats": {
       "status": "SUCCESS",
-      "job_id": "job_aoAnCnzHEceSs_lg1KcXEHrDLaci",
+      "job_id": "job_DRxZcX0KNYdVBDillNM9FVu53oWb",
       "tables": [
         {
           "table_id": "tb_customer_contract",

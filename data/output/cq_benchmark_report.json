@@ -1,13 +1,21 @@
 {
   "benchmark_id": "STARTER_GOLDEN_CQ_LIVE",
-  "evaluated_at": "2026-09-29T22:38:01+09:00",
-  "method": "verification_sql(BigQuery) vs expected_math + live agent answer (Vertex AI gemini-3.8-flash + BigQuery MCP)",
+  "evaluated_at": "2026-09-29T22:49:15+09:00",
+  "run_id": "20260929T224915-dff725a9",
+  "input_manifest_sha256": "43e5c293d2a42b9816fbac100d709dd640445bcd5b7e73ee28ad07b484614371",
+  "track": "table",
+  "evidence_provenance": [
+    "SYNTHETIC_DEMO"
+  ],
+  "synthetic_basis": true,
+  "unconfirmed_cqs": 5,
+  "method": "sql CQ: verification_sql(BigQuery) vs expected_math + live agent answer; citation CQ: agent answer must cite expected chunk and contain expected_facts (Vertex AI gemini-3.8-flash)",
   "model": "gemini-3.8-flash",
   "dataset": "seanjung-poc.starter_ontology_dw",
   "total_cqs": 5,
   "passed": 5,
   "accuracy_rate": 100.0,
-  "llm_tokens_total": 31843,
+  "llm_tokens_total": 31587,
   "evaluation_details": [
     {
       "cq_id": "CQ-01",
@@ -21,7 +29,7 @@
       "verification_sql_result": {
         "factory_price": 1698400
       },
-      "verification_job_id": "job_mOFGDnrg84K6QTHyIY0iNffN6KD4",
+      "verification_job_id": "job_Qfk02tGY_jMAzZdcpBKmoTfAue32",
       "actual_value": "factory_price 포함 · DOC_CHUNK_001 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_001",
       "legal_anchor": "DOC_CHUNK_001",
@@ -32,14 +40,22 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_EF4MNCLLmO9EiTN8mGK-1Eh32XZJ",
-        "job__DcMNcA_dmcv1nMSmSTUMV21wW5W",
-        "job_XcbV7nUPXsesaOXWgzmXq0qq6iBH"
+        "job_jSM6T-L4x-380UODqUbyyJQGl_Ub",
+        "job_dRM54IHzbvm30Qk-WOHMyW5R6uX5",
+        "job_rZ5Oxba-DAiJDrQC59_ZFH9SBbAD"
       ],
-      "llm_tokens": 6972,
-      "elapsed_s": 13.4,
-      "answer_excerpt": "### 결론\nGalaxy S26 Ultra 256GB 모델의 공식 출고가는 **1,698,400원**입니다.\n\n---\n\n### 근거 데이터 (BigQuery)\nBigQuery 데이터베이스 조회 결과는 다음과 같습니다.\n\n* **단말기 ID (device_id)**: `DEV-S26U-256`\n* **단말기명 (device_name)**: Galaxy S26 Ultra 256GB\n* **저장용량 (storage_gb)**: 256GB\n* **공식 출고가 (factory_price_krw)**: 1,698,400원\n\n---\n\n### 규칙·원문 근거\n* **적용 규칙 ID**: `RULE_SUBSIDY_CAP`, `RULE_SIX_PLAN_180D`, `RULE_TCO_24M`\n* **참조 청크 ID**: \n  * `DOC_CHUNK_001`\n  * `DOC_CHUNK_002` (Baseline Plan Commitment (Six-Plan Rule))\n  * `DOC_CHUNK_005` (24-Month Contract TCO Comparison Rule)\n\n---\n\n### 실행 정보\n* **BigQuery Job ID**: \n  * `job__DcMNcA_dm",
-      "error": null
+      "llm_tokens": 7036,
+      "elapsed_s": 11.52,
+      "answer_excerpt": "### **결론**\n**Galaxy S26 Ultra 256GB** 모델의 공식 출고가는 **1,698,400원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n단말 프로필 조회 및 온톨로지 그래프 탐색 결과, 일관되게 확인된 기기 정보는 다음과 같습니다.\n\n* **단말 ID**: `DEV-S26U-256`\n* **단말 모델명**: `Galaxy S26 Ultra 256GB`\n* **저장용량**: `256GB`\n* **공식 출고가 (`factory_price_krw`)**: `1,698,400원`\n\n---\n\n### **규칙·원문 근거**\n* **적용 규칙 ID**: `RULE_SUBSIDY_CAP`, `RULE_SIX_PLAN_180D`, `RULE_TCO_24M`\n* **참조 청크 ID**: \n  * `DOC_CHUNK_001` (공시지원금 상한 및 기본 단말 정책)\n  * `DOC_CHUNK_002` (Baseline Plan Commitment / 180일 유지 규칙)\n  * `DOC_CHUNK_005` (24-Month Contract TCO Comparison Rule)\n\n---\n\n### **실행 정보**\n* **BigQuery ",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:08+09:00"
     },
     {
       "cq_id": "CQ-02",
@@ -55,7 +71,7 @@
         "subsidy": 517500,
         "net_price": 1180900
       },
-      "verification_job_id": "job_mVi8QTZncqb5qiNc_dHVIygtgxYi",
+      "verification_job_id": "job_0xOs-Ak9q7GRlKXmjkc7gcjUBENU",
       "actual_value": "subsidy 포함 · net_price 포함 · DOC_CHUNK_002 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_002",
       "legal_anchor": "DOC_CHUNK_002",
@@ -66,14 +82,22 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_plN7kzpb0kq9JcLseyIwZjRKbVGH",
-        "job_vX_vOcDonZ1KUK562oj-UM32RYaB",
-        "job_A_dQzRHUMTH2y3Ws08-oPGdZ8Gk0"
+        "job_69ogXQS7LeTYuNOYieirFOamGCFO",
+        "job_nyx0IK2iv2w8gHQjuYwnar62Pr61",
+        "job_4ftGAytkbdLPapYqWJQdeMmiPd3t"
       ],
-      "llm_tokens": 4731,
-      "elapsed_s": 16.03,
-      "answer_excerpt": "### **결론**\nGalaxy S26 Ultra 256GB 모델을 5G Premier Essential(월 85,000원) 요금제로 개통할 때 적용되는 **총 지원금은 517,500원**이며, 이를 반영한 **실구매가(할부원금)는 1,180,900원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **단말기 정보**\n  - 단말기명: Galaxy S26 Ultra 256GB (ID: `DEV-S26U-256`, 저장용량: 256GB)\n  - 출고가: 1,698,400원\n- **요금제 정보**\n  - 요금제명: 5G Premier Essential (ID: `PLAN-5G-85`)\n  - 월정액: 85,000원\n  - 선택약정 할인율: 25% (0.25)\n  - 최소 유지 기간: 180일\n- **지원금 정책 (정책 ID: `POL-2026-002`)**\n  - 기본 지원금: 450,000원\n  - 추가 지원금 상한: 67,500원\n  - **총 지원금 산식**: 450,000원 + 67,500원 = **517,500원**\n  - **실구매가(할부원금) 산식**: 1,698,400원(출고가) - 517,500원(총 지원금) = **1,",
-      "error": null
+      "llm_tokens": 4521,
+      "elapsed_s": 15.04,
+      "answer_excerpt": "### **결론**\nGalaxy S26 Ultra 256GB 모델을 5G Premier Essential(월 85,000원) 요금제로 개통할 때 적용되는 **총 지원금은 517,500원**이며, 이를 반영한 **실구매가(할부원금)는 1,180,900원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **단말기 출고가 (`factory_price_krw`)**: 1,698,400원\n- **기본 공시지원금 (`base_subsidy_krw`)**: 450,000원\n- **추가 지원금 (`additional_subsidy_cap_krw`)**: 67,500원\n- **총 지원금 (`total_subsidy_krw`)**: 517,500원  \n  *(산식: 기본 지원금 450,000원 + 추가 지원금 67,500원)*\n- **실구매가/할부원금 (`net_installment_principal_krw`)**: 1,180,900원  \n  *(산식: 출고가 1,698,400원 - 총 지원금 517,500원)*\n- **정책 ID (`policy_id`)**: `POL-2026-002`\n- **의무 유지 기간 (`mandatory_retention_d",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:11+09:00"
     },
     {
       "cq_id": "CQ-03",
@@ -87,7 +111,7 @@
       "verification_sql_result": {
         "penalty": 100000
       },
-      "verification_job_id": "job__GyPraTTBcZaUN-fWt-cID0sQ_Np",
+      "verification_job_id": "job_ottuXpbZD2H-RvqcWkV9jXmGQmx2",
       "actual_value": "penalty 포함 · DOC_CHUNK_003 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_003",
       "legal_anchor": "DOC_CHUNK_003",
@@ -99,16 +123,24 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_ZtKpFXozd300koykZAdU8OeKWNDc",
-        "job_tf_KRByUEBn_sAIFYPtep_hY0VEU",
-        "job_yKTwciN0bKKEfYkM4JN6kT3r42zc",
-        "job_7yzXPxJIxtM6q9-UCYiO9mb6SjQi",
-        "job_Cy8zTC7FzZ4N4N5O8Imf452Zy_FJ"
+        "job_-3In_5tjSjQMGaCfsqhmdqvg2GOz",
+        "job_jfcS6Frs6qV4D7ShW0VN34UlH8B2",
+        "job_w1oPTt-JVVm2ryTQG-XiYW2crNSt",
+        "job_Zk4tMkGO2JZT_OKEvmzT6Dgwmg9x",
+        "job_Yylku4W8U3974B3jeN_DHQNlZ_Kd"
       ],
-      "llm_tokens": 6677,
-      "elapsed_s": 16.82,
-      "answer_excerpt": "### **결론**\nCUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(기준선 45,000원) 미만 요금제인 5G Light(37,000원)로 하향 변경할 경우 발생하는 차액정산 위약금은 **100,000원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **고객 ID**: `CUST_DEMO_001` (계약 ID: `CONTRACT_DEMO_101`)\n- **약정 유형**: 공시지원금 약정 (`PUBLIC_SUBSIDY`, 약정기간 24개월)\n- **복지/면제 자격**: `NONE` (위약금 면제 특례 비해당)\n- **경과 일수**: 120일 (의무 유지 기간 180일 미충족)\n- **기존 요금제**: 5G Premier Essential (월 85,000원)\n  - 초기 기본 공시지원금(`initial_base_subsidy`): **450,000원**\n- **하향 대상 요금제**: 5G Light (월 37,000원, 기준선 45,000원 미만)\n  - 하향 요금제 기본 공시지원금(`lower_tier_base_subsidy`): **150,000원**\n- **산식 및 계산**:\n  $$\\text{위약금} = ",
-      "error": null
+      "llm_tokens": 6685,
+      "elapsed_s": 18.11,
+      "answer_excerpt": "### **결론**\nCUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만 요금제인 5G Light(37,000원)로 하향 변경할 경우 발생하는 차액정산 위약금은 **100,000원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **고객 ID**: `CUST_DEMO_001` (계약 ID: `CONTRACT_DEMO_101`)\n- **약정 유형**: `PUBLIC_SUBSIDY` (공시지원금)\n- **복지 특례 여부**: `NONE`\n- **개통 경과 일수**: 120일 (의무 유지 기간: 180일)\n- **기존 요금제**: 5G Premier Essential (월정액: 85,000원, 기본 공시지원금: 450,000원)\n- **변경 요금제**: 5G Light (월정액: 37,000원, 기본 공시지원금: 150,000원)\n- **기준선(Baseline) 월정액**: 45,000원\n\n#### **산식 및 계산 내역**\n개통 후 180일 미만(`elapsed_days < 180`)에 기준선(45,000원) 미만 요금제로 하향 변경하여 일할 차액 위약금이 부과됩니다.\n\n$$\\begin{aligne",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:14+09:00"
     },
     {
       "cq_id": "CQ-04",
@@ -126,7 +158,7 @@
         "selective_discount_total": 510000,
         "tco_savings": 7500
       },
-      "verification_job_id": "job_6IUNMVt208rd7wFsOUsldi427bG8",
+      "verification_job_id": "job_4nczTInKUdXVGFAX_JMmk2-ddqIm",
       "actual_value": "public_subsidy_total 포함 · selective_discount_total 포함 · tco_savings 포함 · DOC_CHUNK_005 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_005",
       "legal_anchor": "DOC_CHUNK_005",
@@ -138,16 +170,24 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_ix-8s6mEBVNJkj19wOx_7i1jnN4w",
-        "job_qaO6UGZ2C6VNnshzkA8K_UibNE6D",
-        "job_us-8FX_uzNbQ1AsqZu0PKwSpGUsG",
-        "job_KscwgE_zmh8kuLvH8OJLV2FvWFbH",
-        "job_ZrQ4QD_z5Bk3pv_yTEHZzPMy0DUn"
+        "job_UJlGCRXbbhvYSL7qVfa7u5XP2ZZR",
+        "job_kvWBsAQA4j_ZR9EXedEykvJznvOP",
+        "job_MWdlBoNGl8qvtcDSWo-OFkcMs5G7",
+        "job_Eg-i_aQ_IDfFFBKaWkKF9ImQIxF2",
+        "job_qLb4p9JFMecXlwv2h_Y8ioUnSqgW"
       ],
-      "llm_tokens": 6691,
-      "elapsed_s": 17.6,
-      "answer_excerpt": "### **결론**\nGalaxy S26 Ultra 256GB 모델과 5G Premier Essential(월 85,000원) 요금제를 24개월 동안 유지할 경우, **공시지원금**을 선택하는 것이 더 유리합니다. \n공시지원금 이용 시 선택약정(25% 요금할인) 대비 **7,500원**의 총비용(TCO)을 절감할 수 있습니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n1. **기본 단말 및 요금 정보**\n   - **단말기**: Galaxy S26 Ultra 256GB (`DEV-S26U-256`)\n   - **출고가**: 1,698,400원\n   - **요금제**: 5G Premier Essential (`PLAN-5G-85`), 월 85,000원\n\n2. **할인 및 지원금 비교**\n   - **공시지원금 총액**: **517,500원**\n     - 기본 공시지원금: 450,000원\n     - 유통망 추가지원금(15%): 67,500원\n     - 단말 실구매 원금: 1,180,900원 (1,698,400원 - 517,500원)\n   - **선택약정 할인 총액 (24개월)**: **510,000원**\n     - 월 할인액: 21,250",
-      "error": null
+      "llm_tokens": 6751,
+      "elapsed_s": 18.55,
+      "answer_excerpt": "### **결론**\n**공시지원금** 약정을 선택하는 것이 **선택약정(25% 요금할인)** 대비 24개월 기준 **7,500원** 더 저렴하여 유리합니다.\n\n* **공시지원금 24개월 총비용(TCO):** 3,220,900원\n* **선택약정(25%) 24개월 총비용(TCO):** 3,228,400원\n* **절감액:** 7,500원 절감\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n1. **단말기 및 요금제 기준 정보**\n   * 단말기: Galaxy S26 Ultra 256GB (`DEV-S26U-256`)\n   * 출고가: 1,698,400원\n   * 요금제: 5G Premier Essential (`PLAN-5G-85`)\n   * 월정액: 85,000원\n\n2. **지원금 및 할인 혜택 산출**\n   * **공시지원금 경로 (정책 ID: `POL-2026-002`)**\n     * 기본 공시지원금: 450,000원\n     * 유통망 추가지원금(15%): 67,500원\n     * 총 지원금: 517,500원 (450,000원 + 67,500원)\n     * 실구매 단말 원금: 1,180,900원 (1,698,400원 - 517,500원)\n",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:15+09:00"
     },
     {
       "cq_id": "CQ-05",
@@ -163,7 +203,7 @@
         "penalty": 0,
         "exemption_rule": "RULE_WELFARE_EXEMPT"
       },
-      "verification_job_id": "job_bRiakbUkCFvPY7jN9FaPPKXghR58",
+      "verification_job_id": "job_q2rBK1hggYU3fnHx7HeNGFrup2gC",
       "actual_value": "penalty 포함 · exemption_rule 포함 · DOC_CHUNK_004 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_004",
       "legal_anchor": "DOC_CHUNK_004",
@@ -175,16 +215,24 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_I5HDj7cd_jzJbTB_quoRQFCBdcBv",
-        "job_c-sGvLNn4wxV3GNQFr05oCcSbfr9",
-        "job_h0CpoHBR6CBKT5-Zn6Y3XLVARIy8",
-        "job_jUeOa3jkLY9lJumYsnrbap5oAIpm",
-        "job_CeZIRmg2UUkxULrmJtKr-TvTIX54"
+        "job_uxnM4ZQSZXBy4uTz1ikmwCI8dEmI",
+        "job_h-D9EpYLRU0ELTjaoOBDpmv7-Hbn",
+        "job_zORqi2p8MA7aNZDHvCU6RoKKBD3J",
+        "job_TZpa2NiPA2-MF25ihlHN414ouGym",
+        "job_fFgCtJd8FUKhyG6e1bzxoeZIdpOb"
       ],
-      "llm_tokens": 6772,
-      "elapsed_s": 15.99,
-      "answer_excerpt": "### **결론**\n고객 `CUST_DEMO_003`은 만 65세 이상 시니어 복지 특례 대상자(`SENIOR_EXEMPT`)로 등록되어 있어, 개통 88일차(180일 의무유지 기간 이내)에 시니어 요금제로 변경하더라도 **위약금(차액정산금)이 전액 면제되어 부과 위약금은 0원(`EXEMPT_WELFARE`)**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **고객 및 계약 정보**\n  - **고객 ID**: `CUST_DEMO_003`\n  - **계약 ID**: `CONTRACT_DEMO_103`\n  - **고객 세그먼트**: `Senior_Welfare` (연령대: `65+`)\n  - **복지 자격 상태**: `SENIOR_EXEMPT`\n  - **계약 유형**: `PUBLIC_SUBSIDY` (공시지원금 약정, 약정기간 24개월)\n  - **경과 일수**: 88일 (의무유지 기준일수: 180일)\n- **단말기 및 가입 요금제**\n  - **단말기**: `iPhone 16 Pro 256GB` (출고가: 1,700,000원)\n  - **가입 요금제**: `5G Premier Essential` (월정액: 85,000원)\n  - **",
-      "error": null
+      "llm_tokens": 6594,
+      "elapsed_s": 18.12,
+      "answer_excerpt": "### **결론**\nCUST_DEMO_003 고객은 **시니어 복지 특례(SENIOR_EXEMPT)** 대상자이므로, 개통 88일차(180일 이내)에 시니어 요금제로 변경하더라도 **위약금(차액정산금)이 100% 전액 면제(0원)**됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n* **고객 및 계약 정보**:\n  * 고객 ID: `CUST_DEMO_003` (연령대: 65+, 세그먼트: Senior_Welfare)\n  * 계약 ID: `CONTRACT_DEMO_103`\n  * 복지 자격 상태(`welfare_status`): `SENIOR_EXEMPT`\n  * 계약 유형: `PUBLIC_SUBSIDY` (공시지원금)\n  * 단말기: iPhone 16 Pro 256GB (출고가: 1,700,000원)\n  * 이용 요금제: 5G Premier Essential (월정액: 85,000원)\n  * 총 지원금: 460,000원 (기본 지원금 400,000원 + 유통망 추가지원금 60,000원)\n  * 개통 경과일수: 88일 (의무유지 기준일: 180일, 기준 요금: 45,000원)\n* **위약금 계산 결과**:\n  * 위약금 처리 상태(`pena",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:14+09:00"
     }
   ],
   "test_results": [
@@ -200,7 +248,7 @@
       "verification_sql_result": {
         "factory_price": 1698400
       },
-      "verification_job_id": "job_mOFGDnrg84K6QTHyIY0iNffN6KD4",
+      "verification_job_id": "job_Qfk02tGY_jMAzZdcpBKmoTfAue32",
       "actual_value": "factory_price 포함 · DOC_CHUNK_001 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_001",
       "legal_anchor": "DOC_CHUNK_001",
@@ -211,14 +259,22 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_EF4MNCLLmO9EiTN8mGK-1Eh32XZJ",
-        "job__DcMNcA_dmcv1nMSmSTUMV21wW5W",
-        "job_XcbV7nUPXsesaOXWgzmXq0qq6iBH"
+        "job_jSM6T-L4x-380UODqUbyyJQGl_Ub",
+        "job_dRM54IHzbvm30Qk-WOHMyW5R6uX5",
+        "job_rZ5Oxba-DAiJDrQC59_ZFH9SBbAD"
       ],
-      "llm_tokens": 6972,
-      "elapsed_s": 13.4,
-      "answer_excerpt": "### 결론\nGalaxy S26 Ultra 256GB 모델의 공식 출고가는 **1,698,400원**입니다.\n\n---\n\n### 근거 데이터 (BigQuery)\nBigQuery 데이터베이스 조회 결과는 다음과 같습니다.\n\n* **단말기 ID (device_id)**: `DEV-S26U-256`\n* **단말기명 (device_name)**: Galaxy S26 Ultra 256GB\n* **저장용량 (storage_gb)**: 256GB\n* **공식 출고가 (factory_price_krw)**: 1,698,400원\n\n---\n\n### 규칙·원문 근거\n* **적용 규칙 ID**: `RULE_SUBSIDY_CAP`, `RULE_SIX_PLAN_180D`, `RULE_TCO_24M`\n* **참조 청크 ID**: \n  * `DOC_CHUNK_001`\n  * `DOC_CHUNK_002` (Baseline Plan Commitment (Six-Plan Rule))\n  * `DOC_CHUNK_005` (24-Month Contract TCO Comparison Rule)\n\n---\n\n### 실행 정보\n* **BigQuery Job ID**: \n  * `job__DcMNcA_dm",
-      "error": null
+      "llm_tokens": 7036,
+      "elapsed_s": 11.52,
+      "answer_excerpt": "### **결론**\n**Galaxy S26 Ultra 256GB** 모델의 공식 출고가는 **1,698,400원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n단말 프로필 조회 및 온톨로지 그래프 탐색 결과, 일관되게 확인된 기기 정보는 다음과 같습니다.\n\n* **단말 ID**: `DEV-S26U-256`\n* **단말 모델명**: `Galaxy S26 Ultra 256GB`\n* **저장용량**: `256GB`\n* **공식 출고가 (`factory_price_krw`)**: `1,698,400원`\n\n---\n\n### **규칙·원문 근거**\n* **적용 규칙 ID**: `RULE_SUBSIDY_CAP`, `RULE_SIX_PLAN_180D`, `RULE_TCO_24M`\n* **참조 청크 ID**: \n  * `DOC_CHUNK_001` (공시지원금 상한 및 기본 단말 정책)\n  * `DOC_CHUNK_002` (Baseline Plan Commitment / 180일 유지 규칙)\n  * `DOC_CHUNK_005` (24-Month Contract TCO Comparison Rule)\n\n---\n\n### **실행 정보**\n* **BigQuery ",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:08+09:00"
     },
     {
       "cq_id": "CQ-02",
@@ -234,7 +290,7 @@
         "subsidy": 517500,
         "net_price": 1180900
       },
-      "verification_job_id": "job_mVi8QTZncqb5qiNc_dHVIygtgxYi",
+      "verification_job_id": "job_0xOs-Ak9q7GRlKXmjkc7gcjUBENU",
       "actual_value": "subsidy 포함 · net_price 포함 · DOC_CHUNK_002 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_002",
       "legal_anchor": "DOC_CHUNK_002",
@@ -245,14 +301,22 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_plN7kzpb0kq9JcLseyIwZjRKbVGH",
-        "job_vX_vOcDonZ1KUK562oj-UM32RYaB",
-        "job_A_dQzRHUMTH2y3Ws08-oPGdZ8Gk0"
+        "job_69ogXQS7LeTYuNOYieirFOamGCFO",
+        "job_nyx0IK2iv2w8gHQjuYwnar62Pr61",
+        "job_4ftGAytkbdLPapYqWJQdeMmiPd3t"
       ],
-      "llm_tokens": 4731,
-      "elapsed_s": 16.03,
-      "answer_excerpt": "### **결론**\nGalaxy S26 Ultra 256GB 모델을 5G Premier Essential(월 85,000원) 요금제로 개통할 때 적용되는 **총 지원금은 517,500원**이며, 이를 반영한 **실구매가(할부원금)는 1,180,900원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **단말기 정보**\n  - 단말기명: Galaxy S26 Ultra 256GB (ID: `DEV-S26U-256`, 저장용량: 256GB)\n  - 출고가: 1,698,400원\n- **요금제 정보**\n  - 요금제명: 5G Premier Essential (ID: `PLAN-5G-85`)\n  - 월정액: 85,000원\n  - 선택약정 할인율: 25% (0.25)\n  - 최소 유지 기간: 180일\n- **지원금 정책 (정책 ID: `POL-2026-002`)**\n  - 기본 지원금: 450,000원\n  - 추가 지원금 상한: 67,500원\n  - **총 지원금 산식**: 450,000원 + 67,500원 = **517,500원**\n  - **실구매가(할부원금) 산식**: 1,698,400원(출고가) - 517,500원(총 지원금) = **1,",
-      "error": null
+      "llm_tokens": 4521,
+      "elapsed_s": 15.04,
+      "answer_excerpt": "### **결론**\nGalaxy S26 Ultra 256GB 모델을 5G Premier Essential(월 85,000원) 요금제로 개통할 때 적용되는 **총 지원금은 517,500원**이며, 이를 반영한 **실구매가(할부원금)는 1,180,900원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **단말기 출고가 (`factory_price_krw`)**: 1,698,400원\n- **기본 공시지원금 (`base_subsidy_krw`)**: 450,000원\n- **추가 지원금 (`additional_subsidy_cap_krw`)**: 67,500원\n- **총 지원금 (`total_subsidy_krw`)**: 517,500원  \n  *(산식: 기본 지원금 450,000원 + 추가 지원금 67,500원)*\n- **실구매가/할부원금 (`net_installment_principal_krw`)**: 1,180,900원  \n  *(산식: 출고가 1,698,400원 - 총 지원금 517,500원)*\n- **정책 ID (`policy_id`)**: `POL-2026-002`\n- **의무 유지 기간 (`mandatory_retention_d",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:11+09:00"
     },
     {
       "cq_id": "CQ-03",
@@ -266,7 +330,7 @@
       "verification_sql_result": {
         "penalty": 100000
       },
-      "verification_job_id": "job__GyPraTTBcZaUN-fWt-cID0sQ_Np",
+      "verification_job_id": "job_ottuXpbZD2H-RvqcWkV9jXmGQmx2",
       "actual_value": "penalty 포함 · DOC_CHUNK_003 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_003",
       "legal_anchor": "DOC_CHUNK_003",
@@ -278,16 +342,24 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_ZtKpFXozd300koykZAdU8OeKWNDc",
-        "job_tf_KRByUEBn_sAIFYPtep_hY0VEU",
-        "job_yKTwciN0bKKEfYkM4JN6kT3r42zc",
-        "job_7yzXPxJIxtM6q9-UCYiO9mb6SjQi",
-        "job_Cy8zTC7FzZ4N4N5O8Imf452Zy_FJ"
+        "job_-3In_5tjSjQMGaCfsqhmdqvg2GOz",
+        "job_jfcS6Frs6qV4D7ShW0VN34UlH8B2",
+        "job_w1oPTt-JVVm2ryTQG-XiYW2crNSt",
+        "job_Zk4tMkGO2JZT_OKEvmzT6Dgwmg9x",
+        "job_Yylku4W8U3974B3jeN_DHQNlZ_Kd"
       ],
-      "llm_tokens": 6677,
-      "elapsed_s": 16.82,
-      "answer_excerpt": "### **결론**\nCUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(기준선 45,000원) 미만 요금제인 5G Light(37,000원)로 하향 변경할 경우 발생하는 차액정산 위약금은 **100,000원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n- **고객 ID**: `CUST_DEMO_001` (계약 ID: `CONTRACT_DEMO_101`)\n- **약정 유형**: 공시지원금 약정 (`PUBLIC_SUBSIDY`, 약정기간 24개월)\n- **복지/면제 자격**: `NONE` (위약금 면제 특례 비해당)\n- **경과 일수**: 120일 (의무 유지 기간 180일 미충족)\n- **기존 요금제**: 5G Premier Essential (월 85,000원)\n  - 초기 기본 공시지원금(`initial_base_subsidy`): **450,000원**\n- **하향 대상 요금제**: 5G Light (월 37,000원, 기준선 45,000원 미만)\n  - 하향 요금제 기본 공시지원금(`lower_tier_base_subsidy`): **150,000원**\n- **산식 및 계산**:\n  $$\\text{위약금} = ",
-      "error": null
+      "llm_tokens": 6685,
+      "elapsed_s": 18.11,
+      "answer_excerpt": "### **결론**\nCUST_DEMO_001 고객이 개통 후 120일 시점에 5G Slim(45,000원) 미만 요금제인 5G Light(37,000원)로 하향 변경할 경우 발생하는 차액정산 위약금은 **100,000원**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **고객 ID**: `CUST_DEMO_001` (계약 ID: `CONTRACT_DEMO_101`)\n- **약정 유형**: `PUBLIC_SUBSIDY` (공시지원금)\n- **복지 특례 여부**: `NONE`\n- **개통 경과 일수**: 120일 (의무 유지 기간: 180일)\n- **기존 요금제**: 5G Premier Essential (월정액: 85,000원, 기본 공시지원금: 450,000원)\n- **변경 요금제**: 5G Light (월정액: 37,000원, 기본 공시지원금: 150,000원)\n- **기준선(Baseline) 월정액**: 45,000원\n\n#### **산식 및 계산 내역**\n개통 후 180일 미만(`elapsed_days < 180`)에 기준선(45,000원) 미만 요금제로 하향 변경하여 일할 차액 위약금이 부과됩니다.\n\n$$\\begin{aligne",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:14+09:00"
     },
     {
       "cq_id": "CQ-04",
@@ -305,7 +377,7 @@
         "selective_discount_total": 510000,
         "tco_savings": 7500
       },
-      "verification_job_id": "job_6IUNMVt208rd7wFsOUsldi427bG8",
+      "verification_job_id": "job_4nczTInKUdXVGFAX_JMmk2-ddqIm",
       "actual_value": "public_subsidy_total 포함 · selective_discount_total 포함 · tco_savings 포함 · DOC_CHUNK_005 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_005",
       "legal_anchor": "DOC_CHUNK_005",
@@ -317,16 +389,24 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_ix-8s6mEBVNJkj19wOx_7i1jnN4w",
-        "job_qaO6UGZ2C6VNnshzkA8K_UibNE6D",
-        "job_us-8FX_uzNbQ1AsqZu0PKwSpGUsG",
-        "job_KscwgE_zmh8kuLvH8OJLV2FvWFbH",
-        "job_ZrQ4QD_z5Bk3pv_yTEHZzPMy0DUn"
+        "job_UJlGCRXbbhvYSL7qVfa7u5XP2ZZR",
+        "job_kvWBsAQA4j_ZR9EXedEykvJznvOP",
+        "job_MWdlBoNGl8qvtcDSWo-OFkcMs5G7",
+        "job_Eg-i_aQ_IDfFFBKaWkKF9ImQIxF2",
+        "job_qLb4p9JFMecXlwv2h_Y8ioUnSqgW"
       ],
-      "llm_tokens": 6691,
-      "elapsed_s": 17.6,
-      "answer_excerpt": "### **결론**\nGalaxy S26 Ultra 256GB 모델과 5G Premier Essential(월 85,000원) 요금제를 24개월 동안 유지할 경우, **공시지원금**을 선택하는 것이 더 유리합니다. \n공시지원금 이용 시 선택약정(25% 요금할인) 대비 **7,500원**의 총비용(TCO)을 절감할 수 있습니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n1. **기본 단말 및 요금 정보**\n   - **단말기**: Galaxy S26 Ultra 256GB (`DEV-S26U-256`)\n   - **출고가**: 1,698,400원\n   - **요금제**: 5G Premier Essential (`PLAN-5G-85`), 월 85,000원\n\n2. **할인 및 지원금 비교**\n   - **공시지원금 총액**: **517,500원**\n     - 기본 공시지원금: 450,000원\n     - 유통망 추가지원금(15%): 67,500원\n     - 단말 실구매 원금: 1,180,900원 (1,698,400원 - 517,500원)\n   - **선택약정 할인 총액 (24개월)**: **510,000원**\n     - 월 할인액: 21,250",
-      "error": null
+      "llm_tokens": 6751,
+      "elapsed_s": 18.55,
+      "answer_excerpt": "### **결론**\n**공시지원금** 약정을 선택하는 것이 **선택약정(25% 요금할인)** 대비 24개월 기준 **7,500원** 더 저렴하여 유리합니다.\n\n* **공시지원금 24개월 총비용(TCO):** 3,220,900원\n* **선택약정(25%) 24개월 총비용(TCO):** 3,228,400원\n* **절감액:** 7,500원 절감\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n1. **단말기 및 요금제 기준 정보**\n   * 단말기: Galaxy S26 Ultra 256GB (`DEV-S26U-256`)\n   * 출고가: 1,698,400원\n   * 요금제: 5G Premier Essential (`PLAN-5G-85`)\n   * 월정액: 85,000원\n\n2. **지원금 및 할인 혜택 산출**\n   * **공시지원금 경로 (정책 ID: `POL-2026-002`)**\n     * 기본 공시지원금: 450,000원\n     * 유통망 추가지원금(15%): 67,500원\n     * 총 지원금: 517,500원 (450,000원 + 67,500원)\n     * 실구매 단말 원금: 1,180,900원 (1,698,400원 - 517,500원)\n",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:15+09:00"
     },
     {
       "cq_id": "CQ-05",
@@ -342,7 +422,7 @@
         "penalty": 0,
         "exemption_rule": "RULE_WELFARE_EXEMPT"
       },
-      "verification_job_id": "job_bRiakbUkCFvPY7jN9FaPPKXghR58",
+      "verification_job_id": "job_q2rBK1hggYU3fnHx7HeNGFrup2gC",
       "actual_value": "penalty 포함 · exemption_rule 포함 · DOC_CHUNK_004 인용 · GROUNDED",
       "grounded_chunk": "DOC_CHUNK_004",
       "legal_anchor": "DOC_CHUNK_004",
@@ -354,16 +434,24 @@
         "mcp_query_graph_and_wiki"
       ],
       "agent_bq_job_ids": [
-        "job_I5HDj7cd_jzJbTB_quoRQFCBdcBv",
-        "job_c-sGvLNn4wxV3GNQFr05oCcSbfr9",
-        "job_h0CpoHBR6CBKT5-Zn6Y3XLVARIy8",
-        "job_jUeOa3jkLY9lJumYsnrbap5oAIpm",
-        "job_CeZIRmg2UUkxULrmJtKr-TvTIX54"
+        "job_uxnM4ZQSZXBy4uTz1ikmwCI8dEmI",
+        "job_h-D9EpYLRU0ELTjaoOBDpmv7-Hbn",
+        "job_zORqi2p8MA7aNZDHvCU6RoKKBD3J",
+        "job_TZpa2NiPA2-MF25ihlHN414ouGym",
+        "job_fFgCtJd8FUKhyG6e1bzxoeZIdpOb"
       ],
-      "llm_tokens": 6772,
-      "elapsed_s": 15.99,
-      "answer_excerpt": "### **결론**\n고객 `CUST_DEMO_003`은 만 65세 이상 시니어 복지 특례 대상자(`SENIOR_EXEMPT`)로 등록되어 있어, 개통 88일차(180일 의무유지 기간 이내)에 시니어 요금제로 변경하더라도 **위약금(차액정산금)이 전액 면제되어 부과 위약금은 0원(`EXEMPT_WELFARE`)**입니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n- **고객 및 계약 정보**\n  - **고객 ID**: `CUST_DEMO_003`\n  - **계약 ID**: `CONTRACT_DEMO_103`\n  - **고객 세그먼트**: `Senior_Welfare` (연령대: `65+`)\n  - **복지 자격 상태**: `SENIOR_EXEMPT`\n  - **계약 유형**: `PUBLIC_SUBSIDY` (공시지원금 약정, 약정기간 24개월)\n  - **경과 일수**: 88일 (의무유지 기준일수: 180일)\n- **단말기 및 가입 요금제**\n  - **단말기**: `iPhone 16 Pro 256GB` (출고가: 1,700,000원)\n  - **가입 요금제**: `5G Premier Essential` (월정액: 85,000원)\n  - **",
-      "error": null
+      "llm_tokens": 6594,
+      "elapsed_s": 18.12,
+      "answer_excerpt": "### **결론**\nCUST_DEMO_003 고객은 **시니어 복지 특례(SENIOR_EXEMPT)** 대상자이므로, 개통 88일차(180일 이내)에 시니어 요금제로 변경하더라도 **위약금(차액정산금)이 100% 전액 면제(0원)**됩니다.\n\n---\n\n### **근거 데이터 (BigQuery)**\n\n* **고객 및 계약 정보**:\n  * 고객 ID: `CUST_DEMO_003` (연령대: 65+, 세그먼트: Senior_Welfare)\n  * 계약 ID: `CONTRACT_DEMO_103`\n  * 복지 자격 상태(`welfare_status`): `SENIOR_EXEMPT`\n  * 계약 유형: `PUBLIC_SUBSIDY` (공시지원금)\n  * 단말기: iPhone 16 Pro 256GB (출고가: 1,700,000원)\n  * 이용 요금제: 5G Premier Essential (월정액: 85,000원)\n  * 총 지원금: 460,000원 (기본 지원금 400,000원 + 유통망 추가지원금 60,000원)\n  * 개통 경과일수: 88일 (의무유지 기준일: 180일, 기준 요금: 45,000원)\n* **위약금 계산 결과**:\n  * 위약금 처리 상태(`pena",
+      "error": null,
+      "evidence_type": "sql",
+      "evidence_provenance": [
+        "SYNTHETIC_DEMO"
+      ],
+      "answer_confirmed_by": null,
+      "confirmed_at": null,
+      "answer_confirmed": false,
+      "executed_at": "2026-09-29T22:49:14+09:00"
     }
   ]
 }

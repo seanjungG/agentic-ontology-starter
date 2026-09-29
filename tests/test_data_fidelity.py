@@ -120,6 +120,39 @@ class DataFidelityTest(unittest.TestCase):
         self.assertEqual(resolve_track(p)[0], "standard")
         self.assertEqual(self._gate0()["status"], "PASS")
 
+    def _cq(self, cqs):
+        import json
+        self._put("data/output/doc_chunks.jsonl", json.dumps(
+            {"chunk_id": "DOC_CHUNK_001", "content": "제1조(목적) 사업자는 등록하여야 한다.", "provenance": "EXTRACTED"},
+            ensure_ascii=False) + "\n")
+        self._put("data/input/04_cq/golden_competency_questions.json", json.dumps(cqs, ensure_ascii=False))
+
+    def test_t5_cq_with_fictional_entity_is_rejected(self):
+        from pipeline.validator import load_cqs
+        base = {"evidence_type": "citation", "expected_citation": {"chunk_id": "DOC_CHUNK_001", "quote": "사업자는 등록하여야 한다."},
+                "expected_facts": ["등록"]}
+        self._cq([{**base, "cq_id": "OK", "query": "사업자는 무엇을 해야 하는가?"}])
+        self.assertEqual(len(load_cqs(self.root)), 1)
+        self._cq([{**base, "cq_id": "BAD", "query": "PROD-0012 제품의 '글로우 세럼' 광고 문구는 적법한가?"}])
+        with self.assertRaises(SystemExit):
+            load_cqs(self.root)
+        self._cq([{**base, "cq_id": "BAD2", "query": "사업자는?", "expected_citation": {"chunk_id": "DOC_CHUNK_001", "quote": "사업자는 신고한다."}}])
+        with self.assertRaises(SystemExit):
+            load_cqs(self.root)
+
+    def test_t6_report_without_run_record_is_unmeasured(self):
+        import json
+        from src.web.studio_server import build_eval_summary
+        rows = [{"cq_id": f"CQ-{i}", "status": "PASSED"} for i in range(20)]
+        self._put("data/output/cq_benchmark_report.json", json.dumps({"total_cqs": 20, "passed": 20, "test_results": rows}))
+        g = build_eval_summary(self.root)["golden"]
+        self.assertEqual((g["status"], g["passed"], g["score_label"]), ("UNMEASURED", None, "미측정 (실행 기록 없음)"))
+        rows = [{**r, "executed_at": "2026-09-29T00:00:00+09:00"} for r in rows]
+        self._put("data/output/input_manifest.json", "{}")
+        self._put("data/output/cq_benchmark_report.json", json.dumps(
+            {"total_cqs": 20, "passed": 20, "test_results": rows, "run_id": "r1", "input_manifest_sha256": "old"}))
+        self.assertEqual(build_eval_summary(self.root)["golden"]["status"], "STALE")
+
 
 if __name__ == "__main__":
     unittest.main()

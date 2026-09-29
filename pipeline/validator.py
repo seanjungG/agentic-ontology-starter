@@ -181,13 +181,113 @@ def run_gate0(chunks: list, root: str = None) -> dict:
     return report
 
 
+ID_RE = re.compile(r"\b[A-Z][A-Z0-9]*(?:[-_][A-Z0-9]+)+\b")  # ID-like strings, e.g. CUST_DEMO_001, PLAN-5G-85
+QUOTED_RE = re.compile(r"[\"“'‘「『]([^\"”'’」』]{2,60})[\"”'’」』]")
+CHUNK_ID_RE = re.compile(r"DOC_CHUNK_\d{3,}")
+
+
+def _project_meta(root: str) -> dict:
+    path = os.path.join(root, "config/project.json" if os.path.abspath(root) == BASE_DIR else "project.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _table_rows(root: str) -> list:
+    import csv
+    import glob
+    rows = []
+    for path in sorted(glob.glob(os.path.join(root, "data/input/03_tables/*.csv"))):
+        with open(path, "r", encoding="utf-8", newline="") as f:
+            rows += list(csv.DictReader(f))
+    return rows
+
+
+def load_cqs(root: str = None) -> list:
+    """Gate 1 (F7), file checks only. Each CQ is evidence_type "sql" (verification_sql + expected_math over loaded
+    tables) or "citation" (expected_citation {chunk_id, quote} + expected_facts, all verbatim in that chunk).
+    ID-like strings and quoted names in the question must exist in the chunks or tables. sql CQs over
+    SYNTHETIC_DEMO rows need project.json synthetic.allowed. Any rejected CQ stops the evaluation."""
+    root = root or DATA_ROOT
+    with open(os.path.join(root, "data/input/04_cq/golden_competency_questions.json"), "r", encoding="utf-8") as f:
+        cqs = json.load(f)
+    chunk_path = os.path.join(root, "data/output/doc_chunks.jsonl")
+    chunks = {}
+    if os.path.exists(chunk_path):
+        with open(chunk_path, "r", encoding="utf-8") as f:
+            chunks = {c["chunk_id"]: c for c in (json.loads(x) for x in f if x.strip())}
+    rows = _table_rows(root)
+    corpus = "\n".join(c["content"] for c in chunks.values()) + "\n" + "\n".join(str(v) for r in rows for v in r.values())
+    table_prov = sorted({r.get("provenance") for r in rows})
+    synth_ok = (_project_meta(root).get("synthetic") or {}).get("allowed") is True
+    rejected = []
+    for cq in cqs:
+        why, et = [], cq.get("evidence_type")
+        names = ID_RE.findall(cq["query"]) + QUOTED_RE.findall(cq["query"])
+        why += [f"'{n}' is not in the chunks or tables" for n in names if n not in corpus]
+        if et == "sql":
+            if not rows:
+                why.append("sql CQ but no table is loaded")
+            elif "SYNTHETIC_DEMO" in table_prov and not synth_ok:
+                why.append("sql CQ over SYNTHETIC_DEMO rows without synthetic.allowed")
+            why += [f"missing {k}" for k in ("verification_sql", "expected_math") if not cq.get(k)]
+            cq["_evidence_provenance"] = table_prov
+        elif et == "citation":
+            ec, facts = cq.get("expected_citation") or {}, cq.get("expected_facts") or []
+            ch = chunks.get(ec.get("chunk_id"))
+            if not ch:
+                why.append(f"expected_citation.chunk_id {ec.get('chunk_id')} not in doc_chunks.jsonl")
+            else:
+                why += [f"'{t}' is not verbatim in {ch['chunk_id']}" for t in [ec.get("quote") or ""] + facts if not t or t not in ch["content"]]
+                cq["_evidence_provenance"] = [ch.get("provenance")]
+        else:
+            why.append('evidence_type must be "sql" or "citation"')
+        if why:
+            rejected.append({"cq_id": cq.get("cq_id"), "reasons": why})
+    if rejected:
+        for r in rejected:
+            print(f"[GATE 1] REJECT {r['cq_id']}: {'; '.join(r['reasons'])}")
+        raise SystemExit(f"[GATE 1] {len(rejected)} CQ(s) rejected. Fix data/input/04_cq/golden_competency_questions.json.")
+    return cqs
+
+
 def run_validation(workers: int = 5) -> dict:
+    import hashlib
+    import uuid
+    cqs = load_cqs()
     engine = AiFdeAgentEngine()
     fq = engine.server.fq
-    with open(CQ_PATH, "r", encoding="utf-8") as f:
-        cqs = json.load(f)
+
+    def cite(cq):
+        ec, facts = cq["expected_citation"], cq["expected_facts"]
+        a = _agent(engine, cq["query"])
+        cited = sorted(set(CHUNK_ID_RE.findall(a["body"])))
+        found = {t: t in a["body"] for t in facts}
+        reasons = ([] if ec["chunk_id"] in cited else [f"ANCHOR_NOT_CITED {ec['chunk_id']}"]) + \
+                  [f"ANSWER_MISSING {t}" for t, ok in found.items() if not ok] + \
+                  ([] if a["answer_status"] == "GROUNDED" else [f"ANSWER_STATUS {a['answer_status']}"])
+        return {
+            "cq_id": cq["cq_id"], "category": cq.get("category"), "query": cq["query"], "prompt": cq["query"],
+            "expected_value": " · ".join(facts), "expected_citation": ec, "verification_sql_result": {},
+            "verification_job_id": None,
+            "actual_value": " · ".join(f"{t} {'포함' if ok else '누락'}" for t, ok in found.items())
+                            + f" · cited {', '.join(cited) or '-'} · {a['answer_status']}",
+            "grounded_chunk": ec["chunk_id"], "legal_anchor": ec["chunk_id"],
+            "status": "PASSED" if not reasons else "FAILED",
+            "verification_status": "CITATION_MATCH·ANSWER_MATCH" if not reasons else "; ".join(reasons),
+            "dispatched_tools": a["tools"], "agent_bq_job_ids": a["jobs"], "llm_tokens": a["tokens"],
+            "elapsed_s": a["elapsed_s"], "answer_excerpt": a["body"][:600], "error": a.get("error"),
+        }
 
     def one(cq):
+        row = cite(cq) if cq["evidence_type"] == "citation" else sql_one(cq)
+        row.update(evidence_type=cq["evidence_type"], evidence_provenance=cq["_evidence_provenance"],
+                   answer_confirmed_by=cq.get("answer_confirmed_by"), confirmed_at=cq.get("confirmed_at"),
+                   answer_confirmed=bool(cq.get("answer_confirmed_by")), executed_at=_now())
+        return row
+
+    def sql_one(cq):
         exp = cq["expected_math"]
         v = _sql(cq["verification_sql"], fq)
         row = v["rows"][0] if v["rows"] else {}
@@ -215,9 +315,20 @@ def run_validation(workers: int = 5) -> dict:
     with ThreadPoolExecutor(workers) as ex:
         rows = list(ex.map(one, cqs))
     passed = sum(r["status"] == "PASSED" for r in rows)
+    man_path = os.path.join(DATA_ROOT, "data/output/input_manifest.json")
+    man_sha = None
+    if os.path.exists(man_path):
+        with open(man_path, "rb") as f:
+            man_sha = hashlib.sha256(f.read()).hexdigest()
+    prov = sorted({p for r in rows for p in r["evidence_provenance"] if p})
     report = {
         "benchmark_id": "STARTER_GOLDEN_CQ_LIVE", "evaluated_at": _now(),
-        "method": f"verification_sql(BigQuery) vs expected_math + live agent answer (Vertex AI {engine.model_name} + BigQuery MCP)",
+        "run_id": f"{datetime.now(timezone(timedelta(hours=9))).strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex[:8]}",
+        "input_manifest_sha256": man_sha, "track": "lite" if getattr(engine, "is_lite", lambda: False)() else "table",
+        "evidence_provenance": prov, "synthetic_basis": "SYNTHETIC_DEMO" in prov,
+        "unconfirmed_cqs": sum(not r["answer_confirmed"] for r in rows),
+        "method": f"sql CQ: verification_sql(BigQuery) vs expected_math + live agent answer; citation CQ: agent answer "
+                  f"must cite expected chunk and contain expected_facts (Vertex AI {engine.model_name})",
         "model": engine.model_name, "dataset": fq,
         "total_cqs": len(rows), "passed": passed, "accuracy_rate": round(passed / len(rows) * 100, 1) if rows else None,
         "llm_tokens_total": sum(r["llm_tokens"] for r in rows),

@@ -12,12 +12,16 @@ AI FDE Reasoning Engine (Starter v2.0 - Live Gemini + BigQuery).
 No hardcoded answers or data values in code or prompts.
 """
 import json
+import os
+import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.agent.i18n_en import is_english_mode, localize_en_obj
 from src.agent.mcp_server import DomainMcpServer
 from src.gcp_client import DEFAULT_GEMINI_MODEL, DEFAULT_PROJECT_ID, call_vertex_gemini
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 DECOMPOSE_SYS = """당신은 통신 온톨로지 에이전트의 질의 분석기입니다. JSON 한 개만 출력하십시오.
 스키마:
@@ -71,6 +75,28 @@ Rules:
    - BQ_QUERY_ERROR: Report the query failure and do not output any numerical estimates.
 3. Structure: **Conclusion** → **Grounded Data (BigQuery)** → **Applied Rules & Source Chunks** (`rule_id`, `chunk_id`, `anchor`) → **Execution Telemetry** (`BigQuery Job IDs`). Write in clear, objective English only (do not include any Korean words).
 """
+
+
+LITE_SYS = """당신은 문서 기반 에이전트입니다. 아래 [문서 청크]만 근거로 한국어 Markdown 답변을 작성하십시오.
+규칙:
+1. 모든 문장 끝에 근거 청크 ID를 [DOC_CHUNK_001] 형식으로 붙이십시오. 청크에 없는 사실·수치·이름은 쓰지 마십시오.
+2. 청크에 근거가 없으면 "제공된 문서에서 근거를 찾지 못했습니다."라고만 답하십시오.
+3. 원문 표현을 그대로 인용할 때는 따옴표로 표시하십시오. 과장 표현 금지.
+"""
+
+LITE_SYS_EN = """You are a document-grounded agent. Answer in English Markdown using ONLY the [Document Chunks] below.
+Rules:
+1. End every sentence with its source chunk ID in the form [DOC_CHUNK_001]. Never state facts, numbers or names that are not in the chunks.
+2. If the chunks do not support an answer, reply only: "No supporting passage was found in the provided documents."
+3. Put verbatim quotes in quotation marks. No exaggeration.
+"""
+
+CHUNK_ID_RE = re.compile(r"DOC_CHUNK_\d{3,}")
+
+
+def _lite_limit() -> int:
+    with open(os.path.join(BASE_DIR, "config/starter_config.json"), "r", encoding="utf-8") as f:
+        return json.load(f)["lite"]["max_context_chars"]
 
 
 def _strip_sql(obj: Any) -> Any:
@@ -138,9 +164,75 @@ class AiFdeAgentEngine:
                 p[k] = llm[k]
         return p, notes
 
+    def is_lite(self) -> bool:
+        """track=lite (no customer tables): catalog and table tools are off; answers come from the chunks only."""
+        from src.project_context import project_for_root, resolve_track
+        try:
+            return resolve_track(project_for_root(self.server.root_dir))[0] == "lite"
+        except StopIteration:  # root is not a registered project
+            return False
+
+    def _lite_cycle(self, query: str, en: bool, t0: float) -> Dict[str, Any]:
+        jobs: List[Dict[str, Any]] = []
+        chunks = self.server.get_doc_chunks(jobs)
+        ids = {c["chunk_id"] for c in chunks}
+        context = "\n\n".join(
+            f"[{c['chunk_id']}] {c['source_doc']} p.{c['page_from']}-{c['page_to']}"
+            + (f" 제{c['article_no']}조" if c.get("article_no") else "") + f"\n{c['content']}" for c in chunks)
+        limit, synth = _lite_limit(), {}
+        if len(context) > limit:
+            answer_status = "CONTEXT_LIMIT"
+            body = (f"Chunk total {len(context):,} chars exceeds lite.max_context_chars {limit:,}. Stopped (separate request)."
+                    if en else f"청크 총량 {len(context):,}자가 lite.max_context_chars {limit:,}자를 넘어 중단했습니다(별도 요청 필요).")
+            cited = []
+        else:
+            synth = call_vertex_gemini(
+                prompt=f"[Document Chunks]\n{context}\n\n[User Question]\n{query}" if en
+                else f"[문서 청크]\n{context}\n\n[사용자 질문]\n{query}",
+                system_instruction=LITE_SYS_EN if en else LITE_SYS,
+                response_mime_type="text/plain", temperature=0.0, max_tokens=2048,
+                model_name=self.model_name, project_id=self.project_id)
+            body = synth.get("text") or f"Vertex AI `{self.model_name}` HTTP {synth.get('http_code')}: {str(synth.get('error', ''))[:500]}"
+            cited = sorted(set(CHUNK_ID_RE.findall(body)))
+            if synth.get("status") != "SUCCESS" or not synth.get("text"):
+                answer_status = "LLM_ERROR"
+            elif not cited:
+                answer_status = "NO_CITATION"
+            elif set(cited) - ids:
+                answer_status = "INVALID_CITATION"
+            else:
+                answer_status = "GROUNDED"
+        job_ids = [j["job_id"] for j in jobs]
+        p_tok, c_tok = synth.get("prompt_tokens") or 0, synth.get("candidates_tokens") or 0
+        markdown = (f"{body}\n\n---\n- LLM: Vertex AI `{self.model_name}` (`{self.project_id}`) · track=lite · "
+                    f"{p_tok + c_tok:,} tokens · context {len(context):,} chars / {len(chunks)} chunks\n"
+                    f"- BigQuery: `{self.server.fq}.tb_doc_chunks` · Jobs `{', '.join(job_ids)}`\n"
+                    f"- {'Answer Status' if en else '응답 상태'}: `{answer_status}` · cited {', '.join(cited) or '-'}")
+        tool = {"tool_name": "lite_doc_context", "status": "SUCCESS", "chunks": len(chunks), "context_chars": len(context)}
+        return {
+            "status": "SUCCESS", "answer_status": answer_status, "query": query, "track": "lite",
+            "applied_params": {}, "param_notes": [], "cited_chunks": cited,
+            "llm_telemetry": {"model": self.model_name, "project_id": self.project_id, "synthesis_status": synth.get("status"),
+                              "prompt_tokens": p_tok, "candidates_tokens": c_tok, "elapsed_ms": synth.get("elapsed_ms") or 0},
+            "bq_telemetry": {"dataset": self.server.fq, "graph": None, "job_ids": job_ids,
+                             "tool_statuses": {"lite_doc_context": "SUCCESS"}},
+            "lifecycle": {
+                "step_1_thought": {"model": self.model_name, "extracted_parameters": {}, "sub_goals": [],
+                                   "execution_mode": "LITE_ALL_CHUNKS_IN_CONTEXT"},
+                "step_2_tool_dispatch": {"dispatched_tools": [{"step_index": 1, "tool_name": "lite_doc_context",
+                                                               "category": "runtime_domain", "reason": "all chunks in context",
+                                                               "output": tool, "intermediate_observation": json.dumps(tool)}]},
+                "step_3_observation": {"cross_domain_integration_reason": f"cited {cited}"},
+                "step_4_synthesis": {"markdown": markdown},
+            },
+            "performance": {"total_elapsed_seconds": str(round(time.perf_counter() - t0, 2))},
+        }
+
     def execute_cycle(self, query: str, engine: str = "bigquery", lang: str = None) -> Dict[str, Any]:
         t0 = time.perf_counter()
         en = is_english_mode(lang, query)
+        if self.is_lite():
+            return self._lite_cycle(query, en, t0)
         cat = self.server.get_live_catalog()
         det = self.server.extract_params_from_text(query)
         tools = [t["name"] for t in self.server.get_tool_catalog()]

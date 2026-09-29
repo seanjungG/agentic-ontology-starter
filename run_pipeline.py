@@ -57,12 +57,15 @@ def main():
     run_ingest()
 
     if track == "lite":
+        from pipeline.extract_wiki import extract_wiki
+        print("\n>>> Stage 2: Document-based wiki (entities = nodes, concepts = edges; quotes checked against chunks)...")
+        extract_wiki()
         print("\n>>> Stage 3: skipped (track=lite, no customer tables; the property graph needs tables)")
     else:
         print("\n>>> Stage 3: Synthesizing BigQuery SQL:2023 Property Graph DDL...")
         build_graph()
 
-    print("\n>>> Stage 5: Live Golden CQ validation (BigQuery verification SQL + Gemini agent answers)...")
+    print("\n>>> Stage 5: Live Golden CQ validation (Gate 1 CQ checks, then sql / citation scoring)...")
     run_validation()
 
     print("==================================================================")
