@@ -1,10 +1,12 @@
 # Agentic Ontology Starter — 마스터 제품·아키텍처 헌장 (`01_prod.md`)
 
 - **역할**: 이 스타터팩을 클론하여 새로운 도메인/고객사 프로토타입을 구축할 때, **사람(FDE·엔지니어)과 AI 코딩 에이전트(Jetski / Antigravity / Cursor / Claude Code)가 공통으로 준수해야 하는 최상위 기준 문서**입니다.
+- **라이선스 및 상업적 이용 제한 (`LICENSE`)**: 본 저장소의 핵심인 **5-Stage 온톨로지 엔지니어링 방법론·노트북·문서(`CC BY-NC-ND 4.0`)** 및 **소스 코드(`PolyForm Noncommercial 1.0.0`)**는 비영리 목적으로만 제공됩니다. 유상 컨설팅·SI·PoC 납품 및 상용 서비스 탑재를 금지하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([`LICENSE`](LICENSE))
 - **핵심 원칙**: 이 저장소는 백지상태에서 코드를 새로 짜는 보일러플레이트가 아니라, **이미 동작이 검증된 5-Stage 온톨로지 파이프라인·8종 MCP·2-Pass 에이전트·6-Tab 라이트 스튜디오를 그대로 유지한 채 데이터와 도메인 규칙만 빠르게 교체(Swap)하여 프로토타이핑**하는 레퍼런스 엔진입니다.
 - **관련 문서**:
+  - 비영리 듀얼 라이선스 (KO / EN): [`LICENSE`](LICENSE)
   - 상황별 프로토타이핑 레시피: [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)
-  - AI 에이전트 부트스트랩 지침: [`GEMINI.md`](GEMINI.md) · [`AGENTS.md`](AGENTS.md) · [`.cursorrules`](.cursorrules)
+  - AI 에이전트 부트스트랩 지침: [`GEMINI.md`](GEMINI.md) · [`CLAUDE.md`](CLAUDE.md) · [`AGENTS.md`](AGENTS.md) · [`.cursorrules`](.cursorrules)
   - 웹 UI 디자인 시스템 표준: [`DESIGN.md`](DESIGN.md)
   - 5-Stage 방법론 상세: [`methodology/METHODOLOGY_KO.md`](methodology/METHODOLOGY_KO.md) · [`methodology/METHODOLOGY_EN.md`](methodology/METHODOLOGY_EN.md)
   - 8단계 실습 노트북 허브: [`notebooks/README.md`](notebooks/README.md)

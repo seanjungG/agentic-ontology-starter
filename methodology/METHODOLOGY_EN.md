@@ -1,6 +1,8 @@
 # 5-Stage Agentic Ontology Methodology (`METHODOLOGY_EN.md`)
 
-> Live Studio [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [한국어](./METHODOLOGY_KO.md) · [Stage Index](./README.md) · [Notebooks](../notebooks/README.md)
+> Live Studio [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [한국어](./METHODOLOGY_KO.md) · [Stage Index](./README.md) · [Notebooks](../notebooks/README.md) · [License (`LICENSE`)](../LICENSE)
+>
+> **[Methodology Copyright & Non-Commercial Notice (CC BY-NC-ND 4.0)]**: This 5-Stage Agentic Ontology Engineering Methodology (8-Phase Engineering Flow, deliverables D1.1–D5.5, 3-Layer OKF Wiki, Dual Property Graph Design, and 8-Tool MCP & 2-Pass Agent Orchestration) is licensed under **CC BY-NC-ND 4.0**. Commercial use — including paid consulting, system integration (SI) delivery, paid PoCs, client deliverables, or commercial proposals — is strictly prohibited without prior written permission. For commercial or enterprise inquiries, please contact **[seanjung@google.com](mailto:seanjung@google.com)**.
 
 ## 1. Purpose & Core Principles (8-Phase Engineering Flow)
 

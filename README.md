@@ -1,5 +1,12 @@
 # Agentic Ontology Starter
 
+[![Methodology License: CC BY-NC-ND 4.0](https://img.shields.io/badge/Methodology_%26_Docs-CC_BY--NC--ND_4.0-b91c1c)](./LICENSE)
+[![Code License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/Code_License-PolyForm_Noncommercial_1.0.0-dc2626)](./LICENSE)
+[![Commercial Inquiry: seanjung@google.com](https://img.shields.io/badge/Commercial_Inquiry-seanjung%40google.com-0284c7)](mailto:seanjung@google.com)
+
+> **비영리 라이선스 및 방법론 지식재산권 고지 (Non-Commercial License Notice)**:
+> 본 저장소의 핵심인 **5-Stage 에이전틱 온톨로지 엔지니어링 방법론(`methodology/`)·실습 노트북(`notebooks/`)·산업군 아키텍처 템플릿(`industry_cases/`)**은 **CC BY-NC-ND 4.0**으로, **소스 코드(`src/`, `pipeline/`, `terraform/`)**는 **PolyForm Noncommercial 1.0.0**으로 보호됩니다. 개인 학습 및 비상업적 기술 검증 외에 **상용 서비스 탑재, 타 기업/고객사 대상 유상 컨설팅·SI·PoC 딜리버리 활용을 엄격히 금지**하며, 상업적/엔터프라이즈 활용이 필요한 경우 반드시 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([상세 라이선스 안내 (KO / EN)](#5-라이선스-및-상업적-이용-제한-안내--license--commercial-use-restriction-ko--en) · [`LICENSE`](./LICENSE))
+
 정형 데이터(BigQuery DW)와 비정형 정책 문서(업무 가이드·약관·SOP)를 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO SQL:2023 GQL)**로 결합하고, **8종 MCP 도구**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 검증·서빙하는 **5-Stage 엔터프라이즈 온톨로지 스타터 팩**입니다.
 
 - **라이브 스튜디오 (Cloud Run)**: [https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app)
@@ -159,6 +166,7 @@ terraform apply
 
 ```text
 agentic-ontology-starter/
+├── LICENSE                          # 비영리 듀얼 라이선스 (방법론 CC BY-NC-ND 4.0 + 코드 PolyForm NC 1.0)
 ├── 01_prod.md                       # 마스터 제품·아키텍처 헌장 (AI 에이전트 & 엔지니어 최상위 기준)
 ├── PROTOTYPING_PLAYBOOK.md          # 4대 상황별 빠른 프로토타이핑 레시피 & 에이전트 프롬프트
 ├── GEMINI.md / CLAUDE.md / AGENTS.md / .cursorrules # Antigravity · Cursor · Claude Code 자동 로드 가드레일
@@ -185,3 +193,41 @@ agentic-ontology-starter/
 ├── terraform/                       # BigQuery, GCS, IAM, Cloud Build + Cloud Run 선언적 IaC
 └── Dockerfile                       # Cloud Run 컨테이너 이미지 정의
 ```
+
+---
+
+## 5. 라이선스 및 상업적 이용 제한 안내 / License & Commercial Use Restriction (KO / EN)
+
+### [한국어 안내 — KOREAN]
+
+본 저장소의 핵심 자산인 **5-Stage 에이전틱 온톨로지 엔지니어링 방법론(8단계 엔지니어링 흐름 · 3-Layer OKF 위키 · 듀얼 Property Graph 아키텍처 · 8종 MCP 및 2-Pass 에이전트 오케스트레이션 · 4-Tier 리니지 및 경계값 평가 체계)**과 관련 문서(`methodology/`), 실습 노트북(`notebooks/`), 산업군 아키텍처 템플릿(`industry_cases/`), 그리고 전체 소스 코드(`src/`, `pipeline/`, `terraform/`)는 **비영리 듀얼 라이선스([`LICENSE`](./LICENSE))**로 보호됩니다.
+
+- **적용 라이선스**:
+  - **핵심 방법론 · 아키텍처 설계 · 문서 · 노트북 (`methodology/`, `notebooks/`, `industry_cases/`, `*.md`)**: **CC BY-NC-ND 4.0** (저작자표시-비영리-변경금지 4.0 국제 라이선스)
+  - **레퍼런스 소스 코드 (`src/`, `pipeline/`, `terraform/`, `*.py`, `*.sql`, `*.tf`)**: **PolyForm Noncommercial License 1.0.0**
+- **허용 범위 (Permitted)**: 개인 학습, 학술 연구, 비상업적 목적의 자체 기술 검증(Non-commercial Evaluation)
+- **사전 승인 없이 엄격히 금지되는 행위 (Strictly Prohibited)**:
+  1. 본 저장소의 **5-Stage 온톨로지 방법론, 산출물 체계(D1.1~D5.5), 아키텍처 설계도, 노트북 또는 소스 코드**를 타 기업·기관 대상 **유상 컨설팅, SI 구축, 유상 PoC/파일럿 딜리버리, 상업적 제안서 또는 고객사 납품 산출물**로 활용하는 행위
+  2. 상용 제품, 유료 클라우드/SaaS 서비스, 또는 영리 목적의 프로덕션 시스템에 탑재·운영하는 행위
+  3. 본 방법론이나 노트북·코드를 개작·재가공하여 유료 강의, 교육 과정, 상업적 출판물로 판매·배포하는 행위
+- **상업적 활용 및 엔터프라이즈 프로젝트 적용 문의**:
+  고객사 딜리버리 프로젝트(PoC/SI/컨설팅) 적용이나 상업적 사용이 필요한 경우 반드시 사전에 **[seanjung@google.com](mailto:seanjung@google.com)**으로 논의하시기 바랍니다.
+
+---
+
+### [ENGLISH NOTICE]
+
+The core intellectual asset of this repository — the **5-Stage Agentic Ontology Engineering Methodology** (8-Phase Engineering Flow, 3-Layer OKF Wiki Architecture, Dual Property Graph Design, 8-Tool Modular MCP & 2-Pass Agent Orchestration, and 4-Tier Lineage & Boundary Evaluation Framework) — along with all methodology guides (`methodology/`), executable notebooks (`notebooks/`), industry reference templates (`industry_cases/`), and reference source code (`src/`, `pipeline/`, `terraform/`), is protected under a **Non-Commercial Dual License ([`LICENSE`](./LICENSE))**.
+
+- **Applicable Licenses**:
+  - **Core Methodology, Architecture Designs, Documentation & Notebooks (`methodology/`, `notebooks/`, `industry_cases/`, `*.md`)**: **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**
+  - **Reference Source Code (`src/`, `pipeline/`, `terraform/`, `*.py`, `*.sql`, `*.tf`)**: **PolyForm Noncommercial License 1.0.0**
+- **Permitted Use**: Personal learning, academic research, and non-commercial internal technical evaluation.
+- **Strictly Prohibited Without Prior Written Permission**:
+  1. Using the **5-Stage Ontology Methodology, deliverable specifications (D1.1–D5.5), architecture diagrams, notebooks, or source code** in any **paid consulting, system integration (SI) delivery, paid PoC/pilot engagement, commercial proposal, or client deliverable** for third-party organizations;
+  2. Embedding, hosting, or operating the code or methodology within any commercial product, paid SaaS/cloud offering, or commercial production environment;
+  3. Modifying, translating, repackaging, or redistributing the methodology, notebooks, or code for paid training courses, workshops, or commercial publications.
+- **Commercial Licensing & Collaboration Inquiries**:
+  For commercial licensing, enterprise PoC/SI delivery, or collaboration inquiries, please contact **Sean Jung ([seanjung@google.com](mailto:seanjung@google.com))** in advance.
+
+Copyright (c) 2026 Sean Jung (`seanjung@google.com`). All Rights Reserved.

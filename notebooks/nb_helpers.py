@@ -1,3 +1,7 @@
+# Copyright (c) 2026 Sean Jung (seanjung@google.com). All Rights Reserved.
+# Non-Commercial Use Only: Methodology & Docs under CC BY-NC-ND 4.0; Source Code under PolyForm Noncommercial License 1.0.0.
+# Commercial use, paid consulting/SI/PoC delivery, or production deployment requires prior written permission from seanjung@google.com.
+
 # -*- coding: utf-8 -*-
 """Shared helpers for the starter notebooks: setup, methodology flow diagrams, tables, charts,
 graph schematics, pipeline parsing/integration views, agent traces, and NL-to-GQL.

@@ -1,3 +1,7 @@
+# Copyright (c) 2026 Sean Jung (seanjung@google.com). All Rights Reserved.
+# Non-Commercial Use Only: Methodology & Docs under CC BY-NC-ND 4.0; Source Code under PolyForm Noncommercial License 1.0.0.
+# Commercial use, paid consulting/SI/PoC delivery, or production deployment requires prior written permission from seanjung@google.com.
+
 # -*- coding: utf-8 -*-
 """
 AI FDE Reasoning Engine (Starter v2.0 - Live Gemini + BigQuery).

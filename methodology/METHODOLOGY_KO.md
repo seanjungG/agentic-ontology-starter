@@ -1,6 +1,8 @@
 # 5-Stage 에이전틱 온톨로지 구축 방법론 (`METHODOLOGY_KO.md`)
 
-> 라이브 스튜디오 [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [English](./METHODOLOGY_EN.md) · [Stage별 가이드 인덱스](./README.md) · [노트북 디렉터리](../notebooks/README.md)
+> 라이브 스튜디오 [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [English](./METHODOLOGY_EN.md) · [Stage별 가이드 인덱스](./README.md) · [노트북 디렉터리](../notebooks/README.md) · [라이선스 (`LICENSE`)](../LICENSE)
+>
+> **[방법론 저작권 및 상업적 이용 금지 고지 (CC BY-NC-ND 4.0 / Non-Commercial Only)]**: 본 5-Stage 에이전틱 온톨로지 엔지니어링 방법론(8단계 엔지니어링 흐름, 산출물 D1.1~D5.5, 3-Layer OKF 위키, 듀얼 Property Graph 설계, 8종 MCP 및 2-Pass 에이전트 오케스트레이션)은 **CC BY-NC-ND 4.0** 라이선스로 보호됩니다. 개인 학습 및 비상업적 연구 외에 **유상 컨설팅, SI 구축, 유상 PoC 딜리버리, 고객사 제안서·산출물 활용을 엄격히 금지**하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다.
 
 ## 1. 목적과 핵심 원칙 (8단계 엔지니어링 흐름)
 
