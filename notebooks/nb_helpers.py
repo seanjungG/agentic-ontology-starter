@@ -55,8 +55,8 @@ def setup(lang="ko"):
     pd.set_option("display.max_colwidth", 90)
     pd.set_option("display.width", 200)
     fonts = {f.name for f in font_manager.fontManager.ttflist}
-    cjk = next((f for f in ("AppleGothic", "NanumGothic", "Noto Sans CJK KR", "Malgun Gothic") if f in fonts), None)
-    plt.rcParams.update({"font.family": cjk or "sans-serif", "axes.unicode_minus": False, "figure.dpi": 100,
+    cjk = next((f for f in ("Apple SD Gothic Neo", "AppleGothic", "NanumGothic", "Noto Sans CJK KR", "Malgun Gothic") if f in fonts), None)
+    plt.rcParams.update({"font.family": (cjk or "sans-serif") if lang == "ko" else "sans-serif", "axes.unicode_minus": False, "figure.dpi": 100,
                          "axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
                          "grid.alpha": 0.25, "axes.titleweight": "bold"})
     return pd.DataFrame([{"project": PROJECT, "dataset": DATASET, "location": LOCATION,
@@ -182,32 +182,41 @@ def wiki_compilation_summary():
 def draw_eight_phase_flow():
     """Draws the 8-Phase Engineering Flow (Prepare -> Analyze -> Parse -> Integrate -> Build -> Agent -> Answer -> Verify)."""
     phases = [
-        ("1. 준비 (Prepare)", "Stage 1.1a\nRaw CSV/MD & BQ Schema", "#1A73E8", (0, 1)),
-        ("2. 분석 (Analyze)", "Stage 1.1b~1.2\nProfiling, PII & Golden CQs", "#0284c7", (1, 1)),
-        ("3. 파싱 (Parse)", "Stage 2.1\nSHA-256 Chunks & 3-Layer Wiki", "#9334E6", (2, 1)),
-        ("4. 통합 (Integrate)", "Stage 2.2\nRules & Semantic Graph", "#F9AB00", (3, 1)),
-        ("5. 구축 (Build Graph)", "Stage 3.1~3.2\nBQ/Spanner Property Graph", "#0d9488", (0, 0)),
-        ("6. 에이전트 구축 (Agent)", "Stage 4.1\n8 MCP Tools & 2-Pass Engine", "#188038", (1, 0)),
-        ("7. 답변 (Answer & GQL)", "Stage 4.2\nNL2GQL & Grounded Synthesis", "#1A73E8", (2, 0)),
-        ("8. 검증 (Verify & Gate)", "Stage 5.1~5.2\n4-Tier Lineage & 50-Trial Eval", "#D93025", (3, 0)),
+        (t("1. 준비 (Prepare)", "1. Prepare"),
+         t("Stage 1.1a · 원시 CSV/MD & 스키마", "Stage 1.1a\nRaw CSV/MD & BQ Schema"), "#1A73E8", (0, 1)),
+        (t("2. 분석 (Analyze)", "2. Analyze"),
+         t("Stage 1.1b~1.2 · 탐색·PII & Golden CQ", "Stage 1.1b~1.2\nProfiling, PII & Golden CQs"), "#0284c7", (1, 1)),
+        (t("3. 파싱 (Parse)", "3. Parse"),
+         t("Stage 2.1 · SHA-256 청크 & 3-Layer Wiki", "Stage 2.1\nSHA-256 Chunks & 3-Layer Wiki"), "#9334E6", (2, 1)),
+        (t("4. 통합 (Integrate)", "4. Integrate"),
+         t("Stage 2.2 · 도메인 규칙 & 시맨틱 그래프", "Stage 2.2\nRules & Semantic Graph"), "#F9AB00", (3, 1)),
+        (t("5. 구축 (Build Graph)", "5. Build Graph"),
+         t("Stage 3.1~3.2 · BQ/Spanner 프로퍼티 그래프", "Stage 3.1~3.2\nBQ/Spanner Property Graph"), "#0d9488", (0, 0)),
+        (t("6. 에이전트 구축 (Agent)", "6. Build Agent"),
+         t("Stage 4.1 · 8종 MCP 도구 & 2-Pass 엔진", "Stage 4.1\n8 MCP Tools & 2-Pass Engine"), "#188038", (1, 0)),
+        (t("7. 답변 (Answer & GQL)", "7. Answer & GQL"),
+         t("Stage 4.2 · NL2GQL & 근거 인용 합성", "Stage 4.2\nNL2GQL & Grounded Synthesis"), "#1A73E8", (2, 0)),
+        (t("8. 검증 (Verify & Gate)", "8. Verify & Gate"),
+         t("Stage 5.1~5.2 · 4-Tier 리니지 & 50회 평가", "Stage 5.1~5.2\n4-Tier Lineage & 50-Trial Eval"), "#D93025", (3, 0)),
     ]
-    fig, ax = plt.subplots(figsize=(12, 4.2))
+    fig, ax = plt.subplots(figsize=(12.2, 4.3))
     ax.axis("off")
-    ax.set_xlim(-0.5, 3.6)
-    ax.set_ylim(-0.45, 1.55)
+    ax.set_xlim(-0.55, 3.65)
+    ax.set_ylim(-0.48, 1.52)
+    font_fam = plt.rcParams["font.family"]
     for idx, (title, sub, color, (x, y)) in enumerate(phases):
-        box = mpatches.FancyBboxPatch((x - 0.42, y - 0.28), 0.84, 0.56, boxstyle="round,pad=0.04,rounding_size=0.08",
-                                      fc=color, ec="white", lw=2, alpha=0.92)
+        box = mpatches.FancyBboxPatch((x - 0.42, y - 0.27), 0.84, 0.54, boxstyle="round,pad=0.03,rounding_size=0.07",
+                                      fc=color, ec="white", lw=2, alpha=0.94)
         ax.add_patch(box)
-        ax.text(x, y + 0.09, title, ha="center", va="center", color="white", fontsize=9.5, fontweight="bold")
-        ax.text(x, y - 0.11, sub, ha="center", va="center", color="white", fontsize=7.5)
+        ax.text(x, y + 0.09, title, ha="center", va="center", color="white", fontsize=9.2, fontweight="bold", fontfamily=font_fam)
+        ax.text(x, y - 0.11, sub, ha="center", va="center", color="white", fontsize=7.4, fontfamily=font_fam)
         if idx in (0, 1, 2, 4, 5, 6):
-            ax.annotate("", xy=(x + 0.55, y), xytext=(x + 0.43, y),
+            ax.annotate("", xy=(x + 0.56, y), xytext=(x + 0.44, y),
                         arrowprops={"arrowstyle": "->", "color": "#475569", "lw": 1.8})
-        elif idx == 3:
-            ax.annotate("", xy=(0, 0.30), xytext=(3, 0.70),
-                        arrowprops={"arrowstyle": "->", "color": "#475569", "lw": 1.6, "ls": "--",
-                                    "connectionstyle": "arc3,rad=0.18"})
+    # Clean stepped corridor path from Phase 4 (3, 0.70) -> middle corridor y=0.50 -> Phase 5 (0, 0.30)
+    ax.plot([3.0, 3.0, 0.0], [0.71, 0.50, 0.50], color="#475569", lw=1.6, ls="--")
+    ax.annotate("", xy=(0.0, 0.29), xytext=(0.0, 0.50),
+                arrowprops={"arrowstyle": "->", "color": "#475569", "lw": 1.6, "ls": "--"})
     ax.set_title(t("8단계 엔지니어링 파이프라인 및 5-Stage 매핑 도식 (준비 → 분석 → 파싱 → 통합 → 구축 → 에이전트 구축 → 답변 → 검증)",
                    "8-Phase Engineering Pipeline Mapped to the 5-Stage Methodology"), fontweight="bold", pad=10)
     plt.tight_layout()
@@ -215,18 +224,18 @@ def draw_eight_phase_flow():
 
 
 def draw_table_er_blueprint():
-    """Draws the 10-table BigQuery schema blueprint (4 Master + 2 Knowledge + 4 Edge tables)."""
+    """Draws the 10-table BigQuery schema blueprint (4 Master + 2 Knowledge + 4 Edge tables) with non-overlapping coordinates."""
     nodes = [
-        {"id": "tb_customer_contract", "name": "tb_customer_contract\n(PK: contract_id)", "layer": 0, "color": "#1A73E8"},
-        {"id": "tb_domain_rules", "name": "tb_domain_rules\n(PK: rule_id)", "layer": 0, "color": "#F9AB00"},
-        {"id": "edge_contract_device", "name": "edge_contract_device\n[USES_DEVICE]", "layer": 1, "color": "#5F6368"},
-        {"id": "edge_contract_plan", "name": "edge_contract_plan\n[SUBSCRIBES_PLAN]", "layer": 1, "color": "#5F6368"},
-        {"id": "edge_subsidy_binding", "name": "edge_subsidy_binding\n[HAS_SUBSIDY_POLICY]", "layer": 1, "color": "#5F6368"},
-        {"id": "edge_rule_applies_to_plan", "name": "edge_rule_applies_to_plan\n[APPLIES_TO_PLAN]", "layer": 1, "color": "#5F6368"},
-        {"id": "tb_device_master", "name": "tb_device_master\n(PK: device_id)", "layer": 2, "color": "#0284c7"},
-        {"id": "tb_plan_master", "name": "tb_plan_master\n(PK: plan_id)", "layer": 2, "color": "#0d9488"},
-        {"id": "tb_subsidy_policy", "name": "tb_subsidy_policy\n(PK: policy_id)", "layer": 2, "color": "#188038"},
-        {"id": "tb_doc_chunks", "name": "tb_doc_chunks\n(PK: chunk_id / SHA-256)", "layer": 2, "color": "#9334E6"},
+        {"id": "tb_customer_contract", "name": "tb_customer_contract\n(PK: contract_id)", "pos": (0.0, 0.75), "color": "#1A73E8"},
+        {"id": "tb_subsidy_policy", "name": "tb_subsidy_policy\n(PK: policy_id)", "pos": (0.0, 0.15), "color": "#188038"},
+        {"id": "tb_domain_rules", "name": "tb_domain_rules\n(PK: rule_id)", "pos": (0.0, -0.45), "color": "#F9AB00"},
+        {"id": "edge_contract_device", "name": "edge_contract_device\n[USES_DEVICE]", "pos": (1.0, 0.85), "color": "#5F6368"},
+        {"id": "edge_contract_plan", "name": "edge_contract_plan\n[SUBSCRIBES_PLAN]", "pos": (1.0, 0.42), "color": "#5F6368"},
+        {"id": "edge_subsidy_binding", "name": "edge_subsidy_binding\n[HAS_SUBSIDY_POLICY]", "pos": (1.0, -0.02), "color": "#5F6368"},
+        {"id": "edge_rule_applies_to_plan", "name": "edge_rule_applies_to_plan\n[APPLIES_TO_PLAN]", "pos": (1.0, -0.42), "color": "#5F6368"},
+        {"id": "tb_doc_chunks", "name": "tb_doc_chunks\n(PK: chunk_id / SHA-256)", "pos": (1.0, -0.82), "color": "#9334E6"},
+        {"id": "tb_device_master", "name": "tb_device_master\n(PK: device_id)", "pos": (2.0, 0.55), "color": "#0284c7"},
+        {"id": "tb_plan_master", "name": "tb_plan_master\n(PK: plan_id)", "pos": (2.0, -0.12), "color": "#0d9488"},
     ]
     edges = [
         {"src": "tb_customer_contract", "dst": "edge_contract_device", "label": "contract_id"},
@@ -243,7 +252,7 @@ def draw_table_er_blueprint():
     draw_graph(nodes, edges,
                t("starter_ontology_dw 10개 테이블 스키마 설계도 (4 마스터 · 2 지식 · 4 엣지 브릿지)",
                  "starter_ontology_dw 10-Table Schema Blueprint (4 Master · 2 Knowledge · 4 Edge Bridges)"),
-               layout="layers", figsize=(11.5, 5.5), node_size=1900,
+               layout="pos", figsize=(11.8, 5.6), node_size=1850,
                legend={"Contract (#1A73E8)": "#1A73E8", "Device/Plan/Subsidy": "#0d9488",
                        "Domain Rule (#F9AB00)": "#F9AB00", "Doc Chunk (#9334E6)": "#9334E6", "Edge Table (#5F6368)": "#5F6368"})
 
@@ -251,16 +260,28 @@ def draw_table_er_blueprint():
 def draw_semantic_design_graph():
     """Draws the Stage 2 Semantic Ontology Graph design schematic from graph_topology.json (`vis_semantic_graph`)."""
     topo = read_json("data/output/graph_topology.json")["vis_semantic_graph"]
-    layer_map = {"hub": 0, "rule": 1, "entity": 2, "chunk": 2}
+    pos_map = {
+        "HUB_SEMANTIC": (0.0, 0.35),
+        "ENT_CUSTOMER": (1.0, 0.82),
+        "ENT_SUBSIDY": (1.0, 0.32),
+        "RULE_180D": (1.0, -0.15),
+        "RULE_EXEMPT": (1.0, -0.52),
+        "RULE_TCO": (1.0, -0.88),
+        "ENT_DEVICE": (2.05, 0.65),
+        "ENT_PLAN": (2.05, 0.10),
+        "CHUNK_002": (3.25, 0.28),
+        "CHUNK_003": (3.25, -0.32),
+        "CHUNK_004": (3.25, -0.85),
+    }
     nodes = [{"id": n["id"], "name": n["label_ko" if LANG == "ko" else "label_en"],
-              "color": n["color"], "layer": layer_map.get(n["group"], 1)} for n in topo["nodes"]]
+              "color": n["color"], "pos": pos_map.get(n["id"], (1.5, 0.0))} for n in topo["nodes"]]
     edges = [{"src": e["from"], "dst": e["to"],
               "label": e["label_ko" if LANG == "ko" else "label_en"],
               "style": "dashed" if e.get("is_hub") or "GROUNDED" in e["label_en"] else "solid"} for e in topo["edges"]]
     draw_graph(nodes, edges,
                t("Stage 2 시맨틱 온톨로지 그래프 설계 도식 (Entity=Node, Concept=Edge, Sky Blue 허브)",
                  "Stage 2 Semantic Ontology Graph Design Schematic (Entity=Node, Concept=Edge, Sky Blue Hub)"),
-               layout="layers", figsize=(11.5, 5.8), node_size=1750,
+               layout="pos", figsize=(12.2, 5.8), node_size=1750,
                legend={"Semantic Hub (#0284c7)": "#0284c7", "Core Entity (#2563eb)": "#2563eb",
                        "Subsidy Entity (#059669)": "#059669", "Domain Rule (#d97706)": "#d97706", "Doc Chunk (#0d9488)": "#0d9488"})
 
@@ -268,30 +289,36 @@ def draw_semantic_design_graph():
 def draw_property_graph_metamodel():
     """Draws the Stage 3 Zero-ETL Property Graph schema metamodel (6 Node Labels x 4 Edge Labels)."""
     node_labels, edge_labels, _ = graph_metadata()
-    layer_map = {"CustomerContractNode": 0, "DomainRuleNode": 0, "SubsidyNode": 1,
-                 "DeviceNode": 1, "PlanNode": 1, "DocChunkNode": 2}
+    pos_map = {
+        "CustomerContractNode": (0.0, 0.65),
+        "SubsidyNode": (0.0, 0.05),
+        "DomainRuleNode": (0.0, -0.55),
+        "DeviceNode": (1.2, 0.55),
+        "PlanNode": (1.2, -0.02),
+        "DocChunkNode": (1.2, -0.60),
+    }
     nodes = [{"id": n["label"], "name": f"{n['label']}\n({n['table']}\nPK: {n['key']})",
-              "color": LABEL_COLORS.get(n["label"], PALETTE[0]), "layer": layer_map.get(n["label"], 1)}
+              "color": LABEL_COLORS.get(n["label"], PALETTE[0]), "pos": pos_map.get(n["label"], (0.6, 0.0))}
              for n in node_labels]
     edges = [{"src": e["source"], "dst": e["destination"], "label": f"{e['label']}\n({e['table']})"} for e in edge_labels]
     edges.append({"src": "DomainRuleNode", "dst": "DocChunkNode", "label": "source_chunk_id\n(Anchor Join)", "style": "dashed"})
     draw_graph(nodes, edges,
                t("Stage 3 STARTER_ONTOLOGY_GRAPH 메타모델 설계도 (6 Node Labels × 4 Edge Labels)",
                  "Stage 3 STARTER_ONTOLOGY_GRAPH Schema Metamodel (6 Node Labels × 4 Edge Labels)"),
-               layout="layers", figsize=(11.5, 5.4), node_size=2200, legend=LABEL_COLORS)
+               layout="pos", figsize=(11.8, 5.5), node_size=2150, legend=LABEL_COLORS)
 
 
 def draw_agent_architecture():
     """Draws the Stage 4 2-Pass AI FDE Agent & 8-Tool MCP execution architecture schematic."""
     nodes = [
-        {"id": "Q", "name": t("사용자 자연어 질의\n(User Query)", "User Natural-Language\nQuery"), "layer": 0, "color": "#5F6368"},
-        {"id": "P1", "name": t("Step 1 · Gemini 1차 호출\n하위 목표 분해 & 슬롯 추출", "Step 1 · Gemini Pass 1\nSub-Goal & Slot Extraction"), "layer": 1, "color": "#1A73E8"},
-        {"id": "CAT", "name": t("카탈로그 & 정규식 검증기\n(resolve_params)", "Live Catalog & Regex Guard\n(resolve_params)"), "layer": 1, "color": "#0284c7"},
-        {"id": "M1", "name": "mcp_lookup_customer_profile\n(Contract / Device / Subsidy)", "layer": 2, "color": "#0d9488"},
-        {"id": "M2", "name": "mcp_calculate_penalty_rule\n(180d Clawback / 24M TCO)", "layer": 2, "color": "#188038"},
-        {"id": "M3", "name": "mcp_query_graph_and_wiki\n(ISO GQL + SHA-256 Chunk)", "layer": 2, "color": "#9334E6"},
-        {"id": "G", "name": t("Step 3 · 가드레일 상태 판정\nGROUNDED | INSUFFICIENT\n| MATCH_NOT_FOUND", "Step 3 · Guardrail Verdict\nGROUNDED | INSUFFICIENT\n| MATCH_NOT_FOUND"), "layer": 3, "color": "#F9AB00"},
-        {"id": "P2", "name": t("Step 4 · Gemini 2차 호출\n근거·앵커·Job ID 인용 답변", "Step 4 · Gemini Pass 2\nGrounded Cited Synthesis"), "layer": 4, "color": "#D93025"},
+        {"id": "Q", "name": t("사용자 자연어 질의\n(User Query)", "User Natural-Language\nQuery"), "pos": (0.0, 0.05), "color": "#5F6368"},
+        {"id": "P1", "name": t("Step 1 · Gemini 1차 호출\n하위 목표 분해 & 슬롯 추출", "Step 1 · Gemini Pass 1\nSub-Goal & Slot Extraction"), "pos": (0.95, 0.56), "color": "#1A73E8"},
+        {"id": "CAT", "name": t("카탈로그 & 정규식 검증기\n(resolve_params)", "Live Catalog & Regex Guard\n(resolve_params)"), "pos": (1.90, 0.05), "color": "#0284c7"},
+        {"id": "M1", "name": "mcp_lookup_customer_profile\n(Contract / Device / Subsidy)", "pos": (3.05, 0.65), "color": "#0d9488"},
+        {"id": "M2", "name": "mcp_calculate_penalty_rule\n(180d Clawback / 24M TCO)", "pos": (3.05, 0.05), "color": "#188038"},
+        {"id": "M3", "name": "mcp_query_graph_and_wiki\n(ISO GQL + SHA-256 Chunk)", "pos": (3.05, -0.55), "color": "#9334E6"},
+        {"id": "G", "name": t("Step 3 · 가드레일 상태 판정\nGROUNDED | INSUFFICIENT\n| MATCH_NOT_FOUND", "Step 3 · Guardrail Verdict\nGROUNDED | INSUFFICIENT\n| MATCH_NOT_FOUND"), "pos": (4.25, 0.36), "color": "#F9AB00"},
+        {"id": "P2", "name": t("Step 4 · Gemini 2차 호출\n근거·앵커·Job ID 인용 답변", "Step 4 · Gemini Pass 2\nGrounded Cited Synthesis"), "pos": (5.40, -0.18), "color": "#D93025"},
     ]
     edges = [
         {"src": "Q", "dst": "P1", "label": "prompt"},
@@ -308,7 +335,26 @@ def draw_agent_architecture():
     draw_graph(nodes, edges,
                t("Stage 4 AI FDE 2-Pass 에이전트 & 런타임 도메인 MCP 오케스트레이션 설계도",
                  "Stage 4 AI FDE 2-Pass Agent & Runtime Domain MCP Orchestration Blueprint"),
-               layout="layers", figsize=(12, 5.2), node_size=2000)
+               layout="pos", figsize=(12.4, 5.4), node_size=1900)
+
+
+def localize_terms_df(df):
+    """Maps Korean policy search terms in Stage 1 term heatmap to English labels when LANG=='en'."""
+    if LANG == "ko":
+        return df
+    term_map = {
+        "공시지원금": "Public Subsidy",
+        "유통망": "Retail Cap",
+        "180일": "180-Day Rule",
+        "일할": "Prorated Math",
+        "위약금": "Penalty",
+        "선택약정": "Selective 25%",
+        "복지": "Welfare Exempt",
+    }
+    out = df.copy()
+    if "term" in out.columns:
+        out["term"] = out["term"].map(lambda x: term_map.get(str(x), str(x)))
+    return out
 
 
 def gate_checklist_table():
@@ -423,40 +469,77 @@ def heatmap(pivot, title, fmt="{:,.0f}", cmap="Blues", figsize=(9, 3.6)):
 
 
 # ------------------------------------------------------------------ graphs
-def draw_graph(nodes, edges, title, layout="spring", figsize=(11, 6.5), node_size=1500, font_size=8, legend=None):
-    """nodes: [{id, name, color, layer?}], edges: [{src, dst, label?, style?}]"""
-    g = nx.MultiDiGraph()
+def _layered_positions(nodes):
+    """Computes clean, deterministic vertical columns from `layer` keys with slight column stagger."""
+    by_layer = {}
+    for n in nodes:
+        by_layer.setdefault(n.get("layer", 0), []).append(n["id"])
+    sorted_layers = sorted(by_layer.keys())
+    num_layers = max(1, len(sorted_layers) - 1)
+    pos = {}
+    for l_idx, layer_key in enumerate(sorted_layers):
+        x = (l_idx / num_layers) * 2.4 - 1.2 if len(sorted_layers) > 1 else 0.0
+        nids = by_layer[layer_key]
+        k = len(nids)
+        # Stagger odd columns slightly when graph has >= 3 layers to prevent horizontal edge collinearity
+        stagger = (0.045 if (l_idx % 2 == 1 and len(sorted_layers) >= 3) else 0.0)
+        for i, nid in enumerate(nids):
+            if k == 1:
+                y = 0.0 + stagger
+            else:
+                y = 0.85 - (i / (k - 1)) * 1.70 + stagger
+            pos[nid] = (x, y)
+    return pos
+
+
+def draw_graph(nodes, edges, title, layout="layers", figsize=(11.5, 6.2), node_size=1500, font_size=8, legend=None):
+    """nodes: [{id, name, color, layer?, pos?}], edges: [{src, dst, label?, style?}]"""
+    g = nx.DiGraph()
     for n in nodes:
         g.add_node(n["id"], **n)
     for e in edges:
-        g.add_edge(e["src"], e["dst"], label=e.get("label", ""), style=e.get("style", "solid"))
-    if layout == "layers":
-        pos = nx.multipartite_layout(g, subset_key="layer", align="vertical")
+        u, v = e["src"], e["dst"]
+        lbl = e.get("label", "")
+        sty = e.get("style", "solid")
+        if g.has_edge(u, v):
+            prev = g[u][v].get("label", "")
+            if lbl and lbl not in prev:
+                g[u][v]["label"] = f"{prev} / {lbl}" if prev else lbl
+        else:
+            g.add_edge(u, v, label=lbl, style=sty)
+    if layout == "pos" or all("pos" in n for n in nodes):
+        pos = {n["id"]: n["pos"] for n in nodes}
+    elif layout == "layers" or any("layer" in n for n in nodes):
+        pos = _layered_positions(nodes)
     elif layout == "shell":
         pos = nx.shell_layout(g)
     else:
-        pos = nx.spring_layout(g, seed=7, k=1.6 / max(1, len(g) ** 0.5), iterations=200)
+        pos = nx.spring_layout(g, seed=7, k=1.8 / max(1, len(g) ** 0.5), iterations=200)
     fig, ax = plt.subplots(figsize=figsize)
     ax.axis("off")
+    font_fam = plt.rcParams["font.family"]
+    if isinstance(font_fam, list):
+        font_fam = font_fam[0] if font_fam else "sans-serif"
     for style in ("solid", "dashed"):
         es = [(u, v) for u, v, d in g.edges(data=True) if d["style"] == style]
-        nx.draw_networkx_edges(g, pos, edgelist=es, ax=ax, style=style, width=1.15, edge_color="#94A3B8",
-                               arrows=True, arrowsize=12, node_size=node_size, connectionstyle="arc3,rad=0.06")
+        if es:
+            nx.draw_networkx_edges(g, pos, edgelist=es, ax=ax, style=style, width=1.2, edge_color="#94A3B8",
+                                   arrows=True, arrowsize=12, node_size=node_size, connectionstyle="arc3,rad=0.07")
     nx.draw_networkx_nodes(g, pos, ax=ax, node_size=node_size, node_color=[g.nodes[n].get("color", PALETTE[0]) for n in g],
-                           edgecolors="white", linewidths=1.5)
+                           edgecolors="white", linewidths=1.6)
     nx.draw_networkx_labels(g, pos, ax=ax, labels={n: g.nodes[n].get("name", n) for n in g}, font_size=font_size,
-                            font_family=plt.rcParams["font.family"])
-    elabels = {}
-    for u, v, d in g.edges(data=True):
-        if d["label"]:
-            elabels[(u, v)] = d["label"] if (u, v) not in elabels else elabels[(u, v)] + " / " + d["label"]
-    nx.draw_networkx_edge_labels(g, pos, edge_labels=elabels, ax=ax, font_size=6.5, font_color="#475569",
-                                 bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.8})
+                            font_family=font_fam)
+    elabels = {(u, v): d["label"] for u, v, d in g.edges(data=True) if d.get("label")}
+    if elabels:
+        nx.draw_networkx_edge_labels(g, pos, edge_labels=elabels, ax=ax, font_size=6.6, font_color="#334155",
+                                     font_family=font_fam, label_pos=0.38, rotate=False,
+                                     bbox={"boxstyle": "round,pad=0.16", "fc": "white", "ec": "#E2E8F0", "lw": 0.5, "alpha": 0.88})
+    ax.margins(x=0.16, y=0.18)
     if legend:
         for name, color in legend.items():
             ax.scatter([], [], c=color, s=80, label=name)
         ax.legend(loc="lower left", fontsize=8, frameon=False, ncol=min(6, len(legend)))
-    ax.set_title(title, fontweight="bold")
+    ax.set_title(title, fontweight="bold", pad=10)
     plt.tight_layout()
     plt.show()
 
@@ -468,8 +551,18 @@ def _node_name(props, labels):
     return labels[0] if labels else "?"
 
 
+_PG_LABEL_LAYER = {
+    "CustomerContractNode": 0,
+    "SubsidyNode": 1,
+    "DeviceNode": 2,
+    "PlanNode": 3,
+    "DomainRuleNode": 4,
+    "DocChunkNode": 5,
+}
+
+
 def paths_to_graph(path_json_values):
-    """Parses GQL `TO_JSON(p)` values into (nodes, edges) for draw_graph. Node id = '<label>:<name>'."""
+    """Parses GQL `TO_JSON(p)` values into layered (nodes, edges) for draw_graph. Node id = '<label>:<name>'."""
     nodes, ids, edges = {}, {}, []
     for v in path_json_values:
         while isinstance(v, str):
@@ -477,16 +570,23 @@ def paths_to_graph(path_json_values):
         for el in v:
             labels = el.get("labels", [])
             if el.get("kind") == "node":
+                lbl = labels[0] if labels else "?"
                 name = _node_name(el.get("properties", {}), labels)
-                nid = f"{labels[0] if labels else '?'}:{name}"
+                nid = f"{lbl}:{name}"
                 ids[el["identifier"]] = nid
-                nodes[nid] = {"id": nid, "name": name, "color": LABEL_COLORS.get(labels[0] if labels else "", PALETTE[7])}
+                nodes[nid] = {
+                    "id": nid,
+                    "name": name,
+                    "layer": _PG_LABEL_LAYER.get(lbl, 2),
+                    "color": LABEL_COLORS.get(lbl, PALETTE[7]),
+                }
         for el in v:
             if el.get("kind") == "edge":
                 edges.append({"src": ids[el["source_node_identifier"]], "dst": ids[el["destination_node_identifier"]],
                               "label": (el.get("labels") or [""])[0]})
     uniq = {(e["src"], e["dst"], e["label"]): e for e in edges}
-    return list(nodes.values()), list(uniq.values())
+    sorted_nodes = sorted(nodes.values(), key=lambda x: (x.get("layer", 0), x["id"]))
+    return sorted_nodes, list(uniq.values())
 
 
 def graph_metadata():
@@ -520,13 +620,64 @@ def schema_text(node_labels, edge_labels):
     return "\n".join(lines)
 
 
+def _format_vars_md(variables):
+    """Formats a dictionary or list of bound GQL variables into a clean Markdown table."""
+    if not variables:
+        return ""
+    h_var = t("바인딩 변수 / 슬롯", "Variable / Slot")
+    h_val = t("바인딩 값 (Bound Value)", "Bound Value")
+    h_src = t("타입 / 바인딩 위치", "Type / Binding Target")
+    lines = [
+        f"**{t('1) GQL 바인딩 변수 명세 (Bound Variables & Parameters)', '1) Bound GQL Variables & Parameters')}**\n",
+        f"| `{h_var}` | `{h_val}` | {h_src} |",
+        "|:---|:---|:---|",
+    ]
+    if isinstance(variables, dict):
+        for k, v in variables.items():
+            if isinstance(v, tuple) and len(v) >= 2:
+                val_str, desc = v[0], v[1]
+            else:
+                val_str, desc = v, t("GQL 패턴/WHERE 바인딩 파라미터", "GQL pattern / WHERE bound parameter")
+            lines.append(f"| `{k}` | `{val_str}` | {desc} |")
+    elif isinstance(variables, list):
+        for item in variables:
+            lines.append(f"| `{item.get('name', '-')}` | `{item.get('value', '-')}` | {item.get('source', '-')} |")
+    return "\n".join(lines) + "\n\n"
+
+
+def run_gql(gql_query: str, variables=None, title: str = None, show_df: bool = True):
+    """Executes an ISO GQL query on BigQuery and explicitly displays (1) bound variables, (2) GQL statement, and (3) results."""
+    df, meta = sql(gql_query)
+    hdr = f"#### {title}\n" if title else ""
+    hdr += (f"- **BigQuery ISO GQL Execution**: status `{meta.get('status')}` · job `{meta.get('job_id')}` · "
+            f"`{meta.get('elapsed_ms') or 0:,.0f} ms` · `{len(df)} rows`\n\n")
+    vars_block = _format_vars_md(variables)
+    stmt_title = t("2) 실행된 ISO GQL 문장 (Executed ISO GQL Statement)", "2) Executed ISO GQL Statement")
+    stmt_block = f"**{stmt_title}**\n```sql\n{gql_query.strip()}\n```"
+    md(hdr + vars_block + stmt_block)
+    if show_df:
+        display(df)
+    return df, meta
+
+
 # ------------------------------------------------------------------ MCP and agent views
 def show_tool(res, table_key=None, cols=None):
     head = (f"**`{res.get('tool')}`** · status `{res.get('status')}` · steps `{', '.join(res.get('executed_steps', []))}` · "
             f"BigQuery jobs {len(res.get('bq_job_ids', []))} ({res.get('bq_elapsed_ms', 0):,.0f} ms)")
     if res.get("summary"):
         head += f"\n\n{res['summary']}"
-    md(head + "\n\n" + "\n".join(f"- `{j}`" for j in res.get("bq_job_ids", [])[:6]))
+    extra_blocks = []
+    if res.get("applied_params"):
+        non_null = {k: (v, t("DomainMcpServer.resolve_params() 카탈로그 검증 슬롯", "Validated catalog slot via DomainMcpServer.resolve_params()"))
+                    for k, v in res["applied_params"].items() if v is not None}
+        if non_null:
+            extra_blocks.append(_format_vars_md(non_null).strip())
+    if res.get("executed_gql"):
+        gql_lbl = t("실행된 GRAPH_TABLE / ISO GQL 문장 (Executed GQL Statement)", "Executed GRAPH_TABLE / ISO GQL Statement")
+        extra_blocks.append(f"**{gql_lbl}**\n```sql\n{res['executed_gql'].strip()}\n```")
+    job_list = "\n".join(f"- `{j}`" for j in res.get("bq_job_ids", [])[:6])
+    full_md = head + ("\n\n" + "\n\n".join(extra_blocks) if extra_blocks else "") + ("\n\n" + job_list if job_list else "")
+    md(full_md)
     if table_key and res.get(table_key):
         d = pd.DataFrame(res[table_key])
         display(d[cols] if cols else d)
@@ -546,12 +697,18 @@ def show_agent(res, title=None):
                      f"{s['output'].get('matched_rows_count', s['output'].get('matched_graph_paths_count', '-'))} | "
                      f"{s['output'].get('bq_elapsed_ms', 0):,.0f} | {', '.join('`' + j + '`' for j in s['output'].get('bq_job_ids', [])) or '-'} |"
                      for s in steps)
+    gql_snippets = []
+    for s in steps:
+        if s["output"].get("executed_gql"):
+            gql_snippets.append(f"- **`{s['tool_name']}` {t('실행 GQL 문장 및 바인딩 변수', 'Executed GQL & Bound Variables')}** (`params={json.dumps(params, ensure_ascii=False)}`):"
+                                f"\n```sql\n{s['output']['executed_gql'].strip()}\n```")
+    gql_section = ("\n\n" + "\n".join(gql_snippets)) if gql_snippets else ""
     body = res["lifecycle"]["step_4_synthesis"]["markdown"].split("\n\n---\n- LLM:")[0]
     md(f"#### {title or ''}\n**Q.** {res['query']}\n\n"
        f"- **Step 1 ({t('의도 분해 & 파라미터 추출', 'Decomposition & Slot Extraction')})**: sub-goals {subgoals} · "
        f"params `{json.dumps(params, ensure_ascii=False)}`\n"
        f"- **Step 2 ({t('MCP 도구 체이닝 실행', 'Deterministic MCP Tool Dispatch')})**:\n\n"
-       f"| # | MCP Tool | Status | Rows/Paths | BigQuery ms | BigQuery Job ID |\n|---:|:---|:---|---:|---:|:---|\n{rows}\n\n"
+       f"| # | MCP Tool | Status | Rows/Paths | BigQuery ms | BigQuery Job ID |\n|---:|:---|:---|---:|---:|:---|\n{rows}{gql_section}\n\n"
        f"- **Step 3 ({t('근거 앵커 및 가드레일 판정', 'Grounding & Guardrail Verdict')})**: `answer_status={res['answer_status']}` · "
        f"anchors `{s3.get('grounded_anchors', [])}` · Gemini `{lt['model']}` (2 calls, {lt['prompt_tokens'] + lt['candidates_tokens']:,} tokens, "
        f"LLM {lt['elapsed_ms']:,.0f} ms / total {res['performance']['total_elapsed_seconds']} s)\n\n"
@@ -569,13 +726,14 @@ def agent_row(res, qid):
 
 # ------------------------------------------------------------------ NL -> GQL
 GQL_SYS = """You write one BigQuery Graph query in GQL (ISO GQL, GoogleSQL dialect). Never write Cypher.
-Return JSON only: {"answerable": true|false, "gql": "<one statement or empty>", "explanation": "<one short sentence in LANGUAGE>"}
+Return JSON only: {"answerable": true|false, "bound_variables": {"<param_or_filter_key>": "<bound_literal_value>"}, "gql": "<one statement or empty>", "explanation": "<one short sentence in LANGUAGE>"}
 Rules:
 - Start with GRAPH `GRAPH_NAME` then MATCH ... RETURN ... (standalone GQL, no GRAPH_TABLE).
 - Use only labels, properties and edge directions listed in [Schema]. Always write node labels, edge labels and direction.
+- Populate "bound_variables" with the key entity/filter literals bound in your GQL query (e.g. customer_id, device_id, plan_id, graph_name).
 - Return named properties with readable aliases, add ORDER BY, and LIMIT 50.
 - DocChunkNode has no edges: add a second pattern (ch:DocChunkNode) and filter with WHERE ch.chunk_id = <x>.source_chunk_id.
-- If [Schema] has no data for the question, return answerable=false and gql="".
+- If [Schema] has no data for the question, return answerable=false, bound_variables={}, and gql="".
 """
 
 
@@ -585,17 +743,17 @@ def _gen(prompt):
     try:
         spec = json.loads(r.get("text") or "{}")
     except json.JSONDecodeError:
-        spec = {"answerable": False, "gql": "", "explanation": "JSON parse error"}
+        spec = {"answerable": False, "bound_variables": {}, "gql": "", "explanation": "JSON parse error"}
     return spec, r.get("total_tokens", 0), r.get("elapsed_ms", 0)
 
 
 def nl2gql(question, schema, repair=True):
-    """Gemini writes GQL from the live schema, BigQuery runs it; one repair round with the BigQuery error."""
+    """Gemini writes GQL from the live schema, BigQuery runs it; explicitly displays bound variables and GQL statement."""
     spec, tok, ms = _gen(f"[Schema]\n{schema}\n\n[Question]\n{question}")
     attempts = []
     while spec.get("answerable") and spec.get("gql") and len(attempts) < (2 if repair else 1):
         df, meta = sql(spec["gql"])
-        attempts.append({"gql": spec["gql"], "df": df, **meta})
+        attempts.append({"gql": spec["gql"], "bound_variables": spec.get("bound_variables") or {}, "df": df, **meta})
         if meta["status"] == "SUCCESS":
             break
         spec, tok2, ms2 = _gen(f"[Schema]\n{schema}\n\n[Question]\n{question}\n\n[Previous GQL]\n{spec['gql']}\n\n"
@@ -603,10 +761,15 @@ def nl2gql(question, schema, repair=True):
         tok, ms = tok + tok2, ms + ms2
     out = [f"**Q.** {question}", f"- Gemini `{MODEL}`: {spec.get('explanation', '')} ({t('토큰', 'tokens')} {tok:,}, {ms:,.0f} ms)"]
     if not attempts:
-        out.append(f"- {t('생성 결과', 'Result')}: `answerable=false` — {t('스키마에 없는 데이터라 GQL을 만들지 않음', 'no GQL generated because the schema has no such data')}")
+        out.append(f"- {t('생성 결과', 'Result')}: `answerable=false` · `bound_variables={json.dumps(spec.get('bound_variables') or {}, ensure_ascii=False)}` — "
+                   f"{t('스키마에 없는 데이터라 GQL을 만들지 않음', 'no GQL generated because the schema has no such data')}")
     for i, a in enumerate(attempts, 1):
+        bvars = {"GRAPH": (GRAPH, t("대상 프로퍼티 그래프 식별자", "Target BigQuery Property Graph"))}
+        for k, v in (a.get("bound_variables") or {}).items():
+            bvars[k] = (v, t("NL2GQL 추출 바인딩 조건", "NL2GQL extracted filter/entity binding"))
         out.append(f"\n{t('시도', 'Attempt')} {i} · status `{a['status']}` · job `{a.get('job_id')}` · {a.get('elapsed_ms') or 0:,.0f} ms"
-                   f" · {len(a['df'])} rows\n```sql\n{a['gql'].strip()}\n```")
+                   f" · {len(a['df'])} rows\n\n" + _format_vars_md(bvars) +
+                   f"**{t('2) 실행된 ISO GQL 문장 (Executed ISO GQL Statement)', '2) Executed ISO GQL Statement')}**\n```sql\n{a['gql'].strip()}\n```")
         if a.get("error"):
             out.append(f"- BigQuery error: `{a['error'][:300]}`")
     md("\n".join(out))

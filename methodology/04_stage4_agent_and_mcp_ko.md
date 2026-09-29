@@ -1,6 +1,6 @@
 # Stage 4. MCP·에이전트 오케스트레이션
 
-> 스튜디오 [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) · MCP `mcp_stage4_agent_orchestration` + 런타임 MCP 3종 · 노트북 [stage4_agent_and_mcp_execution_ko.ipynb](../notebooks/stage4_agent_and_mcp_execution_ko.ipynb) · [English](./04_stage4_agent_and_mcp_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
+> 스튜디오 [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) · MCP `mcp_stage4_agent_orchestration` + 런타임 MCP 3종 · 노트북 [stage4_agent_and_mcp_execution_ko.ipynb](../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [English](./04_stage4_agent_and_mcp_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
 
 ## 목적
 
@@ -88,7 +88,7 @@ BigQuery 오류는 모든 도구에서 `BQ_QUERY_ERROR`로 반환한다 (0건으
 
 ## 노트북
 
-[stage4_agent_and_mcp_execution_ko.ipynb](../notebooks/stage4_agent_and_mcp_execution_ko.ipynb)
+[stage4_agent_and_mcp_execution_ko.ipynb](../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb)
 
 ## 내 데이터에 적용하기
 

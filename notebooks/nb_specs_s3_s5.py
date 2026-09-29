@@ -6,30 +6,26 @@ Aligned with Phases 5, 6, 7, and 8 of the 8-Phase Engineering Flow:
   - Stage 4: Phase 6. 에이전트 구축 (Agent & 8-Tool MCP Setup) & Phase 7. 답변 (Grounded Answering)
   - Stage 5: Phase 8. 검증 (4-Tier Lineage, Golden CQ Audit & 50-Trial Release Gate)
 """
-from nb_specs_s0_s2 import FQ, GRAPH, code, md, nav_footer, nav_header
+from nb_specs_s0_s2 import FQ, GRAPH, _bootstrap_code, code, md, nav_footer, nav_header
 
 
 def build_stage3(lang="ko"):
     ko = lang == "ko"
+    banner_file = "stage3_property_graph_flow_ko.png" if ko else "stage3_property_graph_flow_en.png"
     return [
         md(f"""{nav_header(3, lang)}
 
 ---
 
-# {"Stage 3. [구축] Zero-ETL 물리 프로퍼티 그래프 (BigQuery Graph / Spanner Graph) & ISO GQL" if ko else "Stage 3. [Build Graph] Zero-ETL Physical Property Graph (BigQuery / Spanner) & ISO GQL"}
-## {"Step 3.1 6 Node × 4 Edge 그래프 메타모델 설계 및 DDL 프로비저닝 · Step 3.2 인스턴스 토폴로지 시각화 및 ISO GQL / NL2GQL" if ko else "Step 3.1 6 Node × 4 Edge Metamodel Design & DDL Provisioning · Step 3.2 Instance Topology & ISO GQL / NL2GQL"}
+# {"Stage 3. [구축] Zero-ETL 물리 프로퍼티 그래프 (BigQuery Graph / Spanner Graph) & 바인딩 변수 기반 ISO GQL" if ko else "Stage 3. [Build Graph] Zero-ETL Physical Property Graph (BigQuery / Spanner) & Parameterized ISO GQL"}
+## {"Step 3.1 6 Node × 4 Edge 그래프 메타모델 설계 및 DDL 프로비저닝 · Step 3.2 인스턴스 토폴로지 시각화 및 ISO GQL / NL2GQL" if ko else "Step 3.1 6 Node × 4 Edge Metamodel Design & DDL Provisioning · Step 3.2 Instance Topology & Parameterized ISO GQL / NL2GQL"}
 
-{("Stage 3은 방법론의 **Phase 5(물리 그래프 구축)**를 구현합니다. Stage 1·2에서 적재한 BigQuery 10개 테이블을 별도 복제 없이(**Zero-ETL**) `pipeline/graph_builder.py`를 통해 **6개 노드 레이블(`CustomerContractNode`, `DeviceNode`, `PlanNode`, `SubsidyNode`, `DomainRuleNode`, `DocChunkNode`)**과 **4개 엣지 레이블(`USES_DEVICE`, `SUBSCRIBES_PLAN`, `HAS_SUBSIDY_POLICY`, `APPLIES_TO_PLAN`)**을 가진 `STARTER_ONTOLOGY_GRAPH`로 선언하고, ISO GQL 다중 홉 탐색과 Gemini 기반 자연어→GQL 변환(`nl2gql`)을 수행합니다."
+{("Stage 3은 방법론의 **Phase 5(물리 그래프 구축)**를 구현합니다. Stage 1·2에서 적재한 BigQuery 10개 테이블을 별도 복제 없이(**Zero-ETL**) `pipeline/graph_builder.py`를 통해 **6개 노드 레이블(`CustomerContractNode`, `DeviceNode`, `PlanNode`, `SubsidyNode`, `DomainRuleNode`, `DocChunkNode`)**과 **4개 엣지 레이블(`USES_DEVICE`, `SUBSCRIBES_PLAN`, `HAS_SUBSIDY_POLICY`, `APPLIES_TO_PLAN`)**을 가진 `STARTER_ONTOLOGY_GRAPH`로 선언하고, **바인딩 변수 명세와 실행 ISO GQL 문장**을 투명하게 확인하며 다중 홉 탐색과 Gemini 기반 자연어→GQL 변환(`nl2gql`)을 수행합니다."
   if ko else
-  "Stage 3 implements **Phase 5 (Physical Property Graph Construction)**. Without duplicating data (**Zero-ETL**), `pipeline/graph_builder.py` projects the 10 BigQuery tables into `STARTER_ONTOLOGY_GRAPH` with **6 Node Labels** and **4 Edge Labels**, verifies key uniqueness via `mcp_stage3_property_graph`, visualizes both the schema metamodel and instance topologies, and executes multi-hop ISO GQL queries and live Gemini NL-to-GQL (`nl2gql`).")}
+  "Stage 3 implements **Phase 5 (Physical Property Graph Construction)**. Without duplicating data (**Zero-ETL**), `pipeline/graph_builder.py` projects the 10 BigQuery tables into `STARTER_ONTOLOGY_GRAPH` with **6 Node Labels** and **4 Edge Labels**, verifies key uniqueness via `mcp_stage3_property_graph`, visualizes both the schema metamodel and layered instance topologies, and executes multi-hop ISO GQL queries—explicitly displaying the **bound variables table**, **executed ISO GQL statement**, and **live BigQuery results** alongside Gemini NL-to-GQL (`nl2gql`).")}
 
-![Step 2 Property Graph Flow](attachment:step2_property_graph_flow.png)"""),
-        code(f"""%load_ext bigframes
-import pandas as pd
-import nb_helpers as H
-from src.agent.mcp_server import DomainMcpServer
-server = DomainMcpServer()
-H.setup("{lang}")"""),
+![Stage 3 Build Property Graph Architecture Flow](attachment:{banner_file})"""),
+        code(_bootstrap_code(lang, with_agent=False)),
         md(f"### 1. {'[Phase 5a: 그래프 스키마 설계 및 메타모델 도식] `INFORMATION_SCHEMA.PROPERTY_GRAPHS` 라이브 메타데이터 및 6 Node × 4 Edge 설계도' if ko else '[Phase 5a: Graph Schema Design & Metamodel] `INFORMATION_SCHEMA.PROPERTY_GRAPHS` Metadata & 6 Node × 4 Edge Metamodel Schematic'}"),
         code("""node_labels, edge_labels, meta = H.graph_metadata()
 H.md(f"**Live Property Graph Catalog Job**: `{meta['job_id']}` ({meta['elapsed_ms']} ms) · Nodes `{len(node_labels)}` · Edges `{len(edge_labels)}`")
@@ -59,59 +55,115 @@ ORDER BY edges DESC"""),
 GRAPH `{GRAPH}`
 MATCH p = (a)-[e]->(b)
 RETURN TO_JSON(p) AS path"""),
-        code("""H.show(df_gnodes)
+        code(f"""H.md(H._format_vars_md({{
+    "GRAPH": ("{GRAPH}", H.t("대상 BigQuery Property Graph 식별자", "Target BigQuery Property Graph")),
+    "pattern (n) / (a)-[e]->(b)": ("ALL_LABELS (6N × 4E)", H.t("전체 노드·엣지 레이블 스캔 및 JSON 경로 추출", "Full node/edge label scan & JSON path projection")),
+}}) + "**" + H.t("실행된 ISO GQL 문장 (Executed ISO GQL Statements)", "Executed ISO GQL Statements") + "**\\n```sql\\n"
+f"GRAPH `{GRAPH}`\\nMATCH p = (a)-[e]->(b)\\nRETURN TO_JSON(p) AS path\\n```")
+H.show(df_gnodes)
 H.show(df_gedges)
 H.bar(df_gnodes, "label", "nodes", H.t("STARTER_ONTOLOGY_GRAPH 노드 레이블별 인스턴스 수", "Node Count by Label"),
       color=[H.LABEL_COLORS.get(x, "#1A73E8") for x in H.pdf(df_gnodes)["label"]])
 H.bar(df_gedges, "label", "edges", H.t("STARTER_ONTOLOGY_GRAPH 엣지 레이블별 인스턴스 수", "Edge Count by Label"), color="#0d9488")
 nodes, edges = H.paths_to_graph(H.pdf(df_all_paths)["path"])
-H.draw_graph(nodes, edges, H.t("STARTER_ONTOLOGY_GRAPH 전체 물리 프로퍼티 그래프 토폴로지 (25 노드 · 29 엣지)", "Full STARTER_ONTOLOGY_GRAPH Instance Topology (25 Nodes · 29 Edges)"), legend=H.LABEL_COLORS)"""),
-        md(f"### 4. {'[Phase 5d: 다중 홉 ISO GQL 탐색 패턴 실습 (`%%bqsql`)] 다이아몬드 결합 · 규칙/청크 앵커 조인 · 1~2홉 가변 경로 서브그래프' if ko else '[Phase 5d: Multi-Hop ISO GQL Patterns (`%%bqsql`)] Diamond Match, Rule/Chunk Anchor Join & 1..2-Hop Ego Subgraph'}"),
-        code(f"""%%bqsql df_g1
-GRAPH `{GRAPH}`
+H.draw_graph(nodes, edges, H.t("STARTER_ONTOLOGY_GRAPH 전체 물리 프로퍼티 그래프 토폴로지 (25 노드 · 29 엣지 · 5계층 배치)", "Full STARTER_ONTOLOGY_GRAPH Instance Topology (25 Nodes · 29 Edges · 5-Column Layout)"), legend=H.LABEL_COLORS)"""),
+        md(f"### 4. {'[Phase 5d: 바인딩 변수 기반 다중 홉 ISO GQL 탐색 실습 (`H.run_gql`)] 실행 GQL 문장 · 바인딩 변수 · 결과 테이블 및 1~2홉 서브그래프 도식' if ko else '[Phase 5d: Parameterized Multi-Hop ISO GQL Patterns (`H.run_gql`)] Executed GQL Statements, Bound Variables, Result Tables & 1..2-Hop Ego Subgraph'}"),
+        code(f"""# GQL-01: 2-Hop Customer Contract -> Device & Subscribed Plan
+gql_1 = \"\"\"GRAPH `{GRAPH}`
 MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode),
       (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)
 RETURN c.customer_id AS customer_id, c.welfare_status AS welfare_status, c.elapsed_days AS elapsed_days,
        d.device_name AS device_name, p.plan_name AS plan_name, p.monthly_fee_krw AS monthly_fee_krw
-ORDER BY customer_id"""),
-        code(f"""%%bqsql df_g3
-GRAPH `{GRAPH}`
+ORDER BY customer_id\"\"\"
+df_g1, _ = H.run_gql(
+    gql_1,
+    variables={{
+        "GRAPH": ("{GRAPH}", H.t("프로퍼티 그래프 뷰", "Property Graph view")),
+        "edge_1": ("USES_DEVICE", H.t("CustomerContractNode → DeviceNode (edge_contract_device)", "CustomerContractNode -> DeviceNode")),
+        "edge_2": ("SUBSCRIBES_PLAN", H.t("CustomerContractNode → PlanNode (edge_contract_plan)", "CustomerContractNode -> PlanNode")),
+    }},
+    title=H.t("GQL-01 · 고객 약정 중심 단말기 및 가입 요금제 2-Hop 탐색", "GQL-01 · 2-Hop Customer Contract to Device & Subscribed Plan"),
+)
+
+# GQL-02: Diamond Pattern (Contract -> Device -> Subsidy -> Plan <- Contract)
+gql_3 = \"\"\"GRAPH `{GRAPH}`
 MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode)-[hs:HAS_SUBSIDY_POLICY]->(p:PlanNode)<-[:SUBSCRIBES_PLAN]-(c)
 RETURN c.customer_id AS customer_id, d.device_name AS device_name, p.plan_name AS plan_name,
        hs.total_subsidy_krw AS policy_total_subsidy_krw, c.granted_subsidy_krw AS granted_subsidy_krw
-ORDER BY customer_id"""),
-        code(f"""%%bqsql df_g5
-GRAPH `{GRAPH}`
-MATCH p = (c:CustomerContractNode)-[e]-{{{{1,2}}}}(n)
-WHERE c.customer_id = 'CUST_DEMO_001'
-RETURN LABELS(n)[OFFSET(0)] AS reached_label, PATH_LENGTH(p) AS hops, TO_JSON(p) AS path
-ORDER BY hops, reached_label"""),
-        code(f"""%%bqsql df_g6
-GRAPH `{GRAPH}`
+ORDER BY customer_id\"\"\"
+df_g3, _ = H.run_gql(
+    gql_3,
+    variables={{
+        "GRAPH": ("{GRAPH}", H.t("프로퍼티 그래프 뷰", "Property Graph view")),
+        "pattern": ("(c)-[:USES_DEVICE]->(d)-[hs:HAS_SUBSIDY_POLICY]->(p)<-[:SUBSCRIBES_PLAN]-(c)",
+                    H.t("4개 엔티티 간 다이아몬드(폐루프) 정합성 매칭", "4-node closed diamond consistency pattern")),
+    }},
+    title=H.t("GQL-02 · 다이아몬드 패턴 매칭 (약정 지급 지원금 vs 정책 고시 총지원금 대조)", "GQL-02 · Diamond Pattern Match (Granted Subsidy vs. Policy Total Subsidy)"),
+)"""),
+        code(f"""# GQL-03: Plan-to-DomainRule & SHA-256 DocChunk Anchor Join
+target_plan_for_rules = "PLAN-5G-37"
+gql_6 = f\"\"\"GRAPH `{GRAPH}`
 MATCH (r:DomainRuleNode)-[a:APPLIES_TO_PLAN]->(p:PlanNode),
       (ch:DocChunkNode)
-WHERE p.plan_id = 'PLAN-5G-37' AND ch.chunk_id = a.source_chunk_id
+WHERE p.plan_id = '{{target_plan_for_rules}}' AND ch.chunk_id = a.source_chunk_id
 RETURN r.rule_id AS rule_id, a.relation_label_ko AS relation_label_ko, p.plan_name AS plan_name,
        ch.chunk_id AS chunk_id, ch.section_title AS section_title, SUBSTR(ch.content, 1, 90) AS excerpt
-ORDER BY rule_id"""),
-        code(f"""%%bqsql df_g8
-GRAPH `{GRAPH}`
+ORDER BY rule_id\"\"\"
+df_g6, _ = H.run_gql(
+    gql_6,
+    variables={{
+        "GRAPH": ("{GRAPH}", H.t("프로퍼티 그래프 뷰", "Property Graph view")),
+        "$target_plan_id (p.plan_id)": (f"'{{target_plan_for_rules}}'", H.t("PlanNode 요금제 ID 필터 변수", "PlanNode target plan_id filter")),
+        "ch.chunk_id": ("a.source_chunk_id", H.t("APPLIES_TO_PLAN 엣지 ↔ DocChunkNode 앵커 조인", "APPLIES_TO_PLAN edge to DocChunkNode join key")),
+    }},
+    title=H.t("GQL-03 · 요금제 바인딩 도메인 규칙 및 원문 정책 청크(SHA-256) 결합 조회", "GQL-03 · Plan-Bound Domain Rules Joined with SHA-256 Policy Chunks"),
+)
+
+# GQL-04: Single-Query Prorated Subsidy Clawback Calculation
+cust_id_param = "CUST_DEMO_001"
+target_plan_param = "PLAN-5G-37"
+elapsed_days_param = 120
+gql_8 = f\"\"\"GRAPH `{GRAPH}`
 MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode)-[cur:HAS_SUBSIDY_POLICY]->(p:PlanNode)<-[:SUBSCRIBES_PLAN]-(c),
       (d)-[tgt:HAS_SUBSIDY_POLICY]->(t:PlanNode),
       (s1:SubsidyNode), (s2:SubsidyNode)
-WHERE c.customer_id = 'CUST_DEMO_001' AND t.plan_id = 'PLAN-5G-37'
+WHERE c.customer_id = '{{cust_id_param}}' AND t.plan_id = '{{target_plan_param}}'
   AND s1.policy_id = cur.policy_id AND s2.policy_id = tgt.policy_id
 RETURN c.customer_id AS customer_id, p.plan_name AS current_plan, t.plan_name AS target_plan,
        s1.base_subsidy_krw AS current_base_subsidy_krw, s2.base_subsidy_krw AS target_base_subsidy_krw,
-       s1.mandatory_retention_days AS retention_days, 120 AS elapsed_days,
-       CAST(ROUND((s1.base_subsidy_krw - s2.base_subsidy_krw) * (s1.mandatory_retention_days - 120) / s1.mandatory_retention_days) AS INT64) AS penalty_krw"""),
-        code("""H.show(df_g1)
-H.show(df_g3)
-H.show(df_g6)
-H.show(df_g8)
+       s1.mandatory_retention_days AS retention_days, {{elapsed_days_param}} AS elapsed_days,
+       CAST(ROUND((s1.base_subsidy_krw - s2.base_subsidy_krw) * (s1.mandatory_retention_days - {{elapsed_days_param}}) / s1.mandatory_retention_days) AS INT64) AS penalty_krw\"\"\"
+df_g8, _ = H.run_gql(
+    gql_8,
+    variables={{
+        "GRAPH": ("{GRAPH}", H.t("프로퍼티 그래프 뷰", "Property Graph view")),
+        "$customer_id (c.customer_id)": (f"'{{cust_id_param}}'", H.t("조회 대상 고객 ID (CustomerContractNode)", "Target customer_id on CustomerContractNode")),
+        "$target_plan_id (t.plan_id)": (f"'{{target_plan_param}}'", H.t("하향 변경 대상 요금제 ID (PlanNode)", "Target downgrade plan_id on PlanNode")),
+        "$elapsed_days": (str(elapsed_days_param), H.t("개통 후 경과일수 (180일 기준 일할 산식 변수)", "Elapsed days since activation (prorated formula input)")),
+    }},
+    title=H.t("GQL-04 · 단일 ISO GQL 쿼리 기반 요금제 하향 차액정산 위약금 산출", "GQL-04 · Single-Query ISO GQL Prorated Downgrade Penalty Calculation"),
+)"""),
+        code(f"""# GQL-05: 1..2-Hop Variable-Length Ego Subgraph for CUST_DEMO_001
+ego_customer = "CUST_DEMO_001"
+gql_5 = f\"\"\"GRAPH `{GRAPH}`
+MATCH p = (c:CustomerContractNode)-[e]-{{{{1,2}}}}(n)
+WHERE c.customer_id = '{{ego_customer}}'
+RETURN LABELS(n)[OFFSET(0)] AS reached_label, PATH_LENGTH(p) AS hops, TO_JSON(p) AS path
+ORDER BY hops, reached_label\"\"\"
+df_g5, _ = H.run_gql(
+    gql_5,
+    variables={{
+        "GRAPH": ("{GRAPH}", H.t("프로퍼티 그래프 뷰", "Property Graph view")),
+        "$customer_id (c.customer_id)": (f"'{{ego_customer}}'", H.t("중심 노드(Ego) 고객 ID", "Center ego node customer_id")),
+        "quantifier -{{1,2}}-": ("1..2 hops", H.t("ISO GQL 가변 길이 경로 탐색 범위", "ISO GQL variable-length path quantifier")),
+    }},
+    title=H.t("GQL-05 · CUST_DEMO_001 중심 1~2홉 가변 길이 서브그래프 경로 추출", "GQL-05 · 1..2-Hop Variable-Length Ego Subgraph Extraction for CUST_DEMO_001"),
+    show_df=False,
+)
+H.show(df_g5[["reached_label", "hops"]])
 enodes, eedges = H.paths_to_graph(H.pdf(df_g5)["path"])
-H.draw_graph(enodes, eedges, H.t("CUST_DEMO_001 중심 1~2홉 가변 길이 탐색 서브그래프 (Ego Network)", "CUST_DEMO_001 1..2-Hop Variable-Length Ego Subgraph"), legend=H.LABEL_COLORS)"""),
-        md(f"### 5. {'[Phase 5e: 자연어 → ISO GQL 변환(`nl2gql`) 및 스키마 가드 검증] Vertex AI Gemini(`gemini-3.8-flash`) 기반 GQL 생성 및 실행' if ko else '[Phase 5e: Live Gemini NL-to-GQL (`nl2gql`) & Schema Guard] Natural Language to ISO GQL Generation & Execution'}"),
+H.draw_graph(enodes, eedges, H.t("CUST_DEMO_001 중심 1~2홉 가변 길이 탐색 서브그래프 (5계층 배치)", "CUST_DEMO_001 1..2-Hop Variable-Length Ego Subgraph (5-Column Layout)"), legend=H.LABEL_COLORS)"""),
+        md(f"### 5. {'[Phase 5e: 자연어 → ISO GQL 변환(`nl2gql`) 및 스키마 가드 검증] Vertex AI Gemini(`gemini-3.8-flash`) 기반 GQL 문장 · 바인딩 변수 생성 및 실행' if ko else '[Phase 5e: Live Gemini NL-to-GQL (`nl2gql`) & Schema Guard] Natural Language to ISO GQL Statement, Bound Variables & Execution'}"),
         code("""schema_str = H.schema_text(node_labels, edge_labels)
 questions = [
     H.t("고객 계약별로 사용 중인 단말기 이름과 가입 요금제 이름, 월정액을 조회해줘.", "List each customer contract with its device name, subscribed plan name, and monthly fee."),
@@ -126,17 +178,17 @@ H.show(pd.DataFrame(nl_rows))"""),
                 (
                     "Zero-ETL BigQuery Property Graph는 기존 RDB 조인 대비 어떤 구조적 이점을 제공하나요?" if ko
                     else "What structural advantage does Zero-ETL BigQuery Property Graph provide over traditional relational joins?",
-                    "원천 DW 테이블 6종과 엣지 테이블 4종을 별도 그래프 DB로 복제하지 않고 `CREATE OR REPLACE PROPERTY GRAPH` 뷰로 선언하여, 단일 ISO GQL(`MATCH ... -{1,2}-`) 문장으로 고객 약정·단말·요금제·지원금·비즈니스 규칙·원문 청크 경로를 동시에 탐색할 수 있습니다." if ko
-                    else "By projecting 6 node tables and 4 edge tables via `CREATE OR REPLACE PROPERTY GRAPH` without data duplication, a single ISO GQL statement traverses contracts, devices, plans, subsidies, rules, and policy chunks."
+                    "원천 DW 테이블 6종과 엣지 테이블 4종을 별도 그래프 DB로 복제하지 않고 `CREATE OR REPLACE PROPERTY GRAPH` 뷰로 선언하여, 단일 ISO GQL(`MATCH ... -{1,2}-`) 문장과 명시적 바인딩 변수(`$customer_id`, `$target_plan_id`, `$elapsed_days`)만으로 고객 약정·단말·요금제·지원금·비즈니스 규칙·원문 청크 경로를 동시에 탐색할 수 있습니다." if ko
+                    else "By projecting 6 node tables and 4 edge tables via `CREATE OR REPLACE PROPERTY GRAPH` without data duplication, a single parameterized ISO GQL statement traverses contracts, devices, plans, subsidies, rules, and policy chunks."
                 ),
             ],
             findings=[
                 "`STARTER_ONTOLOGY_GRAPH`는 6개 노드 레이블(총 31행, 중복 키 `0건`)과 4개 엣지 레이블(총 31행)로 구성되며, 활성 연결 경로에서 25개 노드와 29개 방향성 엣지가 추출되었습니다." if ko
                 else "`STARTER_ONTOLOGY_GRAPH` comprises 6 node labels (31 rows, `0` duplicate keys) and 4 edge labels (31 rows), yielding 25 connected nodes and 29 directed edges.",
-                "ISO GQL 다이아몬드 매칭(`df_g8`)을 통해 `CUST_DEMO_001` 고객이 120일차에 `5G Light(37,000원)`로 변경할 때의 일할 위약금(`(500,000 - 200,000) × 60 / 180 = 100,000원`)을 단일 GQL 쿼리로 산출했습니다." if ko
-                else "Using an ISO GQL diamond pattern (`df_g8`), we computed `CUST_DEMO_001`'s 120-day prorated downgrade penalty (`(500,000 - 200,000) * 60 / 180 = 100,000 KRW`) in a single GQL query.",
-                "Gemini `nl2gql`은 스키마 내 다중 홉 질문 2건을 실행 가능한 ISO GQL로 변환(`SUCCESS`)하고, 스키마에 없는 기지국 품질 질문은 `answerable=false`로 차단했습니다." if ko
-                else "Gemini `nl2gql` translated 2 in-schema questions into executable ISO GQL (`SUCCESS`) and blocked the out-of-schema base-station query with `answerable=false`."
+                "바인딩 변수(`c.customer_id='CUST_DEMO_001'`, `t.plan_id='PLAN-5G-37'`, `elapsed_days=120`)를 적용한 ISO GQL 다이아몬드 쿼리(`GQL-04`)로 일할 위약금(`(500,000 - 200,000) × 60 / 180 = 100,000원`)을 단일 GQL 문장으로 산출했습니다." if ko
+                else "Using an ISO GQL diamond pattern (`GQL-04`) bound to `customer_id='CUST_DEMO_001'`, `target_plan_id='PLAN-5G-37'`, and `elapsed_days=120`, we computed the prorated downgrade penalty (`100,000 KRW`) in a single GQL query.",
+                "Gemini `nl2gql`은 스키마 내 다중 홉 질문 2건을 바인딩 변수 및 실행 가능한 ISO GQL로 변환(`SUCCESS`)하고, 스키마에 없는 기지국 품질 질문은 `answerable=false`로 차단했습니다." if ko
+                else "Gemini `nl2gql` translated 2 in-schema questions into executable ISO GQL (`SUCCESS`) with extracted bound variables and blocked the out-of-schema base-station query with `answerable=false`."
             ],
             next_steps=[
                 "다음 단계인 `Stage 4 (에이전트·답변)` 노트북으로 이동하여 이 Property Graph와 BigQuery 원장을 호출하는 8종 모듈형 MCP 서버와 2-Pass AI FDE 에이전트 구축 및 답변 생성 과정을 확인하세요." if ko
@@ -148,6 +200,7 @@ H.show(pd.DataFrame(nl_rows))"""),
 
 def build_stage4(lang="ko"):
     ko = lang == "ko"
+    banner_file = "stage4_agent_mcp_flow_ko.png" if ko else "stage4_agent_mcp_flow_en.png"
     return [
         md(f"""{nav_header(4, lang)}
 
@@ -156,19 +209,12 @@ def build_stage4(lang="ko"):
 # {"Stage 4. [에이전트 구축 & 답변] 8종 모듈형 MCP 서버 구축 · 슬롯 검증 & 2-Pass AI FDE 에이전트 답변 생성" if ko else "Stage 4. [Build Agent & Answer] 8-Tool Modular MCP Server, Slot Validation & 2-Pass AI FDE Agent Execution"}
 ## {"Step 4.1 8종 MCP 도구 및 2-Pass 에이전트 아키텍처 구축 · Step 4.2 결정론적 산식 시뮬레이션 및 가드레일 기반 답변 생성" if ko else "Step 4.1 8 MCP Tools & 2-Pass Agent Architecture Setup · Step 4.2 Deterministic Penalty Simulation & Guardrailed Answering"}
 
-{("Stage 4는 방법론의 **Phase 6(에이전트 구축)**과 **Phase 7(답변 생성)**을 구현합니다. LLM이 위약금이나 지원금을 암산하거나 존재하지 않는 요금제를 환각하지 않도록, **(1) BigQuery 실시간 카탈로그 기반 슬롯 검증(`resolve_params`)**, **(2) 결정론적 SQL/GQL을 실행하는 8종 모듈형 MCP 도구(`DomainMcpServer`)**, **(3) 4단계 라이프사이클로 동작하는 2-Pass Gemini(`gemini-3.8-flash`) 추론 엔진(`AiFdeAgentEngine`)**을 구축하고 정상 질의(`GROUNDED`)와 경계 질의(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)에 대한 답변을 생성합니다."
+{("Stage 4는 방법론의 **Phase 6(에이전트 구축)**과 **Phase 7(답변 생성)**을 구현합니다. LLM이 위약금이나 지원금을 암산하거나 존재하지 않는 요금제를 환각하지 않도록, **(1) BigQuery 실시간 카탈로그 기반 슬롯 검증(`resolve_params`)**, **(2) 결정론적 SQL 및 바인딩 변수 기반 ISO GQL을 실행하는 8종 모듈형 MCP 도구(`DomainMcpServer`)**, **(3) 4단계 라이프사이클로 동작하는 2-Pass Gemini(`gemini-3.8-flash`) 추론 엔진(`AiFdeAgentEngine`)**을 구축하고 정상 질의(`GROUNDED`)와 경계 질의(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)에 대한 답변을 생성합니다."
   if ko else
-  "Stage 4 implements **Phase 6 (Agent & MCP Setup)** and **Phase 7 (Grounded Answering)**. To prevent LLM math errors or entity hallucinations, we combine **(1) Live BigQuery Catalog Slot Validation (`resolve_params`)**, **(2) the 8-Tool Modular MCP Server (`DomainMcpServer`)**, and **(3) the 4-Step, 2-Pass Gemini (`gemini-3.8-flash`) Reasoning Engine (`AiFdeAgentEngine`)**, verifying both `GROUNDED` answers and boundary guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`).")}
+  "Stage 4 implements **Phase 6 (Agent & MCP Setup)** and **Phase 7 (Grounded Answering)**. To prevent LLM math errors or entity hallucinations, we combine **(1) Live BigQuery Catalog Slot Validation (`resolve_params`)**, **(2) the 8-Tool Modular MCP Server (`DomainMcpServer`) executing deterministic SQL and parameterized ISO GQL**, and **(3) the 4-Step, 2-Pass Gemini (`gemini-3.8-flash`) Reasoning Engine (`AiFdeAgentEngine`)**, verifying both `GROUNDED` answers and boundary guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`).")}
 
-![Step 3 AI FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)"""),
-        code(f"""%load_ext bigframes
-import pandas as pd
-import nb_helpers as H
-from src.agent.mcp_server import DomainMcpServer
-from src.agent.reasoning_engine import AiFdeAgentEngine
-H.setup("{lang}")
-server = DomainMcpServer()
-agent = AiFdeAgentEngine()"""),
+![Stage 4 Agent and MCP Orchestration Flow](attachment:{banner_file})"""),
+        code(_bootstrap_code(lang, with_agent=True)),
         md(f"### 1. {'[Phase 6a: 에이전트 및 MCP 서버 아키텍처 구축] 2-Pass 오케스트레이션 설계도 · 8종 MCP 도구 카탈로그 · `mcp_stage4_agent_orchestration`' if ko else '[Phase 6a: Agent & MCP Architecture Setup] 2-Pass Orchestration Blueprint, 8-Tool MCP Catalog & `mcp_stage4_agent_orchestration`'}"),
         code("""H.draw_agent_architecture()
 H.show(pd.DataFrame(server.get_tool_catalog()), ["name", "stage", "category", "steps", "spec_origin", "description" if H.LANG == "ko" else "description_en"])
@@ -186,7 +232,7 @@ for q in sample_queries:
     resolved = server.resolve_params({"query": q})
     slot_rows.append({"query": q, **{k: v for k, v in resolved.items()}})
 H.show(pd.DataFrame(slot_rows))"""),
-        md(f"### 3. {'[Phase 6c: 런타임 도메인 MCP 3종 직접 호출 및 중간 데이터 확인] 고객 프로필 · 위약금/24개월 TCO 산식 · 그래프/위키 탐색 및 180일 위약금 곡선' if ko else '[Phase 6c: Direct Execution of 3 Runtime Domain MCP Tools] Customer Profile, Penalty/24M TCO Math, Graph Traversal & 180-Day Penalty Curve'}"),
+        md(f"### 3. {'[Phase 6c: 런타임 도메인 MCP 3종 직접 호출 및 GQL 문장/변수 확인] 고객 프로필 · 위약금/24개월 TCO 산식 · 그래프/위키 탐색(`executed_gql`) 및 180일 위약금 곡선' if ko else '[Phase 6c: Direct Execution of 3 Runtime Domain MCP Tools] Customer Profile, Penalty/24M TCO Math, Graph Traversal (`executed_gql` + Bound Variables) & 180-Day Penalty Curve'}"),
         code("""r_prof = server.execute_tool("mcp_lookup_customer_profile", {"customer_id": "CUST_DEMO_001"})
 H.show_tool(r_prof, "matched_rows", ["customer_id", "device_name", "plan_name", "monthly_fee_krw", "factory_price_krw", "total_subsidy_krw", "net_installment_principal_krw", "grounded_chunk_id"])
 
@@ -248,6 +294,7 @@ H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
 
 def build_stage5(lang="ko"):
     ko = lang == "ko"
+    banner_file = "stage5_lineage_eval_flow_ko.png" if ko else "stage5_lineage_eval_flow_en.png"
     return [
         md(f"""{nav_header(5, lang)}
 
@@ -260,15 +307,8 @@ def build_stage5(lang="ko"):
   if ko else
   "Stage 5 completes **Phase 8 (Verification & Release Gate)**. Using `mcp_stage5_lineage_and_eval` and `pipeline/validator.py`, we verify **(1) the 4-Tier End-to-End Data Lineage (`Source File → DocChunk → DomainRule → CustomerContract → Golden CQ`)**, **(2) deterministic SQL ground-truth auditing across all 5 Golden CQs**, **(3) 10 Boundary Cases × 5 repeated trials (50 live runs) for success, consistency, and intent stability**, and **(4) the Gate 1–5 Production Release Readiness Checklist**.")}
 
-![Step 3 AI FDE Orchestration Flow](attachment:step3_fde_orchestration_flow.png)"""),
-        code(f"""%load_ext bigframes
-import pandas as pd
-import nb_helpers as H
-from src.agent.mcp_server import DomainMcpServer
-from src.agent.reasoning_engine import AiFdeAgentEngine
-H.setup("{lang}")
-server = DomainMcpServer()
-agent = AiFdeAgentEngine()"""),
+![Stage 5 Lineage and Release Gate Architecture Flow](attachment:{banner_file})"""),
+        code(_bootstrap_code(lang, with_agent=True)),
         md(f"### 1. {'[Phase 8a: 4-Tier 데이터 리니지 검증] `mcp_stage5_lineage_and_eval` 실행 · 리니지 조인(`%%bqsql`) · 멀티파타이트 리니지 설계 도식' if ko else '[Phase 8a: 4-Tier Data Lineage Verification] `mcp_stage5_lineage_and_eval`, Lineage Join (`%%bqsql`) & Multipartite Lineage Graph'}"),
         code("""res_s5 = server.execute_tool("mcp_stage5_lineage_and_eval", {"steps": ["build_4tier_lineage", "run_golden_cq_suite", "diagnose_boundary_failures"]})
 H.show_tool(res_s5)"""),

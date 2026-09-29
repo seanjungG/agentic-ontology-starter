@@ -1,6 +1,6 @@
 # Stage 3. Property Graph and GQL
 
-> Studio [`Stage 3. Property Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) · MCP `mcp_stage3_property_graph` · Notebook [stage3_property_graph_bigquery_spanner_en.ipynb](../notebooks/stage3_property_graph_bigquery_spanner_en.ipynb) · [한국어](./03_stage3_property_graph_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
+> Studio [`Stage 3. Property Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) · MCP `mcp_stage3_property_graph` · Notebook [stage3_property_graph_bigquery_spanner_en.ipynb](../notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) · [한국어](./03_stage3_property_graph_ko.md) · [Full methodology](./METHODOLOGY_EN.md)
 
 ## Purpose
 
@@ -95,7 +95,7 @@ In both cases `tb_doc_chunks` is joined on `ap.source_chunk_id` to attach the ev
 
 ## Notebook
 
-[stage3_property_graph_bigquery_spanner_en.ipynb](../notebooks/stage3_property_graph_bigquery_spanner_en.ipynb)
+[stage3_property_graph_bigquery_spanner_en.ipynb](../notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb)
 
 ## Apply to your data
 

@@ -12,23 +12,23 @@ STUDIO_URL = "https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app"
 
 STAGE_NAV = [
     (0, "0. 전체 흐름 개요", "0. End-to-End Overview",
-     "stage0_overview_walkthrough.ipynb", "stage0_overview_walkthrough_en.ipynb",
-     "../methodology/METHODOLOGY_KO.md", "../methodology/METHODOLOGY_EN.md", "overview"),
+     "stage0_overview_walkthrough_ko.ipynb", "stage0_overview_walkthrough_en.ipynb",
+     "../../methodology/METHODOLOGY_KO.md", "../../methodology/METHODOLOGY_EN.md", "overview"),
     (1, "Stage 1 · 준비·분석", "Stage 1 · Prepare & Analyze",
      "stage1_asset_and_cq_ko.ipynb", "stage1_asset_and_cq_en.ipynb",
-     "../methodology/01_stage1_asset_and_cq_ko.md", "../methodology/01_stage1_asset_and_cq_en.md", "stage1"),
+     "../../methodology/01_stage1_asset_and_cq_ko.md", "../../methodology/01_stage1_asset_and_cq_en.md", "stage1"),
     (2, "Stage 2 · 파싱·통합", "Stage 2 · Parse & Integrate",
      "stage2_wiki_and_semantic_graph_ko.ipynb", "stage2_wiki_and_semantic_graph_en.ipynb",
-     "../methodology/02_stage2_wiki_and_semantic_graph_ko.md", "../methodology/02_stage2_wiki_and_semantic_graph_en.md", "stage2"),
+     "../../methodology/02_stage2_wiki_and_semantic_graph_ko.md", "../../methodology/02_stage2_wiki_and_semantic_graph_en.md", "stage2"),
     (3, "Stage 3 · 그래프 구축", "Stage 3 · Build Property Graph",
      "stage3_property_graph_bigquery_spanner_ko.ipynb", "stage3_property_graph_bigquery_spanner_en.ipynb",
-     "../methodology/03_stage3_property_graph_ko.md", "../methodology/03_stage3_property_graph_en.md", "stage3"),
+     "../../methodology/03_stage3_property_graph_ko.md", "../../methodology/03_stage3_property_graph_en.md", "stage3"),
     (4, "Stage 4 · 에이전트·답변", "Stage 4 · Build Agent & Answer",
      "stage4_agent_and_mcp_execution_ko.ipynb", "stage4_agent_and_mcp_execution_en.ipynb",
-     "../methodology/04_stage4_agent_and_mcp_ko.md", "../methodology/04_stage4_agent_and_mcp_en.md", "stage4"),
+     "../../methodology/04_stage4_agent_and_mcp_ko.md", "../../methodology/04_stage4_agent_and_mcp_en.md", "stage4"),
     (5, "Stage 5 · 리니지·검증", "Stage 5 · Verify & Evaluate",
      "stage5_lineage_and_evaluation_ko.ipynb", "stage5_lineage_and_evaluation_en.ipynb",
-     "../methodology/05_stage5_lineage_and_eval_ko.md", "../methodology/05_stage5_lineage_and_eval_en.md", "stage5"),
+     "../../methodology/05_stage5_lineage_and_eval_ko.md", "../../methodology/05_stage5_lineage_and_eval_en.md", "stage5"),
 ]
 
 
@@ -38,6 +38,22 @@ def md(text):
 
 def code(src):
     return {"cell_type": "code", "metadata": {}, "source": src.strip() + "\n", "outputs": [], "execution_count": None}
+
+
+def _bootstrap_code(lang: str, with_agent: bool = False) -> str:
+    agent_imp = "\nfrom src.agent.reasoning_engine import AiFdeAgentEngine" if with_agent else ""
+    agent_init = "\nagent = AiFdeAgentEngine()" if with_agent else ""
+    return f"""%load_ext bigframes
+import sys
+from pathlib import Path
+for _p in (Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent):
+    if (_p / "nb_helpers.py").exists() and str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
+import pandas as pd
+import nb_helpers as H
+from src.agent.mcp_server import DomainMcpServer{agent_imp}
+H.setup("{lang}")
+server = DomainMcpServer(){agent_init}"""
 
 
 def nav_header(stage: int, lang: str = "ko") -> str:
@@ -52,10 +68,10 @@ def nav_header(stage: int, lang: str = "ko") -> str:
         else:
             items.append(f"[{label}](./{target})")
     bar_str = " → ".join(items)
-    lang_switch = (f"**🇰🇷 한국어 ( 현재 )** · [🇺🇸 English Version](./{nb_en})" if ko
-                   else f"[🇰🇷 한국어 버전 (Korean)](./{nb_ko}) · **🇺🇸 English (Current)**")
+    lang_switch = (f"**🇰🇷 한국어 (현재 폴더: `notebooks/ko/`)** · [🇺🇸 English (`notebooks/en/{nb_en}`)](../en/{nb_en})" if ko
+                   else f"[🇰🇷 한국어 (`notebooks/ko/{nb_ko}`)](../ko/{nb_ko}) · **🇺🇸 English (Current Folder: `notebooks/en/`)**")
     doc_link = f"[{'방법론 가이드 (Methodology Doc)' if ko else 'Methodology Guide'}]({doc_ko if ko else doc_en})"
-    idx_link = f"[{'노트북 전체 인덱스 (README)' if ko else 'Notebook Index (README)'}](./README.md)"
+    idx_link = f"[{'노트북 전체 인덱스 (README)' if ko else 'Notebook Index (README)'}](../README.md)"
     studio_link = f"[{'라이브 스튜디오 탭 열기' if ko else 'Open Live Studio Tab'}]({STUDIO_URL}/?tab={tab})"
     return (f"> **{'언어 전환 & 바로가기' if ko else 'Language & Quick Links'}**: {lang_switch} ｜ {doc_link} ｜ {idx_link} ｜ {studio_link}\n>\n"
             f"> **{'전체 라이프사이클 네비게이션' if ko else 'Lifecycle Navigation'}**: {bar_str}")
@@ -72,7 +88,7 @@ def nav_footer(stage: int, lang: str, qa_items: list, findings: list, next_steps
     nav_parts.append(f"[🏠 {'0. 전체 흐름 초기 화면' if ko else '0. Overview Home'}](./{STAGE_NAV[0][3] if ko else STAGE_NAV[0][4]})")
     if next_s:
         nav_parts.append(f"[➡️ {next_s[1] if ko else next_s[2]}](./{next_s[3] if ko else next_s[4]})")
-    nav_parts.append(f"[🌐 {'English Version' if ko else '한국어 버전'}](./{nb_en if ko else nb_ko})")
+    nav_parts.append(f"[🌐 {'English Version' if ko else '한국어 버전'}]({'../en/' + nb_en if ko else '../ko/' + nb_ko})")
     nav_parts.append(f"[📖 {'방법론 문서' if ko else 'Methodology Doc'}]({doc_ko if ko else doc_en})")
 
     qa_block = "\n".join(f"- **Q.** {q}\n  - **A.** {a}" for q, a in qa_items)
@@ -93,6 +109,9 @@ def nav_footer(stage: int, lang: str, qa_items: list, findings: list, next_steps
 
 def build_stage0(lang="ko"):
     ko = lang == "ko"
+    ko_prefix = "./" if ko else "../ko/"
+    en_prefix = "../en/" if ko else "./"
+    banner_file = "stage0_overview_flow_ko.png" if ko else "stage0_overview_flow_en.png"
     return [
         md(f"""{nav_header(0, lang)}
 
@@ -101,37 +120,30 @@ def build_stage0(lang="ko"):
 # {"0. 전체 흐름 초기 화면 — 8단계 엔지니어링 파이프라인 & 5-Stage 에이전틱 온톨로지 워크스루" if ko else "0. End-to-End Entrypoint — 8-Phase Engineering Pipeline & 5-Stage Agentic Ontology Walkthrough"}
 ## {"준비 → 분석 → 파싱 → 통합 → 구축 → 에이전트 구축 → 답변 → 검증 (BigQuery Property Graph · ISO GQL · Gemini 3.8 Flash)" if ko else "Prepare → Analyze → Parse → Integrate → Build Graph → Build Agent → Answer (GQL) → Verify & Gate"}
 
-{("이 초기 노트북은 **Agentic Ontology Starter Pack v2.0**의 전체 엔지니어링 방법론을 처음부터 끝까지 한눈에 파악하고 실행하는 **마스터 진입 화면**입니다. 단순 데이터 조회에 그치지 않고, **원시 데이터 준비(Phase 1) → 탐색·CQ 설계(Phase 2) → 비정형 문서 파싱·SHA-256 해시 앵커링(Phase 3) → 3-Layer Wiki 및 시맨틱 규칙 통합(Phase 4) → BigQuery/Spanner 물리 프로퍼티 그래프 구축(Phase 5) → 8종 MCP 서버 및 2-Pass 에이전트 구축(Phase 6) → 실시간 ISO GQL 생성 및 근거 기반 답변(Phase 7) → 4-Tier 리니지 및 50회 경계값 벤치마크 검증(Phase 8)**의 전 과정을 중간 데이터·테이블 구조·그래프 설계 도식과 함께 조화롭게 확인합니다."
+{("이 초기 노트북은 **Agentic Ontology Starter Pack v2.0**의 전체 엔지니어링 방법론을 처음부터 끝까지 한눈에 파악하고 실행하는 **마스터 진입 화면**입니다. 단순 데이터 조회에 그치지 않고, **원시 데이터 준비(Phase 1) → 탐색·CQ 설계(Phase 2) → 비정형 문서 파싱·SHA-256 해시 앵커링(Phase 3) → 3-Layer Wiki 및 시맨틱 규칙 통합(Phase 4) → BigQuery/Spanner 물리 프로퍼티 그래프 구축(Phase 5) → 8종 MCP 서버 및 2-Pass 에이전트 구축(Phase 6) → 바인딩 변수 기반 ISO GQL 생성 및 근거 기반 답변(Phase 7) → 4-Tier 리니지 및 50회 경계값 벤치마크 검증(Phase 8)**의 전 과정을 중간 데이터·테이블 구조·그래프 설계 도식과 함께 조화롭게 확인합니다."
   if ko else
-  "This master entrypoint notebook walks through the complete **Agentic Ontology Starter Pack v2.0** methodology end to end. Rather than isolated data exploration, it connects **1. Preparation → 2. Analysis & CQ Design → 3. Markdown Parsing & SHA-256 Anchoring → 4. 3-Layer Wiki & Semantic Rule Integration → 5. Physical Property Graph Construction → 6. 8-Tool MCP & 2-Pass Agent Setup → 7. Live ISO GQL & Grounded Answering → 8. 4-Tier Lineage & 50-Trial Benchmark Verification**, showing intermediate tables, data outputs, and graph design schematics at every phase.")}
+  "This master entrypoint notebook walks through the complete **Agentic Ontology Starter Pack v2.0** methodology end to end. Rather than isolated data exploration, it connects **1. Preparation → 2. Analysis & CQ Design → 3. Markdown Parsing & SHA-256 Anchoring → 4. 3-Layer Wiki & Semantic Rule Integration → 5. Physical Property Graph Construction → 6. 8-Tool MCP & 2-Pass Agent Setup → 7. Parameterized ISO GQL & Grounded Answering → 8. 4-Tier Lineage & 50-Trial Benchmark Verification**, showing intermediate tables, bound GQL variables, data outputs, and graph design schematics at every phase.")}
 
-![Evolutionary Journey Overview](attachment:evolutionary_overview_flow.png)
+![Stage 0 Overview Architecture Flow](attachment:{banner_file})
 
-### {"전체 8단계 엔지니어링 흐름 및 한/영 노트북 네비게이션 맵" if ko else "8-Phase Engineering Flow & Bilingual Notebook Navigation Map"}
+### {"전체 8단계 엔지니어링 흐름 및 한/영 노트북 네비게이션 맵 (`notebooks/ko/` · `notebooks/en/`)" if ko else "8-Phase Engineering Flow & Bilingual Notebook Navigation Map (`notebooks/ko/` · `notebooks/en/`)"}
 
-| {"엔지니어링 단계 (8-Phase)" if ko else "Engineering Phase"} | {"정본 Stage (Step)" if ko else "Canonical Stage"} | {"핵심 구현 모듈 및 MCP 도구" if ko else "Core Modules & MCP Tools"} | {"중간 확인 데이터 · 테이블 · 그래프 도식" if ko else "Intermediate Data, Tables & Graph Schematics"} | {"한글 노트북 (KO)" if ko else "Korean Notebook (KO)"} | {"영문 노트북 (EN)" if ko else "English Notebook (EN)"} |
+| {"엔지니어링 단계 (8-Phase)" if ko else "Engineering Phase"} | {"정본 Stage (Step)" if ko else "Canonical Stage"} | {"핵심 구현 모듈 및 MCP 도구" if ko else "Core Modules & MCP Tools"} | {"중간 확인 데이터 · 테이블 · 그래프 도식" if ko else "Intermediate Data, Tables & Graph Schematics"} | {"한글 노트북 (`ko/`)" if ko else "Korean Notebook (`ko/`)"} | {"영문 노트북 (`en/`)" if ko else "English Notebook (`en/`)"} |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. {"준비 (Prepare)" if ko else "Prepare"}**<br>**2. {"분석 (Analyze)" if ko else "Analyze"}** | **Stage 1**<br>(`Step 1.1`–`1.2`) | `terraform/bigquery.tf`<br>`mcp_stage1_asset_discovery`<br>`H.check_cq_sql()` | {"원시 CSV/MD 인벤토리, 10개 테이블 스키마 설계도, 비식별 약정 원장, 지원금 히트맵, Golden CQ 5종 SQL 검증" if ko else "Raw CSV/MD inventory, 10-table ER blueprint, de-identified contracts, subsidy heatmap, 5 Golden CQs SQL check"} | [`stage1_ko`](./stage1_asset_and_cq_ko.ipynb) | [`stage1_en`](./stage1_asset_and_cq_en.ipynb) |
-| **3. {"파싱 (Parse)" if ko else "Parse"}**<br>**4. {"통합 (Integrate)" if ko else "Integrate"}** | **Stage 2**<br>(`Step 2.1`–`2.2`) | `pipeline/ingest.py`<br>`mcp_stage2_wiki_and_semantic`<br>`H.propose_triples()` | {"`DOC_CHUNK` 정규식 파싱 & SHA-256 해시 앵커 비교표, 3-Layer Wiki 4종, Gemini 트리플 추출, 시맨틱 그래프 도식" if ko else "`DOC_CHUNK` regex parsing & SHA-256 anchor table, 3-Layer Wiki, Gemini triple extraction, Semantic Graph schematic"} | [`stage2_ko`](./stage2_wiki_and_semantic_graph_ko.ipynb) | [`stage2_en`](./stage2_wiki_and_semantic_graph_en.ipynb) |
-| **5. {"구축 (Build Graph)" if ko else "Build Graph"}** | **Stage 3**<br>(`Step 3.1`–`3.2`) | `pipeline/graph_builder.py`<br>`mcp_stage3_property_graph`<br>`H.nl2gql()` | {"6 Node × 4 Edge 메타모델 설계도, BigQuery/Spanner Graph DDL, 전체 토폴로지 & 1~2홉 서브그래프, ISO GQL & NL2GQL" if ko else "6 Node × 4 Edge metamodel schematic, BQ/Spanner DDL, full topology & 1..2-hop ego graph, ISO GQL & NL2GQL"} | [`stage3_ko`](./stage3_property_graph_bigquery_spanner_ko.ipynb) | [`stage3_en`](./stage3_property_graph_bigquery_spanner_en.ipynb) |
-| **6. {"에이전트 구축 (Agent)" if ko else "Build Agent"}**<br>**7. {"답변 (Answer)" if ko else "Answer"}** | **Stage 4**<br>(`Step 4.1`–`4.2`) | `src/agent/mcp_server.py`<br>`src/agent/reasoning_engine.py`<br>`mcp_stage4_agent_orchestration` | {"2-Pass 에이전트 오케스트레이션 설계도, 8종 MCP 카탈로그, 슬롯 파싱, 180일 위약금 곡선, Golden CQ & 경계 답변" if ko else "2-Pass agent orchestration schematic, 8-tool MCP catalog, slot parsing, 180d penalty curve, Golden CQ & boundary answers"} | [`stage4_ko`](./stage4_agent_and_mcp_execution_ko.ipynb) | [`stage4_en`](./stage4_agent_and_mcp_execution_en.ipynb) |
-| **8. {"검증 (Verify & Gate)" if ko else "Verify & Gate"}** | **Stage 5**<br>(`Step 5.1`–`5.2`) | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | {"4-Tier 데이터 리니지 테이블 & 멀티파타이트 그래프, Golden CQ 5종 실시간 재검증, Boundary 50회 평가 & Gate 1~5 판정" if ko else "4-Tier lineage table & multipartite graph, live CQ re-audit, Boundary 50-trial metrics & Gate 1..5 checklist"} | [`stage5_ko`](./stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_en`](./stage5_lineage_and_evaluation_en.ipynb) |
+| **1. {"준비 (Prepare)" if ko else "Prepare"}**<br>**2. {"분석 (Analyze)" if ko else "Analyze"}** | **Stage 1**<br>(`Step 1.1`–`1.2`) | `terraform/bigquery.tf`<br>`mcp_stage1_asset_discovery`<br>`H.check_cq_sql()` | {"원시 CSV/MD 인벤토리, 10개 테이블 스키마 설계도, 비식별 약정 원장, 지원금 히트맵, Golden CQ 5종 SQL 검증" if ko else "Raw CSV/MD inventory, 10-table ER blueprint, de-identified contracts, subsidy heatmap, 5 Golden CQs SQL check"} | [`stage1_ko`]({ko_prefix}stage1_asset_and_cq_ko.ipynb) | [`stage1_en`]({en_prefix}stage1_asset_and_cq_en.ipynb) |
+| **3. {"파싱 (Parse)" if ko else "Parse"}**<br>**4. {"통합 (Integrate)" if ko else "Integrate"}** | **Stage 2**<br>(`Step 2.1`–`2.2`) | `pipeline/ingest.py`<br>`mcp_stage2_wiki_and_semantic`<br>`H.propose_triples()` | {"`DOC_CHUNK` 정규식 파싱 & SHA-256 해시 앵커 비교표, 3-Layer Wiki 4종, Gemini 트리플 추출, 시맨틱 그래프 도식" if ko else "`DOC_CHUNK` regex parsing & SHA-256 anchor table, 3-Layer Wiki, Gemini triple extraction, Semantic Graph schematic"} | [`stage2_ko`]({ko_prefix}stage2_wiki_and_semantic_graph_ko.ipynb) | [`stage2_en`]({en_prefix}stage2_wiki_and_semantic_graph_en.ipynb) |
+| **5. {"구축 (Build Graph)" if ko else "Build Graph"}** | **Stage 3**<br>(`Step 3.1`–`3.2`) | `pipeline/graph_builder.py`<br>`mcp_stage3_property_graph`<br>`H.run_gql()` / `H.nl2gql()` | {"6 Node × 4 Edge 메타모델 설계도, BigQuery/Spanner Graph DDL, 전체 토폴로지 & 1~2홉 서브그래프, 바인딩 변수 기반 ISO GQL" if ko else "6 Node × 4 Edge metamodel schematic, BQ/Spanner DDL, full topology & 1..2-hop ego graph, parameterized ISO GQL"} | [`stage3_ko`]({ko_prefix}stage3_property_graph_bigquery_spanner_ko.ipynb) | [`stage3_en`]({en_prefix}stage3_property_graph_bigquery_spanner_en.ipynb) |
+| **6. {"에이전트 구축 (Agent)" if ko else "Build Agent"}**<br>**7. {"답변 (Answer)" if ko else "Answer"}** | **Stage 4**<br>(`Step 4.1`–`4.2`) | `src/agent/mcp_server.py`<br>`src/agent/reasoning_engine.py`<br>`mcp_stage4_agent_orchestration` | {"2-Pass 에이전트 오케스트레이션 설계도, 8종 MCP 카탈로그, 슬롯 파싱, 180일 위약금 곡선, Golden CQ & 경계 답변" if ko else "2-Pass agent orchestration schematic, 8-tool MCP catalog, slot parsing, 180d penalty curve, Golden CQ & boundary answers"} | [`stage4_ko`]({ko_prefix}stage4_agent_and_mcp_execution_ko.ipynb) | [`stage4_en`]({en_prefix}stage4_agent_and_mcp_execution_en.ipynb) |
+| **8. {"검증 (Verify & Gate)" if ko else "Verify & Gate"}** | **Stage 5**<br>(`Step 5.1`–`5.2`) | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | {"4-Tier 데이터 리니지 테이블 & 멀티파타이트 그래프, Golden CQ 5종 실시간 재검증, Boundary 50회 평가 & Gate 1~5 판정" if ko else "4-Tier lineage table & multipartite graph, live CQ re-audit, Boundary 50-trial metrics & Gate 1..5 checklist"} | [`stage5_ko`]({ko_prefix}stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_en`]({en_prefix}stage5_lineage_and_evaluation_en.ipynb) |
 
-### {"조직 성숙도별 3-Track 도입 가이드 (`config/starter_config.json`)" if ko else "3-Track Adoption Model (`config/starter_config.json`)"}
+### {"조직 성숙도별 3-Track 선택 흐름 가이드 (`config/starter_config.json`)" if ko else "3-Track Selective Adoption Model (`config/starter_config.json`)"}
 
 | {"트랙 (Track)" if ko else "Track"} | {"활성 Stage" if ko else "Active Stages"} | {"물리 그래프 엔진" if ko else "Graph Engine"} | {"적용 목적 및 권장 시나리오" if ko else "Target Scenario"} |
 | :--- | :--- | :--- | :--- |
 | **Track 1 · Lite** | `Stage 1 → Stage 2 → Stage 4` | `none` | {"비정형 정책 문서 위키(3-Layer LLM-Wiki)와 도메인 규칙 테이블만으로 빠르게 에이전트를 기동할 때" if ko else "Fast-track deployment using 3-Layer LLM-Wiki and codified rule tables without a physical property graph"} |
 | **Track 2 · Standard** | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `bigquery` / `spanner` | {"정형 DW 원장 4종과 비정형 규칙을 Zero-ETL Property Graph로 결합해 다중 홉 ISO GQL 추론을 수행할 때" if ko else "Unifying 4 structured DW ledgers and unstructured rules into a Zero-ETL Property Graph for multi-hop ISO GQL"} |
 | **Track 3 · Full-Stack** | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `bigquery` | {"4-Tier 데이터 리니지, Golden CQ 5건(100%), 경계값 10건×5회(50회) 벤치마크 및 Cloud Run 배포 게이트까지 운영할 때" if ko else "Full lifecycle operation including 4-Tier lineage, 5 Golden CQs, 50-trial boundary benchmark, and Cloud Run release gates"} |"""),
-        code(f"""%load_ext bigframes
-import pandas as pd
-import nb_helpers as H
-from src.agent.mcp_server import DomainMcpServer
-from src.agent.reasoning_engine import AiFdeAgentEngine
-server = DomainMcpServer()
-agent = AiFdeAgentEngine()
-H.setup("{lang}")"""),
+        code(_bootstrap_code(lang, with_agent=True)),
         md(f"### 1. {'[전체 아키텍처 도식] 8단계 엔지니어링 파이프라인 및 10개 테이블 스키마 블루프린트' if ko else '[Architecture Blueprint] 8-Phase Engineering Pipeline & 10-Table Schema Blueprint'}"),
         code("""H.draw_eight_phase_flow()
 H.draw_table_er_blueprint()"""),
@@ -155,7 +167,7 @@ H.show(df_wiki)
 res_s2 = server.execute_tool("mcp_stage2_wiki_and_semantic")
 H.show_tool(res_s2, "anchored_chunks")
 H.draw_semantic_design_graph()"""),
-        md(f"### 4. {'[Phase 5 · Stage 3: 물리 그래프 구축] `STARTER_ONTOLOGY_GRAPH` 메타모델 검증 및 전체 인스턴스 토폴로지 (`%%bqsql` + ISO GQL)' if ko else '[Phase 5 · Stage 3: Build Property Graph] `STARTER_ONTOLOGY_GRAPH` Metamodel Check & Full Instance Topology (`%%bqsql` + ISO GQL)'}"),
+        md(f"### 4. {'[Phase 5 · Stage 3: 물리 그래프 구축] `STARTER_ONTOLOGY_GRAPH` 메타모델 · 실행 GQL 문장 & 바인딩 변수 · 전체 인스턴스 토폴로지 (`%%bqsql` + `H.run_gql`)' if ko else '[Phase 5 · Stage 3: Build Property Graph] `STARTER_ONTOLOGY_GRAPH` Metamodel, Executed GQL & Bound Variables, and Full Topology (`%%bqsql` + `H.run_gql`)'}"),
         code("""res_s3 = server.execute_tool("mcp_stage3_property_graph")
 H.show_tool(res_s3, "node_tables")
 H.draw_property_graph_metamodel()"""),
@@ -163,9 +175,27 @@ H.draw_property_graph_metamodel()"""),
 GRAPH `{GRAPH}`
 MATCH p = (a)-[e]->(b)
 RETURN TO_JSON(p) AS path"""),
-        code("""nodes, edges = H.paths_to_graph(H.pdf(df_paths)["path"])
-H.md(H.t(f"**실측 추출된 물리 그래프 노드 `{len(nodes)}`개 · 엣지 `{len(edges)}`개**", f"**Extracted physical graph nodes: `{len(nodes)}` · edges: `{len(edges)}`**"))
-H.draw_graph(nodes, edges, H.t("STARTER_ONTOLOGY_GRAPH 전체 인스턴스 토폴로지 (실측)", "Full Instance Topology of STARTER_ONTOLOGY_GRAPH"), legend=H.LABEL_COLORS)"""),
+        code(f"""gql_cust_rules = \"\"\"GRAPH `{GRAPH}`
+MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode),
+      (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode),
+      (ch:DocChunkNode)
+WHERE c.customer_id = 'CUST_DEMO_001' AND ch.chunk_id = ap.source_chunk_id
+RETURN c.customer_id AS customer_id, d.device_name AS device_name, p.plan_name AS plan_name,
+       r.rule_id AS rule_id, ap.source_chunk_id AS chunk_id, ch.content_sha256 AS sha256_anchor
+ORDER BY r.rule_id\"\"\"
+_ = H.run_gql(
+    gql_cust_rules,
+    variables={{
+        "GRAPH": ("{GRAPH}", H.t("BigQuery 프로퍼티 그래프 식별자", "Target BigQuery Property Graph")),
+        "c.customer_id": ("'CUST_DEMO_001'", H.t("CustomerContractNode 고객 필터 변수", "CustomerContractNode filter parameter")),
+        "ch.chunk_id": ("ap.source_chunk_id", H.t("DocChunkNode SHA-256 앵커 조인 키", "DocChunkNode SHA-256 anchor join key")),
+    }},
+    title=H.t("3-Hop ISO GQL 실행 예시 (고객 약정 → 단말/요금제 ← 도메인 규칙 + 근거 청크)",
+              "3-Hop ISO GQL Execution (Customer Contract → Device/Plan ← Domain Rule + DocChunk)"),
+)
+nodes, edges = H.paths_to_graph(H.pdf(df_paths)["path"])
+H.md(H.t(f"**실측 추출된 물리 그래프 노드 `{{len(nodes)}}`개 · 엣지 `{{len(edges)}}`개**", f"**Extracted physical graph nodes: `{{len(nodes)}}` · edges: `{{len(edges)}}`**"))
+H.draw_graph(nodes, edges, H.t("STARTER_ONTOLOGY_GRAPH 전체 인스턴스 토폴로지 (5계층 레이어 배치)", "Full Instance Topology of STARTER_ONTOLOGY_GRAPH (5-Column Layered Layout)"), legend=H.LABEL_COLORS)"""),
         md(f"### 5. {'[Phase 6~7 · Stage 4: 에이전트 구축 & 답변] 2-Pass 에이전트 설계도 · 실시간 NL-to-GQL 생성 · Golden CQ 추론 실행' if ko else '[Phase 6–7 · Stage 4: Build Agent & Answer] 2-Pass Agent Blueprint, Live NL-to-GQL & Golden CQ Execution'}"),
         code("""H.draw_agent_architecture()
 node_labels, edge_labels, _ = H.graph_metadata()
@@ -193,8 +223,8 @@ H.show(H.gate_checklist_table())"""),
             findings=[
                 "BigQuery `starter_ontology_dw` 내 마스터 4종(22행), 지식/규칙 2종(9행), 엣지 브릿지 4종(31행) 총 10개 테이블(62행)과 비식별 고객 ID(`CUST_DEMO_001~006`, 위반 `0건`)가 실측 확인되었습니다." if ko
                 else "Verified 10 BigQuery tables (62 total rows across 4 master, 2 knowledge, and 4 edge tables) with 0 de-identification violations (`CUST_DEMO_001~006`).",
-                "비정형 가이드 5개 청크(`DOC_CHUNK_001~005`)의 SHA-256 해시 앵커가 BigQuery `tb_doc_chunks` 및 3-Layer Wiki와 100% 일치하며, `STARTER_ONTOLOGY_GRAPH`에서 중복 키 `0건` 및 멀티홉 경로 12건이 검증되었습니다." if ko
-                else "All 5 policy chunks (`DOC_CHUNK_001~005`) match their stored SHA-256 anchors in `tb_doc_chunks`, with 0 duplicate keys and 12 multi-hop paths in `STARTER_ONTOLOGY_GRAPH`.",
+                "비정형 가이드 5개 청크(`DOC_CHUNK_001~005`)의 SHA-256 해시 앵커가 BigQuery `tb_doc_chunks` 및 3-Layer Wiki와 일치하며, `STARTER_ONTOLOGY_GRAPH`에서 중복 키 `0건` 및 멀티홉 경로가 검증되었습니다." if ko
+                else "All 5 policy chunks (`DOC_CHUNK_001~005`) match their stored SHA-256 anchors in `tb_doc_chunks`, with 0 duplicate keys and verified multi-hop paths in `STARTER_ONTOLOGY_GRAPH`.",
                 "Gate 1 ~ Gate 5 통합 점검 결과 Golden CQ 5/5(`100.0%`) 및 경계값 10건×5회(`50 Trials`, 통과율 `98.0%`) 기준을 모두 충족(`PASS`)했습니다." if ko
                 else "All 5 release gates (`Gate 1`–`Gate 5`) passed, with 5/5 (`100.0%`) Golden CQs and `98.0%` success across 50 boundary benchmark trials."
             ],
@@ -208,6 +238,7 @@ H.show(H.gate_checklist_table())"""),
 
 def build_stage1(lang="ko"):
     ko = lang == "ko"
+    banner_file = "stage1_prepare_analyze_flow_ko.png" if ko else "stage1_prepare_analyze_flow_en.png"
     return [
         md(f"""{nav_header(1, lang)}
 
@@ -220,13 +251,8 @@ def build_stage1(lang="ko"):
   if ko else
   "Stage 1 executes **Phase 1 (Preparation)** and **Phase 2 (Analysis)** of the methodology. We first define the target **5 Golden Competency Questions (CQs)** and **10 Boundary Cases**, scope the required 6 structured CSVs and 2 unstructured policy guides, and validate the 10 Terraform-provisioned BigQuery tables (`starter_ontology_dw`).")}
 
-![Step 1 Architecture Flow](attachment:step1_architecture_flow.png)"""),
-        code(f"""%load_ext bigframes
-import pandas as pd
-import nb_helpers as H
-from src.agent.mcp_server import DomainMcpServer
-server = DomainMcpServer()
-H.setup("{lang}")"""),
+![Stage 1 Prepare and Analyze Architecture Flow](attachment:{banner_file})"""),
+        code(_bootstrap_code(lang, with_agent=False)),
         md(f"### 1. {'[Phase 1: 준비 (Preparation)] 원천 입력 자산(`data/input/`) 인벤토리 및 10개 테이블 스키마 설계도 (`%%bqsql`)' if ko else '[Phase 1: Preparation] Raw Input Asset Inventory (`data/input/`) & 10-Table Schema Blueprint (`%%bqsql`)'}"),
         code("""H.show(H.raw_inputs_inventory())
 H.draw_table_er_blueprint()"""),
@@ -282,12 +308,22 @@ H.heatmap(d_sub.pivot(index="device_name", columns="plan_name", values="net_pric
           H.t("단말 × 요금제 실구매가 히트맵 (KRW)", "Net Purchase Price Heatmap (KRW)"))"""),
         md(f"### 5. {'[Phase 2d: 비정형 문서 · 용어사전 · Golden CQ 설계] 정책 청크 용어 빈도(`%%bqsql`) 및 Golden CQ 5종 정답 SQL 대조 검증' if ko else '[Phase 2d: Unstructured Chunks, Glossary & Golden CQ Design] Term Frequency (`%%bqsql`) & 5 Golden CQs SQL Ground-Truth Check'}"),
         code(f"""%%bqsql df_terms
-SELECT term, chunk_id, ARRAY_LENGTH(REGEXP_EXTRACT_ALL(content, term)) AS hits
-FROM `{FQ}.tb_doc_chunks`, UNNEST(['공시지원금', '유통망', '180일', '차액정산', '위약금', '선택약정', '복지']) AS term
-ORDER BY term, chunk_id"""),
+SELECT t.term, c.chunk_id, ARRAY_LENGTH(REGEXP_EXTRACT_ALL(c.content, t.pat)) AS hits
+FROM `{FQ}.tb_doc_chunks` c,
+UNNEST([
+  STRUCT({'\"공시지원금 (Subsidy)\"' if ko else '\"Public Subsidy\"'} AS term, r'(?i)subsidy|공시지원금' AS pat),
+  STRUCT({'\"유통망 상한 (15% Cap)\"' if ko else '\"15% Retail Cap\"'}, r'(?i)15%|additional|유통망'),
+  STRUCT({'\"180일 의무유지 (180d)\"' if ko else '\"180-Day Rule\"'}, r'(?i)180-day|180 days|180일'),
+  STRUCT({'\"일할 차액정산 (Prorated)\"' if ko else '\"Prorated Clawback\"'}, r'(?i)formula|prorated|일할|차액정산'),
+  STRUCT({'\"위약금 (Penalty)\"' if ko else '\"Penalty Settlement\"'}, r'(?i)penalty|위약금'),
+  STRUCT({'\"선택약정 25% (Selective)\"' if ko else '\"25% Selective Discount\"'}, r'(?i)selective|25%|선택약정'),
+  STRUCT({'\"복지 면제 (Welfare)\"' if ko else '\"Welfare Exemption\"'}, r'(?i)welfare|exempt|복지|면제')
+]) AS t
+ORDER BY t.term, c.chunk_id"""),
         code("""glossary = H.read_json("data/input/05_glossary/business_glossary.json")
 H.show(pd.DataFrame([{"term": k, "definition": v} for k, v in glossary.items()] if isinstance(glossary, dict) else glossary))
-H.heatmap(H.pdf(df_terms).pivot(index="term", columns="chunk_id", values="hits"),
+df_terms_loc = H.pdf(df_terms)
+H.heatmap(df_terms_loc.pivot(index="term", columns="chunk_id", values="hits"),
           H.t("핵심 도메인 용어 × 정책 문서 청크 출현 빈도", "Domain Term × Policy Document Chunk Frequency"), fmt="{:.0f}")
 cqs = H.read_json("data/input/04_cq/golden_competency_questions.json")
 H.show(H.check_cq_sql(cqs))
@@ -321,6 +357,7 @@ H.show(bcs, ["case_id", "root_cause_code", "missing_context", "query", "expected
 
 def build_stage2(lang="ko"):
     ko = lang == "ko"
+    banner_file = "stage2_parse_integrate_flow_ko.png" if ko else "stage2_parse_integrate_flow_en.png"
     return [
         md(f"""{nav_header(2, lang)}
 
@@ -333,13 +370,8 @@ def build_stage2(lang="ko"):
   if ko else
   "Stage 2 implements **Phase 3 (Parsing)** and **Phase 4 (Integration)**. `pipeline/ingest.py` (`run_ingest()`) parses raw policy guides (`01_guides/*.md`) into `DOC_CHUNK_001~005` with deterministic **SHA-256 hash anchors (`anchor_<12hex>`)**, compiles the **Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`)**, and binds structured tariff plans to codified business rules (`tb_domain_rules`, `edge_rule_applies_to_plan`) inside the **Semantic Ontology Graph (`Entity=Node`, `Concept=Edge`)**.")}
 
-![Step 1 Architecture Flow](attachment:step1_architecture_flow.png)"""),
-        code(f"""%load_ext bigframes
-import pandas as pd
-import nb_helpers as H
-from src.agent.mcp_server import DomainMcpServer
-server = DomainMcpServer()
-H.setup("{lang}")"""),
+![Stage 2 Parse and Integrate Architecture Flow](attachment:{banner_file})"""),
+        code(_bootstrap_code(lang, with_agent=False)),
         md(f"### 1. {'[Phase 3a: 파싱 (Parsing)] 원시 정책 마크다운(`01_guides/*.md`) 정규식 청크 분할 및 SHA-256 해시 앵커 무결성 대조 (`pipeline/ingest.py`)' if ko else '[Phase 3a: Parsing] Raw Policy Markdown (`01_guides/*.md`) Chunking & SHA-256 Anchor Integrity Check (`pipeline/ingest.py`)'}"),
         code("""df_parsed = H.parse_guides_live_demo()
 H.show(df_parsed)"""),
@@ -381,17 +413,18 @@ H.draw_semantic_design_graph()
 rp = H.pdf(df_rule_plan)
 nodes, edges = [], []
 for r in rp.itertuples():
-    nodes.append({"id": r.rule_id, "name": r.rule_id, "color": "#F9AB00", "layer": 0})
-    nodes.append({"id": r.plan_name, "name": r.plan_name, "color": "#0284c7", "layer": 1})
-    nodes.append({"id": r.source_chunk_id, "name": r.source_chunk_id, "color": "#9334E6", "layer": 2})
-    edges.append({"src": r.rule_id, "dst": r.plan_name, "label": r.relation_label_ko})
+    nodes.append({"id": r.source_chunk_id, "name": r.source_chunk_id, "color": "#9334E6", "layer": 0})
+    nodes.append({"id": r.rule_id, "name": r.rule_id, "color": "#F9AB00", "layer": 1})
+    nodes.append({"id": r.plan_name, "name": r.plan_name, "color": "#0284c7", "layer": 2})
+    e_lbl = r.relation_label_ko if H.LANG == "ko" else "APPLIES_TO_PLAN"
+    edges.append({"src": r.rule_id, "dst": r.plan_name, "label": e_lbl})
     edges.append({"src": r.rule_id, "dst": r.source_chunk_id, "label": "GROUNDED_IN", "style": "dashed"})
 uniq_nodes = list({n["id"]: n for n in nodes}.values())
 H.draw_graph(uniq_nodes, edges,
-             H.t("BigQuery 실데이터 기반 Rule → Plan (APPLIES_TO_PLAN) 및 Rule ⇢ DocChunk (GROUNDED_IN) 브릿지 그래프",
-                 "Live BigQuery Rule → Plan (APPLIES_TO_PLAN) & Rule ⇢ DocChunk (GROUNDED_IN) Semantic Bridge Graph"),
-             layout="layers", figsize=(11.5, 5.2), node_size=1850,
-             legend={"Domain Rule (#F9AB00)": "#F9AB00", "Tariff Plan (#0284c7)": "#0284c7", "Doc Chunk (#9334E6)": "#9334E6"})"""),
+             H.t("BigQuery 실데이터 기반 DocChunk ⇠ Rule (GROUNDED_IN) 및 Rule → Plan (APPLIES_TO_PLAN) 시맨틱 브릿지 그래프",
+                 "Live BigQuery DocChunk ⇠ Rule (GROUNDED_IN) & Rule → Plan (APPLIES_TO_PLAN) Semantic Bridge Graph"),
+             layout="layers", figsize=(11.8, 5.4), node_size=1850,
+             legend={"Doc Chunk (#9334E6)": "#9334E6", "Domain Rule (#F9AB00)": "#F9AB00", "Tariff Plan (#0284c7)": "#0284c7"})"""),
         nav_footer(
             2, lang,
             qa_items=[

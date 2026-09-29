@@ -2,9 +2,9 @@
 """
 validate_and_pack_notebooks.py
 ==============================
-Standard Notebook Integrity & Attachment Packer for Agentic Ontology Starter (11 Canonical Notebooks).
+Standard Notebook Integrity & Attachment Packer for Agentic Ontology Starter (12 Canonical Notebooks in `ko/` & `en/`).
 
-1. Scans every cell across all `.ipynb` files in `notebooks/` for `attachment:<filename>`.
+1. Scans every cell across all `.ipynb` files in `notebooks/ko/` and `notebooks/en/` for `attachment:<filename>`.
 2. Loads the corresponding binary PNG from `notebooks/assets/<filename>`, verifies the PNG magic bytes,
    encodes it as standard Base64, and embeds `cell["attachments"][<filename>] = {"image/png": b64}`.
 3. Assigns deterministic, unique `nbformat v4.5` cell `"id"` values (`cell-00`, `cell-01`, ...).
@@ -24,10 +24,13 @@ PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 def pack_and_validate_all():
     notebooks_dir = os.path.dirname(os.path.abspath(__file__))
     assets_dir = os.path.join(notebooks_dir, "assets")
-    ipynb_paths = sorted(glob.glob(os.path.join(notebooks_dir, "*.ipynb")))
+    ipynb_paths = sorted(
+        glob.glob(os.path.join(notebooks_dir, "ko", "*.ipynb"))
+        + glob.glob(os.path.join(notebooks_dir, "en", "*.ipynb"))
+    )
 
     if not ipynb_paths:
-        print("[ERROR] No .ipynb files found in", notebooks_dir)
+        print("[ERROR] No .ipynb files found in", os.path.join(notebooks_dir, "{ko,en}"))
         sys.exit(1)
 
     asset_b64_cache = {}
@@ -45,7 +48,7 @@ def pack_and_validate_all():
     total_errors = 0
 
     for path in ipynb_paths:
-        fname = os.path.basename(path)
+        rel_name = os.path.relpath(path, notebooks_dir)
         with open(path, "r", encoding="utf-8") as f:
             nb = json.load(f)
 
@@ -94,7 +97,7 @@ def pack_and_validate_all():
                     cell_attachments = {}
                     for ref_name in att_refs:
                         if ref_name not in asset_b64_cache:
-                            print(f"[ERROR] {fname} Cell {idx} references missing asset '{ref_name}'!")
+                            print(f"[ERROR] {rel_name} Cell {idx} references missing asset '{ref_name}'!")
                             total_errors += 1
                         else:
                             cell_attachments[ref_name] = {"image/png": asset_b64_cache[ref_name]}
@@ -122,16 +125,16 @@ def pack_and_validate_all():
             atts = c.get("attachments", {})
             for r in refs:
                 if r not in atts or "image/png" not in atts[r] or len(atts[r]["image/png"]) < 1000:
-                    print(f"[FAIL] {fname} Cell {idx}: missing or invalid attachment '{r}'")
+                    print(f"[FAIL] {rel_name} Cell {idx}: missing or invalid attachment '{r}'")
                     total_errors += 1
                 else:
                     raw = base64.b64decode(atts[r]["image/png"])
                     if not raw.startswith(PNG_MAGIC):
-                        print(f"[FAIL] {fname} Cell {idx}: corrupted PNG payload for '{r}'")
+                        print(f"[FAIL] {rel_name} Cell {idx}: corrupted PNG payload for '{r}'")
                         total_errors += 1
                     verified_att_cells.append(f"Cell {idx}:{r}({len(atts[r]['image/png']) // 1024}KB)")
 
-        print(f"[PASS] {fname:<48} | {file_size_kb:6.1f} KB | {len(verified_nb['cells']):2d} cells | {out_count:2d} outputs | Att: {', '.join(verified_att_cells)}")
+        print(f"[PASS] {rel_name:<52} | {file_size_kb:6.1f} KB | {len(verified_nb['cells']):2d} cells | {out_count:2d} outputs | Att: {', '.join(verified_att_cells)}")
 
     if total_errors > 0:
         print(f"\n[FAILED] Total validation errors: {total_errors}")

@@ -1,6 +1,6 @@
 # Stage 1. 자산 탐색·스코핑·CQ 정의
 
-> 스튜디오 [`Stage 1. Asset`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage1) · MCP `mcp_stage1_asset_discovery` · 노트북 [stage1_asset_and_cq_ko.ipynb](../notebooks/stage1_asset_and_cq_ko.ipynb) · [English](./01_stage1_asset_and_cq_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
+> 스튜디오 [`Stage 1. Asset`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage1) · MCP `mcp_stage1_asset_discovery` · 노트북 [stage1_asset_and_cq_ko.ipynb](../notebooks/ko/stage1_asset_and_cq_ko.ipynb) · [English](./01_stage1_asset_and_cq_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
 
 ## 목적
 
@@ -77,7 +77,7 @@ CQ 한 건의 필드:
 
 ## 노트북
 
-[stage1_asset_and_cq_ko.ipynb](../notebooks/stage1_asset_and_cq_ko.ipynb)
+[stage1_asset_and_cq_ko.ipynb](../notebooks/ko/stage1_asset_and_cq_ko.ipynb)
 
 ## 내 데이터에 적용하기
 

@@ -1,6 +1,6 @@
 # Stage 2. OKF Wiki·시맨틱 모델링
 
-> 스튜디오 [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) · MCP `mcp_stage2_wiki_and_semantic` · 노트북 [stage2_wiki_and_semantic_graph_ko.ipynb](../notebooks/stage2_wiki_and_semantic_graph_ko.ipynb) · [English](./02_stage2_wiki_and_semantic_graph_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
+> 스튜디오 [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) · MCP `mcp_stage2_wiki_and_semantic` · 노트북 [stage2_wiki_and_semantic_graph_ko.ipynb](../notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) · [English](./02_stage2_wiki_and_semantic_graph_en.md) · [전체 방법론](./METHODOLOGY_KO.md)
 
 ## 목적
 
@@ -70,7 +70,7 @@
 
 ## 노트북
 
-[stage2_wiki_and_semantic_graph_ko.ipynb](../notebooks/stage2_wiki_and_semantic_graph_ko.ipynb)
+[stage2_wiki_and_semantic_graph_ko.ipynb](../notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb)
 
 ## 내 데이터에 적용하기
 
