@@ -8,7 +8,8 @@ Pipeline Ingest Engine (Real GCP BigQuery & Cloud Storage Integration):
 - Parses unstructured policy guides (`01_guides/*.md`) into SHA-256 anchored chunks (`doc_chunks.jsonl`)
 - Compiles Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`)
 - Uploads `raw/`, `parsed/`, and `ontology/` artifacts to real GCS bucket `gs://seanjung-poc-starter-ontology`
-- Loads the 10 Terraform-provisioned BigQuery tables from data/input/03_tables/*.csv (no values typed in code)
+- Loads the 10 Terraform-provisioned BigQuery tables from data/input/03_tables/*.csv (no values typed in code);
+  track=lite (no customer tables) loads tb_doc_chunks only
 """
 
 import csv
@@ -195,56 +196,8 @@ def build_chunks(guide_dir: str = "data/input/01_guides", root: str = None):
     return guide_files, chunks
 
 
-def run_ingest(
-    guide_dir: str = "data/input/01_guides",
-    output_dir: str = "data/output",
-    wiki_dir: str = "data/llm_wiki",
-    sync_gcp: bool = True,
-):
-    abs_output_dir = os.path.join(DATA_ROOT, output_dir)
-    abs_wiki_dir = os.path.join(DATA_ROOT, wiki_dir)
-    os.makedirs(abs_output_dir, exist_ok=True)
-    os.makedirs(abs_wiki_dir, exist_ok=True)
-
-    guide_files, chunks = build_chunks(guide_dir)
-    from pipeline.validator import run_gate0
-    if run_gate0(chunks)["status"] != "PASS":  # nothing is written or loaded when Gate 0 fails
-        raise SystemExit(1)
-
-    chunks_path = os.path.join(abs_output_dir, "doc_chunks.jsonl")
-    with open(chunks_path, "w", encoding="utf-8") as f:
-        for c in chunks:
-            f.write(json.dumps(c, ensure_ascii=False) + "\n")
-
-    ontology = {
-        "@context": "https://cloud.google.com/ontology/v0.2/context.jsonld",
-        "@graph": [
-            {
-                "@id": "domain:TelecomSubsidyManagement",
-                "@type": "DomainOntology",
-                "label": "Enterprise Subsidy & Contract Management (Starter v2.0)",
-                "summary": "Hybrid ontology unifying structured BigQuery DW tables and unstructured policy manuals.",
-                "totalChunks": len(chunks),
-                "supportedTracks": ["lite", "standard", "full"],
-                "supportedGraphEngines": ["bigquery", "spanner"],
-            }
-        ],
-    }
-    for c in chunks:
-        ontology["@graph"].append(
-            {
-                "@id": f"chunk:{c['chunk_id']}",
-                "@type": "DocChunk",
-                "title": c["title"],
-                "sourceDoc": c.get("source_doc", "sample_policy_guide.md"),
-                "hashAnchor": c["hash_anchor"],
-            }
-        )
-
-    onto_path = os.path.join(abs_output_dir, "ontology.jsonld")
-    with open(onto_path, "w", encoding="utf-8") as f:
-        json.dump(ontology, f, ensure_ascii=False, indent=2)
-
+def _sample_tables_and_wiki(doc_table, chunks, guide_files):
+    """Bundled sample schema only. A project with another schema sets project.json ingest_module."""
     # Structured sample tables (data/input/03_tables) -> rows for the 10 Terraform-provisioned tables (terraform/bigquery.tf)
     devices = _read_csv("data/input/03_tables/devices.csv")
     plans = _read_csv("data/input/03_tables/plans.csv")
@@ -274,12 +227,7 @@ def run_ingest(
               c["contract_type"], int(c["commitment_months"]), int(c["elapsed_days"]),
               0 if c["contract_type"] == "SELECTIVE_25PCT" else total_subsidy.get(c["policy_id"]),
               c["welfare_status"], c["status"]) for c in contracts]),
-        "tb_doc_chunks": (
-            ("chunk_id", "source_file", "section_title", "content", "content_sha256", "trust_tier",
-             "source_doc", "source_sha256", "page_from", "page_to", "article_no"),
-            [(ch["chunk_id"], ch["source_doc"], ch["title"], ch["content"], ch["hash_anchor"], ch["provenance"],
-              ch.get("source_original"), ch.get("source_sha256"), ch.get("page_from"), ch.get("page_to"), ch.get("article_no"))
-             for ch in chunks]),
+        "tb_doc_chunks": doc_table,
         "tb_domain_rules": (rule_cols, [tuple(r[k] for k in rule_cols) for r in rules]),
         "edge_contract_device": (
             ("contract_id", "customer_id", "device_id", "edge_type"),
@@ -335,6 +283,95 @@ def run_ingest(
             + [f"### `{r['rule_id']}` · {r['rule_name']} (`{r['source_chunk_id']}`)\n- **Condition**: `{r['condition_expr']}`\n"
                f"- **Formula**: `{r['formula_expr']}`\n- {r['description_ko']}\n" for r in rules]),
     }
+    return tables, wiki
+
+
+def _lite_summary(project, reason, chunks):
+    """Layer-1 summary for a documents-only project: facts from input_manifest.json and the chunks, no domain text."""
+    man_path = os.path.join(DATA_ROOT, "data/output/input_manifest.json")
+    docs = []
+    if os.path.exists(man_path):
+        with open(man_path, "r", encoding="utf-8") as f:
+            docs = json.load(f)["documents"]
+    return "\n".join(
+        ["# Knowledge Wiki: Summary (Layer 1)",
+         f"- **Project**: {project.get('project_name') or project['project_id']}",
+         f"- **Track**: lite ({reason}). No tables are loaded; answers cite chunk IDs.",
+         f"- **Source documents**: {len(docs)} (`data/output/input_manifest.json`)",
+         f"- **Chunks**: {len(chunks)} in `{DEFAULT_PROJECT_ID}.{DEFAULT_DATASET_ID}.tb_doc_chunks`, text copied from the originals by code",
+         "", "## Documents"]
+        + [f"- `{d['source_doc']}` · {d['pages']} pages · SHA-256 `{d['source_sha256'][:12]}`" for d in docs]) + "\n"
+
+
+def run_ingest(
+    guide_dir: str = "data/input/01_guides",
+    output_dir: str = "data/output",
+    wiki_dir: str = "data/llm_wiki",
+    sync_gcp: bool = True,
+):
+    abs_output_dir = os.path.join(DATA_ROOT, output_dir)
+    abs_wiki_dir = os.path.join(DATA_ROOT, wiki_dir)
+    os.makedirs(abs_output_dir, exist_ok=True)
+    os.makedirs(abs_wiki_dir, exist_ok=True)
+
+    guide_files, chunks = build_chunks(guide_dir)
+    from pipeline.validator import run_gate0
+    if run_gate0(chunks)["status"] != "PASS":  # nothing is written or loaded when Gate 0 fails
+        raise SystemExit(1)
+
+    from src.project_context import project_for_root, resolve_track
+    project = project_for_root(DATA_ROOT)
+    track, _, reason = resolve_track(project)
+    fq = f"{DEFAULT_PROJECT_ID}.{DEFAULT_DATASET_ID}"
+    chunks_path = os.path.join(abs_output_dir, "doc_chunks.jsonl")
+    with open(chunks_path, "w", encoding="utf-8") as f:
+        for c in chunks:
+            f.write(json.dumps(c, ensure_ascii=False) + "\n")
+
+    ontology = {
+        "@context": "https://cloud.google.com/ontology/v0.2/context.jsonld",
+        "@graph": [
+            {
+                "@id": "domain:TelecomSubsidyManagement",
+                "@type": "DomainOntology",
+                "label": "Enterprise Subsidy & Contract Management (Starter v2.0)",
+                "summary": "Hybrid ontology unifying structured BigQuery DW tables and unstructured policy manuals.",
+            } if track != "lite" else {
+                "@id": f"domain:{project['project_id']}",
+                "@type": "DomainOntology",
+                "label": project.get("project_name") or project["project_id"],
+                "summary": f"Documents only (track=lite): chunks copied from the customer originals. {reason}.",
+            },
+        ],
+    }
+    ontology["@graph"][0].update({"totalChunks": len(chunks), "supportedTracks": ["lite", "standard", "full"],
+                                  "supportedGraphEngines": ["bigquery", "spanner"]})
+    for c in chunks:
+        ontology["@graph"].append(
+            {
+                "@id": f"chunk:{c['chunk_id']}",
+                "@type": "DocChunk",
+                "title": c["title"],
+                "sourceDoc": c.get("source_doc", "sample_policy_guide.md"),
+                "hashAnchor": c["hash_anchor"],
+            }
+        )
+
+    onto_path = os.path.join(abs_output_dir, "ontology.jsonld")
+    with open(onto_path, "w", encoding="utf-8") as f:
+        json.dump(ontology, f, ensure_ascii=False, indent=2)
+
+    doc_table = (
+        ("chunk_id", "source_file", "section_title", "content", "content_sha256", "trust_tier",
+         "source_doc", "source_sha256", "page_from", "page_to", "article_no"),
+        [(ch["chunk_id"], ch["source_doc"], ch["title"], ch["content"], ch["hash_anchor"], ch["provenance"],
+          ch.get("source_original"), ch.get("source_sha256"), ch.get("page_from"), ch.get("page_to"), ch.get("article_no"))
+         for ch in chunks])
+    if track == "lite":  # documents only: no tables and no table-derived wiki (entities/concepts: pipeline/extract_wiki.py)
+        tables = {"tb_doc_chunks": doc_table}
+        wiki = {"summary.md": _lite_summary(project, reason, chunks)}
+    else:
+        tables, wiki = _sample_tables_and_wiki(doc_table, chunks, guide_files)
     for fn, body in wiki.items():
         with open(os.path.join(abs_wiki_dir, fn), "w", encoding="utf-8") as f:
             f.write(body)

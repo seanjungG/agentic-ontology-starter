@@ -55,6 +55,22 @@ def cached(project: Dict[str, Any], kind: str, factory: Callable[[Dict[str, Any]
     return _CACHE[key]
 
 
+def project_for_root(root: str) -> Dict[str, Any]:
+    return next(p for p in list_projects() if os.path.abspath(p["root"]) == os.path.abspath(root))
+
+
+def resolve_track(project: Dict[str, Any]) -> tuple:
+    """Returns (track, tables, reason). `tables` = CSVs listed in project.json `tables` that exist.
+    track "auto": standard when such tables exist, else lite (documents only)."""
+    tables = [t for t in project.get("tables") or [] if os.path.isfile(os.path.join(project["root"], t))]
+    track = project.get("track") or "auto"
+    if track != "auto":
+        return track, tables, f"track={track} in project.json"
+    if tables:
+        return "standard", tables, f"auto: {len(tables)} table CSV(s) listed in project.json"
+    return "lite", tables, "auto: no table CSV listed in project.json"
+
+
 def load_override(project: Dict[str, Any], key: str, name: str):
     """Optional per-project class/function, e.g. `"mcp_module": "src/mcp_server.py"` (path relative to the project root)."""
     rel = project.get(key)

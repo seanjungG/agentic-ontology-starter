@@ -10,13 +10,23 @@ import argparse
 import os
 import sys
 
-from src.project_context import get_project, load_override
+from src.project_context import get_project, load_override, resolve_track
+
+NO_TABLES = """[STOP] track={track} needs customer tables, but project.json lists none ({reason}).
+Choose one and tell the operator (the agent must not create tables):
+  (a) Ask the customer for the table extracts, put them in data/input/03_tables/ and list them in project.json "tables".
+  (b) Physical graph built from the documents: not implemented (separate request).
+  (c) Synthetic demo data: only with explicit user approval, recorded in project.json "synthetic".
+Or set "track": "auto" / "lite" to run the documents-only path."""
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", help="project id (default: sample or env STARTER_PROJECT)")
     p = get_project(ap.parse_args().project)
+    track, tables, reason = resolve_track(p)
+    if track != "lite" and not tables:
+        sys.exit(NO_TABLES.format(track=track, reason=reason))
     gcp = p.get("gcp") or {}
     env = {"GCP_PROJECT_ID": gcp.get("project_id"), "BQ_DATASET_ID": gcp.get("dataset_id"),
            "GCS_WIKI_BUCKET": gcp.get("gcs_bucket"), "STARTER_PROJECT_ROOT": p["root"]}
@@ -31,13 +41,13 @@ def main():
     run_validation = load_override(p, "validator_module", "run_validation") or run_validation
 
     print("==================================================================")
-    print(f" [Enterprise Agentic Ontology Starter] Executing Unified Pipeline · project={p['project_id']}")
+    print(f" [Enterprise Agentic Ontology Starter] Executing Unified Pipeline · project={p['project_id']} · track={track} ({reason})")
     print("==================================================================")
     from pipeline.extract_docs import extract_project
     from pipeline.ingest import build_chunks
     from pipeline.validator import run_gate0
     print(">>> Stage 1: Converting customer_doc/ originals to 01_guides (code only, no summary)...")
-    if extract_project(p["root"])["needs_ocr"]:
+    if extract_project(p["root"], {"track": track, "track_reason": reason})["needs_ocr"]:
         sys.exit("[STOP] Pages without text (needs_ocr). See data/output/input_manifest.json.")
     print("\n>>> Gate 0: Chunks vs. original text...")
     if run_gate0(build_chunks()[1])["status"] != "PASS":
@@ -46,8 +56,11 @@ def main():
     print("\n>>> Stage 1 & 2: Ingesting Unstructured Guides & Extracting Anchors...")
     run_ingest()
 
-    print("\n>>> Stage 3: Synthesizing BigQuery SQL:2023 Property Graph DDL...")
-    build_graph()
+    if track == "lite":
+        print("\n>>> Stage 3: skipped (track=lite, no customer tables; the property graph needs tables)")
+    else:
+        print("\n>>> Stage 3: Synthesizing BigQuery SQL:2023 Property Graph DDL...")
+        build_graph()
 
     print("\n>>> Stage 5: Live Golden CQ validation (BigQuery verification SQL + Gemini agent answers)...")
     run_validation()

@@ -5,6 +5,9 @@
   "customer_org": "Sample",
   "domain": "Device subsidy, plan-change penalty, 24-month TCO",
   "track": "full",
+  "tables": ["data/input/03_tables/devices.csv", "data/input/03_tables/plans.csv", "data/input/03_tables/subsidies.csv",
+             "data/input/03_tables/customer_contracts.csv", "data/input/03_tables/domain_rules.csv", "data/input/03_tables/rule_plan_edges.csv"],
+  "synthetic": {"allowed": true, "reason": "De-identified demo data bundled with the starter; not customer data."},
   "graph_engine": "bigquery",
   "gcp": {"project_id": "", "dataset_id": "", "gcs_bucket": ""}
 }

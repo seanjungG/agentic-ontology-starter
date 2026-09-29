@@ -67,9 +67,52 @@ def _sql(sql: str, fq: str) -> dict:
             "error": str(r.get("error", ""))[:500] or None}
 
 
+PROVENANCE = ("CUSTOMER_PROVIDED", "EXTRACTED", "SYNTHETIC_DEMO")
+
+
+def _input_errors(root: str, sample: bool) -> list:
+    """F6: every row of data/input/03_tables/*.csv needs provenance + source_ref; SYNTHETIC_DEMO rows need
+    project.json synthetic.allowed=true (set only with user approval). F10: a customer project must not contain
+    files identical to the bundled sample or industry_cases."""
+    import csv
+    import glob
+    from pipeline.extract_docs import sha256_file
+    meta_path = os.path.join(root, "config/project.json" if sample else "project.json")
+    meta = {}
+    if os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+    synth_ok = (meta.get("synthetic") or {}).get("allowed") is True
+    errors = []
+    for path in sorted(glob.glob(os.path.join(root, "data/input/03_tables/*.csv"))):
+        with open(path, "r", encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+        bad = [i for i, r in enumerate(rows, 2) if r.get("provenance") not in PROVENANCE or not (r.get("source_ref") or "").strip()]
+        synth = [i for i, r in enumerate(rows, 2) if r.get("provenance") == "SYNTHETIC_DEMO"] if not synth_ok else []
+        name = os.path.relpath(path, root)
+        if bad:
+            errors.append(f"{name}: {len(bad)} row(s) without provenance {PROVENANCE} or source_ref (first line {bad[0]})")
+        if synth:
+            errors.append(f"{name}: {len(synth)} SYNTHETIC_DEMO row(s) but project.json synthetic.allowed is not true "
+                          f"(first line {synth[0]}); synthetic data needs user approval")
+    if not sample:
+        ref = {}
+        for d in ("data/input", "industry_cases"):
+            for f in glob.glob(os.path.join(BASE_DIR, d, "**/*"), recursive=True):
+                if os.path.isfile(f) and os.path.getsize(f):
+                    ref[sha256_file(f)] = os.path.relpath(f, BASE_DIR)
+        for d in ("data/input", "customer_doc"):
+            for f in sorted(glob.glob(os.path.join(root, d, "**/*"), recursive=True)):
+                if os.path.isfile(f) and os.path.getsize(f) and sha256_file(f) in ref:
+                    errors.append(f"{os.path.relpath(f, root)}: same content as starter file {ref[sha256_file(f)]} "
+                                  "(sample / industry_cases data must not be loaded as customer data)")
+    return errors
+
+
 def run_gate0(chunks: list, root: str = None) -> dict:
     """Gate 0 (before any load): chunks vs. the customer originals, per document. File checks only (no LLM / GCP).
-    In a customer project every 01_guides/*.md must be written by pipeline/extract_docs.py and unchanged since."""
+    In a customer project every 01_guides/*.md must be written by pipeline/extract_docs.py and unchanged since.
+    Also table provenance and sample isolation (_input_errors)."""
     from pipeline.extract_docs import ARTICLE_RE, DOC_DIR, GUIDE_DIR, MANIFEST, nonws, read_pages, sha256_bytes, sha256_file
     root = root or DATA_ROOT
     with open(os.path.join(BASE_DIR, "config/starter_config.json"), "r", encoding="utf-8") as f:
@@ -84,6 +127,7 @@ def run_gate0(chunks: list, root: str = None) -> dict:
     sample = os.path.abspath(root) == BASE_DIR
     docs, legacy, errors = [], [], [f"needs_ocr: {d}" for d in manifest.get("needs_ocr", [])]
     errors += [f"{m}: listed in {MANIFEST} but missing in {GUIDE_DIR}" for m in by_md if m not in guides]
+    errors += _input_errors(root, sample)
     for g in guides:
         with open(os.path.join(gdir, g), "rb") as f:
             raw_md = f.read()

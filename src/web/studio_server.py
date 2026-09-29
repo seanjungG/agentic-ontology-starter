@@ -21,7 +21,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, BASE_DIR)
 
 from src.lineage.lineage_engine import LineageEngine
-from src.project_context import cached, get_engine, get_project, list_projects
+from src.project_context import cached, get_engine, get_project, list_projects, resolve_track
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -2893,7 +2893,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/industry_cases":
             return self._json(INDUSTRY_CASES)
         if path == "/api/projects":
-            return self._json([{k: v for k, v in p.items() if k != "root"} for p in list_projects()])
+            return self._json([{**{k: v for k, v in p.items() if k != "root"}, "track": resolve_track(p)[0]} for p in list_projects()])
         try:
             proj = get_project(arg("project") or None)
         except KeyError as e:

@@ -1,13 +1,13 @@
-edge_id,rule_id,plan_id,source_chunk_id,relation_label_ko
-EDGE_RP_01,RULE_SIX_PLAN_180D,PLAN-5G-130,DOC_CHUNK_002,180일 기준선 유지 의무 적용
-EDGE_RP_02,RULE_TCO_24M,PLAN-5G-130,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용
-EDGE_RP_03,RULE_SIX_PLAN_180D,PLAN-5G-85,DOC_CHUNK_002,180일 기준선 유지 의무 적용
-EDGE_RP_04,RULE_TCO_24M,PLAN-5G-85,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용
-EDGE_RP_05,RULE_SIX_PLAN_180D,PLAN-5G-61,DOC_CHUNK_002,180일 기준선 유지 의무 적용
-EDGE_RP_06,RULE_TCO_24M,PLAN-5G-61,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용
-EDGE_RP_07,RULE_SIX_PLAN_180D,PLAN-5G-45,DOC_CHUNK_002,180일 기준선 유지 의무 적용
-EDGE_RP_08,RULE_TCO_24M,PLAN-5G-45,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용
-EDGE_RP_09,RULE_SIX_PLAN_180D,PLAN-5G-37,DOC_CHUNK_003,기준선 미만 하향 시 일할 위약금 발생
-EDGE_RP_10,RULE_WELFARE_EXEMPT,PLAN-5G-37,DOC_CHUNK_004,시니어 복지 전환 시 위약금 면제 특례
-EDGE_RP_11,RULE_SIX_PLAN_180D,PLAN-LTE-33,DOC_CHUNK_003,기준선 미만 하향 시 일할 위약금 발생
-EDGE_RP_12,RULE_WELFARE_EXEMPT,PLAN-LTE-33,DOC_CHUNK_004,시니어 복지 전환 시 위약금 면제 특례
+edge_id,rule_id,plan_id,source_chunk_id,relation_label_ko,provenance,source_ref
+EDGE_RP_01,RULE_SIX_PLAN_180D,PLAN-5G-130,DOC_CHUNK_002,180일 기준선 유지 의무 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_02,RULE_TCO_24M,PLAN-5G-130,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_03,RULE_SIX_PLAN_180D,PLAN-5G-85,DOC_CHUNK_002,180일 기준선 유지 의무 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_04,RULE_TCO_24M,PLAN-5G-85,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_05,RULE_SIX_PLAN_180D,PLAN-5G-61,DOC_CHUNK_002,180일 기준선 유지 의무 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_06,RULE_TCO_24M,PLAN-5G-61,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_07,RULE_SIX_PLAN_180D,PLAN-5G-45,DOC_CHUNK_002,180일 기준선 유지 의무 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_08,RULE_TCO_24M,PLAN-5G-45,DOC_CHUNK_005,24개월 공시 vs 선택약정 비교 적용,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_09,RULE_SIX_PLAN_180D,PLAN-5G-37,DOC_CHUNK_003,기준선 미만 하향 시 일할 위약금 발생,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_10,RULE_WELFARE_EXEMPT,PLAN-5G-37,DOC_CHUNK_004,시니어 복지 전환 시 위약금 면제 특례,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_11,RULE_SIX_PLAN_180D,PLAN-LTE-33,DOC_CHUNK_003,기준선 미만 하향 시 일할 위약금 발생,SYNTHETIC_DEMO,project.json#synthetic
+EDGE_RP_12,RULE_WELFARE_EXEMPT,PLAN-LTE-33,DOC_CHUNK_004,시니어 복지 전환 시 위약금 면제 특례,SYNTHETIC_DEMO,project.json#synthetic

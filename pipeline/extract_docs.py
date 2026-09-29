@@ -87,7 +87,8 @@ def _strip_repeats(pages: list) -> tuple:
     return pages, removed
 
 
-def extract_project(root: str) -> dict:
+def extract_project(root: str, track: dict = None) -> dict:
+    """track: {"track", "track_reason"} from src.project_context.resolve_track, recorded in the manifest."""
     src_dir, out_dir = os.path.join(root, DOC_DIR), os.path.join(root, GUIDE_DIR)
     files = sorted(f for f in os.listdir(src_dir) if f.lower().endswith(SUPPORTED)) if os.path.isdir(src_dir) else []
     os.makedirs(out_dir, exist_ok=True)
@@ -114,7 +115,7 @@ def extract_project(root: str) -> dict:
                      "chars_original": len(nonws("".join(raw))), "chars_written": len(nonws("".join(pages))),
                      "removed_header_footer_lines": removed})
     manifest = {"extractor": "pipeline/extract_docs.py", "status": "NEEDS_OCR" if needs_ocr else "OK",
-                "documents": docs, "needs_ocr": needs_ocr}
+                **(track or {}), "documents": docs, "needs_ocr": needs_ocr}
     with open(os.path.join(root, MANIFEST), "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
         f.write("\n")
@@ -122,11 +123,12 @@ def extract_project(root: str) -> dict:
 
 
 def main():
-    from src.project_context import get_project
+    from src.project_context import get_project, resolve_track
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", help="project id (default: sample or env STARTER_PROJECT)")
     p = get_project(ap.parse_args().project)
-    m = extract_project(p["root"])
+    track, _, reason = resolve_track(p)
+    m = extract_project(p["root"], {"track": track, "track_reason": reason})
     for d in m["documents"]:
         print(f"[EXTRACT] {d['source_doc']} -> {d['md_file']} · {d['pages']} pages · "
               f"{d['chars_written']:,}/{d['chars_original']:,} chars · header/footer lines removed {d['removed_header_footer_lines']}")

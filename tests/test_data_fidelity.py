@@ -94,6 +94,32 @@ class DataFidelityTest(unittest.TestCase):
         self.assertTrue(all(c["source_original"] == "notes.md" and c["page_from"] == 1 for c in chunks))
         self.assertEqual(self._gate0()["status"], "PASS")
 
+    def test_t4_row_without_provenance_fails(self):
+        self._put("data/input/03_tables/items.csv", "item_id,name,provenance,source_ref\nA1,x,CUSTOMER_PROVIDED,items.xlsx\nA2,y,,\n")
+        r = self._gate0()
+        self.assertEqual(r["status"], "FAIL")
+        self.assertIn("1 row(s) without provenance", r["errors"][0])
+
+    def test_t4_unapproved_synthetic_rows_fail(self):
+        self._put("data/input/03_tables/items.csv", "item_id,provenance,source_ref\nA1,SYNTHETIC_DEMO,agent\n")
+        r = self._gate0()
+        self.assertEqual(r["status"], "FAIL")
+        self.assertIn("synthetic.allowed is not true", r["errors"][0])
+
+    def test_t7_sample_file_in_project_fails(self):
+        shutil.copytree(os.path.join(BASE_DIR, "data/input/03_tables"), os.path.join(self.root, "data/input/03_tables"))
+        r = self._gate0()
+        self.assertEqual(r["status"], "FAIL")
+        self.assertTrue(any("same content as starter file" in e for e in r["errors"]), r["errors"])
+
+    def test_auto_track_without_tables_is_lite(self):
+        from src.project_context import resolve_track
+        self.assertEqual(resolve_track({"root": self.root, "track": "auto", "tables": []})[0], "lite")
+        self._put("data/input/03_tables/items.csv", "item_id,provenance,source_ref\nA1,CUSTOMER_PROVIDED,items.xlsx\n")
+        p = {"root": self.root, "track": "auto", "tables": ["data/input/03_tables/items.csv"]}
+        self.assertEqual(resolve_track(p)[0], "standard")
+        self.assertEqual(self._gate0()["status"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()

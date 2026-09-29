@@ -1,6 +1,6 @@
 {
   "gate": "GATE_0",
-  "evaluated_at": "2026-09-29T22:28:47+09:00",
+  "evaluated_at": "2026-09-29T22:37:02+09:00",
   "status": "PASS",
   "thresholds": {
     "min_char_ratio": 0.95,
