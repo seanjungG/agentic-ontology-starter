@@ -1,10 +1,9 @@
 # Agentic Ontology Starter — 마스터 제품·아키텍처 헌장 (`01_prod.md`)
 
 - **역할 및 위상**: 이 저장소(`agentic-ontology-starter`)는 특정 고객사의 프로덕션 비즈니스·데이터를 담고 있지 않은 **교육용 · 테스트용 · 신규 프로젝트 부트스트랩용 심플 레퍼런스 레포지토리**입니다. 반입될 외부 고객 비즈니스와 데이터 형태(문서만 있는 경우, 일부 테이블만 있는 경우, 전혀 다른 산업군 스키마가 들어오는 경우 등)가 완전히 예측 불가능한 상황에서도 유연하게 적응하도록 설계되었으며, 사람(FDE·엔지니어)과 AI 코딩 에이전트(Jetski / Antigravity / Cursor / Claude Code)가 공통으로 준수해야 하는 최상위 기준 문서입니다.
-- **라이선스 및 상업적 이용 제한 (`LICENSE`)**: 본 저장소의 핵심인 **5-Stage 온톨로지 엔지니어링 방법론·노트북·문서(`CC BY-NC-ND 4.0`)** 및 **소스 코드(`PolyForm Noncommercial 1.0.0`)**는 비영리 목적으로만 제공됩니다. 유상 컨설팅·SI·PoC 납품 및 상용 서비스 탑재를 금지하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([`LICENSE`](LICENSE))
 - **핵심 원칙**: 이 저장소는 백지상태에서 코드를 새로 짜는 보일러플레이트가 아니라, **동작이 검증된 5-Stage 온톨로지 파이프라인·8종 MCP·2-Pass/Lite 에이전트·6-Tab 라이트 스튜디오 골격을 그대로 유지한 채, 예측 불가능한 외부 고객 문서·데이터를 `projects/<id>/` 단위로 격리 인입하고 트랙(`auto`/`lite`/`standard`/`full`)과 모듈 오버라이드(`*_module`)로 유연하게 부트스트랩**하는 레퍼런스 엔진입니다.
 - **관련 문서**:
-  - 비영리 듀얼 라이선스 (KO / EN): [`LICENSE`](LICENSE)
+  - 비영리 듀얼 라이선스: [`LICENSE`](LICENSE)
   - 상황별 프로토타이핑 레시피: [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)
   - AI 에이전트 부트스트랩 지침: [`GEMINI.md`](GEMINI.md) · [`CLAUDE.md`](CLAUDE.md) · [`AGENTS.md`](AGENTS.md) · [`.cursorrules`](.cursorrules)
   - 웹 UI 디자인 시스템 표준: [`DESIGN.md`](DESIGN.md)
@@ -95,3 +94,13 @@
 | [`src/web/studio_server.py`](src/web/studio_server.py) | 6-Tab 통합 웹 스튜디오 서버 (`config/portal_profile.json` 기반 렌더링) | 코어 레이아웃 유지 |
 | [`notebooks/ko/`](notebooks/ko/) · [`notebooks/en/`](notebooks/en/) | Stage 0~5 국문(6종) · 영문(6종) 실행형 노트북 및 `nb_helpers.py` | 필요 시 쿼리만 갱신 |
 | [`terraform/`](terraform/) | BigQuery, GCS, IAM, Cloud Run 선언적 IaC | `terraform.tfvars`만 수정 |
+
+---
+
+## License
+
+This starter pack is licensed under a non-commercial dual license:
+- **Methodology, Documentation & Notebooks**: [Creative Commons CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+- **Source Code & Pipelines**: [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)
+
+See [`LICENSE`](LICENSE) for complete terms. For commercial licensing, contact `seanjung@google.com`.
