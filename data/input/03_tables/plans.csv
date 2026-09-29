@@ -1,7 +1,7 @@
-plan_id,plan_name,network_type,monthly_fee,is_baseline_tier,tier_category,min_maintenance_days,selective_discount_rate
-PLAN-5G-130,5G Premier Super,5G,130000,true,5G_HIGH,180,0.25
-PLAN-5G-85,5G Premier Essential,5G,85000,true,5G_HIGH,180,0.25
-PLAN-5G-61,5G Direct 61,5G,61000,true,5G_MID,180,0.25
-PLAN-5G-45,5G Slim (Baseline Threshold),5G,45000,true,5G_MID,180,0.25
-PLAN-5G-37,5G Light (Below Baseline),5G,37000,false,BELOW_BASELINE,0,0.25
-PLAN-LTE-33,LTE Basic (Below Baseline),LTE,33000,false,BELOW_BASELINE,0,0.25
+plan_id,plan_name,network_type,monthly_fee,is_baseline_tier,tier_category,min_maintenance_days,selective_discount_rate,provenance,source_ref
+PLAN-5G-130,5G Premier Super,5G,130000,true,5G_HIGH,180,0.25,SYNTHETIC_DEMO,project.json#synthetic
+PLAN-5G-85,5G Premier Essential,5G,85000,true,5G_HIGH,180,0.25,SYNTHETIC_DEMO,project.json#synthetic
+PLAN-5G-61,5G Direct 61,5G,61000,true,5G_MID,180,0.25,SYNTHETIC_DEMO,project.json#synthetic
+PLAN-5G-45,5G Slim (Baseline Threshold),5G,45000,true,5G_MID,180,0.25,SYNTHETIC_DEMO,project.json#synthetic
+PLAN-5G-37,5G Light (Below Baseline),5G,37000,false,BELOW_BASELINE,0,0.25,SYNTHETIC_DEMO,project.json#synthetic
+PLAN-LTE-33,LTE Basic (Below Baseline),LTE,33000,false,BELOW_BASELINE,0,0.25,SYNTHETIC_DEMO,project.json#synthetic

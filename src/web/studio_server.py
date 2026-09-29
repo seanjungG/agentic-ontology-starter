@@ -14,14 +14,14 @@ Agentic Ontology Studio Server (Starter Pack v2.0)
   * 3-Track Data Maturity (`lite: 1→2→4`, `standard: 1→2→3→4`, `full: 1→5`) & Dual Graph Engine Adapter (`BigQuery Property Graph` <-> `Cloud Spanner Graph`)
   * 8 Core Modular MCPs (5 Stage Pipeline MCPs with selectable `steps` + 3 Runtime Execution MCPs)
 """
-import os, sys, json, csv, glob, http.server, socketserver
+import os, sys, json, csv, glob, hashlib, http.server, socketserver
 from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, BASE_DIR)
 
 from src.lineage.lineage_engine import LineageEngine
-from src.project_context import cached, get_engine, get_project, list_projects
+from src.project_context import cached, get_engine, get_project, list_projects, resolve_track
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -81,6 +81,22 @@ def build_eval_summary(root=BASE_DIR):
         sum(1 for x in cq_items if x.get("status") == "PASSED" or x.get("verification_status") == "EXACT_MATCH"),
     ) if cq_exists else 0
     cq_rate = round((cq_passed / cq_total) * 100, 1) if cq_total else None
+    # F8: show a score only for a recorded run on the current inputs (data/output/input_manifest.json)
+    man_path, man_sha = os.path.join(root, "data/output/input_manifest.json"), None
+    if os.path.exists(man_path):
+        with open(man_path, "rb") as f:
+            man_sha = hashlib.sha256(f.read()).hexdigest()
+    if not cq_exists or not cq_total:
+        cq_state, cq_label = "PENDING", "미측정"
+    elif not cq_raw.get("run_id") or not all(x.get("executed_at") for x in cq_items):
+        cq_state, cq_label = "UNMEASURED", "미측정 (실행 기록 없음)"
+    elif cq_raw.get("input_manifest_sha256") != man_sha:
+        cq_state, cq_label = "STALE", "입력 변경 후 재평가 필요"
+    else:
+        cq_state = "MEASURED"
+        cq_label = f"{cq_passed} / {cq_total} (" + ("합성 데이터 기준 " if cq_raw.get("synthetic_basis") else "") + f"{cq_rate}%)"
+    if cq_state != "MEASURED":
+        cq_passed = cq_rate = None
 
     bd_exists = os.path.exists(os.path.join(root, BOUNDARY_REPORT_PATH))
     bd_raw = load_json_file(BOUNDARY_REPORT_PATH, {}, root) if bd_exists else {}
@@ -108,7 +124,10 @@ def build_eval_summary(root=BASE_DIR):
         "design": ev_cfg.get("design", {}),
         "rubric": rubric,
         "golden": {
-            "status": "MEASURED" if cq_exists and cq_total > 0 else "PENDING",
+            "status": cq_state,
+            "score_label": cq_label,
+            "unconfirmed": cq_raw.get("unconfirmed_cqs"),
+            "run_id": cq_raw.get("run_id"),
             "total": cq_total,
             "passed": cq_passed,
             "pass_rate": cq_rate,
@@ -1392,7 +1411,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
             <span class="badge human">STAGE 1 · ASSET DISCOVERY &amp; GOVERNANCE</span>
-            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="비식별화 정형 마스터 원장(4종) & 비정형 정책 가이드(2종) 통합 인벤토리" data-en="De-identified Structured DW Ledgers (4) & Unstructured Policy Guides (2) Inventory">비식별화 정형 마스터 원장(4종) &amp; 비정형 정책 가이드(2종) 통합 인벤토리</span>
+            <span id="st1-ribbon-title" style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">비식별화 정형 마스터 원장(4종) &amp; 비정형 정책 가이드(2종) 통합 인벤토리</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="badge approved">PII De-identified (CUST_DEMO_*)</span>
@@ -2001,13 +2020,26 @@ HTML_PAGE = r"""<!DOCTYPE html>
     { id: 'guide_welfare', name: '시니어·복지 위약금 면제 특례 및 24M TCO 가이드 (sample_welfare_exemption_guide.md)', type: 'doc', doc: 'sample_welfare_exemption_guide.md', status: 'SHA-256 Anchored', badge: 'llm' }
   ];
 
+  // F9: labels come from row provenance (CSV) and input_manifest.json + gate0_report.json; the fixed list is sample-only.
+  const PROV_LABEL = { CUSTOMER_PROVIDED: '고객 제공 테이블', EXTRACTED: '문서 추출 테이블', SYNTHETIC_DEMO: '합성 데모 데이터' };
+  function stage1TableLabel(id) {
+    const t = stage1Table(id), i = t.headers.indexOf('provenance');
+    const vals = [...new Set(t.rows.map(r => i < 0 ? '' : r[i]))];
+    return vals.length === 1 && PROV_LABEL[vals[0]] ? PROV_LABEL[vals[0]] : '출처 없음 (적재 불가)';
+  }
+  function stage1DocLabel(doc) {
+    const a = globalAssets || {};
+    const g = ((a.gate0 || {}).documents || []).find(d => d.guide === doc);
+    if (g) return `원문 비율 ${(g.char_ratio * 100).toFixed(1)}% · ${g.pages}쪽`;
+    return ((a.chunks || []).find(c => c.source_doc === doc) || {}).provenance === 'SYNTHETIC_DEMO' ? '합성 데모 데이터' : '출처 없음';
+  }
   function stage1Catalog() {
     const a = globalAssets || {}, tables = a.tables || {};
     const docs = [...new Set((a.chunks || []).map(c => c.source_doc).filter(Boolean))];
-    const curated = STAGE1_CATALOG.filter(i => i.type === 'dw' ? tables[i.id] : docs.includes(i.doc));
-    if (curated.length) return curated;
-    return Object.keys(tables).map(t => ({ id: t, short: t, name: `${t}.csv`, type: 'dw', pk: tables[t].headers[0] || '-', status: 'CSV Source', badge: 'human' }))
-      .concat(docs.map((d, i) => ({ id: `doc_${i + 1}`, name: d, type: 'doc', doc: d, status: 'SHA-256 Anchored', badge: 'llm' })));
+    const label = i => ({ ...i, status: i.type === 'dw' ? stage1TableLabel(i.id) : stage1DocLabel(i.doc), badge: i.type === 'dw' ? 'human' : 'llm' });
+    if (a.is_sample) return STAGE1_CATALOG.filter(i => i.type === 'dw' ? tables[i.id] : docs.includes(i.doc)).map(label);
+    return Object.keys(tables).map(t => label({ id: t, short: t, name: `${t}.csv`, type: 'dw', pk: tables[t].headers[0] || '-' }))
+      .concat(docs.map((d, i) => label({ id: `doc_${i + 1}`, name: d, type: 'doc', doc: d })));
   }
 
   // Counts come from /api/assets (repo CSVs + data/output/doc_chunks.jsonl), not from fixed values.
@@ -2022,10 +2054,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     const cat = stage1Catalog(), dw = cat.filter(i => i.type === 'dw');
     set('st1-kpi-assets', `${cat.length} Assets`);
-    set('st1-kpi-assets-sub', `DW 마스터 테이블 ${dw.length}종 + 정책 가이드 ${cat.length - dw.length}종`);
+    set('st1-kpi-assets-sub', `테이블 ${dw.length}종 + 문서 ${cat.length - dw.length}종`);
+    set('st1-ribbon-title', `테이블 ${dw.length}종 · 문서 ${cat.length - dw.length}종 인벤토리`);
     set('st1-filter-all', `전체 자산 (${cat.length})`);
-    set('st1-filter-dw', `정형 DW 마스터 원장 (${dw.length})`);
-    set('st1-filter-doc', `비정형 정책 가이드 (${cat.length - dw.length})`);
+    set('st1-filter-dw', `테이블 (${dw.length})`);
+    set('st1-filter-doc', `문서 (${cat.length - dw.length})`);
     set('st1-kpi-rows', `${dw.reduce((s, i) => s + stage1Table(i.id).rows.length, 0)} Rows`);
     set('st1-kpi-rows-sub', dw.map(i => `${i.short} ${stage1Table(i.id).rows.length}`).join(' · '));
     const ids = stage1Chunks();
@@ -2049,6 +2082,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     if (!tbody) return;
     renderStage1Kpis();
     const rows = stage1Catalog().filter(item => stage1Filter === 'all' || item.type === stage1Filter);
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5">데이터 없음</td></tr>'; return; }
     tbody.innerHTML = rows.map((item, idx) => `
       <tr id="st1-row-${item.id}" onclick="inspectStage1Asset('${item.id}')">
         <td><code style="font-weight:700; color:var(--apple-blue);">${item.id}</code></td>
@@ -2079,7 +2113,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
       const trs = tbl.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
       body.innerHTML = `
         <div style="margin-bottom:10px; font-size:12px; color:var(--apple-text-secondary);">
-          물리 파일 경로: <code>data/input/03_tables/${assetId}.csv</code> &middot; Zero-ETL Property Graph 노드로 직접 승격됨
+          물리 파일 경로: <code>data/input/03_tables/${assetId}.csv</code> &middot; ${esc(item.status)}
         </div>
         <div style="overflow-x:auto; border:1px solid #cbd5e1; border-radius:8px;">
           <table class="ov-gap-table" style="font-size:12px;">
@@ -2397,7 +2431,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const g = ev.golden || {}, b = ev.boundary || {};
     const pct = v => (v === null || v === undefined) ? '미측정' : `${v}%`;
     document.getElementById('ev-kpi-grid').innerHTML = `
-      <div class="metric-box"><div class="metric-title">Golden CQ 통과</div><div class="metric-value" style="color:var(--apple-emerald);">${g.passed ?? '-'} / ${g.total ?? '-'} (${pct(g.pass_rate)})</div><div class="ov-metric-cap">검증 SQL + 에이전트 답변 대조 · ${esc(g.evaluated_at || '미측정')}</div></div>
+      <div class="metric-box"><div class="metric-title">Golden CQ 통과</div><div class="metric-value" style="color:var(--apple-emerald);">${esc(g.score_label || '미측정')}</div><div class="ov-metric-cap">sql: 검증 SQL + 답변 대조 · citation: 청크 인용 + 원문 사실 대조 · 정답 미확정 ${g.unconfirmed ?? '-'}건 · ${esc(g.evaluated_at || '미측정')}</div></div>
       <div class="metric-box"><div class="metric-title">Boundary 성공률</div><div class="metric-value" style="color:var(--apple-blue);">${pct(b.avg_success_rate)}</div><div class="ov-metric-cap">${b.case_count || 0} Cases × ${b.trials_per_case ?? '-'} Trials 실측</div></div>
       <div class="metric-box"><div class="metric-title">응답 일관성</div><div class="metric-value" style="color:var(--apple-indigo);">${pct(b.avg_consistency_rate)}</div><div class="ov-metric-cap">반복 실행 간 (응답 상태, 판정) 일치 비율</div></div>
       <div class="metric-box"><div class="metric-title">의도 안정성</div><div class="metric-value" style="color:var(--apple-teal);">${pct(b.avg_intent_stability)}</div><div class="ov-metric-cap">반복 실행 간 호출 도구 조합 일치 비율 · ${esc(b.model || '')} · ${esc(b.evaluated_at || '미측정')}</div></div>
@@ -2893,7 +2927,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/industry_cases":
             return self._json(INDUSTRY_CASES)
         if path == "/api/projects":
-            return self._json([{k: v for k, v in p.items() if k != "root"} for p in list_projects()])
+            return self._json([{**{k: v for k, v in p.items() if k != "root"}, "track": resolve_track(p)[0]} for p in list_projects()])
         try:
             proj = get_project(arg("project") or None)
         except KeyError as e:
@@ -2916,7 +2950,9 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
                         wiki[fname] = json.load(f) if fname.endswith(".json") else f.read()
             tables = {os.path.splitext(os.path.basename(t))[0]: load_csv_table(t)
                       for t in sorted(glob.glob(os.path.join(root, "data/input/03_tables/*.csv")))}
-            self._json({"chunks": chunks, "wiki": wiki, "tables": tables})
+            self._json({"chunks": chunks, "wiki": wiki, "tables": tables, "is_sample": os.path.abspath(root) == BASE_DIR,
+                        "manifest": load_json_file("data/output/input_manifest.json", {}, root),
+                        "gate0": load_json_file("data/output/gate0_report.json", {}, root)})
         elif path == "/api/graph":
             self._json({
                 "ddl": load_text_file("data/output/create_property_graph.sql", "-- BigQuery DDL not yet generated", root),

@@ -1,38 +1,44 @@
 # 5-Stage 에이전틱 온톨로지 구축 방법론 (`METHODOLOGY_KO.md`)
 
 > 라이브 스튜디오 [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [English](../en/METHODOLOGY_EN.md) · [Stage별 가이드 인덱스](../README.md) · [노트북 디렉터리](../../notebooks/README.md) · [라이선스 (`LICENSE`)](../../LICENSE)
->
-> **[방법론 저작권 및 상업적 이용 금지 고지 (CC BY-NC-ND 4.0 / Non-Commercial Only)]**: 본 5-Stage 에이전틱 온톨로지 엔지니어링 방법론(8단계 엔지니어링 흐름, 산출물 D1.1~D5.5, 3-Layer OKF 위키, 듀얼 Property Graph 설계, 8종 MCP 및 2-Pass 에이전트 오케스트레이션)은 **CC BY-NC-ND 4.0** 라이선스로 보호됩니다. 개인 학습 및 비상업적 연구 외에 **유상 컨설팅, SI 구축, 유상 PoC 딜리버리, 고객사 제안서·산출물 활용을 엄격히 금지**하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다.
 
-## 1. 목적과 핵심 원칙 (8단계 엔지니어링 흐름)
+## 1. 목적과 핵심 원칙 (교육·테스트·부트스트랩용 유연한 온톨로지 엔진)
 
-이 문서는 정형 데이터(BigQuery DW 테이블)와 비정형 정책 문서(업무 가이드·약관)를 **1. 준비(Prepare) → 2. 분석(Analyze) → 3. 파싱(Parse) → 4. 통합(Integrate) → 5. 구축(Build Graph) → 6. 에이전트 구축(Build Agent) → 7. 답변(Answer & GQL) → 8. 검증(Verify & Gate)**의 8단계 엔지니어링 흐름을 통해 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO GQL)**로 결합하고, **MCP 도구(8종)**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 근거 기반 답변을 제공하는 5-Stage 절차를 정의한다.
+본 레포지토리(`agentic-ontology-starter`)는 특정 고객사 비즈니스나 정형 데이터가 고정되어 있지 않은 상태에서, **어떤 산업군의 문서나 정형 데이터가 들어올지 예측할 수 없는 상황에서도 유연하게 온톨로지와 에이전트를 구축·검증할 수 있도록 설계된 교육용·테스트용·부트스트랩용 심플 레포지토리**다.
 
-1. **원문 해시 앵커 보존**: 비정형 문서는 문단별 SHA-256 해시(`anchor_<12hex>`)와 함께 `tb_doc_chunks`에 적재해 에이전트 답변에서 원문 문단까지 역추적한다.
-2. **Zero-ETL 그래프 투영**: 정형 원장(`tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_customer_contract`)과 비정형 규칙·청크(`tb_domain_rules`, `tb_doc_chunks`)를 복제 없이 `CREATE OR REPLACE PROPERTY GRAPH`로 묶는다.
-3. **결정론적 산식 실행**: 위약금 일할 계산이나 24개월 총비용(TCO) 비교는 LLM 암산에 맡기지 않고 MCP 도구 내부 SQL/Python 산식으로 계산한다.
-4. **가드레일 상태 분리**: 근거 확인(`GROUNDED`), 조건 미일치(`MATCH_NOT_FOUND`), 필수 정보 부족(`INSUFFICIENT_PARAMETERS`), 쿼리 오류(`BQ_QUERY_ERROR`)를 명확히 구분한다.
+정형 데이터(BigQuery DW 테이블)와 비정형 정책 문서(업무 가이드·약관·매뉴얼)를 **1. 준비(Prepare) → 2. 분석(Analyze) → 3. 파싱(Parse) → 4. 통합(Integrate) → 5. 구축(Build Graph) → 6. 에이전트 구축(Build Agent) → 7. 답변(Answer & GQL) → 8. 검증(Verify & Gate)**의 8단계 엔지니어링 흐름을 통해 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO GQL)**로 결합하고, **MCP 도구(8종)**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 근거 기반 답변을 제공하는 5-Stage 절차를 정의한다.
+
+1. **코드 기반 원문 변환 및 Gate 0 검증**: 외부 고객 문서(`PDF`, `DOCX`, `MD`, `TXT`)는 AI 요약 없이 `pipeline/extract_docs.py`가 원문 그대로 `01_guides/*.md`로 변환하며, 적재 전 Gate 0(글자 수·12-gram 보존율 95% 이상, 텍스트 누락 쪽·조문 0건, 수동 작성 `.md` 0건)을 통과해야 한다.
+2. **결정론적 청킹 및 출처 5컬럼 보존**: 조문 문서(`제N조(`)는 조문 단위로, 일반 문서는 제목·문단 단위(상한 1,500자)로 분할하며, 모든 청크에 `source_doc`·`source_sha256`·`page_from`·`page_to`·`article_no`와 SHA-256 해시 앵커(`anchor_<12hex>`)를 기록한다.
+3. **데이터 유무에 따른 유연한 트랙·그래프 전환**: 정형 원장이 있으면 복제 없이 `CREATE OR REPLACE PROPERTY GRAPH`로 묶고(`standard`/`full`), 문서만 있으면 가짜 테이블을 만들지 않고 문서 내 주요 업무 단위를 `Entity`(Node), 사전·사후·제약 조건을 `Concept`(Edge)으로 추출한 위키와 전체 청크 인용 에이전트(`lite`)로 구동한다.
+4. **결정론적 산식 실행 및 가드레일 상태 분리**: 금액·일수 계산은 MCP 도구 내부 SQL/Python 산식으로 수행하며, 응답 상태를 `GROUNDED`, `MATCH_NOT_FOUND`, `INSUFFICIENT_PARAMETERS`, `BQ_QUERY_ERROR` 및 `lite` 전용 인용 상태(`NO_CITATION`, `INVALID_CITATION`, `CONTEXT_LIMIT`)로 명확히 구분한다.
 
 ## 2. 8단계 엔지니어링 흐름 & 5-Stage 라이프사이클 · 스튜디오 · MCP · 노트북 매핑
 
 | 8단계 엔지니어링 흐름 | Stage | 단계명 | 스튜디오 탭 | Stage MCP 도구 (`src/agent/mcp_server.py`) | 산출물 ID | 상세 가이드 / 한·영 노트북 |
 | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
 | **0. 전체 흐름 투어** | **공통** | 아키텍처 개요 및 파이프라인 투어 | [`0. Overview`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=overview) | Stage 1~5 일괄/개별 실행 | - | [KO 노트북](../../notebooks/ko/stage0_overview_walkthrough_ko.ipynb) · [EN 노트북](../../notebooks/en/stage0_overview_walkthrough_en.ipynb) |
-| **1. 준비 · 2. 분석** | **Stage 1** | 자산 탐색 · 스코핑 · CQ 정의 | [`Stage 1. Asset`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage1) | `mcp_stage1_asset_discovery` | `D1.1`~`D1.4` | [가이드](./01_stage1_asset_and_cq_ko.md) · [KO](../../notebooks/ko/stage1_asset_and_cq_ko.ipynb) · [EN](../../notebooks/en/stage1_asset_and_cq_en.ipynb) |
+| **1. 준비 · 2. 분석** | **Stage 1** | 자산 탐색 · 스코핑 · CQ 정의 (Gate 0·1) | [`Stage 1. Asset`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage1) | `mcp_stage1_asset_discovery` | `D1.1`~`D1.4` | [가이드](./01_stage1_asset_and_cq_ko.md) · [KO](../../notebooks/ko/stage1_asset_and_cq_ko.ipynb) · [EN](../../notebooks/en/stage1_asset_and_cq_en.ipynb) |
 | **3. 파싱 · 4. 통합** | **Stage 2** | 3-Layer 위키 · 시맨틱 그래프 | [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage2) | `mcp_stage2_wiki_and_semantic` | `D2.1`~`D2.6` | [가이드](./02_stage2_wiki_and_semantic_graph_ko.md) · [KO](../../notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) · [EN](../../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) |
 | **5. 구축** | **Stage 3** | Property Graph · ISO GQL | [`Stage 3. Property Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage3) | `mcp_stage3_property_graph` | `D3.1`~`D3.4` | [가이드](./03_stage3_property_graph_ko.md) · [KO](../../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) · [EN](../../notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) |
 | **6. 에이전트 · 7. 답변** | **Stage 4** | MCP 스위트 · 에이전트 오케스트레이션 | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 런타임 3종 | `D4.1`~`D4.4` | [가이드](./04_stage4_agent_and_mcp_ko.md) · [KO](../../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
 | **8. 검증** | **Stage 5** | 4계층 리니지 · 평가 · 배포 게이트 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`~`D5.5` | [가이드](./05_stage5_lineage_and_eval_ko.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
 
-## 3. 도입 트랙 (3-Track Adoption Model)
+## 3. 도입 트랙 (3-Track Adoption Model) 및 예측 불가능한 데이터 유입 시 분기
 
-조직의 데이터 준비도에 따라 `config/starter_config.json`에서 3가지 트랙을 선택할 수 있다.
+트랙은 프로젝트 `project.json`의 `track`으로 정한다. 기본값 `auto`는 `tables`에 등록된 고객 정형 CSV가 실제로 존재하면 `standard`, 문서만 있고 정형 CSV가 없으면 `lite`로 자동 결정한다.
 
-| 트랙 | 활성 Stage | 물리 그래프 엔진 | 적용 환경 |
+| 트랙 | 활성 Stage | 물리 그래프 엔진 | 적용 환경 및 동작 방식 |
 | :--- | :---: | :---: | :--- |
-| **Track 1 · Lite** | `Stage 1 → 2 → 4` | `none` (위키·규칙 조회) | 비정형 정책 가이드 문서 위주 환경에서 빠르게 위키·에이전트를 검증할 때 |
-| **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (또는 Spanner DDL) | 정형 DW 원장과 비정형 위키를 Property Graph로 통합해 다중 홉 GQL 추론을 수행할 때 |
-| **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` | 4계층 리니지, Golden CQ 5건, 경계값 벤치마크(10건×5회) 및 Terraform Cloud Run 배포까지 전주기를 운영할 때 |
+| **Track 1 · Lite** | `Stage 1 → 2 → 4 → 5(citation)` | `none` (청크·문서 기반 위키) | 정형 테이블 없이 원본 문서(`customer_doc/`)만 유입되었을 때. `extract_wiki.py`가 문서에서 `Entity`(Node)·`Concept`(Edge) 위키를 추출하고, 에이전트는 전체 청크(300,000자 한도)를 컨텍스트로 받아 `[DOC_CHUNK_XXX]`를 인용해 답하며 `evidence_type: "citation"` CQ로 채점한다 |
+| **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (또는 Spanner DDL) | 정형 DW 원장(`CUSTOMER_PROVIDED`)과 비정형 위키(`EXTRACTED`)를 Property Graph로 통합해 다중 홉 GQL 추론과 2-Pass MCP 오케스트레이션을 수행할 때 |
+| **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` | 선언형 리니지(`config/lineage_spec.json`), Golden CQ(`sql` + `citation`), 경계값 벤치마크(10건×5회) 및 Terraform Cloud Run 배포까지 전주기를 운영할 때 |
+
+### 3.1 유입 데이터 상황별 대응 및 데이터 출처(`provenance`) 원칙
+
+- **정형 테이블 없이 그래프(Stage 3)나 SQL 평가 요청 시**: 임의로 합성 테이블을 생성하지 않고 즉시 중단한 뒤 사용자에게 **(a) 고객 정형 CSV 추가 제공, (b) 문서 기반 물리 그래프(별도 설계), (c) 합성 데모 시드 사용(명시적 승인 필요)** 또는 **`lite` 트랙 전환**을 확인받는다.
+- **타 산업·신규 스키마 유입 시 모듈 오버라이드**: 통신 샘플과 다른 테이블 스키마가 들어오면 공용 파이프라인 코드를 수정하지 않고 `projects/<id>/project.json`의 `ingest_module`·`graph_module`·`mcp_module`·`engine_module`·`validator_module`에 프로젝트 전용 모듈을 지정한다.
+- **출처(`provenance`) 3등급 구분**: 모든 데이터는 `CUSTOMER_PROVIDED`(고객 직접 제공 CSV), `EXTRACTED`(고객 문서에서 코드로 추출한 청크·위키), `SYNTHETIC_DEMO`(기본 데모 전용 합성 시드)로 구분하며, 고객 프로젝트에는 데모 시드나 `industry_cases` 파일 적재를 차단한다.
 
 > 참고: Cloud Spanner Graph는 DDL 생성(`data/output/create_spanner_graph.sql`)을 지원하며, 라이브 쿼리 실행은 BigQuery Property Graph(`STARTER_ONTOLOGY_GRAPH`)를 사용한다.
 

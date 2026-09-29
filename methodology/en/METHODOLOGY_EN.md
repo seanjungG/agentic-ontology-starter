@@ -1,8 +1,6 @@
 # 5-Stage Agentic Ontology Methodology (`METHODOLOGY_EN.md`)
 
 > Live Studio [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [Korean (KO)](../ko/METHODOLOGY_KO.md) · [Stage Index](../README.md) · [Notebooks](../../notebooks/README.md) · [License (`LICENSE`)](../../LICENSE)
->
-> **[Methodology Copyright & Non-Commercial Notice (CC BY-NC-ND 4.0)]**: This 5-Stage Agentic Ontology Engineering Methodology (8-Phase Engineering Flow, deliverables D1.1–D5.5, 3-Layer OKF Wiki, Dual Property Graph Design, and 8-Tool MCP & 2-Pass Agent Orchestration) is licensed under **CC BY-NC-ND 4.0**. Commercial use — including paid consulting, system integration (SI) delivery, paid PoCs, client deliverables, or commercial proposals — is strictly prohibited without prior written permission. For commercial or enterprise inquiries, please contact **[seanjung@google.com](mailto:seanjung@google.com)**.
 
 ## 1. Purpose & Core Principles (8-Phase Engineering Flow)
 
@@ -24,13 +22,31 @@ This guide defines the 5-Stage engineering workflow — structured across **1. P
 | **6. Build Agent · 7. Answer** | **Stage 4** | MCP Suite & Agent Orchestration | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 3 Runtime MCPs | `D4.1`–`D4.4` | [Guide](./04_stage4_agent_and_mcp_en.md) · [KO](../../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
 | **8. Verify & Gate** | **Stage 5** | 4-Tier Lineage, Evaluation & Gate | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`–`D5.5` | [Guide](./05_stage5_lineage_and_eval_en.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
 
-## 3. 3-Track Adoption Model (`config/starter_config.json`)
+## 3. Role of Starter Repository & 3-Track Adoption Model (`project.json` `track`)
+
+This repository (`agentic-ontology-starter`) is an **educational, test, and project-bootstrap reference template** designed to handle unpredictable customer business domains and input data configurations without shipping any customer-proprietary assets.
+
+The default `track: "auto"` inspects `project.json` `tables`: if customer table CSV files are listed, it activates `standard` / `full`; if `tables` is empty, it activates `lite`. Customer documents placed in `customer_doc/` are converted verbatim by `pipeline/extract_docs.py` and loaded only after **Gate 0** (`data/output/gate0_report.json`) passes (`char_retention_ratio >= 0.95` per document, zero empty pages, zero placeholder strings). Tables not provided by the customer are never synthesized.
 
 | Track | Active Stages | Graph Engine | Target Scenario |
 | :--- | :---: | :---: | :--- |
-| **Track 1 · Lite** | `Stage 1 → 2 → 4` | `none` | Unstructured policy documents only — rapid 3-Layer Wiki and agent validation |
-| **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (or Spanner DDL) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and GQL |
-| **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` | Full lifecycle including 4-tier lineage, Golden CQ 5, boundary benchmark (10×5), and Terraform Cloud Run deployment |
+| **Track 1 · Lite** | `Stage 1 -> 2 -> 4 -> 5(citation)` | `none` | Source documents only (`tables: {}`), no customer tables. `extract_docs.py` + `extract_wiki.py` build `doc_chunks.jsonl`, `entities.md`, and `concepts.md`. Stage 3 is skipped, the agent runs `execute_lite_doc_cycle()` with `[DOC_CHUNK_XXX]` citations, and Stage 5 scores `evidence_type: "citation"` CQs |
+| **Track 2 · Standard** | `Stage 1 -> 2 -> 3 -> 4` | `bigquery` (or Spanner DDL) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and GQL |
+| **Track 3 · Full** | `Stage 1 -> 2 -> 3 -> 4 -> 5` | `bigquery` | Full lifecycle including 4-tier lineage, Golden CQ 5 (`evidence_type: "sql"`), boundary benchmark (10x5), and Terraform Cloud Run deployment |
+
+### 3.1 Customer Input Scenario Adaptation Matrix & 3-Tier Provenance
+
+| Scenario | Customer Input Assets | `project.json` Settings | Pipeline Execution & Stage Adaptation |
+| :--- | :--- | :--- | :--- |
+| **Scenario A1 (`lite`)** | Unstructured documents only (`customer_doc/*.pdf, *.docx`) | `"track": "auto"`, `"tables": {}` | `extract_docs.py` (Gate 0 >= 95%) -> `extract_wiki.py` (`entities.md` Node, `concepts.md` Edge) -> Skip Stage 3 -> Stage 4 `execute_lite_doc_cycle` (300,000-char chunk context) -> Stage 5 `evidence_type: "citation"` CQ scoring |
+| **Scenario A2 (Graph Halt)** | Unstructured documents only, but user forces `track: "full"` or `--stage 3` | `"track": "full"`, `"tables": {}` | Halts immediately before Stage 3 with explicit guidance: provide structured tables in `03_tables/` or switch `track` to `"lite"` / `"auto"` (zero synthetic table fabrication) |
+| **Scenario B (Partial Tables)** | Unstructured documents + partial CSVs (e.g., 2 of 6 tables) | `"track": "auto"`, `"tables": {"devices": "devices.csv", ...}` | Loads only customer-supplied tables (`provenance=CUSTOMER_PROVIDED`); missing tables are left empty (0 rows) and never backfilled with `telecom_sample` rows |
+| **Scenario C (Custom Domain)** | Non-telecom custom domain documents + custom table schemas | Custom `"tables"` + `"ingest_module"`, `"graph_module"`, `"mcp_module"`, `"engine_module"` | Dynamically imports domain-specific Python modules and `projects/<id>/config/lineage_spec.json` to run the 5-Stage pipeline on custom schemas |
+
+Every ingested record and chunk carries one of three provenance tiers:
+- `CUSTOMER_PROVIDED`: Verbatim customer files (`customer_doc/*`, customer CSVs).
+- `EXTRACTED`: Chunks, entities, and concept relations extracted from `CUSTOMER_PROVIDED` documents with verified verbatim quotes (`<= 300` chars).
+- `SYNTHETIC_DEMO`: Educational demo records inside `projects/telecom_sample` (explicitly badged `[SYNTHETIC_BASIS: NN%]` in Stage 5 reports).
 
 ## 4. Runtime Resources & 8 MCP Tools
 

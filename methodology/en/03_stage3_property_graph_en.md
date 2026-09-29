@@ -99,7 +99,16 @@ In both cases `tb_doc_chunks` is joined on `ap.source_chunk_id` to attach the ev
 
 ## Apply to your data
 
+### 1) Document-Only Projects (`tables: {}` — Scenario A1 & A2)
+
+BigQuery Property Graph (`CREATE OR REPLACE PROPERTY GRAPH`) requires physical BigQuery node and edge tables. When a customer project provides only unstructured documents (`01_raw_docs/`, `01_guides/`) without structured table CSVs:
+
+- **Option 1 (`track: "auto"` or `"lite"` — Recommended)**: Stage 3 is automatically skipped, and the pipeline proceeds directly from Stage 2 (`03_wiki/entities.md`, `concepts.md`, `doc_chunks.jsonl`) to Stage 4 (`execute_lite_doc_cycle`).
+- **Option 2 (`track: "full"` or `--stage 3` forced — Scenario A2)**: The pipeline halts immediately before Stage 3 without fabricating synthetic tables, outputting guidance to either supply structured CSVs (`03_tables/`) or switch `track` to `"lite"` / `"auto"`.
+
+### 2) Custom Domain Schemas (Scenario C)
+
 1. **Tables**: define the node and edge tables in `terraform/bigquery.tf`. An edge table needs the key columns of both end nodes.
-2. **DDL**: edit the BigQuery DDL in `pipeline/graph_builder.py` (node labels, keys, properties, edges) for your tables. The Spanner DDL is in the same file.
-3. **Queries**: edit the `MATCH` patterns and column names in `src/agent/mcp_server.py` for your labels.
+2. **Module Override (`graph_module`)**: when your domain schema differs from the 6-table telecom sample, specify `"graph_module": "projects.<id>.custom_graph"` in `project.json` to supply your own `build_graph()` implementation.
+3. **DDL & Queries**: edit the BigQuery DDL in `pipeline/graph_builder.py` (node labels, keys, properties, edges) and the `MATCH` patterns in `src/agent/mcp_server.py` for your labels.
 4. **Graph name**: to rename the graph, change `self.graph` in `DomainMcpServer` and `graph_fqn` in `build_graph()` together.

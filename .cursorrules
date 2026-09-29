@@ -1,21 +1,39 @@
 # Cursor Rules (.cursorrules) — Agentic Ontology Starter
 
-You are working inside a cloned or imported copy of `agentic-ontology-starter`.
+You are working inside `agentic-ontology-starter`, an **educational, test, and project-bootstrap simplified reference repository** designed to flexibly adapt to unpredictable incoming customer business domains and data formats (documents only, partial tables, or custom schemas) without containing any customer-proprietary production assets.
 Before making ANY architectural, pipeline, agent, or UI changes, you MUST read:
 1. `01_prod.md` (Master Product & Architecture Charter)
-2. `PROTOTYPING_PLAYBOOK.md` (4-Scenario Rapid Prototyping Recipes & 5-File Swap Guide)
+2. `PROTOTYPING_PLAYBOOK.md` (Scenario A/A2/B/C/D Rapid Prototyping Recipes & Swap Guide)
 3. `GEMINI.md` (Detailed AI Agent Bootstrap & Governance Rules)
 4. `DESIGN.md` (Apple/Google Enterprise Light Theme UI Specification)
 
 ## Mandatory Rules
 1. DO NOT rewrite the project from scratch or replace the 6-Tab Studio (`src/web/studio_server.py`) with a different frontend or dark-mode theme.
-2. DO NOT create mock SQLite databases or fake hardcoded query outputs. Always use `src/gcp_client.py` against real BigQuery (`BQ_DATASET_ID`), GCS (`GCS_BUCKET_NAME`), and Vertex AI (`VERTEX_GEMINI_MODEL="gemini-3.8-flash"`).
-3. DO NOT downgrade the Gemini model (`gemini-3.8-flash`) or commit API keys (Google API Key) or local absolute paths (로컬 사용자 홈 경로).
-4. When asked to prototype a new domain (e.g., Manufacturing, Finance, Retail, Healthcare, Telecom, Legal/HR SOP), follow the 5-Step Domain Swap in `PROTOTYPING_PLAYBOOK.md`:
-   - Step 1: Select Track (`lite`, `standard`, or `full`) in `config/starter_config.json` based on Scenarios A, B, C, or D.
-   - Step 2: Place domain markdown guides, CSV tables, Golden CQs, and boundary cases in `data/input/` (use `industry_cases/` templates as reference).
-   - Step 3: Update `DOMAIN_RULES` and table/edge schemas in `pipeline/ingest.py` and `pipeline/graph_builder.py`, then run them to populate `data/llm_wiki/` and BigQuery.
-   - Step 4: Keep the 5 Stage MCP tools intact in `src/agent/mcp_server.py` and adapt the 3 Runtime MCP tools + slot extraction in `src/agent/reasoning_engine.py` to the new domain tables.
-   - Step 5: Update UI labels and sample queries in `config/portal_profile.json` and run `python3 pipeline/validator.py`.
+2. DO NOT create mock SQLite databases or fake hardcoded query outputs. Always use `src/gcp_client.py` against real BigQuery (`BQ_DATASET_ID`), GCS (`GCS_BUCKET_NAME`), and Vertex AI (`VERTEX_GEMINI_MODEL="gemini-3.8-flash"`). Loaded data must be customer material or derived from it (Customer Data Rules below).
+3. DO NOT downgrade the Gemini model (`gemini-3.8-flash`) or commit API keys (Google API Key) or local absolute paths (local user home paths).
+4. When asked to prototype a new domain (e.g., Manufacturing, Finance, Retail, Healthcare, Telecom, Legal/HR SOP), isolate customer assets inside `projects/<id>/` (`python3 new_project.py <id>`) and follow `PROTOTYPING_PLAYBOOK.md`:
+   - Step 1: Let `project.json` `track` (`"auto"` by default) select `"lite"` (when `tables` is empty) or `"standard"` / `"full"` (when customer CSVs are listed in `tables`).
+   - Step 2: Place original documents in `customer_doc/` (converted verbatim by `pipeline/extract_docs.py` and checked by Gate 0 >= 95%), customer CSVs in `data/input/03_tables/`, and Golden CQs (`evidence_type: "sql" | "citation"`) in `data/input/04_cq/`.
+   - Step 3: For `lite` projects, `pipeline/extract_wiki.py` extracts `entities.md` (Node) and `concepts.md` (Edge) with verified quotes (`<=300` chars) and skips Stage 3. For `standard`/`full` projects, update node/edge schemas or set `ingest_module` and `graph_module` in `project.json`.
+   - Step 4: Keep the 5 Stage MCP tools intact. For `lite`, `execute_lite_doc_cycle()` answers from chunk context with `[DOC_CHUNK_XXX]` citations; for custom schemas, set `mcp_module` and `engine_module` in `project.json`.
+   - Step 5: Update UI labels and sample queries in `config/portal_profile.json`, lineage in `config/lineage_spec.json`, and run `python3 pipeline/validator.py --project <id>`.
 5. Keep all reports and documentation objective and concise without exaggerated adjectives ('완벽한', '무결점', '무손실') or decorative emojis.
 6. New customer data or a separate data domain goes into `projects/<id>/`, created by `python3 new_project.py <id> --name "<name>"`; never overwrite the root sample. Put schema-specific code in project files referenced by `project.json` (`mcp_module`, `engine_module`, `ingest_module`, `graph_module`, `validator_module`) instead of adding per-project `if` branches to shared code. See `projects/_template/README.md`.
+
+## Customer Data Rules
+
+Definitions
+- Customer material: original files in `customer_doc/` and tables the customer provided
+- Derived data: text, chunks and rows extracted from customer material by code (source link required)
+- Synthetic data: anything else
+
+Rules (gates and checks in code enforce them as well)
+1. Convert customer documents verbatim with `pipeline/extract_docs.py` (`run_pipeline.py` runs it first). Never put summarized or rewritten text into `data/input/01_guides/`. Summaries exist only in the Stage 2 wiki, with source chunks.
+2. Code decides chunk boundaries. Do not insert `DOC_CHUNK` comments by hand.
+3. If Gate 0 fails (per document: character ratio and 12-character coverage >= 95%, 100% of text pages, 0 missing articles), stop and report the per-document figures and missing pages from `data/output/gate0_report.json`.
+4. Do not create tables, rows or entities (products, customers, transactions, cases, ad copy, ...) that are not in the customer material. If a request (graph, SQL evaluation, ...) needs tables that do not exist, stop and ask: (a) request the tables from the customer (b) physical graph built from the documents (not implemented, separate request) (c) synthetic demo data (only with user approval: `project.json` `synthetic.allowed: true`, `provenance=SYNTHETIC_DEMO` on every row).
+5. Do not produce anything outside the request (data, tables, evaluation numbers, datasets for screens). If screen work needs data, ask first.
+6. Evaluation numbers come only from running `pipeline/validator.py`. Never write or edit report or summary files by hand. If it was not run, report "not measured".
+7. The real-data rule means real infrastructure AND loaded data that is customer material or derived from it. Loading invented data into real BigQuery or Spanner also violates it.
+8. Add a "data source summary" to the final report: per-document character ratio and chunk count, rows per provenance, CQ evidence types (sql/citation), whether evaluation evidence includes synthetic data, and the number of answers not confirmed by a person.
+9. Numbers such as model names, tokens, cost and row counts must be measured values. Do not copy example text.

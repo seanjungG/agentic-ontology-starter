@@ -1,17 +1,11 @@
 # Agentic Ontology Starter
 
-[![Methodology License: CC BY-NC-ND 4.0](https://img.shields.io/badge/Methodology_%26_Docs-CC_BY--NC--ND_4.0-b91c1c)](./LICENSE)
-[![Code License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/Code_License-PolyForm_Noncommercial_1.0.0-dc2626)](./LICENSE)
-[![Commercial Inquiry: seanjung@google.com](https://img.shields.io/badge/Commercial_Inquiry-seanjung%40google.com-0284c7)](mailto:seanjung@google.com)
+정형 데이터(BigQuery DW)와 비정형 정책 문서(업무 가이드·약관·SOP)를 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO SQL:2023 GQL)**로 결합하고, **8종 MCP 도구**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 검증·서빙하는 **5-Stage 에이전틱 온톨로지 교육 · 테스트 · 부트스트랩용 심플 레퍼런스 스타터 팩**입니다.
 
-> **비영리 라이선스 및 방법론 지식재산권 고지 (Non-Commercial License Notice)**:
-> 본 저장소의 핵심인 **5-Stage 에이전틱 온톨로지 엔지니어링 방법론(`methodology/`)·실습 노트북(`notebooks/`)·산업군 아키텍처 템플릿(`industry_cases/`)**은 **CC BY-NC-ND 4.0**으로, **소스 코드(`src/`, `pipeline/`, `terraform/`)**는 **PolyForm Noncommercial 1.0.0**으로 보호됩니다. 개인 학습 및 비상업적 기술 검증 외에 **상용 서비스 탑재, 타 기업/고객사 대상 유상 컨설팅·SI·PoC 딜리버리 활용을 엄격히 금지**하며, 상업적/엔터프라이즈 활용이 필요한 경우 반드시 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([상세 라이선스 안내 (KO / EN)](#5-라이선스-및-상업적-이용-제한-안내--license--commercial-use-restriction-ko--en) · [`LICENSE`](./LICENSE))
-
-정형 데이터(BigQuery DW)와 비정형 정책 문서(업무 가이드·약관·SOP)를 **3-Layer 위키(OKF v0.2)**와 **BigQuery Property Graph(ISO SQL:2023 GQL)**로 결합하고, **8종 MCP 도구**와 **Vertex AI Gemini 에이전트(`gemini-3.8-flash`)**로 검증·서빙하는 **5-Stage 엔터프라이즈 온톨로지 스타터 팩**입니다.
-
+- **저장소 위상 및 유연성**: 특정 고객사의 프로덕션 비즈니스나 실데이터를 담고 있지 않으며, 향후 유입될 외부 고객 비즈니스와 데이터 형태(문서만 있는 경우 `lite`, 일부 테이블만 있는 경우, 전혀 다른 도메인 테이블 스키마가 들어오는 경우 `*_module` 오버라이드 등)가 완전히 예측 불가능한 상황에서도 `projects/<id>/` 격리 구조와 자동 트랙 판별(`track: "auto"`)로 즉시 부트스트랩할 수 있도록 설계되었습니다.
 - **라이브 스튜디오 (Cloud Run)**: [https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app)
 - **빠른 프로토타이핑 & AI 에이전트 부트스트랩 문서**:
-  - [**상황별 빠른 프로토타이핑 플레이북 (`PROTOTYPING_PLAYBOOK.md`)**](./PROTOTYPING_PLAYBOOK.md) — 4대 데이터 상황별 5-File Swap 레시피
+  - [**상황별 빠른 프로토타이핑 플레이북 (`PROTOTYPING_PLAYBOOK.md`)**](./PROTOTYPING_PLAYBOOK.md) — 시나리오별(Scenario A / A2 / B / C / D) 도메인 이식 레시피
   - [**마스터 제품·아키텍처 헌장 (`01_prod.md`)**](./01_prod.md) · [**UI 디자인 표준 (`DESIGN.md`)**](./DESIGN.md)
   - **툴별 에이전트 가드레일**: [**Antigravity (`GEMINI.md`)**](./GEMINI.md) · [**Cursor (`.cursorrules`)**](./.cursorrules) · [**Claude Code (`CLAUDE.md` / `AGENTS.md`)**](./CLAUDE.md)
   - [**4대 산업군 8종 비식별 레퍼런스 템플릿 (`industry_cases/README.md`)**](./industry_cases/README.md) — 제조 · 금융 · 리테일 · 통신 스키마/규칙/CQ 샘플
@@ -57,18 +51,17 @@
 ```
 
 #### [Step 2 명령] 내 도메인 데이터 인입 (Stage 1 Asset & Stage 2 3-Layer Wiki 구축) 요청
-> **언제 쓰는가**: 내가 준비한 정책/매뉴얼 문서(MD/PDF 텍스트)와 정형 테이블(CSV 또는 기존 BigQuery 테이블)을 넣어서 **Stage 1(자산 등록·CQ 정의) ~ Stage 2(문단 청킹·SHA-256 해시·3-Layer OKF 위키·도메인 규칙 테이블 적재)**까지 수행할 때.
+> **언제 쓰는가**: 고객 원본 문서(PDF·DOCX·MD·TXT)와 고객이 준 테이블(CSV)을 넣어서 **Stage 1(자산 등록·CQ 정의) ~ Stage 2(문단 청킹·SHA-256 해시·3-Layer OKF 위키·도메인 규칙 테이블 적재)**까지 수행할 때.
 
 ```text
 @01_prod.md @GEMINI.md @PROTOTYPING_PLAYBOOK.md 를 준수해서 내 도메인 데이터를 인입(Stage 1 ~ Stage 2)해줘.
-코어 프레임워크는 절대 재작성하지 말고 아래 데이터에 맞춰 인입 파이프라인만 교체해줘:
+코어 프레임워크는 절대 재작성하지 말고, AGENTS.md의 고객 데이터 원칙을 지켜줘:
 1. 도메인 개요: [예: 사내 구매/계약 승인 규정 / 스마트팩토리 설비 보전 SOP / 금융 대출 심사 규정]
-   (유사한 구조가 필요하면 industry_cases/ 하위 템플릿을 참고해줘.)
-2. 입력 데이터 구성 (data/input/):
-   - 비정형 가이드 문서(01_guides/): [내가 넣은 마크다운/문서 파일 경로 또는 생성할 도메인 규정 설명]
-   - 정형 마스터/트랜잭션 테이블(03_tables/): [내가 넣은 CSV 파일 경로 또는 스키마 설명]
-   - 핵심 검증 질문(04_cq/golden_cqs.json 5건, boundary_cases.json 10건)과 용어사전(05_glossary/business_glossary.json)도 이 도메인에 맞게 구성해줘.
-3. pipeline/ingest.py 의 테이블 적재 목록, DOMAIN_RULES(핵심 판정/계산 규칙), compile_3layer_wiki() 요약을 이 도메인에 맞게 수정하고, 실제로 python3 pipeline/ingest.py 를 실행해서 data/llm_wiki/*.md 와 BigQuery 테이블(tb_doc_chunks, tb_domain_rules 및 마스터 테이블)에 적재된 행 수를 확인해줘. /goal
+2. 입력 데이터 (projects/<id>/):
+   - 고객 원본 문서(customer_doc/): [내가 넣은 파일 목록]. python3 pipeline/extract_docs.py --project <id> 로 원문 그대로 변환하고 요약하거나 다시 쓰지 마.
+   - 고객 테이블(data/input/03_tables/): [내가 넣은 CSV 목록, 없으면 "없음"]. project.json tables에 등록하고 행마다 provenance를 채워줘. 없으면 만들지 말고 lite로 진행해줘.
+   - CQ(04_cq/)는 문서·테이블에 있는 내용으로만 쓰고, CQ마다 근거 청크와 원문 구절 또는 검증 SQL을 붙여줘.
+3. python3 run_pipeline.py --project <id> 를 실행해서 Gate 0 결과(문서별 원문 비율, 청크 수, 누락 쪽), 트랙 결정 이유, BigQuery 적재 행 수를 보고하고, 마지막에 데이터 출처 요약을 붙여줘. /goal
 ```
 
 #### [Step 3 명령] 온톨로지 Property Graph 구축 · MCP 에이전트 연결 · 6-Tab 스튜디오 구동 요청
@@ -89,7 +82,7 @@
 
 | 시나리오 | 보유 데이터 및 목표 | 설정 트랙 (`starter_config.json`) | 실행 Stage | 교체 대상 (`5-File Swap`) |
 | :--- | :--- | :---: | :---: | :--- |
-| **Scenario A · 문서 전용 퀵스타트** | 정형 DW 테이블 없이 **업무 규정·약관·매뉴얼 문서(MD)**와 계산 규칙만으로 위키 + 에이전트 Q&A 구축 | `lite` | `Stage 1 → 2 → 4` | `data/input/01_guides/*`, `starter_config.json`, `pipeline/ingest.py`, `mcp_server.py`, `portal_profile.json` |
+| **Scenario A · 문서 전용 퀵스타트** | 고객 테이블 없이 **원본 문서(PDF·DOCX·MD·TXT)**만으로 원문 청크 + 문서 기반 위키 + 청크 인용 에이전트 Q&A 구축. 그래프·SQL 평가를 요청받으면 테이블을 만들지 않고 멈춰서 묻는다 | `lite` (`project.json` `track: auto`) | `Stage 1 → 2 → 4` | `customer_doc/*`, `04_cq/*` (citation CQ), `portal_profile.json` |
 | **Scenario B · DW + 문서 하이브리드** *(기본 권장)* | **마스터/트랜잭션 CSV(DW 테이블) + 정책 문서**를 결합해 **BigQuery Property Graph(`ISO GQL`) 다중 홉 추론** 수행 | `standard` (`bigquery`) | `Stage 1 → 2 → 3 → 4` | `data/input/*`, `starter_config.json`, `ingest.py` + `graph_builder.py`, `mcp_server.py`, `portal_profile.json` |
 | **Scenario C · 저지연 운영 그래프 확장** | Scenario B + 실시간 이상거래(FDS)/설비 인터락용 **Cloud Spanner Graph DDL(`INTERLEAVE`)** 동시 생성 | `standard` (`bigquery` + Spanner DDL) | `Stage 1 → 2 → 3 → 4` | Scenario B + `pipeline/graph_builder.py` (`create_spanner_graph.sql`) |
 | **Scenario D · 감사 리니지 & 배포 게이트** | **4계층 리니지 시각화 + Golden CQ 5건 + 경계값 50회 라이브 평가 게이트** 통과 및 Cloud Run 배포 | `full` | `Stage 1 → 2 → 3 → 4 → 5` | Scenario B + `data/input/04_cq/*`, `pipeline/validator.py`, `terraform/terraform.tfvars` |
@@ -181,7 +174,7 @@ python3 -m src.web.studio_server                # http://127.0.0.1:8080/?project
 
 ```text
 agentic-ontology-starter/
-├── LICENSE                          # 비영리 듀얼 라이선스 (방법론 CC BY-NC-ND 4.0 + 코드 PolyForm NC 1.0)
+├── LICENSE                          # Non-commercial dual license (CC BY-NC-ND 4.0 & PolyForm NC 1.0)
 ├── 01_prod.md                       # 마스터 제품·아키텍처 헌장 (AI 에이전트 & 엔지니어 최상위 기준)
 ├── PROTOTYPING_PLAYBOOK.md          # 4대 상황별 빠른 프로토타이핑 레시피 & 에이전트 프롬프트
 ├── GEMINI.md / CLAUDE.md / AGENTS.md / .cursorrules # Antigravity · Cursor · Claude Code 자동 로드 가드레일
@@ -202,9 +195,11 @@ agentic-ontology-starter/
 ├── methodology/                     # 5-Stage 방법론 마스터(KO/EN) 및 Stage 1~5 한/영 상세 가이드 (13개 파일)
 ├── notebooks/                       # 8단계 흐름 기반 한/영 실습 노트북 12종(ko/ 6종, en/ 6종) + nb_helpers.py
 ├── pipeline/
+│   ├── extract_docs.py              # Stage 1 고객 원본 문서(PDF/DOCX/MD/TXT) 원문 변환 및 Gate 0 검증
 │   ├── ingest.py                    # Stage 1~2 데이터 파싱·위키 컴파일·BigQuery/GCS 적재 파이프라인
+│   ├── extract_wiki.py              # Stage 2 문서 청크 기반 Entity(Node)·Concept(Edge) 인용 검증 추출
 │   ├── graph_builder.py             # Stage 3 BigQuery/Spanner Property Graph DDL 합성 및 배포
-│   └── validator.py                 # Stage 5 Golden CQ 5건 검증 및 경계값 10건×5회 반복 평가 엔진
+│   └── validator.py                 # Stage 5 Golden CQ(sql/citation) 검증 및 경계값 10건×5회 반복 평가 엔진
 ├── src/
 │   ├── gcp_client.py                # BigQuery REST/GQL, GCS 업로드, Vertex AI Gemini 호출 클라이언트
 │   ├── project_context.py           # 프로젝트 해석 및 프로젝트별 MCP·에이전트 엔진 (선택적 *_module 오버라이드)
@@ -218,38 +213,12 @@ agentic-ontology-starter/
 
 ---
 
-## 5. 라이선스 및 상업적 이용 제한 안내 / License & Commercial Use Restriction (KO / EN)
+## 5. License
 
-### [한국어 안내 — KOREAN]
+This repository is distributed under a non-commercial dual license:
 
-본 저장소의 핵심 자산인 **5-Stage 에이전틱 온톨로지 엔지니어링 방법론(8단계 엔지니어링 흐름 · 3-Layer OKF 위키 · 듀얼 Property Graph 아키텍처 · 8종 MCP 및 2-Pass 에이전트 오케스트레이션 · 4-Tier 리니지 및 경계값 평가 체계)**과 관련 문서(`methodology/`), 실습 노트북(`notebooks/`), 산업군 아키텍처 템플릿(`industry_cases/`), 그리고 전체 소스 코드(`src/`, `pipeline/`, `terraform/`)는 **비영리 듀얼 라이선스([`LICENSE`](./LICENSE))**로 보호됩니다.
+- **Methodology, Documentation & Notebooks (`methodology/`, `notebooks/`, `industry_cases/`, `*.md`)**: [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+- **Source Code & Pipelines (`src/`, `pipeline/`, `terraform/`, `config/`, `*.py`, `*.sql`, `*.tf`)**: [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
 
-- **적용 라이선스**:
-  - **핵심 방법론 · 아키텍처 설계 · 문서 · 노트북 (`methodology/`, `notebooks/`, `industry_cases/`, `*.md`)**: **CC BY-NC-ND 4.0** (저작자표시-비영리-변경금지 4.0 국제 라이선스)
-  - **레퍼런스 소스 코드 (`src/`, `pipeline/`, `terraform/`, `*.py`, `*.sql`, `*.tf`)**: **PolyForm Noncommercial License 1.0.0**
-- **허용 범위 (Permitted)**: 개인 학습, 학술 연구, 비상업적 목적의 자체 기술 검증(Non-commercial Evaluation)
-- **사전 승인 없이 엄격히 금지되는 행위 (Strictly Prohibited)**:
-  1. 본 저장소의 **5-Stage 온톨로지 방법론, 산출물 체계(D1.1~D5.5), 아키텍처 설계도, 노트북 또는 소스 코드**를 타 기업·기관 대상 **유상 컨설팅, SI 구축, 유상 PoC/파일럿 딜리버리, 상업적 제안서 또는 고객사 납품 산출물**로 활용하는 행위
-  2. 상용 제품, 유료 클라우드/SaaS 서비스, 또는 영리 목적의 프로덕션 시스템에 탑재·운영하는 행위
-  3. 본 방법론이나 노트북·코드를 개작·재가공하여 유료 강의, 교육 과정, 상업적 출판물로 판매·배포하는 행위
-- **상업적 활용 및 엔터프라이즈 프로젝트 적용 문의**:
-  고객사 딜리버리 프로젝트(PoC/SI/컨설팅) 적용이나 상업적 사용이 필요한 경우 반드시 사전에 **[seanjung@google.com](mailto:seanjung@google.com)**으로 논의하시기 바랍니다.
+For commercial licensing, enterprise delivery, or collaboration inquiries, please contact `seanjung@google.com`. Full legal terms are available in [`LICENSE`](./LICENSE).
 
----
-
-### [ENGLISH NOTICE]
-
-The core intellectual asset of this repository — the **5-Stage Agentic Ontology Engineering Methodology** (8-Phase Engineering Flow, 3-Layer OKF Wiki Architecture, Dual Property Graph Design, 8-Tool Modular MCP & 2-Pass Agent Orchestration, and 4-Tier Lineage & Boundary Evaluation Framework) — along with all methodology guides (`methodology/`), executable notebooks (`notebooks/`), industry reference templates (`industry_cases/`), and reference source code (`src/`, `pipeline/`, `terraform/`), is protected under a **Non-Commercial Dual License ([`LICENSE`](./LICENSE))**.
-
-- **Applicable Licenses**:
-  - **Core Methodology, Architecture Designs, Documentation & Notebooks (`methodology/`, `notebooks/`, `industry_cases/`, `*.md`)**: **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**
-  - **Reference Source Code (`src/`, `pipeline/`, `terraform/`, `*.py`, `*.sql`, `*.tf`)**: **PolyForm Noncommercial License 1.0.0**
-- **Permitted Use**: Personal learning, academic research, and non-commercial internal technical evaluation.
-- **Strictly Prohibited Without Prior Written Permission**:
-  1. Using the **5-Stage Ontology Methodology, deliverable specifications (D1.1–D5.5), architecture diagrams, notebooks, or source code** in any **paid consulting, system integration (SI) delivery, paid PoC/pilot engagement, commercial proposal, or client deliverable** for third-party organizations;
-  2. Embedding, hosting, or operating the code or methodology within any commercial product, paid SaaS/cloud offering, or commercial production environment;
-  3. Modifying, translating, repackaging, or redistributing the methodology, notebooks, or code for paid training courses, workshops, or commercial publications.
-- **Commercial Licensing & Collaboration Inquiries**:
-  For commercial licensing, enterprise PoC/SI delivery, or collaboration inquiries, please contact **Sean Jung ([seanjung@google.com](mailto:seanjung@google.com))** in advance.
-
-Copyright (c) 2026 Sean Jung (`seanjung@google.com`). All Rights Reserved.

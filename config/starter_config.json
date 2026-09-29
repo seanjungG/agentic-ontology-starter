@@ -4,6 +4,27 @@
   "region": "asia-northeast3",
   "track": "full",
   "graph_engine": "bigquery",
+  "gates": {
+    "gate0": {
+      "_readme": "Per document, chunks vs. the original file (pipeline/validator.py run_gate0). Ratios use the original text before header/footer removal.",
+      "min_char_ratio": 0.95,
+      "min_ngram_coverage": 0.95,
+      "ngram_len": 12,
+      "min_page_coverage": 1.0,
+      "max_missing_articles": 0
+    }
+  },
+  "chunking": {
+    "max_chars": 1500
+  },
+  "lite": {
+    "_readme": "track=lite: every tb_doc_chunks row goes into the Gemini context (no search, no embeddings). Above the limit the answer stops.",
+    "max_context_chars": 300000
+  },
+  "wiki_extraction": {
+    "_readme": "pipeline/extract_wiki.py: each entity / concept keeps a verbatim quote of at most this length from its source chunk.",
+    "max_quote_chars": 300
+  },
   "supported_tracks": {
     "lite": {
       "label": "Track 1 · Lite (Unstructured Wiki Only)",

@@ -32,7 +32,7 @@ def main():
     ap.add_argument("--gcp-project", default=DEFAULT_PROJECT_ID)
     ap.add_argument("--dataset", help="BigQuery dataset (default: <id>_dw with underscores)")
     ap.add_argument("--bucket", help="GCS bucket (default: <gcp-project>-<id>)")
-    ap.add_argument("--track", default="full", choices=["lite", "standard", "full"])
+    ap.add_argument("--track", default="auto", choices=["auto", "lite", "standard", "full"])
     ap.add_argument("--engine", default="bigquery", choices=["bigquery", "spanner"])
     a = ap.parse_args()
 

@@ -6,6 +6,9 @@ Executes the declarative Terraform IaC in `agentic-ontology-starter/terraform/`:
 - If local `terraform` binary is available, executes `terraform init / validate / plan / apply` locally.
 - Otherwise (e.g., corporate gMac with Santa Lockdown), packages `terraform/*.tf` to GCS and runs
   official `hashicorp/terraform:1.8.5` via Google Cloud Build in `seanjung-poc`.
+Options (environment): TF_PLAN_ONLY=1 stops after `terraform plan` (review before apply);
+TF_WORKSPACE_NAME=<name> selects or creates a separate state workspace (e.g. a test dataset);
+TF_VAR_* and TF_CLI_ARGS_* (e.g. TF_CLI_ARGS_plan="-target=...") are passed to Terraform.
 """
 
 import io
@@ -28,6 +31,8 @@ REGION = os.environ.get("GCP_REGION", "asia-northeast3")
 BUILD_BUCKET = f"{PROJECT_ID}_cloudbuild"
 SOURCE_OBJECT = "source/agentic_ontology_starter_terraform.tgz"
 CTX = ssl._create_unverified_context()
+PLAN_ONLY = os.environ.get("TF_PLAN_ONLY") == "1"
+WORKSPACE = os.environ.get("TF_WORKSPACE_NAME", "")
 
 
 def get_token() -> str:
@@ -89,18 +94,21 @@ def run_via_cloud_build(token: str) -> dict:
             {
                 "name": "hashicorp/terraform:1.8.5",
                 "entrypoint": "sh",
-                "env": [f"GOOGLE_OAUTH_ACCESS_TOKEN={token}"] + [f"{k}={v}" for k, v in sorted(os.environ.items()) if k.startswith("TF_VAR_")],
+                "env": [f"GOOGLE_OAUTH_ACCESS_TOKEN={token}"] + [f"{k}={v}" for k, v in sorted(os.environ.items())
+                                                                  if k.startswith(("TF_VAR_", "TF_CLI_ARGS"))],
                 "args": [
                     "-c",
                     (
                         "set -e\n"
                         "terraform version\n"
                         "terraform init -input=false\n"
-                        "terraform validate\n"
+                        + (f"terraform workspace select -or-create=true {WORKSPACE}\n" if WORKSPACE else "")
+                        + "terraform validate\n"
                         "terraform plan -out=tfplan -input=false\n"
-                        "terraform apply -input=false -auto-approve tfplan\n"
-                        "terraform output -json > /workspace/terraform_outputs.json\n"
-                        "cat /workspace/terraform_outputs.json\n"
+                        + ("" if PLAN_ONLY else
+                           "terraform apply -input=false -auto-approve tfplan\n"
+                           "terraform output -json > /workspace/terraform_outputs.json\n"
+                           "cat /workspace/terraform_outputs.json\n")
                     ),
                 ],
             }
@@ -152,8 +160,9 @@ def main():
         env["GOOGLE_OAUTH_ACCESS_TOKEN"] = token
         for cmd in [
             [tf_bin, "init", "-input=false"],
+            *([[tf_bin, "workspace", "select", "-or-create=true", WORKSPACE]] if WORKSPACE else []),
             [tf_bin, "validate"],
-            [tf_bin, "apply", "-input=false", "-auto-approve"],
+            [tf_bin, "plan", "-input=false"] if PLAN_ONLY else [tf_bin, "apply", "-input=false", "-auto-approve"],
         ]:
             subprocess.run(cmd, cwd=str(TF_DIR), env=env, check=True)
     else:

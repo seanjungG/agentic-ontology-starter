@@ -1,8 +1,6 @@
 # 5-Stage 에이전틱 온톨로지 엔지니어링 방법론 교육용 슬라이드 (`slides/README.md`)
 
 > 라이브 스튜디오 [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [방법론 인덱스](../methodology/README.md) · [한/영 노트북 인덱스](../notebooks/README.md) · [프로토타이핑 플레이북](../PROTOTYPING_PLAYBOOK.md) · [라이선스 (`LICENSE`)](../LICENSE)
->
-> **[저작권 및 비영리 라이선스 고지 (CC BY-NC-ND 4.0 / Non-Commercial Only)]**: 본 교육용 슬라이드 덱(`.pptx`, `.html`)과 5-Stage 온톨로지 엔지니어링 커리큘럼은 **CC BY-NC-ND 4.0** 라이선스로 보호됩니다. 개인 학습 및 비상업적 연구 외에 **유상 컨설팅, SI 구축, 유상 PoC 딜리버리, 유료 강의·교육·출판, 고객사 제안서·산출물 활용을 엄격히 금지**하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다.
 
 ---
 

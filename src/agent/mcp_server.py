@@ -86,6 +86,11 @@ class DomainMcpServer:
         self._catalog_at = time.time()
         return self._catalog
 
+    def get_doc_chunks(self, jobs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """track=lite: every row of tb_doc_chunks (the only table loaded for a documents-only project)."""
+        return self._run(f"""SELECT chunk_id, source_doc, page_from, page_to, article_no, content
+            FROM `{self.fq}.tb_doc_chunks` ORDER BY chunk_id""", jobs)
+
     def extract_params_from_text(self, text: str) -> Dict[str, Any]:
         """Deterministic extraction: literal numbers from text + exact catalog-name matches (no alias dictionary)."""
         cat = self.get_live_catalog()
@@ -322,7 +327,8 @@ class DomainMcpServer:
         if os.path.exists(rp):
             with open(rp, "r", encoding="utf-8") as f:
                 r = json.load(f)
-            report = {k: r.get(k) for k in ("evaluated_at", "total_cqs", "passed", "accuracy_rate", "method")}
+            report = {k: r.get(k) for k in ("evaluated_at", "run_id", "total_cqs", "passed", "accuracy_rate", "synthetic_basis",
+                                           "unconfirmed_cqs", "method")}
         return {
             "status": "SUCCESS", "stage": "STAGE 5", "lineage_records": rows, "latest_validation_report": report,
             "summary": (

@@ -1,0 +1,8 @@
+{
+  "extractor": "pipeline/extract_docs.py",
+  "status": "OK",
+  "track": "full",
+  "track_reason": "track=full in project.json",
+  "documents": [],
+  "needs_ocr": []
+}

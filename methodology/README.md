@@ -1,8 +1,6 @@
 # 5-Stage Agentic Ontology Methodology (`methodology/`)
 
-> **방법론 저작권 및 비영리 라이선스 고지 (Methodology IP & Non-Commercial Notice — CC BY-NC-ND 4.0)**
-> - **한국어**: 본 폴더(`methodology/`)에 수록된 **5-Stage 에이전틱 온톨로지 엔지니어링 방법론(8단계 엔지니어링 흐름 · 산출물 체계 D1.1~D5.5 · 3-Layer OKF 위키 · 듀얼 Property Graph · 8종 MCP 및 2-Pass 에이전트 · 4-Tier 리니지/경계값 평가 체계)**은 **CC BY-NC-ND 4.0(저작자표시-비영리-변경금지)** 라이선스로 보호됩니다. 개인 학습 및 비상업적 연구 외에 **타 기업/기관 대상 유상 컨설팅, SI 구축, 유상 PoC 딜리버리, 상업적 제안서/산출물 활용 및 무단 개작 배포를 엄격히 금지**합니다. 상업적 활용이나 고객사 프로젝트 적용이 필요한 경우 반드시 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. ([`../LICENSE`](../LICENSE))
-> - **English**: The **5-Stage Agentic Ontology Engineering Methodology** contained in this directory (`methodology/`) is protected under **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**. Any commercial use — including paid consulting, system integration (SI) delivery, paid PoCs, client deliverables, commercial proposals, or unauthorized derivative distribution — is strictly prohibited without prior written permission. For commercial or enterprise inquiries, please contact **[seanjung@google.com](mailto:seanjung@google.com)**. ([`../LICENSE`](../LICENSE))
+> [Live Studio](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) · [Korean (`METHODOLOGY_KO.md`)](./ko/METHODOLOGY_KO.md) · [English (`METHODOLOGY_EN.md`)](./en/METHODOLOGY_EN.md) · [Notebooks](../notebooks/README.md) · [License (`LICENSE`)](../LICENSE)
 
 이 폴더는 **5-Stage 에이전틱 온톨로지 구축 방법론**을 언어별 하위 폴더(`methodology/ko/` · `methodology/en/`)로 구분하여 담고 있습니다. 각 Stage 문서는 라이브 스튜디오 탭, MCP 도구, 실행 가능한 Jupyter 노트북(`notebooks/ko/` · `notebooks/en/`)과 1:1로 대응합니다.
 

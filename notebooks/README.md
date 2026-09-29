@@ -3,8 +3,6 @@
 > **🇰🇷 국문 마스터 초기 화면 (`notebooks/ko/`)**: [`ko/stage0_overview_walkthrough_ko.ipynb`](./ko/stage0_overview_walkthrough_ko.ipynb) ｜ **🇺🇸 English Master Entrypoint (`notebooks/en/`)**: [`en/stage0_overview_walkthrough_en.ipynb`](./en/stage0_overview_walkthrough_en.ipynb)
 >
 > **정본 방법론 문서 (Methodology Docs)**: [한국어 (`METHODOLOGY_KO.md`)](../methodology/ko/METHODOLOGY_KO.md) · [English (`METHODOLOGY_EN.md`)](../methodology/en/METHODOLOGY_EN.md) ｜ **Live Web Studio**: [`Agentic Ontology Studio`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app) ｜ **License**: [`LICENSE`](../LICENSE)
->
-> **[비영리 라이선스 고지 / Non-Commercial License Notice (`CC BY-NC-ND 4.0` & `PolyForm NC 1.0`)]**: 본 노트북(12종)과 5-Stage 온톨로지 엔지니어링 방법론은 개인 학습 및 비상업적 기술 검증 목적으로만 제공됩니다. 유상 컨설팅·SI·PoC 납품 및 상용 서비스 활용을 금지하며, 상업적/엔터프라이즈 활용이 필요한 경우 **[seanjung@google.com](mailto:seanjung@google.com)**으로 사전 논의하시기 바랍니다. / Commercial use, paid consulting/SI delivery, or client deliverable usage is strictly prohibited without prior written permission from **[seanjung@google.com](mailto:seanjung@google.com)**.
 
 본 디렉터리는 **Agentic Ontology Starter Pack v2.0**의 **5-Stage × 8-Phase 엔터프라이즈 에이전틱 온톨로지 방법론**을 BigQuery(`seanjung-poc.starter_ontology_dw`), BigQuery Property Graph(`STARTER_ONTOLOGY_GRAPH`), Vertex AI Gemini(`gemini-3.8-flash`) 실환경에서 단계별로 실행·검증하는 **12종의 인터랙티브 Jupyter 노트북**을 제공합니다.
 

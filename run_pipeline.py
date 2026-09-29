@@ -1,21 +1,32 @@
 # -*- coding: utf-8 -*-
 """
 One-Click End-to-End Pipeline Runner:
-Executes Ingestion ➔ Property Graph DDL Generation ➔ CQ Validation.
+Executes original-text extraction ➔ Gate 0 ➔ Ingestion ➔ Property Graph DDL Generation ➔ CQ Validation.
 
     python3 run_pipeline.py                      # bundled sample (repository root)
     python3 run_pipeline.py --project <id>       # projects/<id>/ data + that project's GCP dataset/bucket
 """
 import argparse
 import os
+import sys
 
-from src.project_context import get_project, load_override
+from src.project_context import get_project, load_override, resolve_track
+
+NO_TABLES = """[STOP] track={track} needs customer tables, but project.json lists none ({reason}).
+Choose one and tell the operator (the agent must not create tables):
+  (a) Ask the customer for the table extracts, put them in data/input/03_tables/ and list them in project.json "tables".
+  (b) Physical graph built from the documents: not implemented (separate request).
+  (c) Synthetic demo data: only with explicit user approval, recorded in project.json "synthetic".
+Or set "track": "auto" / "lite" to run the documents-only path."""
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", help="project id (default: sample or env STARTER_PROJECT)")
     p = get_project(ap.parse_args().project)
+    track, tables, reason = resolve_track(p)
+    if track != "lite" and not tables:
+        sys.exit(NO_TABLES.format(track=track, reason=reason))
     gcp = p.get("gcp") or {}
     env = {"GCP_PROJECT_ID": gcp.get("project_id"), "BQ_DATASET_ID": gcp.get("dataset_id"),
            "GCS_WIKI_BUCKET": gcp.get("gcs_bucket"), "STARTER_PROJECT_ROOT": p["root"]}
@@ -30,15 +41,31 @@ def main():
     run_validation = load_override(p, "validator_module", "run_validation") or run_validation
 
     print("==================================================================")
-    print(f" [Enterprise Agentic Ontology Starter] Executing Unified Pipeline · project={p['project_id']}")
+    print(f" [Enterprise Agentic Ontology Starter] Executing Unified Pipeline · project={p['project_id']} · track={track} ({reason})")
     print("==================================================================")
-    print(">>> Stage 1 & 2: Ingesting Unstructured Guides & Extracting Anchors...")
+    from pipeline.extract_docs import extract_project
+    from pipeline.ingest import build_chunks
+    from pipeline.validator import run_gate0
+    print(">>> Stage 1: Converting customer_doc/ originals to 01_guides (code only, no summary)...")
+    if extract_project(p["root"], {"track": track, "track_reason": reason})["needs_ocr"]:
+        sys.exit("[STOP] Pages without text (needs_ocr). See data/output/input_manifest.json.")
+    print("\n>>> Gate 0: Chunks vs. original text...")
+    if run_gate0(build_chunks()[1])["status"] != "PASS":
+        sys.exit("[STOP] Gate 0 failed. See data/output/gate0_report.json. Nothing was loaded.")
+
+    print("\n>>> Stage 1 & 2: Ingesting Unstructured Guides & Extracting Anchors...")
     run_ingest()
 
-    print("\n>>> Stage 3: Synthesizing BigQuery SQL:2023 Property Graph DDL...")
-    build_graph()
+    if track == "lite":
+        from pipeline.extract_wiki import extract_wiki
+        print("\n>>> Stage 2: Document-based wiki (entities = nodes, concepts = edges; quotes checked against chunks)...")
+        extract_wiki()
+        print("\n>>> Stage 3: skipped (track=lite, no customer tables; the property graph needs tables)")
+    else:
+        print("\n>>> Stage 3: Synthesizing BigQuery SQL:2023 Property Graph DDL...")
+        build_graph()
 
-    print("\n>>> Stage 5: Live Golden CQ validation (BigQuery verification SQL + Gemini agent answers)...")
+    print("\n>>> Stage 5: Live Golden CQ validation (Gate 1 CQ checks, then sql / citation scoring)...")
     run_validation()
 
     print("==================================================================")
