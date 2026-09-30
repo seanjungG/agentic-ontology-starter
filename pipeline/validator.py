@@ -22,7 +22,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_ROOT = os.environ.get("STARTER_PROJECT_ROOT", BASE_DIR)  # project data root (run_pipeline.py --project)
 sys.path.insert(0, BASE_DIR)
 from src.agent.reasoning_engine import AiFdeAgentEngine  # noqa: E402
-from src.gcp_client import execute_bq_sql  # noqa: E402
+from src.gcp_client import call_vertex_gemini, execute_bq_sql  # noqa: E402
 
 CQ_PATH = os.path.join(DATA_ROOT, "data/input/04_cq/golden_competency_questions.json")
 BOUNDARY_PATH = os.path.join(DATA_ROOT, "data/input/04_cq/boundary_cases.json")
@@ -52,13 +52,75 @@ def _agent(engine: AiFdeAgentEngine, query: str) -> dict:
         return {"error": repr(e)[:500], "body": "", "answer_status": "EXCEPTION", "tools": [], "jobs": [],
                 "tokens": 0, "elapsed_s": round(time.perf_counter() - t0, 2)}
     lt = res["llm_telemetry"]
+    outs = [{"tool": d.get("tool_name"), "output": d.get("output")} for d in res["lifecycle"]["step_2_tool_dispatch"]["dispatched_tools"]]
     return {"body": res["lifecycle"]["step_4_synthesis"]["markdown"].split(FOOTER)[0],
             "answer_status": res["answer_status"],
             "tools": list(res["bq_telemetry"]["tool_statuses"].keys()),
             "tool_statuses": res["bq_telemetry"]["tool_statuses"],
             "jobs": res["bq_telemetry"]["job_ids"],
+            "tool_outputs": json.dumps(outs, ensure_ascii=False, default=str)[:6000],
             "tokens": (lt.get("prompt_tokens") or 0) + (lt.get("candidates_tokens") or 0),
             "elapsed_s": round(time.perf_counter() - t0, 2)}
+
+
+# Final-answer rubric (GOAL-161): the judge scores the agent's final answer by meaning, not keyword presence.
+RUBRIC = [
+    ("relevance", 20, "Answers the question actually asked (not a neighbouring topic); conclusion comes first."),
+    ("accuracy", 30, "Facts, formulas, conditions and numbers match the expected answer and the evidence."),
+    ("completeness", 20, "Covers every sub-question and required condition."),
+    ("grounding", 15, "Every number and rule is backed by the retrieved evidence; nothing invented."),
+    ("actionability", 15, "Clear, non-hedged conclusion plus useful related information (exceptions, caveats)."),
+]
+JUDGE_PROMPT = """You are a strict evaluator of an ontology agent. Score ONLY the [Final Answer], by meaning, not by keyword overlap.
+
+[Question]
+{q}
+
+[Expected Answer]
+{exp}
+
+[Evidence the agent retrieved]
+{ev}
+
+[Final Answer]
+{ans}
+
+Axes (total 100):
+{axes}
+
+Rules:
+- If relevance < 8 the total cannot exceed 40.
+- Give an axis its maximum only when there is nothing to criticise.
+- Each number or rule not found in the evidence costs grounding at least 3 points.
+- A hedged or self-contradictory conclusion loses accuracy and actionability points.
+Return JSON only: {{"scores": {{"relevance": n, "accuracy": n, "completeness": n, "grounding": n, "actionability": n}},
+ "verdict": "PASS|PARTIAL|FAIL", "deductions": ["axis: reason"], "summary": "one sentence"}}"""
+
+
+def _judge(engine: AiFdeAgentEngine, query: str, expected: str, a: dict, chunks: dict) -> dict:
+    if a.get("error") or not a["body"]:
+        return {"scores": {k: 0 for k, *_ in RUBRIC} | {"total": 0}, "verdict": "FAIL",
+                "deductions": [f"agent error: {a.get('error')}"], "summary": "no answer"}
+    cited = [chunks[c] for c in sorted(set(CHUNK_ID_RE.findall(a["body"]))) if c in chunks]
+    ev = f"BigQuery job IDs: {a['jobs']}\n" + a["tool_outputs"] + "".join(f"\n[{c['chunk_id']}] {c['content'][:700]}" for c in cited)
+    axes = "\n".join(f"- {k} ({mx}): {d}" for k, mx, d in RUBRIC)
+    r = call_vertex_gemini(JUDGE_PROMPT.format(q=query, exp=expected, ev=ev, ans=a["body"], axes=axes),
+                           response_mime_type="application/json", temperature=0.0, max_tokens=4096,
+                           model_name=engine.model_name, project_id=engine.project_id)
+    try:
+        j = json.loads(r["text"])
+    except (ValueError, KeyError):
+        return {"scores": {k: 0 for k, *_ in RUBRIC} | {"total": 0}, "verdict": "FAIL",
+                "deductions": [f"judge error: {r.get('status')} {str(r.get('error', ''))[:200]}"], "summary": "judge failed"}
+    sc = {k: max(0, min(mx, int(round(float(j.get("scores", {}).get(k, 0)))))) for k, mx, _ in RUBRIC}
+    total = sum(sc.values()) if sc["relevance"] >= 8 else min(sum(sc.values()), 40)
+    return {"scores": {**sc, "total": total}, "verdict": j.get("verdict", "FAIL"),
+            "deductions": j.get("deductions", []), "summary": j.get("summary", "")}
+
+
+def _trigrams(s: str) -> set:
+    s = "".join(s.split())
+    return {s[i:i + 3] for i in range(len(s) - 2)}
 
 
 def _sql(sql: str, fq: str) -> dict:
@@ -258,6 +320,11 @@ def run_validation(workers: int = 5) -> dict:
     cqs = load_cqs()
     engine = AiFdeAgentEngine()
     fq = engine.server.fq
+    chunk_path = os.path.join(DATA_ROOT, "data/output/doc_chunks.jsonl")
+    chunks = {}
+    if os.path.exists(chunk_path):
+        with open(chunk_path, "r", encoding="utf-8") as f:
+            chunks = {c["chunk_id"]: c for c in (json.loads(x) for x in f if x.strip())}
 
     def cite(cq):
         ec, facts = cq["expected_citation"], cq["expected_facts"]
@@ -277,11 +344,17 @@ def run_validation(workers: int = 5) -> dict:
             "status": "PASSED" if not reasons else "FAILED",
             "verification_status": "CITATION_MATCH·ANSWER_MATCH" if not reasons else "; ".join(reasons),
             "dispatched_tools": a["tools"], "agent_bq_job_ids": a["jobs"], "llm_tokens": a["tokens"],
-            "elapsed_s": a["elapsed_s"], "answer_excerpt": a["body"][:600], "error": a.get("error"),
+            "elapsed_s": a["elapsed_s"], "answer_excerpt": a["body"][:600], "error": a.get("error"), "_a": a,
         }
 
     def one(cq):
         row = cite(cq) if cq["evidence_type"] == "citation" else sql_one(cq)
+        a = row.pop("_a")
+        row["answer"] = a["body"]
+        row["rubric"] = _judge(engine, cq["query"], row["expected_value"], a, chunks)
+        if row["rubric"]["verdict"] != "PASS":  # final-answer quality gate on top of the value checks
+            row["status"] = "FAILED"
+            row["verification_status"] += f"; RUBRIC_{row['rubric']['verdict']} {row['rubric']['scores']['total']}"
         row.update(evidence_type=cq["evidence_type"], evidence_provenance=cq["_evidence_provenance"],
                    answer_confirmed_by=cq.get("answer_confirmed_by"), confirmed_at=cq.get("confirmed_at"),
                    answer_confirmed=bool(cq.get("answer_confirmed_by")), executed_at=_now())
@@ -309,12 +382,21 @@ def run_validation(workers: int = 5) -> dict:
             "status": "PASSED" if not reasons else "FAILED",
             "verification_status": "SQL_MATCH·ANSWER_MATCH" if not reasons else "; ".join(reasons),
             "dispatched_tools": a["tools"], "agent_bq_job_ids": a["jobs"], "llm_tokens": a["tokens"],
-            "elapsed_s": a["elapsed_s"], "answer_excerpt": a["body"][:600], "error": a.get("error"),
+            "elapsed_s": a["elapsed_s"], "answer_excerpt": a["body"][:600], "error": a.get("error"), "_a": a,
         }
 
     with ThreadPoolExecutor(workers) as ex:
         rows = list(ex.map(one, cqs))
+    tg = {r["cq_id"]: _trigrams(r["answer"]) for r in rows}
+    dups = [{"a": x["cq_id"], "b": y["cq_id"], "jaccard_3gram": round(len(tg[x["cq_id"]] & tg[y["cq_id"]]) / max(1, len(tg[x["cq_id"]] | tg[y["cq_id"]])), 3)}
+            for i, x in enumerate(rows) for y in rows[i + 1:]]
+    for d in [d for d in dups if d["jaccard_3gram"] >= 0.5]:  # near-identical answers to different questions
+        for r in rows:
+            if r["cq_id"] in (d["a"], d["b"]):
+                r["status"] = "FAILED"
+                r["verification_status"] += f"; DUPLICATE_ANSWER {d['a']}~{d['b']} {d['jaccard_3gram']}"
     passed = sum(r["status"] == "PASSED" for r in rows)
+    tot = [r["rubric"]["scores"]["total"] for r in rows]
     man_path = os.path.join(DATA_ROOT, "data/output/input_manifest.json")
     man_sha = None
     if os.path.exists(man_path):
@@ -328,7 +410,13 @@ def run_validation(workers: int = 5) -> dict:
         "evidence_provenance": prov, "synthetic_basis": "SYNTHETIC_DEMO" in prov,
         "unconfirmed_cqs": sum(not r["answer_confirmed"] for r in rows),
         "method": f"sql CQ: verification_sql(BigQuery) vs expected_math + live agent answer; citation CQ: agent answer "
-                  f"must cite expected chunk and contain expected_facts (Vertex AI {engine.model_name})",
+                  f"must cite expected chunk and contain expected_facts (Vertex AI {engine.model_name}); every final answer "
+                  f"is also scored by an LLM judge on a 100-point rubric (PASS verdict required) and checked for duplicates",
+        "rubric": [{"key": k, "max": mx, "desc": d} for k, mx, d in RUBRIC],
+        "rubric_avg_total": round(sum(tot) / len(tot), 1) if tot else None,
+        "rubric_axis_avg": {k: round(sum(r["rubric"]["scores"][k] for r in rows) / len(rows), 1) for k, *_ in RUBRIC} if rows else {},
+        "duplicate_pairs": [d for d in dups if d["jaccard_3gram"] >= 0.5],
+        "max_pairwise_jaccard_3gram": max((d["jaccard_3gram"] for d in dups), default=0),
         "model": engine.model_name, "dataset": fq,
         "total_cqs": len(rows), "passed": passed, "accuracy_rate": round(passed / len(rows) * 100, 1) if rows else None,
         "llm_tokens_total": sum(r["llm_tokens"] for r in rows),
@@ -337,7 +425,7 @@ def run_validation(workers: int = 5) -> dict:
     path = os.path.join(OUT_DIR, "cq_benchmark_report.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    print(f"[VALIDATOR] Golden CQ {passed}/{len(rows)} passed -> {path}")
+    print(f"[VALIDATOR] Golden CQ {passed}/{len(rows)} passed · rubric avg {report['rubric_avg_total']} -> {path}")
     return report
 
 

@@ -43,6 +43,9 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
    - **`evidence_type: "sql"` (`full` track)**: Verifies that independent BigQuery `verification_sql` matches `expected_math` and that the live agent answer (`AiFdeAgentEngine.execute_cycle`) contains the exact numbers and `grounded_chunk`.
    - **`evidence_type: "citation"` (`lite` track)**: Verifies that the document-context agent answer (`execute_lite_doc_cycle`) cites `grounded_chunk` (`DOC_CHUNK_XXX`) and includes at least one keyword from `expected_keywords`.
    - **`status: "UNCONFIRMED"` CQs**: Questions without customer-confirmed ground truth are counted separately in `unconfirmed_cq_count` rather than being auto-passed as 100%.
+   - **Final-answer rubric (`_judge`)**: Value-presence checks alone can pass an answer that addresses a different question. An LLM judge (same Gemini model) therefore scores the agent's final answer: relevance 20 · accuracy 30 · completeness 20 · grounding 15 · actionability 15. The judge sees only the question, the expected answer, the tool outputs the agent actually retrieved, and the text of the chunks it cited. Relevance below 8 caps the total at 40; each number not found in the evidence costs grounding at least 3 points. A verdict other than `PASS` marks the CQ `FAILED` (`RUBRIC_PARTIAL` / `RUBRIC_FAIL`).
+   - **Duplicate-answer check**: If two different CQs get answers with 3-gram Jaccard ≥ 0.5, both fail with `DUPLICATE_ANSWER`. Identical answers to different questions mean retrieval or generation ignored the question.
+   - Do not raise scores by preloading answers or evidence, or by returning fixed responses. Improve scores only through prompts and retrieval logic.
 3. **Execution Provenance Metadata (`cq_benchmark_report.json`)**:
    - Every validation report records the input file hash (`input_manifest_sha256`), provenance tier (`evidence_provenance`), synthetic data flag (`synthetic_basis`), and unconfirmed CQ count (`unconfirmed_cq_count`).
    ```json
@@ -81,6 +84,7 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 ## Gate 5 (Production Release Gate)
 
 - [ ] Confirmed Golden CQs achieve `100.0%` pass rate and `input_manifest_sha256` matches current inputs (`cq_benchmark_report.json`).
+- [ ] Every final answer gets a rubric verdict of `PASS` and `duplicate_pairs` is empty (`rubric_avg_total`, `rubric_axis_avg` recorded).
 - [ ] Boundary benchmark (`10 × 5`) verifies `GROUNDED`, `MATCH_NOT_FOUND`, and `INSUFFICIENT_PARAMETERS` guardrails in `boundary_benchmark_results.json`.
 - [ ] Zero hardcoded secrets (`AIza...`), customer identifiers, or local paths (`/<local-home>/`).
 - [ ] `terraform apply` succeeds and Cloud Run `/api/portal/profile` returns HTTP 200.

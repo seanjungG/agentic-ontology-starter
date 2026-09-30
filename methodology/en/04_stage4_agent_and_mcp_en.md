@@ -60,7 +60,7 @@ The 24-month cost is computed for both paths: public subsidy `(factory price - t
 3. **Validation**: fees and day counts must be numbers written in the question. Names not in the catalog are dropped. If the Gemini call fails, rule-based extraction is used instead.
 4. **Tool calls**: run the MCPs in sub-goal order. When runtime tools are used, `mcp_query_graph_and_wiki` is added as the evidence step.
 5. **Answer status**: set from the tool statuses in the order `BQ_ERROR` → `MATCH_NOT_FOUND` → `INSUFFICIENT_PARAMETERS` → `GROUNDED`. If answer generation fails, the status is `LLM_ERROR`.
-6. **Answer (Gemini call 2)**: uses only the tool result JSON as evidence. Order: conclusion → evidence data → rules and chunks → execution info (job IDs).
+6. **Answer (Gemini call 2)**: uses only the tool result JSON as evidence. Order: conclusion → evidence data → rules and chunks → related information (exceptions, caveats) → execution info (job IDs). The conclusion applies the question's conditions to the rules and gives one answer; if it depends on a condition, it is split by condition. Stage 5 scores the final answer with a rubric.
 
 Each question calls Gemini twice, and the result records the token count and the BigQuery job IDs.
 

@@ -43,6 +43,9 @@
    - **`evidence_type: "sql"` (`full` 트랙)**: 독립 실행한 BigQuery `verification_sql` 결과가 `expected_math`와 일치하는지, 그리고 에이전트(`AiFdeAgentEngine.execute_cycle`) 실시간 답변이 정답 수치와 `grounded_chunk`를 포함하는지 검증한다.
    - **`evidence_type: "citation"` (`lite` 트랙)**: 에이전트(`execute_lite_doc_cycle`) 답변에 `grounded_chunk`(`DOC_CHUNK_XXX`) 인용이 포함되어 있고 `expected_keywords` 중 최소 1개 이상이 포함되는지 검증한다.
    - **`status: "UNCONFIRMED"` 문항 처리**: 고객이 정답(`expected_math` 또는 `expected_keywords`)을 아직 확정하지 않은 문항은 자동 통과(100%)로 위장하지 않고 `unconfirmed_cq_count`로 별도 집계한다.
+   - **최종 답변 루브릭 채점 (`_judge`)**: 값 포함 검사만으로는 질문과 다른 답을 해도 통과할 수 있다. 그래서 에이전트 최종 답변을 LLM 심사(같은 Gemini 모델)가 질문 적합성 20 · 정확성 30 · 완결성 20 · 근거 충실도 15 · 명확성 15로 채점한다. 심사에는 질문, 정답, 에이전트가 실제 조회한 도구 결과와 인용 청크 원문만 넣는다. 질문 적합성 8점 미만이면 총점 상한 40, 근거에 없는 수치는 항목당 3점 이상 감점. 판정이 `PASS`가 아니면 문항은 `FAILED`(`RUBRIC_PARTIAL`/`RUBRIC_FAIL`).
+   - **중복 답변 검사**: 서로 다른 문항의 답변 3-gram Jaccard가 0.5 이상이면 두 문항 모두 `DUPLICATE_ANSWER`로 실패 처리한다. 질문이 다른데 답이 같다는 것은 조회나 답변 생성이 질문을 반영하지 못했다는 신호다.
+   - 채점을 올리려고 정답·근거를 미리 넣어 두거나 고정 응답을 쓰지 않는다. 점수 개선은 프롬프트와 조회 로직으로만 한다.
 3. **실행 출처 메타데이터 기록 (`cq_benchmark_report.json`)**:
    - 평가 리포트에는 반드시 입력 자산 매니페스트 해시(`input_manifest_sha256`), 출처 분류(`evidence_provenance`), 합성 데이터 포함 여부(`synthetic_basis`), 정답 미확정 문항 수(`unconfirmed_cq_count`)를 함께 기록한다.
    ```json
@@ -82,6 +85,7 @@
 ## 게이트 (Gate 5 — 최종 배포 승인)
 
 - [ ] 확정된 Golden CQ 검증 통과율 100.0% 및 `input_manifest_sha256` 일치 확인 (`cq_benchmark_report.json`).
+- [ ] 모든 문항의 최종 답변 루브릭 판정 `PASS`, `duplicate_pairs` 0건 (`rubric_avg_total`, `rubric_axis_avg` 기록).
 - [ ] 경계값 10건 × 5회 벤치마크에서 `INSUFFICIENT_PARAMETERS` 및 `MATCH_NOT_FOUND` 가드레일이 정상 작동하고 결과가 `boundary_benchmark_results.json`에 기록됨.
 - [ ] 저장소 내 시크릿(`AIza...`), 고객사 고유 식별자, 로컬 절대 경로(`/<local-home>/`) 0건 확인.
 - [ ] `terraform apply` 통과 및 Cloud Run 헬스체크(`/api/portal/profile`) 정상 응답 확인.
