@@ -97,7 +97,7 @@
 | [`src/agent/reasoning_engine.py`](src/agent/reasoning_engine.py) | 2-Pass MCP 에이전트(`full`) 및 1-Pass 문서 청크 인용 에이전트(`lite` `execute_lite_doc_cycle`) | 커스텀 스키마 시 `engine_module` 오버라이드 |
 | [`pipeline/validator.py`](pipeline/validator.py) | Golden CQ(`sql`/`citation` 분기) 및 경계값 10건×5회 라이브 벤치마크 (`input_manifest_sha256` 기록) | 코어 유지 (`validator_module` 오버라이드 지원) |
 | [`src/project_context.py`](src/project_context.py) · [`src/lineage/lineage_engine.py`](src/lineage/lineage_engine.py) | 프로젝트 해석·프로젝트별 엔진 캐시 · 리니지 DAG 엔진 | 코어 유지 |
-| [`src/web/studio_server.py`](src/web/studio_server.py) | 6-Tab 통합 웹 스튜디오 서버 (`config/portal_profile.json` 기반 렌더링) | 코어 레이아웃 유지 |
+| [`src/web/studio_server.py`](src/web/studio_server.py) | 6-Tab 통합 웹 스튜디오 서버 (`0. Overview` 인터랙티브 전체 패스 맵[Lite/Standard/Full/Dual Fabric] & 선택 조합 기반 스타터팩 패키지 구현 구성도 + Stage 1~5 실행 뷰어) | 코어 레이아웃 유지 |
 | [`notebooks/ko/`](notebooks/ko/) · [`notebooks/en/`](notebooks/en/) | Stage 0~5 국문(6종) · 영문(6종) 실행형 노트북 및 `nb_helpers.py` | 필요 시 쿼리만 갱신 |
 | [`terraform/`](terraform/) | BigQuery, GCS, IAM, Cloud Run 선언적 IaC | `terraform.tfvars`만 수정 |
 

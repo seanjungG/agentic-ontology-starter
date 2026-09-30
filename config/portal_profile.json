@@ -12,9 +12,17 @@
     ]
   },
   "overview": {
-    "eyebrow": "SECTION 1 · 5-STAGE METHODOLOGY & MODULAR MCP PIPELINE",
+    "eyebrow": "SECTION 2 · 5-STAGE METHODOLOGY & MODULAR MCP PIPELINE",
     "title": "5-Stage 온톨로지 엔지니어링 방법론과 모듈형 Stage MCP 실행 보드",
-    "lead": "왼쪽에서 오른쪽으로 <b>STAGE 1 ➔ STAGE 5</b>가 진행되며, 각 Stage 상단의 <code>▶ Stage N MCP</code> 버튼을 클릭하면 해당 Stage의 세부 Step을 선택·단독 실행할 수 있습니다. 상단 컨트롤 바에서 데이터 성숙도 트랙(Lite 1→2→4 · Standard 1→2→3→4 · Full 1→5)과 그래프 엔진(BigQuery / Spanner)을 실시간 전환해 보세요.",
+    "lead": "위쪽 전체 패스 맵에서 선택한 경로(Lite 1→2→4 · Standard 1→2→3→4 · Full-Stack 1→5)에 따라 아래 5개 Stage 중 현재 활성화된 단계와 생략(Bypass)되는 단계가 자동 표시됩니다. 각 Stage 상단의 <code>▶ Stage N MCP</code> 버튼을 클릭하면 세부 Step을 단독 실행할 수 있습니다.",
+    "path_configurator": {
+      "eyebrow_ko": "INTERACTIVE PATH MAP & STARTER PACK PACKAGE BUILDER",
+      "eyebrow_en": "INTERACTIVE PATH MAP & STARTER PACK PACKAGE BUILDER",
+      "title_ko": "전체 경로(Lite · Standard · Full-Stack) 다이어그램 & 스타터팩 패키지 조립 보드",
+      "title_en": "Full-Picture Path Map (Lite · Standard · Full-Stack) & Starter Pack Package Builder",
+      "lead_ko": "아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>선택한 조합으로 조립·구현되는 스타터팩 패키지 구성도(파이프라인 아키텍처, 포함 코드 모듈, 활성 MCP·노트북, project.json·Terraform, 실행 CLI)</b>가 즉시 재구성됩니다.",
+      "lead_en": "Select a <b>Path Preset (Lite / Standard / Full-Stack / Dual Fabric)</b> or <b>click any building block inside the Stage 1 ➔ Stage 5 diagram</b> below. The active route lights up in real time and dynamically assembles the <b>Starter Pack Package Blueprint (pipeline flow, Python modules, MCP tools, notebooks, project.json/Terraform, and CLI commands)</b>."
+    },
     "stages": [
       {
         "stage_id": "stage1",
