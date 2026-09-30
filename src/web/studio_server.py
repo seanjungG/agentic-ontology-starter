@@ -680,6 +680,296 @@ HTML_PAGE = r"""<!DOCTYPE html>
     margin-top: 4px;
   }
 
+  /* 4-B. Interactive Path Map & Starter Pack Package Builder (GOAL-158) */
+  .ov-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .ov-preset-card {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 11px;
+    padding: 11px 13px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+  }
+  .ov-preset-card:hover {
+    border-color: var(--apple-blue);
+    box-shadow: 0 3px 10px rgba(0, 113, 227, 0.08);
+    transform: translateY(-1px);
+  }
+  .ov-preset-card.active {
+    border-color: var(--apple-blue);
+    background: linear-gradient(135deg, rgba(0, 113, 227, 0.08), rgba(2, 132, 199, 0.02));
+    box-shadow: 0 3px 12px rgba(0, 113, 227, 0.12);
+  }
+  .ov-preset-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .ov-preset-tag {
+    font-size: 10.5px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+  .ov-preset-card.active .ov-preset-tag {
+    background: var(--apple-blue);
+    color: #ffffff;
+  }
+  .ov-preset-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--apple-text-primary);
+  }
+  .ov-preset-route {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: #0284c7;
+  }
+  .ov-preset-desc {
+    font-size: 11.5px;
+    color: var(--apple-text-secondary);
+    line-height: 1.45;
+  }
+
+  .ov-fullmap-canvas {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ov-route-diagram-bar {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ov-map-cols {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(215px, 1fr));
+    gap: 12px;
+    align-items: stretch;
+  }
+  .ov-map-col {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-top-width: 4px;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.18s ease;
+  }
+  .ov-map-col.bypassed {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    border-top-color: #94a3b8 !important;
+    opacity: 0.78;
+  }
+  .ov-map-col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .ov-map-col-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--apple-text-primary);
+    line-height: 1.3;
+  }
+  .ov-map-col-sub {
+    font-size: 11px;
+    color: var(--apple-text-secondary);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #cbd5e1;
+  }
+  .ov-pick-card {
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 9px 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+  }
+  .ov-pick-card:hover {
+    border-color: #0284c7;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
+  }
+  .ov-pick-card.selected {
+    background: #eff6ff;
+    border-color: var(--apple-blue);
+    box-shadow: 0 2px 10px rgba(0, 113, 227, 0.12);
+  }
+  .ov-pick-card.selected.tone-teal {
+    background: #f0fdfa;
+    border-color: #0d9488;
+  }
+  .ov-pick-card.selected.tone-indigo {
+    background: #eef2ff;
+    border-color: #4f46e5;
+  }
+  .ov-pick-card.selected.tone-purple {
+    background: #f5f3ff;
+    border-color: #7c3aed;
+  }
+  .ov-pick-card.selected.tone-amber {
+    background: #fffbeb;
+    border-color: #d97706;
+  }
+  .ov-pick-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .ov-pick-tag {
+    font-size: 10px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: #0369a1;
+  }
+  .ov-pick-state {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+  }
+  .ov-pick-card.selected .ov-pick-state {
+    background: var(--apple-blue);
+    color: #ffffff;
+  }
+  .ov-pick-card.selected.tone-teal .ov-pick-state { background: #0d9488; }
+  .ov-pick-card.selected.tone-indigo .ov-pick-state { background: #4f46e5; }
+  .ov-pick-card.selected.tone-purple .ov-pick-state { background: #7c3aed; }
+  .ov-pick-card.selected.tone-amber .ov-pick-state { background: #d97706; }
+  .ov-pick-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+  }
+  .ov-pick-desc {
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.45;
+  }
+  .ov-pick-meta {
+    font-size: 10.5px;
+    font-family: var(--font-mono);
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.75);
+    border-top: 1px dotted #cbd5e1;
+    padding-top: 4px;
+    margin-top: 2px;
+  }
+
+  /* Assembled Package Implementation Diagram & 4-Card Manifest */
+  .ov-pkg-pipe-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .ov-pkg-node {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-left-width: 4px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+  }
+  .ov-pkg-node.bypassed {
+    background: #f1f5f9;
+    border-style: dashed;
+    border-left-style: solid;
+    border-left-color: #94a3b8 !important;
+    opacity: 0.72;
+  }
+  .ov-pkg-manifest-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(260px, 1fr));
+    gap: 12px;
+    align-items: stretch;
+  }
+  .ov-pkg-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    padding: 13px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ov-pkg-box-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .ov-pkg-box-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .ov-pkg-item-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    font-size: 11.5px;
+  }
+  .ov-pkg-item-row.skipped {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border-style: dashed;
+  }
+  .ov-stage-col.bypassed-col {
+    background: #f1f5f9;
+    border-style: dashed;
+    opacity: 0.68;
+  }
+
   /* 5. Stage 1 Asset Studio Styles (.asset-summary-ribbon, .bento-kpi-grid, .asset-list-card, .inspector-drawer) */
   .asset-summary-ribbon {
     display: flex;
@@ -1220,22 +1510,26 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <section class="tab-panel active" id="panel-overview">
       <div class="ov-scroll-wrap">
 
-        <!-- Executive Summary & Interactive Track / Graph Engine Selector -->
-        <div class="ov-card ov-hero-card">
+        <!-- PART 1: Interactive Full-Picture Path Map & Building Block Selector -->
+        <div class="ov-card ov-hero-card" id="ov-fullmap-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow" data-ko="EXECUTIVE SUMMARY · AGENTIC ONTOLOGY STARTER PACK V2.0" data-en="EXECUTIVE SUMMARY · AGENTIC ONTOLOGY STARTER PACK V2.0">EXECUTIVE SUMMARY · AGENTIC ONTOLOGY STARTER PACK V2.0</span>
+            <span class="ov-eyebrow" id="ov-builder-eyebrow" data-ko="INTERACTIVE PATH MAP &amp; STARTER PACK PACKAGE BUILDER" data-en="INTERACTIVE PATH MAP &amp; STARTER PACK PACKAGE BUILDER">INTERACTIVE PATH MAP &amp; STARTER PACK PACKAGE BUILDER</span>
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              <span class="badge approved" data-ko="5-Stage × 9-Step 표준 라이프사이클" data-en="5-Stage × 9-Step Canonical Lifecycle">5-Stage × 9-Step 표준 라이프사이클</span>
-              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/METHODOLOGY_KO.md" target="_blank" rel="noopener">방법론 (METHODOLOGY_KO.md)</a>
-              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage0_overview_walkthrough_ko.ipynb" target="_blank" rel="noopener">노트북 (ko/stage0_overview_walkthrough_ko.ipynb)</a>
+              <span class="badge approved" data-ko="전체 경로 그림 + 항목 클릭형 패키지 조립" data-en="Visual Path Map + Click-to-Assemble Package">전체 경로 그림 + 항목 클릭형 패키지 조립</span>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="/docs/architecture/gcp_system_architecture.html" target="_blank" rel="noopener" data-ko="GCP 시스템 아키텍처 (HTML)" data-en="GCP System Architecture (HTML)">GCP 시스템 아키텍처 (HTML)</a>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/METHODOLOGY_KO.md" target="_blank" rel="noopener" data-ko="방법론 (METHODOLOGY_KO.md)" data-en="Methodology (METHODOLOGY_EN.md)">방법론 (METHODOLOGY_KO.md)</a>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage0_overview_walkthrough_ko.ipynb" target="_blank" rel="noopener" data-ko="노트북 (Stage 0)" data-en="Notebook (Stage 0)">노트북 (Stage 0)</a>
             </div>
           </div>
-          <h2 class="ov-h2" data-ko="기업 맞춤형 3-Track 온톨로지 방법론 & BigQuery / Spanner 듀얼 그래프 스타터팩" data-en="Configurable 3-Track Ontology Methodology & BigQuery / Spanner Dual Graph Starter Pack">기업 맞춤형 3-Track 온톨로지 방법론 &amp; BigQuery / Spanner 듀얼 그래프 스타터팩</h2>
-          <p class="ov-lead" data-ko="본 스타터팩은 고객 식별자를 비식별화(<code>CUST_DEMO_*</code>)한 슬림 샘플 데이터(정형 원장 4종 + 정책 가이드 2종) 위에 <b>Stage 1~5 모듈형 파이프라인 MCP</b>와 <b>BigQuery Property Graph / Cloud Spanner Graph 듀얼 어댑터</b>를 결합한 참조 아키텍처입니다." data-en="This starter pack combines de-identified sample data (4 DW ledgers + 2 policy guides) with Stage 1~5 modular pipeline MCPs and a dual adapter for BigQuery Property Graph and Cloud Spanner Graph.">
-            본 스타터팩은 고객 식별자를 비식별화(<code>CUST_DEMO_*</code>)한 슬림 샘플 데이터(정형 원장 4종 + 정책 가이드 2종) 위에 <b>Stage 1~5 모듈형 파이프라인 MCP</b>와 <b>BigQuery Property Graph / Cloud Spanner Graph 듀얼 어댑터</b>를 결합한 참조 아키텍처입니다.
+          <h2 class="ov-h2" id="ov-builder-title" data-ko="전체 경로(Lite · Standard · Full-Stack) 다이어그램 &amp; 스타터팩 패키지 조립 보드" data-en="Full-Picture Path Map (Lite · Standard · Full-Stack) &amp; Starter Pack Package Builder">전체 경로(Lite · Standard · Full-Stack) 다이어그램 &amp; 스타터팩 패키지 조립 보드</h2>
+          <p class="ov-lead" id="ov-builder-lead" style="margin-bottom:10px;" data-ko="아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>선택한 조합으로 조립·구현되는 스타터팩 패키지 구성도(파이프라인 아키텍처, 포함 코드 모듈, 활성 MCP·노트북, project.json·Terraform, 실행 CLI)</b>가 즉시 재구성됩니다." data-en="Select a <b>Path Preset (Lite / Standard / Full-Stack / Dual Fabric)</b> or <b>click any building block inside the Stage 1 ➔ Stage 5 diagram</b> below. The active route lights up in real time and dynamically assembles the <b>Starter Pack Package Blueprint (pipeline flow, Python modules, MCP tools, notebooks, project.json/Terraform, and CLI commands)</b>.">
+            아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>선택한 조합으로 조립·구현되는 스타터팩 패키지 구성도(파이프라인 아키텍처, 포함 코드 모듈, 활성 MCP·노트북, project.json·Terraform, 실행 CLI)</b>가 즉시 재구성됩니다.
           </p>
 
-          <div class="ov-config-strip">
+          <!-- 1-A. 4 Quick Path Preset Cards + Synchronized Segmented Strip -->
+          <div class="ov-preset-grid" id="ov-preset-grid"></div>
+
+          <div class="ov-config-strip" style="margin-top:10px;">
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:700; color:#1e293b;" data-ko="데이터 성숙도 트랙 (Track):" data-en="Data Maturity Track:">데이터 성숙도 트랙 (Track):</span>
               <div class="apple-segmented-control" id="ov-track-selector">
@@ -1249,140 +1543,58 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <div class="apple-segmented-control" id="ov-engine-selector">
                 <button class="segment-btn active" onclick="selectGraphEngine('bigquery')">BigQuery Property Graph (SQL:2023)</button>
                 <button class="segment-btn" onclick="selectGraphEngine('spanner')">Cloud Spanner Graph (ISO GQL)</button>
+                <button class="segment-btn" onclick="selectGraphEngine('both')">Dual Fabric (BQ + Spanner)</button>
+                <button class="segment-btn" onclick="selectGraphEngine('none')">미사용 (Lite Bypass)</button>
               </div>
             </div>
           </div>
+
+          <!-- 1-B. Full-Picture Path Diagram & 5-Column Clickable Building Blocks -->
+          <div class="ov-fullmap-canvas" style="margin-top:12px;">
+            <div class="ov-route-diagram-bar" id="ov-route-diagram-bar"></div>
+            <div class="ov-map-cols" id="ov-map-cols"></div>
+          </div>
         </div>
 
-        <!-- SECTION 1: 5-Stage Flow Board -->
+        <!-- PART 2: Assembled Starter Pack Package Implementation Blueprint -->
+        <div class="ov-card" id="ov-assembled-package-card" style="border-left:4px solid #0d9488;">
+          <div class="ov-card-head">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="ov-eyebrow teal" data-ko="ASSEMBLED STARTER PACK BLUEPRINT · 선택 조합 패키지 구현 구성도" data-en="ASSEMBLED STARTER PACK BLUEPRINT · PACKAGE IMPLEMENTATION VIEW">ASSEMBLED STARTER PACK BLUEPRINT · 선택 조합 패키지 구현 구성도</span>
+              <span class="badge human" id="ov-pkg-active-badge">Track 3 · Full-Stack + BigQuery Property Graph</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;" id="ov-pkg-kpi-pills"></div>
+          </div>
+          <h2 class="ov-h2" id="ov-pkg-title">선택한 구성 항목으로 조립된 스타터팩 패키지 아키텍처 &amp; 구현 명세</h2>
+          <p class="ov-lead" id="ov-pkg-subtitle" style="margin-bottom:12px;"></p>
+
+          <!-- 2-A. Visual 5-Stage Package Implementation Pipeline Diagram -->
+          <div class="ov-pkg-pipe-grid" id="ov-pkg-pipe-grid"></div>
+
+          <!-- 2-B. 4-Column Package Manifest (Code Modules / MCP & Notebooks / project.json & Terraform / CLI) -->
+          <div class="ov-pkg-manifest-grid" id="ov-pkg-manifest-grid"></div>
+        </div>
+
+        <!-- PART 3: 5-Stage Detailed Step & MCP Execution Board (Synced with Selected Path) -->
         <div class="ov-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow" id="ov-s1-eyebrow">SECTION 1 · 5-STAGE METHODOLOGY &amp; MODULAR MCP PIPELINE</span>
+            <span class="ov-eyebrow" id="ov-s1-eyebrow">SECTION 2 · 5-STAGE METHODOLOGY &amp; MODULAR MCP PIPELINE</span>
+            <span class="badge human" id="ov-s1-path-hint">선택한 패스에 포함된 활성 Stage와 생략(Bypass) Stage가 구분 표시됩니다</span>
           </div>
           <h2 class="ov-h2" id="ov-s1-title">5-Stage 온톨로지 엔지니어링 방법론과 모듈형 Stage MCP 실행 보드</h2>
           <p class="ov-lead" id="ov-s1-lead"></p>
           <div class="ov-flow-board" id="ov-flow-board"></div>
         </div>
 
-        <!-- SECTION 2: 3-Band Architecture Diagram (.ov-diagram-zone, Light Enterprise HTML/CSS) -->
-        <div class="ov-card">
-          <div class="ov-card-head">
-            <span class="ov-eyebrow teal">SECTION 2 · HYBRID ONTOLOGY &amp; DUAL GRAPH ENGINE ARCHITECTURE</span>
-            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              <span class="badge human">Default: BigQuery Property Graph</span>
-              <span class="badge indigo">Opt-in: Cloud Spanner Graph + EXTERNAL_QUERY</span>
-              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="/docs/architecture/gcp_system_architecture.html" target="_blank" rel="noopener">GCP 시스템 아키텍처 다이어그램 (HTML)</a>
-            </div>
-          </div>
-          <h2 class="ov-h2" data-ko="비정형 3-Layer Wiki + 정형 Zero-ETL 듀얼 Property Graph + 8대 모듈형 MCP 아키텍처" data-en="Unstructured 3-Layer Wiki + Zero-ETL Dual Property Graph + 8 Modular MCP Architecture">비정형 3-Layer Wiki + 정형 Zero-ETL 듀얼 Property Graph + 8대 모듈형 MCP 아키텍처</h2>
-          <div class="ov-diagram-zone">
-            <div class="ovd">
-              <div class="ovd-band b-teal">
-                <div class="ovd-band-head">
-                  <span class="ovd-band-title">BAND 1 · Unstructured Policy Track (Stage 1 &amp; Stage 2 · Track 1 Lite / Track 3 Full)</span>
-                  <span class="ovd-band-sub">data/input/01_guides/*.md &rarr; data/llm_wiki/*.md &amp; doc_chunks.jsonl</span>
-                </div>
-                <div class="ovd-flow">
-                  <div class="ovd-node">
-                    <span class="ovd-node-kicker">RAW POLICY GUIDES</span>
-                    <span class="ovd-node-title">약관 · 특례 가이드 2종</span>
-                    <span class="ovd-node-desc">180일 의무유지 약관 및 시니어·군입대 면제 특례 원문</span>
-                  </div>
-                  <div class="ovd-node">
-                    <span class="ovd-node-kicker">SHA-256 CHUNKING</span>
-                    <span class="ovd-node-title">문단 해시 앵커 (5 Chunks)</span>
-                    <span class="ovd-node-desc"><code>DOC_CHUNK_001~005</code> 불변 해시 앵커 및 출처 고정</span>
-                  </div>
-                  <div class="ovd-node hi-teal">
-                    <span class="ovd-node-kicker">KARPATHY 3-LAYER WIKI</span>
-                    <span class="ovd-node-title">OKF v0.2 위키 컴파일</span>
-                    <span class="ovd-node-desc">Layer 1(Summary) &middot; Layer 2(Entities) &middot; Layer 3(Concepts/Rules)</span>
-                  </div>
-                  <div class="ovd-node hi-teal">
-                    <span class="ovd-node-kicker">SEMANTIC GRAPH</span>
-                    <span class="ovd-node-title">시맨틱 그래프 (Stage 2)</span>
-                    <span class="ovd-node-desc">Entity=Node, Concept=Edge 표준 시각화 (Sky Blue 허브)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="ovd-bridge">
-                <span>Semantic &amp; Relational Bridge Binding</span>
-                <span class="ovd-pill">SUBSCRIBES_PLAN</span>
-                <span class="ovd-pill">BOUND_TO_POLICY</span>
-                <span class="ovd-pill">COVERS_DEVICE</span>
-                <span class="ovd-pill">REQUIRES_PLAN</span>
-                <span class="ovd-pill">APPLIES_RULE</span>
-                <span class="ovd-pill">GROUNDED_IN (SHA-256)</span>
-              </div>
-
-              <div class="ovd-band b-indigo">
-                <div class="ovd-band-head">
-                  <span class="ovd-band-title">BAND 2 · Structured DW &amp; Dual Property Graph Track (Stage 3 · BigQuery Graph [Default] / Spanner Graph [Opt-in] / Graph Fabric)</span>
-                  <span class="ovd-band-sub">create_property_graph.sql (ISO SQL:2023) &harr; create_spanner_graph.sql (ISO GQL) &harr; EXTERNAL_QUERY(spanner_fabric_conn)</span>
-                </div>
-                <div class="ovd-flow">
-                  <div class="ovd-node">
-                    <span class="ovd-node-kicker">5-AXIS ENGINE CHECKLIST</span>
-                    <span class="ovd-node-title">5축 그래프 엔진 선택 기준</span>
-                    <span class="ovd-node-desc"><code>source_system</code> &middot; <code>latency_slo</code> &middot; <code>concurrency</code> &middot; <code>write_freshness</code> &middot; <code>data_scale</code></span>
-                  </div>
-                  <div class="ovd-node hi-indigo">
-                    <span class="ovd-node-kicker">ENGINE A · DEFAULT (OLAP)</span>
-                    <span class="ovd-node-title">BigQuery Property Graph</span>
-                    <span class="ovd-node-desc">Zero-ETL 무복제 논리 그래프 &middot; 대규모 DW 분석 및 유휴 비용 0원</span>
-                  </div>
-                  <div class="ovd-node hi-indigo">
-                    <span class="ovd-node-kicker">ENGINE B · OPT-IN (OLTP)</span>
-                    <span class="ovd-node-title">Cloud Spanner Graph</span>
-                    <span class="ovd-node-desc">100 PU 최소 구성 &middot; 인덱스 포인터 기반 수십~수백 ms 실시간 멀티홉 탐색</span>
-                  </div>
-                  <div class="ovd-node hi-indigo">
-                    <span class="ovd-node-kicker">GRAPH FABRIC (BOTH MODE)</span>
-                    <span class="ovd-node-title">BigQuery EXTERNAL_QUERY</span>
-                    <span class="ovd-node-desc"><code>spanner_fabric_conn</code>을 통해 Spanner 실시간 그래프와 BigQuery 원장·청크 연합 조인</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="ovd-band b-purple">
-                <div class="ovd-band-head">
-                  <span class="ovd-band-title">BAND 3 · Modular MCP Suite &amp; Closed-Loop Evaluation (Stage 4 &amp; Stage 5)</span>
-                  <span class="ovd-band-sub">5 Stage Pipeline MCPs + 3 Runtime Execution MCPs &rarr; 4-Tier Lineage &amp; Boundary Eval</span>
-                </div>
-                <div class="ovd-flow">
-                  <div class="ovd-node hi-purple">
-                    <span class="ovd-node-kicker">PIPELINE AUTOMATION</span>
-                    <span class="ovd-node-title">Stage 1~5 파이프라인 MCP</span>
-                    <span class="ovd-node-desc">각 Stage의 세부 Step 배열(<code>steps=[...]</code>) 및 <code>engine</code> 선택 실행</span>
-                  </div>
-                  <div class="ovd-node hi-purple">
-                    <span class="ovd-node-kicker">RUNTIME DOMAIN MCP</span>
-                    <span class="ovd-node-title">런타임 실행 MCP 3종</span>
-                    <span class="ovd-node-desc">고객원장 조회 &middot; 결정론적 위약금/TCO 산식 &middot; 듀얼 그래프/위키 탐색</span>
-                  </div>
-                  <div class="ovd-node">
-                    <span class="ovd-node-kicker">4-TIER LINEAGE</span>
-                    <span class="ovd-node-title">엔드투엔드 데이터 계보</span>
-                    <span class="ovd-node-desc">Raw DW/Guide &rarr; OKF Wiki &rarr; Property Graph &rarr; Agent 응답</span>
-                  </div>
-                  <div class="ovd-node">
-                    <span class="ovd-node-kicker">CLOSED-LOOP EVAL</span>
-                    <span class="ovd-node-title">Golden CQ 5 &amp; Boundary 10</span>
-                    <span class="ovd-node-desc">실제 에이전트(Gemini + BigQuery/Spanner) 반복 실행 결과로 정확도·강건성 실측</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- SECTION 3: Feature Gap Matrix -->
+        <!-- PART 4: Feature Gap Matrix & Measured Starter Benchmark -->
         <div class="ov-card">
           <div class="ov-card-head">
             <span class="ov-eyebrow indigo" id="ov-s2-eyebrow">SECTION 3 · GOOGLE CLOUD NATIVE FOUNDATION VS. STARTER PACK EXTENSIONS</span>
+            <span class="ov-eyebrow purple" id="ov-s4-eyebrow">MEASURED STARTER BENCHMARK</span>
           </div>
           <h2 class="ov-h2" id="ov-s2-title">Google Cloud 네이티브 기반 기술과 스타터팩 모듈형 확장 아키텍처</h2>
+          <p class="ov-lead" id="ov-s4-note" style="margin-bottom:10px;"></p>
+          <div class="ov-metric-grid" id="ov-metric-grid" style="margin-bottom:14px;"></div>
           <table class="ov-gap-table">
             <thead>
               <tr>
@@ -1394,15 +1606,6 @@ HTML_PAGE = r"""<!DOCTYPE html>
             </thead>
             <tbody id="ov-gap-body"></tbody>
           </table>
-        </div>
-
-        <!-- SECTION 4: Measured Metrics -->
-        <div class="ov-card">
-          <div class="ov-card-head">
-            <span class="ov-eyebrow purple" id="ov-s4-eyebrow">SECTION 4 · MEASURED STARTER BENCHMARK &amp; REFERENCE TELEMETRY</span>
-          </div>
-          <p class="ov-lead" id="ov-s4-note"></p>
-          <div class="ov-metric-grid" id="ov-metric-grid"></div>
         </div>
 
       </div>
@@ -1843,8 +2046,24 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   function applyProjectMeta() {
     const p = projectList.find(x => x.project_id === activeProject) || {};
-    selectTrack(p.track || 'full');
-    selectGraphEngine(p.graph_engine || 'bigquery');
+    const qs = new URLSearchParams(location.search);
+    const qsPreset = qs.get('preset');
+    const qsEngine = qs.get('engine');
+    if (qsPreset && ['lite', 'standard', 'full', 'fabric'].includes(qsPreset)) {
+      selectPathPreset(qsPreset);
+    } else {
+      selectTrack(p.track || 'full');
+      selectGraphEngine(p.graph_engine || 'bigquery');
+    }
+    if (qsEngine && ['none', 'bigquery', 'spanner', 'both'].includes(qsEngine)) {
+      selectGraphEngine(qsEngine);
+    }
+    if (qs.get('scroll') === 'pkg') {
+      setTimeout(() => {
+        const el = document.getElementById('ov-assembled-package-card');
+        if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }, 200);
+    }
     const chips = document.getElementById('agent-sample-chips');  // sample-specific questions
     if (chips) chips.style.display = (p.root_dir && p.root_dir !== '.') ? 'none' : '';
   }
@@ -1921,43 +2140,819 @@ HTML_PAGE = r"""<!DOCTYPE html>
       renderLineageAll();
       if (lineageActiveTrace) selectLineageNode(lineageActiveTrace.selected_node.id);
     }
+    renderOverviewPathBuilder();
   }
 
-  // 3. Track & Graph Engine Selectors
-  function selectTrack(trackKey) {
-    activeTrack = trackKey;
-    const labels = {
+  // 3. Interactive Path Map & Starter Pack Package Builder State (GOAL-158)
+  let portalOverviewCache = null;
+  let pkgBuilderState = {
+    preset: 'full',          // 'lite' | 'standard' | 'full' | 'fabric' | 'custom'
+    input: 'doc_dw',         // 'doc_only' | 'doc_dw'
+    wiki: 'okf_3layer',      // 'chunks' | 'okf_3layer'
+    engine: 'bigquery',      // 'none' | 'bigquery' | 'spanner' | 'both'
+    runtime: 'mcp_8tools',   // 'lite_agent' | 'mcp_8tools'
+    eval: 'full_lineage_boundary' // 'golden_only' | 'full_lineage_boundary'
+  };
+
+  function syncTrackAndEngineBadges() {
+    const isLite = (pkgBuilderState.engine === 'none' || pkgBuilderState.input === 'doc_only');
+    const isFull = (!isLite && pkgBuilderState.eval === 'full_lineage_boundary');
+    activeTrack = isLite ? 'lite' : (isFull ? 'full' : 'standard');
+    activeGraphEngine = (pkgBuilderState.engine === 'spanner') ? 'spanner' : 'bigquery';
+
+    const trackLabels = {
       'lite': 'Track 1 · Lite (1→2→4)',
       'standard': 'Track 2 · Standard (1→2→3→4)',
       'full': 'Track 3 · Full-Stack (1→5)'
     };
-    document.getElementById('hdr-track-badge').textContent = labels[trackKey] || labels.full;
+    const hdrTrack = document.getElementById('hdr-track-badge');
+    if (hdrTrack) hdrTrack.textContent = trackLabels[activeTrack] || trackLabels.full;
+
+    const engLabels = {
+      'none': 'No Physical Graph (Lite Bypass)',
+      'bigquery': 'BigQuery Property Graph',
+      'spanner': 'Cloud Spanner Graph (ISO GQL)',
+      'both': 'Dual Graph Fabric (BQ + Spanner)'
+    };
+    const hdrEng = document.getElementById('hdr-engine-badge');
+    if (hdrEng) hdrEng.textContent = engLabels[pkgBuilderState.engine] || engLabels.bigquery;
+
+    const agPill = document.getElementById('agent-engine-pill');
+    if (agPill) agPill.textContent = 'Engine: ' + (pkgBuilderState.engine === 'spanner' ? 'Spanner Graph' : (pkgBuilderState.engine === 'both' ? 'Dual Fabric (BQ+Spanner)' : 'BigQuery Graph'));
+
     document.querySelectorAll('#ov-track-selector .segment-btn').forEach((b, idx) => {
       const k = ['lite', 'standard', 'full'][idx];
-      b.classList.toggle('active', k === trackKey);
+      b.classList.toggle('active', k === activeTrack);
     });
-  }
-
-  function selectGraphEngine(engineKey) {
-    activeGraphEngine = engineKey;
-    const label = engineKey === 'spanner' ? 'Cloud Spanner Graph (ISO GQL)' : 'BigQuery Property Graph';
-    document.getElementById('hdr-engine-badge').textContent = label;
-    const agPill = document.getElementById('agent-engine-pill');
-    if (agPill) agPill.textContent = 'Engine: ' + (engineKey === 'spanner' ? 'Spanner Graph' : 'BigQuery Graph');
-
     document.querySelectorAll('#ov-engine-selector .segment-btn').forEach((b, idx) => {
-      const k = ['bigquery', 'spanner'][idx];
-      b.classList.toggle('active', k === engineKey);
+      const k = ['bigquery', 'spanner', 'both', 'none'][idx];
+      b.classList.toggle('active', k === pkgBuilderState.engine);
     });
     ['st3', 'st4'].forEach(prefix => {
       const bqBtn = document.getElementById(prefix + '-btn-bq');
       const spBtn = document.getElementById(prefix + '-btn-sp');
       if (bqBtn && spBtn) {
-        bqBtn.classList.toggle('active', engineKey === 'bigquery');
-        spBtn.classList.toggle('active', engineKey === 'spanner');
+        bqBtn.classList.toggle('active', activeGraphEngine === 'bigquery');
+        spBtn.classList.toggle('active', activeGraphEngine === 'spanner');
       }
     });
     if (globalGraph) updateStage3DdlView();
+  }
+
+  function selectPathPreset(presetKey) {
+    if (presetKey === 'lite') {
+      pkgBuilderState = { preset: 'lite', input: 'doc_only', wiki: 'okf_3layer', engine: 'none', runtime: 'lite_agent', eval: 'golden_only' };
+    } else if (presetKey === 'standard') {
+      const eng = (pkgBuilderState.engine === 'spanner') ? 'spanner' : 'bigquery';
+      pkgBuilderState = { preset: 'standard', input: 'doc_dw', wiki: 'okf_3layer', engine: eng, runtime: 'mcp_8tools', eval: 'golden_only' };
+    } else if (presetKey === 'fabric') {
+      pkgBuilderState = { preset: 'fabric', input: 'doc_dw', wiki: 'okf_3layer', engine: 'both', runtime: 'mcp_8tools', eval: 'full_lineage_boundary' };
+    } else {
+      const eng = (pkgBuilderState.engine === 'spanner') ? 'spanner' : 'bigquery';
+      pkgBuilderState = { preset: 'full', input: 'doc_dw', wiki: 'okf_3layer', engine: eng, runtime: 'mcp_8tools', eval: 'full_lineage_boundary' };
+    }
+    syncTrackAndEngineBadges();
+    renderOverviewPathBuilder();
+  }
+
+  function selectBuilderItem(category, optKey) {
+    pkgBuilderState[category] = optKey;
+    if (category === 'input' && optKey === 'doc_only') {
+      pkgBuilderState.engine = 'none';
+      pkgBuilderState.runtime = 'lite_agent';
+    } else if (category === 'input' && optKey === 'doc_dw') {
+      if (pkgBuilderState.engine === 'none') pkgBuilderState.engine = 'bigquery';
+      pkgBuilderState.runtime = 'mcp_8tools';
+    } else if (category === 'engine') {
+      if (optKey === 'none') {
+        pkgBuilderState.runtime = 'lite_agent';
+      } else {
+        pkgBuilderState.input = 'doc_dw';
+        pkgBuilderState.runtime = 'mcp_8tools';
+      }
+    } else if (category === 'runtime') {
+      if (optKey === 'lite_agent') {
+        pkgBuilderState.engine = 'none';
+      } else if (pkgBuilderState.engine === 'none') {
+        pkgBuilderState.input = 'doc_dw';
+        pkgBuilderState.engine = 'bigquery';
+      }
+    }
+    // Determine matching preset label
+    if (pkgBuilderState.engine === 'none') {
+      pkgBuilderState.preset = 'lite';
+    } else if (pkgBuilderState.engine === 'both') {
+      pkgBuilderState.preset = 'fabric';
+    } else if (pkgBuilderState.eval === 'full_lineage_boundary') {
+      pkgBuilderState.preset = 'full';
+    } else {
+      pkgBuilderState.preset = 'standard';
+    }
+    syncTrackAndEngineBadges();
+    renderOverviewPathBuilder();
+  }
+
+  function selectTrack(trackKey) {
+    if (trackKey === 'lite') selectPathPreset('lite');
+    else if (trackKey === 'standard') selectPathPreset('standard');
+    else selectPathPreset('full');
+  }
+
+  function selectGraphEngine(engineKey) {
+    if (engineKey === 'none') {
+      selectBuilderItem('engine', 'none');
+    } else if (engineKey === 'both') {
+      selectBuilderItem('engine', 'both');
+    } else {
+      selectBuilderItem('engine', engineKey === 'spanner' ? 'spanner' : 'bigquery');
+    }
+  }
+
+  function copyPackageCli() {
+    const pre = document.getElementById('ov-pkg-cli-code');
+    if (!pre) return;
+    navigator.clipboard.writeText(pre.textContent || '');
+    const btn = document.getElementById('ov-pkg-cli-copy-btn');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = studioLang === 'en' ? 'Copied!' : '복사 완료!';
+      setTimeout(() => { btn.textContent = orig; }, 1400);
+    }
+  }
+
+  function renderOverviewPathBuilder() {
+    const isEn = (studioLang === 'en');
+    const st = pkgBuilderState;
+    const isStage3Active = (st.engine !== 'none');
+    const isStage5Full = (st.eval === 'full_lineage_boundary');
+
+    // 1. Render 4 Quick Path Presets
+    const presets = [
+      {
+        id: 'lite',
+        tag: 'TRACK 1 · LITE PATH',
+        title: isEn ? 'Document-Only Fast Path' : '문서 중심 빠른 시작 (Lite 패스)',
+        route: 'Stage 1 ➔ Stage 2 ──(Stage 3 생략)──▶ Stage 4',
+        desc: isEn
+          ? 'Guides/PDFs only · Skip physical graph · Direct 3-Layer Wiki & SHA-256 chunk citation'
+          : '비정형 약관/문서 단독 · 물리 그래프(Stage 3) 생략 · 원문 청크/3-Layer 위키 직접 인용 추론'
+      },
+      {
+        id: 'standard',
+        tag: 'TRACK 2 · STANDARD PATH',
+        title: isEn ? 'Single Graph Engine Path' : '정형+비정형 표준 그래프 (Standard 패스)',
+        route: 'Stage 1 ➔ Stage 2 ➔ Stage 3 (BQ/Spanner) ➔ Stage 4',
+        desc: isEn
+          ? 'DW tables + Policy guides · Zero-ETL BigQuery or Spanner Graph · 8 Modular MCPs'
+          : '정형 DW 원장 + 정책 문서 · 단일 물리 그래프(BigQuery 기본 / Spanner 선택) + 8대 MCP 추론'
+      },
+      {
+        id: 'full',
+        tag: 'TRACK 3 · FULL-STACK PATH',
+        title: isEn ? 'Enterprise Governance Full-Stack' : '엔터프라이즈 거버넌스 풀스택 (Full 패스)',
+        route: 'Stage 1 ➔ Stage 2 ➔ Stage 3 ➔ Stage 4 ➔ Stage 5',
+        desc: isEn
+          ? 'All 5 Stages · Physical Graph + 4-Tier Lineage DAG + 50-Trial Boundary Regression'
+          : 'Stage 1~5 전 구간 · 물리 그래프 + 4-Tier 엔드투엔드 리니지 DAG + 바운더리 50회 회귀 평가'
+      },
+      {
+        id: 'fabric',
+        tag: 'DUAL-ENGINE FABRIC PATH',
+        title: isEn ? 'BigQuery + Spanner Graph Fabric' : 'BigQuery + Spanner 듀얼 패브릭 통합',
+        route: 'Stage 1 ➔ 2 ➔ 3 (BQ + Spanner EXTERNAL_QUERY) ➔ 4 ➔ 5',
+        desc: isEn
+          ? 'Simultaneous OLAP (BigQuery) + OLTP (Spanner 100 PU) graph with EXTERNAL_QUERY join'
+          : 'OLAP(BigQuery) + OLTP(Spanner 100 PU) 동시 구축 및 EXTERNAL_QUERY 연합 조인 풀스택'
+      }
+    ];
+    const presetGrid = document.getElementById('ov-preset-grid');
+    if (presetGrid) {
+      presetGrid.innerHTML = presets.map(p => `
+        <div class="ov-preset-card ${st.preset === p.id ? 'active' : ''}" onclick="selectPathPreset('${p.id}')">
+          <div class="ov-preset-top">
+            <span class="ov-preset-tag">${esc(p.tag)}</span>
+            <span style="font-size:11px; font-weight:800; color:${st.preset === p.id ? 'var(--apple-blue)' : '#64748b'};">
+              ${st.preset === p.id ? (isEn ? '● ACTIVE PATH' : '● 현재 선택 패스') : (isEn ? '○ Select Preset' : '○ 패스 선택')}
+            </span>
+          </div>
+          <div class="ov-preset-title">${esc(p.title)}</div>
+          <div class="ov-preset-route">${esc(p.route)}</div>
+          <div class="ov-preset-desc">${esc(p.desc)}</div>
+        </div>
+      `).join('');
+    }
+
+    // 2. Render Visual Route Diagram Bar (SVG + Route Indicator)
+    const routeBar = document.getElementById('ov-route-diagram-bar');
+    if (routeBar) {
+      const liteColor = !isStage3Active ? '#059669' : '#cbd5e1';
+      const liteDash = !isStage3Active ? '' : 'stroke-dasharray="6,5"';
+      const mainColor = isStage3Active ? '#4f46e5' : '#cbd5e1';
+      const mainDash = isStage3Active ? '' : 'stroke-dasharray="6,5"';
+      const st5Color = isStage5Full ? '#db2777' : '#0284c7';
+      const st3Label = st.engine === 'none'
+        ? (isEn ? 'BYPASSED (Lite Direct)' : '생략됨 (Lite 직행)')
+        : (st.engine === 'both' ? 'Dual Fabric (BQ+Spanner)' : (st.engine === 'spanner' ? 'Spanner Graph (100 PU)' : 'BigQuery Graph (Default)'));
+      const st5Label = isStage5Full
+        ? (isEn ? '4-Tier Lineage + 50-Trial Eval' : '4-Tier 리니지 + 50회 경계평가')
+        : (isEn ? 'Golden CQ Basic Check' : 'Golden CQ 기본 점검');
+
+      routeBar.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="badge human" style="font-weight:800;">${isEn ? 'ACTIVE ARCHITECTURE ROUTE' : '현재 활성 아키텍처 경로'}</span>
+            <span style="font-size:13px; font-weight:800; color:#0f172a;">
+              ${!isStage3Active
+                ? (isEn ? 'Track 1 · Lite Bypass Route: Stage 1 (Docs) ➔ Stage 2 (Wiki/Chunks) ──[Skip Stage 3]──▶ Stage 4 (Lite Agent) ➔ Stage 5 (CQ Check)' : 'Track 1 · Lite 우회 경로: Stage 1 (문서) ➔ Stage 2 (위키/청크) ──[Stage 3 물리 그래프 생략]──▶ Stage 4 (Lite 에이전트) ➔ Stage 5 (CQ 점검)')
+                : (isStage5Full
+                    ? (isEn ? `Track 3 · Full-Stack Route: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8 MCPs) ➔ Stage 5 (Full Lineage & Boundary)` : `Track 3 · Full-Stack 정식 경로: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8대 MCP) ➔ Stage 5 (4-Tier 리니지 & 경계평가)`)
+                    : (isEn ? `Track 2 · Standard Route: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8 MCPs) ➔ Stage 5 (Golden CQ)` : `Track 2 · Standard 표준 경로: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8대 MCP) ➔ Stage 5 (Golden CQ 검증)`))}
+            </span>
+          </div>
+          <span style="font-size:11.5px; color:#475569;">
+            ${isEn ? 'Click any Stage node or option card below to customize your Starter Pack package' : '아래 다이어그램의 노드 또는 각 Stage 카드를 클릭하면 스타터팩 패키지가 즉시 재조립됩니다'}
+          </span>
+        </div>
+        <svg viewBox="0 0 1200 108" style="width:100%; height:104px; display:block; overflow:visible;">
+          <defs>
+            <marker id="arr-blue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#0284c7"/>
+            </marker>
+            <marker id="arr-emerald" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="${liteColor}"/>
+            </marker>
+            <marker id="arr-indigo" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="${mainColor}"/>
+            </marker>
+            <marker id="arr-pink" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="${st5Color}"/>
+            </marker>
+          </defs>
+
+          <!-- Stage 1 -> Stage 2 Always Active -->
+          <line x1="205" y1="68" x2="275" y2="68" stroke="#0284c7" stroke-width="3" marker-end="url(#arr-blue)"/>
+
+          <!-- Top Arc: Track 1 Lite Bypass (Stage 2 -> Stage 4 skipping Stage 3) -->
+          <path d="M 390 42 C 470 4, 730 4, 810 42" fill="none" stroke="${liteColor}" stroke-width="${!isStage3Active ? '3' : '1.8'}" ${liteDash} marker-end="url(#arr-emerald)"/>
+          <g style="cursor:pointer;" onclick="selectPathPreset('lite')">
+            <rect x="455" y="2" width="290" height="22" rx="11" fill="${!isStage3Active ? '#ecfdf5' : '#f8fafc'}" stroke="${liteColor}" stroke-width="1.5"/>
+            <text x="600" y="17" text-anchor="middle" font-size="11" font-weight="800" fill="${!isStage3Active ? '#047857' : '#64748b'}" font-family="Pretendard, sans-serif">
+              ${!isStage3Active ? (isEn ? '★ ACTIVE: Track 1 Lite Direct Bridge (Stage 3 Bypassed)' : '★ 활성 패스: Track 1 Lite 직행 브릿지 (Stage 3 그래프 생략)') : (isEn ? 'Track 1 Lite Bypass Route (Click to skip Stage 3)' : 'Track 1 Lite 우회 경로 (클릭 시 Stage 3 생략)')}
+            </text>
+          </g>
+
+          <!-- Main Route: Stage 2 -> Stage 3 -> Stage 4 -->
+          <line x1="465" y1="68" x2="515" y2="68" stroke="${mainColor}" stroke-width="${isStage3Active ? '3' : '1.8'}" ${mainDash} marker-end="url(#arr-indigo)"/>
+          <line x1="695" y1="68" x2="745" y2="68" stroke="${mainColor}" stroke-width="${isStage3Active ? '3' : '1.8'}" ${mainDash} marker-end="url(#arr-indigo)"/>
+
+          <!-- Stage 4 -> Stage 5 -->
+          <line x1="935" y1="68" x2="985" y2="68" stroke="${st5Color}" stroke-width="${isStage5Full ? '3' : '2.2'}" ${isStage5Full ? '' : 'stroke-dasharray="5,4"'} marker-end="url(#arr-pink)"/>
+
+          <!-- Node 1: Stage 1 -->
+          <g style="cursor:pointer;" onclick="switchTab('stage1')">
+            <rect x="15" y="42" width="190" height="52" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+            <text x="110" y="62" text-anchor="middle" font-size="11" font-weight="800" fill="#1d4ed8">STAGE 1 · ASSET &amp; GATE 0</text>
+            <text x="110" y="80" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0f172a">${st.input === 'doc_only' ? (isEn ? 'Docs Only (PDF/MD)' : '비정형 문서 단독') : (isEn ? '4 DW CSVs + 2 Guides' : '정형 원장 + 정책 문서')}</text>
+          </g>
+
+          <!-- Node 2: Stage 2 -->
+          <g style="cursor:pointer;" onclick="switchTab('stage2')">
+            <rect x="275" y="42" width="190" height="52" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="2"/>
+            <text x="370" y="62" text-anchor="middle" font-size="11" font-weight="800" fill="#0f766e">STAGE 2 · WIKI &amp; SEMANTIC</text>
+            <text x="370" y="80" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0f172a">${st.wiki === 'chunks' ? (isEn ? 'SHA-256 Chunks Only' : 'SHA-256 해시 청크 인용') : (isEn ? '3-Layer Wiki + JSON-LD' : '3-Layer Wiki + 시맨틱')}</text>
+          </g>
+
+          <!-- Node 3: Stage 3 -->
+          <g style="cursor:pointer;" onclick="switchTab('stage3')">
+            <rect x="515" y="42" width="180" height="52" rx="10" fill="${isStage3Active ? '#eef2ff' : '#f1f5f9'}" stroke="${isStage3Active ? '#4f46e5' : '#94a3b8'}" stroke-width="2" ${isStage3Active ? '' : 'stroke-dasharray="5,4"'}/>
+            <text x="605" y="62" text-anchor="middle" font-size="11" font-weight="800" fill="${isStage3Active ? '#4338ca' : '#64748b'}">STAGE 3 · PROPERTY GRAPH</text>
+            <text x="605" y="80" text-anchor="middle" font-size="11.5" font-weight="700" fill="${isStage3Active ? '#0f172a' : '#64748b'}">${esc(st3Label)}</text>
+          </g>
+
+          <!-- Node 4: Stage 4 -->
+          <g style="cursor:pointer;" onclick="switchTab('stage4')">
+            <rect x="745" y="42" width="190" height="52" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+            <text x="840" y="62" text-anchor="middle" font-size="11" font-weight="800" fill="#6d28d9">STAGE 4 · AGENT &amp; MCP</text>
+            <text x="840" y="80" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0f172a">${st.runtime === 'lite_agent' ? (isEn ? 'Lite Doc Citation Agent' : 'Lite 청크 인용 에이전트') : (isEn ? '8 Modular MCP Suite' : '8대 모듈형 MCP 스위트')}</text>
+          </g>
+
+          <!-- Node 5: Stage 5 -->
+          <g style="cursor:pointer;" onclick="switchTab('stage5')">
+            <rect x="985" y="42" width="200" height="52" rx="10" fill="${isStage5Full ? '#fdf2f8' : '#f0f9ff'}" stroke="${st5Color}" stroke-width="2"/>
+            <text x="1085" y="62" text-anchor="middle" font-size="11" font-weight="800" fill="${isStage5Full ? '#be185d' : '#0369a1'}">STAGE 5 · LINEAGE &amp; EVAL</text>
+            <text x="1085" y="80" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0f172a">${esc(st5Label)}</text>
+          </g>
+        </svg>
+      `;
+    }
+
+    // 3. Render 5-Column Clickable Building Blocks (#ov-map-cols)
+    const columnsSpec = [
+      {
+        stage: 'STAGE 1',
+        tab: 'stage1',
+        accent: '#3b82f6',
+        bypassed: false,
+        title: isEn ? '1. Input Assets & Governance' : '1. 입력 자산 & 거버넌스',
+        sub: isEn ? 'Select customer input data shape' : '고객 입력 데이터 형태 선택',
+        cat: 'input',
+        options: [
+          {
+            key: 'doc_only',
+            tone: 'tone-teal',
+            tag: '[문서:가이드]',
+            title: isEn ? 'Unstructured Docs Only (Lite)' : '비정형 정책·약관 문서 단독',
+            desc: isEn ? 'PDF / DOCX / MD guides only. Runs Gate 0 (>=95% char fidelity) without DW CSV tables.' : 'PDF·DOCX·MD 원문만 투입. 정형 CSV 없이 Gate 0(원문 보존율 >=95%) 검증 후 Lite 경로 연결.',
+            meta: 'extract_docs.py ➔ gate0_report.json'
+          },
+          {
+            key: 'doc_dw',
+            tone: '',
+            tag: '[DB:마스터+문서]',
+            title: isEn ? 'Structured DW + Policy Guides' : '정형 DW 원장(4종) + 정책 가이드(2종)',
+            desc: isEn ? 'Combines de-identified DW tables (CUST_DEMO_*) with anchored policy guides.' : '고객약정·단말·요금제·지원금 정형 테이블(비식별화 CUST_DEMO_*)과 약관·특례 문서 결합.',
+            meta: '4 CSVs + 2 Guides ➔ input_manifest.json'
+          }
+        ]
+      },
+      {
+        stage: 'STAGE 2',
+        tab: 'stage2',
+        accent: '#0d9488',
+        bypassed: false,
+        title: isEn ? '2. Wiki & Semantic Layer' : '2. 3-Layer Wiki & 시맨틱 계층',
+        sub: isEn ? 'Select document compilation depth' : '문서 지식화 및 시맨틱 구조 선택',
+        cat: 'wiki',
+        options: [
+          {
+            key: 'chunks',
+            tone: 'tone-teal',
+            tag: '[위키:청크]',
+            title: isEn ? 'SHA-256 Anchored Chunks Only' : 'SHA-256 해시 앵커 청크 인용',
+            desc: isEn ? 'Paragraph chunking with immutable SHA-256 anchors for direct citation.' : '원문 문단별 불변 해시 앵커(DOC_CHUNK_*)만 빠르게 생성하여 에이전트 근거로 주입.',
+            meta: 'data/output/doc_chunks.jsonl'
+          },
+          {
+            key: 'okf_3layer',
+            tone: 'tone-teal',
+            tag: '[위키:OKF]',
+            title: isEn ? 'Karpathy 3-Layer Wiki + Semantic Graph' : '3-Layer LLM-Wiki + 시맨틱 그래프',
+            desc: isEn ? 'Compiles L1 Summary, L2 Entities (Node), L3 Concepts/Rules (Edge) & ontology.jsonld.' : 'L1(Summary)·L2(Entities=Node)·L3(Concepts/Rules=Edge) 컴파일 및 시맨틱 그래프 구축.',
+            meta: 'data/llm_wiki/*.md + ontology.jsonld'
+          }
+        ]
+      },
+      {
+        stage: 'STAGE 3',
+        tab: 'stage3',
+        accent: '#4f46e5',
+        bypassed: !isStage3Active,
+        title: isEn ? '3. Physical Property Graph' : '3. 물리 Property Graph 엔진',
+        sub: isEn ? 'Select graph DB or bypass (Lite)' : '5축 기준에 따른 그래프 엔진 선택',
+        cat: 'engine',
+        options: [
+          {
+            key: 'none',
+            tone: 'tone-amber',
+            tag: '[엔진:생략]',
+            title: isEn ? 'Bypass Physical Graph (Track 1 Lite)' : '물리 그래프 미사용 (Stage 3 생략)',
+            desc: isEn ? 'Skips Stage 3 DDL/ingestion and jumps directly from Stage 2 Wiki to Stage 4 Agent.' : 'Stage 3 물리 그래프 적재를 생략하고 Stage 2 위키/청크에서 Stage 4 에이전트로 직행.',
+            meta: 'Stage 2 ──(Direct Bridge)──▶ Stage 4'
+          },
+          {
+            key: 'bigquery',
+            tone: 'tone-indigo',
+            tag: '[엔진:기본]',
+            title: isEn ? 'BigQuery Property Graph (Default)' : 'BigQuery Property Graph (기본)',
+            desc: isEn ? 'Zero-ETL logical graph view over BigQuery DW tables (ISO SQL:2023). $0 idle cost.' : 'BigQuery 원장 위 Zero-ETL 무복제 논리 그래프(SQL:2023). 추가 인프라 유휴 비용 $0.',
+            meta: 'create_property_graph.sql (p50 ~552ms)'
+          },
+          {
+            key: 'spanner',
+            tone: 'tone-indigo',
+            tag: '[엔진:선택]',
+            title: isEn ? 'Cloud Spanner Graph (Low-Latency)' : 'Cloud Spanner Graph (초저지연 OLTP)',
+            desc: isEn ? '100 PU Enterprise edition for index-pointer multi-hop online traversal (ISO GQL).' : '100 PU 최소 사양 기반 실시간 온라인 멀티홉 탐색(ISO GQL). 저지연 SLA 환경 최적.',
+            meta: 'create_spanner_graph.sql (p50 ~120ms)'
+          },
+          {
+            key: 'both',
+            tone: 'tone-indigo',
+            tag: '[엔진:통합]',
+            title: isEn ? 'Dual-Engine Graph Fabric (Both)' : 'Dual Graph Fabric (BQ + Spanner 통합)',
+            desc: isEn ? 'Provisions both engines and joins Spanner online graph with BigQuery DW via EXTERNAL_QUERY.' : '양대 엔진 동시 적재 및 BigQuery EXTERNAL_QUERY(spanner_fabric_conn)로 실시간 연합 조인.',
+            meta: 'BQ + Spanner + spanner_fabric_conn'
+          }
+        ]
+      },
+      {
+        stage: 'STAGE 4',
+        tab: 'stage4',
+        accent: '#7c3aed',
+        bypassed: false,
+        title: isEn ? '4. Agent & MCP Runtime' : '4. 에이전트 & MCP 추론 런타임',
+        sub: isEn ? 'Select agent execution architecture' : '에이전트 추론 및 도구 체이닝 방식',
+        cat: 'runtime',
+        options: [
+          {
+            key: 'lite_agent',
+            tone: 'tone-purple',
+            tag: '[런타임:Lite]',
+            title: isEn ? 'Lite Document Citation Agent' : 'Lite 문서 청크 인용 에이전트',
+            desc: isEn ? 'Injects up to 300k chars of anchored chunks into Gemini with strict [DOC_CHUNK_*] grounding.' : '최대 300,000자 원문 청크와 위키를 컨텍스트로 주입하여 [DOC_CHUNK_*] 인용 답변 생성.',
+            meta: 'execute_lite_doc_cycle()'
+          },
+          {
+            key: 'mcp_8tools',
+            tone: 'tone-purple',
+            tag: '[런타임:MCP]',
+            title: isEn ? '8 Modular MCPs + Deterministic Math' : '8대 모듈형 MCP + 결정론적 산식 엔진',
+            desc: isEn ? '5 Stage pipeline MCPs + 3 Runtime domain MCPs (Contract lookup, Penalty/TCO math, Graph GQL).' : '파이프라인 5종 MCP + 런타임 3종 MCP(고객원장·위약금/TCO 결정론 산식·그래프 GQL 탐색).',
+            meta: 'mcp_server.py + reasoning_engine.py'
+          }
+        ]
+      },
+      {
+        stage: 'STAGE 5',
+        tab: 'stage5',
+        accent: '#db2777',
+        bypassed: !isStage5Full,
+        title: isEn ? '5. Lineage & Evaluation' : '5. 데이터 리니지 & 평가 루프',
+        sub: isEn ? 'Select governance & verification depth' : '거버넌스 계보 및 벤치마크 검증 수준',
+        cat: 'eval',
+        options: [
+          {
+            key: 'golden_only',
+            tone: 'tone-amber',
+            tag: '[평가:기본]',
+            title: isEn ? 'Golden CQ Verification (Track 1·2)' : 'Golden CQ 정합성 검증 (Track 1·2)',
+            desc: isEn ? 'Validates core Golden CQs (SQL or citation grounding) without full 50-trial boundary harness.' : '핵심 Golden CQ(수치 SQL 대조 또는 원문 청크 인용) 통과 여부를 빠르게 검증.',
+            meta: 'cq_benchmark_report.json (5 CQs)'
+          },
+          {
+            key: 'full_lineage_boundary',
+            tone: 'tone-purple',
+            tag: '[평가:풀스택]',
+            title: isEn ? '4-Tier Lineage DAG + 50-Trial Boundary' : '4-Tier 리니지 DAG + 바운더리 50회 평가',
+            desc: isEn ? 'Full Tier 1~4 data lineage graph + 10 boundary cases × 5 trials closed-loop diagnostics.' : '원천~에이전트 4-Tier 엔드투엔드 리니지 DAG 시각화 및 경계값 10건×5회 반복 실측.',
+            meta: 'lineage_spec.json + boundary_benchmark_results.json'
+          }
+        ]
+      }
+    ];
+
+    const mapCols = document.getElementById('ov-map-cols');
+    if (mapCols) {
+      mapCols.innerHTML = columnsSpec.map(col => {
+        const cardsHtml = col.options.map(opt => {
+          const isSel = (st[col.cat] === opt.key);
+          return `
+            <div class="ov-pick-card ${isSel ? 'selected ' + opt.tone : ''}" onclick="selectBuilderItem('${col.cat}', '${opt.key}')">
+              <div class="ov-pick-head">
+                <span class="ov-pick-tag">${esc(opt.tag)}</span>
+                <span class="ov-pick-state">${isSel ? (isEn ? '✓ SELECTED' : '✓ 선택됨') : (isEn ? 'Select' : '클릭 선택')}</span>
+              </div>
+              <div class="ov-pick-title">${esc(opt.title)}</div>
+              <div class="ov-pick-desc">${esc(opt.desc)}</div>
+              <div class="ov-pick-meta">${esc(opt.meta)}</div>
+            </div>
+          `;
+        }).join('');
+
+        const statusBadge = col.bypassed
+          ? `<span class="badge" style="background:#e2e8f0; color:#475569;">${isEn ? 'BYPASSED / LITE' : '생략 / 간소화'}</span>`
+          : `<span class="badge approved">${isEn ? 'ACTIVE STAGE' : '구현 포함'}</span>`;
+
+        return `
+          <div class="ov-map-col ${col.bypassed ? 'bypassed' : ''}" style="border-top-color:${col.accent};">
+            <div class="ov-map-col-head">
+              <span class="ov-stage-chip" style="background:${col.accent}; color:#ffffff;">${col.stage}</span>
+              <div style="display:flex; gap:4px; align-items:center;">
+                ${statusBadge}
+                <button class="subnav-action-btn" style="padding:2px 7px; font-size:10px;" onclick="switchTab('${col.tab}')">${isEn ? 'Open ↗' : '탭 이동 ↗'}</button>
+              </div>
+            </div>
+            <div class="ov-map-col-title">${esc(col.title)}</div>
+            <div class="ov-map-col-sub">${esc(col.sub)}</div>
+            <div style="display:flex; flex-direction:column; gap:7px; flex:1;">
+              ${cardsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 4. Render Assembled Starter Pack Package Implementation Blueprint (#ov-assembled-package-card)
+    const trackBadgeText = activeTrack === 'lite'
+      ? 'Track 1 · Lite (Stage 1→2→4)'
+      : (activeTrack === 'standard' ? 'Track 2 · Standard (Stage 1→2→3→4)' : 'Track 3 · Full-Stack (Stage 1→5)');
+    const engBadgeText = st.engine === 'none'
+      ? (isEn ? 'No Physical Graph (Direct Citation)' : '물리 그래프 생략 (원문 청크 직행)')
+      : (st.engine === 'both'
+          ? 'Dual Fabric (BigQuery + Spanner EXTERNAL_QUERY)'
+          : (st.engine === 'spanner' ? 'Cloud Spanner Graph (ISO GQL · 100 PU)' : 'BigQuery Property Graph (ISO SQL:2023)'));
+
+    const activeBadgeEl = document.getElementById('ov-pkg-active-badge');
+    if (activeBadgeEl) activeBadgeEl.textContent = `${trackBadgeText} + ${engBadgeText}`;
+
+    const pkgTitleEl = document.getElementById('ov-pkg-title');
+    if (pkgTitleEl) {
+      pkgTitleEl.textContent = isEn
+        ? `Assembled Starter Pack Implementation Blueprint: ${trackBadgeText}`
+        : `선택 조합으로 조립된 스타터팩 패키지 구현 구성도 (${trackBadgeText})`;
+    }
+
+    const pkgSubEl = document.getElementById('ov-pkg-subtitle');
+    if (pkgSubEl) {
+      pkgSubEl.innerHTML = isEn
+        ? `Based on your selections above, the Starter Pack wires together the following <b>pipeline stages, Python modules, MCP tools, notebooks, <code>project.json</code> config, Terraform IaC resources, and CLI commands</b>.`
+        : `위 다이어그램에서 선택한 항목들에 맞춰 스타터팩의 <b>5단계 파이프라인 모듈, 활성 MCP 도구, 실습 노트북, <code>project.json</code> 설정, GCP Terraform 리소스 및 실행 명령어</b>가 아래와 같이 자동 구성됩니다.`;
+    }
+
+    const activeModulesCount = 4 + (isStage3Active ? 1 : 0) + (isStage5Full ? 1 : 0);
+    const activeMcpCount = isStage3Active ? (isStage5Full ? 8 : 7) : 3;
+    const activeNbCount = 3 + (isStage3Active ? 1 : 0) + (isStage5Full ? 2 : 1);
+    const latencyProfile = st.engine === 'none'
+      ? (isEn ? 'Lite Context · $0 Extra Infra' : '문서 컨텍스트 추론 · 추가 인프라 $0')
+      : (st.engine === 'spanner'
+          ? 'Spanner p50 ~120ms · 100 PU'
+          : (st.engine === 'both' ? 'Spanner 120ms + Fabric 518ms' : 'BigQuery p50 ~552ms · Serverless $0 Idle'));
+
+    const kpiPillsEl = document.getElementById('ov-pkg-kpi-pills');
+    if (kpiPillsEl) {
+      kpiPillsEl.innerHTML = `
+        <span class="badge approved">${isEn ? `Modules: ${activeModulesCount}/6 Active` : `활성 코드 모듈: ${activeModulesCount}/6종`}</span>
+        <span class="badge indigo">${isEn ? `MCP Tools: ${activeMcpCount}/8 Active` : `활성 MCP 도구: ${activeMcpCount}/8종`}</span>
+        <span class="badge llm">${isEn ? `Notebooks: ${activeNbCount}/6 Included` : `실습 노트북: ${activeNbCount}/6종`}</span>
+        <span class="badge human">${esc(latencyProfile)}</span>
+      `;
+    }
+
+    // 4-A. Visual 5-Stage Package Implementation Pipeline Grid (#ov-pkg-pipe-grid)
+    const pipeStages = [
+      {
+        num: 'STAGE 1',
+        name: isEn ? 'Asset & Gate 0 Extraction' : '자산 수집 & Gate 0 검증',
+        active: true,
+        color: '#3b82f6',
+        script: st.input === 'doc_only' ? 'pipeline/extract_docs.py' : 'pipeline/extract_docs.py + ingest.py',
+        gcp: st.input === 'doc_only' ? 'Cloud Storage (Raw Docs)' : 'GCS + BigQuery Raw Tables',
+        artifact: st.input === 'doc_only' ? 'gate0_report.json + input_manifest.json' : '4 DW Tables + gate0_report.json',
+        note: st.input === 'doc_only'
+          ? (isEn ? 'Extracts full text (>=95% ratio) with page/provenance anchors; skips CSV table load.' : '원문 보존율 95% 이상 추출 및 페이지 앵커 고정 (정형 CSV 적재 생략)')
+          : (isEn ? 'Loads 4 de-identified DW CSVs + 2 policy guides with provenance check & 5-axis checklist.' : '비식별화 정형 원장 4종 + 정책 문서 2종 적재 및 5축 그래프 체크리스트 산출')
+      },
+      {
+        num: 'STAGE 2',
+        name: isEn ? 'Wiki & Semantic Compiler' : '위키 & 시맨틱 그래프 컴파일',
+        active: true,
+        color: '#0d9488',
+        script: 'pipeline/ingest.py (compile_wiki)',
+        gcp: 'BigQuery tb_doc_chunks + GCS Wiki',
+        artifact: st.wiki === 'chunks' ? 'doc_chunks.jsonl (SHA-256)' : 'summary/entities/concepts/rules.md + ontology.jsonld',
+        note: st.wiki === 'chunks'
+          ? (isEn ? 'Generates SHA-256 anchored paragraph chunks for direct grounding.' : '문단별 SHA-256 해시 앵커 청크(doc_chunks.jsonl) 생성 및 BigQuery 적재')
+          : (isEn ? 'Compiles Karpathy 3-Layer Wiki + Entity(Node)/Concept(Edge) JSON-LD ontology.' : 'Karpathy 3-Layer 위키 마크다운 4종 및 Entity=Node/Concept=Edge 시맨틱 그래프 생성')
+      },
+      {
+        num: 'STAGE 3',
+        name: isEn ? 'Physical Property Graph' : '물리 Property Graph 구축',
+        active: isStage3Active,
+        color: '#4f46e5',
+        script: isStage3Active ? 'pipeline/graph_builder.py' : 'BYPASSED (생략됨)',
+        gcp: st.engine === 'none'
+          ? (isEn ? 'None (Skipped in Lite Path)' : '미사용 (Lite 경로에서 생략)')
+          : (st.engine === 'both'
+              ? 'BigQuery Graph + Spanner Graph (100 PU) + EXTERNAL_QUERY'
+              : (st.engine === 'spanner' ? 'Cloud Spanner Graph (100 PU, ISO GQL)' : 'BigQuery Property Graph (ISO SQL:2023)')),
+        artifact: st.engine === 'none'
+          ? 'None (Stage 2 ➔ Stage 4 직행)'
+          : (st.engine === 'both'
+              ? 'create_property_graph.sql + create_spanner_graph.sql'
+              : (st.engine === 'spanner' ? 'create_spanner_graph.sql + graph_topology.json' : 'create_property_graph.sql + graph_topology.json')),
+        note: st.engine === 'none'
+          ? (isEn ? 'Physical graph DDL and node/edge tables are bypassed; Stage 2 connects straight to Stage 4.' : '물리 그래프 DDL 생성을 생략하고 Stage 2 위키/청크가 Stage 4 에이전트로 직결됨')
+          : (st.engine === 'both'
+              ? (isEn ? 'Builds both BigQuery & Spanner graphs + runs EXTERNAL_QUERY federated join benchmark.' : 'BigQuery 무복제 뷰와 Spanner 물리 그래프를 동시 구축하고 EXTERNAL_QUERY로 연합 조인')
+              : (st.engine === 'spanner'
+                  ? (isEn ? 'Upserts nodes/edges to Cloud Spanner (100 PU) for sub-150ms ISO GQL multi-hop traversal.' : 'Cloud Spanner(100 PU)에 노드·엣지를 적재하여 120ms대 온라인 멀티홉 GQL 탐색 수행')
+                  : (isEn ? 'Projects 4 DW tables + 2 doc tables as a Zero-ETL BigQuery Property Graph.' : '정형 원장 4종과 문서 규칙 노드를 Zero-ETL 무복제 BigQuery Property Graph로 승격')))
+      },
+      {
+        num: 'STAGE 4',
+        name: isEn ? 'Agent & MCP Orchestration' : '에이전트 & MCP 런타임',
+        active: true,
+        color: '#7c3aed',
+        script: st.runtime === 'lite_agent' ? 'src/agent/reasoning_engine.py (Lite)' : 'src/agent/mcp_server.py + reasoning_engine.py',
+        gcp: `Vertex AI Gemini + ${st.engine === 'spanner' ? 'Spanner GQL' : (st.engine === 'both' ? 'BQ + Spanner Fabric' : 'BigQuery SQL/GQL')}`,
+        artifact: st.runtime === 'lite_agent' ? 'execute_lite_doc_cycle ([DOC_CHUNK_*])' : '8 Modular MCP Tools + Deterministic Math',
+        note: st.runtime === 'lite_agent'
+          ? (isEn ? 'Answers questions directly from anchored document chunks without SQL/GQL table joins.' : 'SQL/그래프 조인 없이 원문 청크 컨텍스트(최대 300k자) 기반으로 [DOC_CHUNK_*] 인용 답변 생성')
+          : (isEn ? 'Chains 5 Stage MCPs + 3 Runtime MCPs (Contract, Penalty/TCO formula, Graph/Wiki traversal).' : 'Stage 1~5 파이프라인 MCP와 런타임 도메인 MCP 3종(원장·위약금산식·그래프탐색) 체이닝')
+      },
+      {
+        num: 'STAGE 5',
+        name: isEn ? 'Lineage & Closed-Loop Eval' : '리니지 & 바운더리 평가',
+        active: true,
+        color: isStage5Full ? '#db2777' : '#0284c7',
+        script: isStage5Full ? 'pipeline/validator.py (Full + Lineage)' : 'pipeline/validator.py (--golden-only)',
+        gcp: isStage5Full ? '4-Tier Lineage DAG + Vertex Eval' : 'Golden CQ Verification',
+        artifact: isStage5Full ? 'lineage_spec.json + cq & boundary reports' : 'cq_benchmark_report.json',
+        note: isStage5Full
+          ? (isEn ? 'Renders interactive 4-Tier Lineage DAG (live BQ row counts) + 10×5 Boundary regression.' : '실측 행 수 기반 4-Tier 데이터 리니지 DAG 시각화 및 Golden 5건 + Boundary 50회 회귀 평가')
+          : (isEn ? 'Runs lightweight Golden CQ accuracy/citation verification (skips 50-trial boundary loop).' : '핵심 Golden CQ 정합성(SQL 대조 또는 청크 인용)만 신속 검증 (바운더리 50회 루프 생략)')
+      }
+    ];
+
+    const pipeGridEl = document.getElementById('ov-pkg-pipe-grid');
+    if (pipeGridEl) {
+      pipeGridEl.innerHTML = pipeStages.map(ps => `
+        <div class="ov-pkg-node ${ps.active ? '' : 'bypassed'}" style="border-left-color:${ps.color};">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
+            <span style="font-size:10.5px; font-weight:800; font-family:var(--font-mono); color:${ps.active ? ps.color : '#64748b'};">${ps.num}</span>
+            <span class="badge ${ps.active ? 'approved' : ''}" style="${ps.active ? '' : 'background:#e2e8f0; color:#475569;'}">
+              ${ps.active ? (isEn ? 'INCLUDED' : '패키지 포함') : (isEn ? 'BYPASSED' : '패스 생략')}
+            </span>
+          </div>
+          <div style="font-size:12.5px; font-weight:800; color:#0f172a;">${esc(ps.name)}</div>
+          <div style="font-size:11px; color:#334155; line-height:1.45;">${esc(ps.note)}</div>
+          <div style="margin-top:auto; padding-top:6px; border-top:1px dotted #cbd5e1; font-size:10.5px; font-family:var(--font-mono); color:#0f172a;">
+            <div><b>Code:</b> ${esc(ps.script)}</div>
+            <div><b>GCP:</b> ${esc(ps.gcp)}</div>
+            <div><b>Out:</b> ${esc(ps.artifact)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 4-B. Render 4-Column Package Implementation Manifest (#ov-pkg-manifest-grid)
+    const codeModules = [
+      { file: 'pipeline/extract_docs.py', active: true, role: isEn ? 'Gate 0 raw doc parser & 5-axis checklist' : '원문 변환 · Gate 0 검증 · 5축 체크리스트' },
+      { file: 'pipeline/ingest.py', active: true, role: st.input === 'doc_only' ? (isEn ? 'Chunks & 3-Layer Wiki compiler (doc-only)' : '청크 & 3-Layer 위키 컴파일 (CSV 생략)') : (isEn ? 'DW CSV + Chunks load to BQ/Spanner' : '정형 원장 + 청크 BigQuery/Spanner 적재') },
+      { file: 'pipeline/graph_builder.py', active: isStage3Active, role: isStage3Active ? (isEn ? `Synthesizes ${st.engine.toUpperCase()} DDL & benchmark` : `${st.engine.toUpperCase()} 그래프 DDL 합성 및 벤치마크`) : (isEn ? 'Skipped in Lite path (no physical graph)' : 'Lite 패스에서 실행 생략 (물리 그래프 미사용)') },
+      { file: 'src/gcp_client.py', active: true, role: st.engine === 'both' ? (isEn ? 'BQ + Spanner + EXTERNAL_QUERY fabric client' : 'BQ + Spanner + EXTERNAL_QUERY 연합 클라이언트') : (st.engine === 'spanner' ? (isEn ? 'Cloud Spanner GQL + BQ SQL dialect rewrite' : 'Spanner GQL 실행 및 SQL 방언 자동 변환') : (isEn ? 'BigQuery SQL/GRAPH_TABLE & Gemini client' : 'BigQuery SQL/GRAPH_TABLE 및 Gemini 연동')) },
+      { file: 'src/agent/mcp_server.py', active: true, role: st.runtime === 'lite_agent' ? (isEn ? 'Stage 1·2·5 MCPs + Lite doc citation' : 'Stage 1·2·5 MCP 및 Lite 문서 인용') : (isEn ? `All 8 MCP tools (engine=${st.engine === 'both' ? 'bigquery|spanner' : st.engine})` : `8대 모듈형 MCP 전수 구동 (engine=${st.engine})`) },
+      { file: 'pipeline/validator.py', active: true, role: isStage5Full ? (isEn ? 'Golden CQ 5 + Boundary 50-Trial harness' : 'Golden CQ 5종 + 바운더리 50회 회귀 평가') : (isEn ? 'Golden CQ quick accuracy/citation check' : 'Golden CQ 핵심 정합성/인용 검증') }
+    ];
+
+    const mcpAndNotebooks = [
+      { name: 'mcp_stage1_asset_discovery', nb: 'stage1_asset_and_cq', active: true, tool: 'mcp_stage1_asset_discovery' },
+      { name: 'mcp_stage2_wiki_and_semantic', nb: 'stage2_wiki_and_semantic_graph', active: true, tool: 'mcp_stage2_wiki_and_semantic' },
+      { name: 'mcp_stage3_property_graph', nb: 'stage3_property_graph_bigquery_spanner', active: isStage3Active, tool: 'mcp_stage3_property_graph' },
+      { name: 'mcp_stage4_agent_orchestration + Runtime 3종', nb: 'stage4_agent_and_mcp_execution', active: true, tool: 'mcp_stage4_agent_orchestration' },
+      { name: 'mcp_stage5_lineage_and_eval', nb: 'stage5_lineage_and_evaluation', active: isStage5Full, tool: 'mcp_stage5_lineage_and_eval' }
+    ];
+
+    const projectJsonPreview = JSON.stringify({
+      project_id: activeProject || 'my_ontology',
+      track: activeTrack,
+      graph_engine: st.engine === 'none' ? 'bigquery' : st.engine,
+      input_mode: st.input,
+      wiki_mode: st.wiki,
+      eval_mode: st.eval,
+      spanner_instance_id: (st.engine === 'spanner' || st.engine === 'both') ? 'starter-spanner' : '',
+      spanner_bq_connection_id: (st.engine === 'both') ? 'spanner_fabric_conn' : ''
+    }, null, 2);
+
+    const tfResources = [
+      { res: 'google_storage_bucket (Wiki & Docs)', active: true },
+      { res: 'google_bigquery_dataset + tb_doc_chunks', active: true },
+      { res: 'BigQuery Property Graph (SQL:2023 View)', active: st.engine === 'bigquery' || st.engine === 'both' },
+      { res: 'google_spanner_instance (100 PU) + DB', active: st.engine === 'spanner' || st.engine === 'both' },
+      { res: 'google_bigquery_connection (spanner_fabric_conn)', active: st.engine === 'both' }
+    ];
+
+    const spannerTfFlag = (st.engine === 'spanner' || st.engine === 'both') ? ' --enable-spanner' : '';
+    const cliCommands = [
+      `# 1. ${isEn ? 'Scaffold project with selected Track & Graph Engine' : '선택한 트랙 및 그래프 엔진으로 프로젝트 생성'}`,
+      `python3 new_project.py --id my_case --name "My Ontology" \\`,
+      `  --track ${activeTrack} --graph-engine ${st.engine === 'none' ? 'bigquery' : st.engine}`,
+      ``,
+      `# 2. ${isEn ? 'Provision GCP infrastructure via Terraform' : '선택 구성에 필요한 GCP 인프라 Terraform 배포'}`,
+      `python3 terraform/apply_terraform.py --project my_case${spannerTfFlag}`,
+      ``,
+      `# 3. ${isEn ? 'Run selected pipeline path & launch Studio UI' : '선택 패스 파이프라인 실행 및 로컬 스튜디오 구동'}`,
+      `python3 pipeline/extract_docs.py --project my_case`,
+      `python3 run_pipeline.py --project my_case --track ${activeTrack}`,
+      `python3 -m src.web.studio_server 8080`
+    ].join('\n');
+
+    const manifestGridEl = document.getElementById('ov-pkg-manifest-grid');
+    if (manifestGridEl) {
+      const langFolder = isEn ? 'en' : 'ko';
+      const langSuffix = isEn ? '_en.ipynb' : '_ko.ipynb';
+      manifestGridEl.innerHTML = `
+        <!-- Box 1: Code Modules -->
+        <div class="ov-pkg-box">
+          <div class="ov-pkg-box-head">
+            <span class="ov-pkg-box-title">${isEn ? '1. Included Pipeline & Runtime Modules' : '1. [구현:코드] 파이프라인 & 런타임 모듈'}</span>
+            <span class="badge approved">${activeModulesCount}/6</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${codeModules.map(m => `
+              <div class="ov-pkg-item-row ${m.active ? '' : 'skipped'}">
+                <div>
+                  <code style="font-weight:800; color:${m.active ? 'var(--apple-blue)' : '#94a3b8'};">${esc(m.file)}</code>
+                  <div style="font-size:11px; color:${m.active ? '#475569' : '#94a3b8'}; margin-top:2px;">${esc(m.role)}</div>
+                </div>
+                <span class="badge ${m.active ? 'approved' : ''}" style="flex-shrink:0; ${m.active ? '' : 'background:#e2e8f0; color:#64748b;'}">
+                  ${m.active ? (isEn ? 'ACTIVE' : '포함') : (isEn ? 'SKIP' : '생략')}
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Box 2: MCP Tools & Notebooks -->
+        <div class="ov-pkg-box">
+          <div class="ov-pkg-box-head">
+            <span class="ov-pkg-box-title">${isEn ? '2. Active MCP Tools & Stage Notebooks' : '2. [구현:MCP & 노트북] 활성 도구 및 노트북'}</span>
+            <span class="badge indigo">${activeMcpCount} MCPs</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${mcpAndNotebooks.map(item => `
+              <div class="ov-pkg-item-row ${item.active ? '' : 'skipped'}">
+                <div style="min-width:0; flex:1;">
+                  <div style="font-weight:700; color:${item.active ? '#0f172a' : '#94a3b8'}; font-size:11.5px;">${esc(item.name)}</div>
+                  <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/${langFolder}/${item.nb}${langSuffix}" target="_blank" rel="noopener" style="font-size:10px; font-family:var(--font-mono); color:${item.active ? '#0284c7' : '#94a3b8'}; text-decoration:none; word-break:break-all; display:inline-block; line-height:1.3; margin-top:2px;">
+                    notebooks/${langFolder}/${item.nb}${langSuffix} ↗
+                  </a>
+                </div>
+                <button class="ov-stage-mcp-btn" style="flex-shrink:0;" onclick="openStageMcpModal('${item.tool}')">▶ MCP</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Box 3: project.json & Terraform Resources -->
+        <div class="ov-pkg-box">
+          <div class="ov-pkg-box-head">
+            <span class="ov-pkg-box-title">${isEn ? '3. Synthesized project.json & Terraform IaC' : '3. [구현:설정 & IaC] project.json & GCP 리소스'}</span>
+            <span class="badge llm">Terraform</span>
+          </div>
+          <pre class="code-pre-light" style="font-size:10.5px; padding:8px 10px; max-height:135px; margin:0;">${esc(projectJsonPreview)}</pre>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
+            ${tfResources.map(tf => `
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:11px; padding:4px 7px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px;">
+                <code style="color:${tf.active ? '#0f172a' : '#94a3b8'}; min-width:0; word-break:break-all;">${esc(tf.res)}</code>
+                <span style="font-size:10px; font-weight:800; white-space:nowrap; flex-shrink:0; color:${tf.active ? '#059669' : '#94a3b8'};">${tf.active ? (isEn ? '● PROVISIONED' : '● 배포됨') : (isEn ? '○ NOT NEEDED' : '○ 불필요')}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Box 4: Ready-to-Run CLI Commands -->
+        <div class="ov-pkg-box">
+          <div class="ov-pkg-box-head">
+            <span class="ov-pkg-box-title">${isEn ? '4. Ready-to-Run Package Bootstrap CLI' : '4. [구현:CLI] 선택 패키지 3-Step 실행 명령어'}</span>
+            <button class="subnav-action-btn" id="ov-pkg-cli-copy-btn" style="padding:2px 8px; font-size:10.5px;" onclick="copyPackageCli()">${isEn ? 'Copy CLI' : 'CLI 복사'}</button>
+          </div>
+          <pre class="code-pre-light" id="ov-pkg-cli-code" style="font-size:10.5px; padding:10px; flex:1; margin:0; white-space:pre-wrap;">${esc(cliCommands)}</pre>
+        </div>
+      `;
+    }
+
+    // 5. Sync the 5-Stage Detailed Flow Board (#ov-flow-board) with active/bypassed states
+    if (portalOverviewCache) {
+      renderFiveStageFlowBoard(portalOverviewCache);
+    }
+  }
+
+  function renderFiveStageFlowBoard(ov) {
+    const board = document.getElementById('ov-flow-board');
+    if (!board) return;
+    const isEn = (studioLang === 'en');
+    const isStage3Active = (pkgBuilderState.engine !== 'none');
+    const isStage5Full = (pkgBuilderState.eval === 'full_lineage_boundary');
+
+    board.innerHTML = (ov.stages || []).map(st => {
+      const isBypassed = (st.stage_id === 'stage3' && !isStage3Active) || (st.stage_id === 'stage5' && !isStage5Full);
+      const statePill = isBypassed
+        ? `<span class="badge" style="background:#e2e8f0; color:#475569; font-size:10px;">${isEn ? 'Bypassed in Selected Path' : '현재 선택 패스에서 생략'}</span>`
+        : `<span class="badge approved" style="font-size:10px;">${isEn ? 'Active in Selected Path' : '현재 선택 패스 활성'}</span>`;
+
+      const steps = (st.steps || []).map((sp, i) => `
+        ${i > 0 ? '<div class="ov-conn-v">&darr;</div>' : ''}
+        <div class="ov-step-box" style="border-left-color:${esc(st.accent)};" onclick="switchTab('${esc(st.stage_id || 'stage1')}')">
+          <div class="ov-step-badge" style="color:${esc(st.accent)};">${esc(sp.badge)}</div>
+          <div class="ov-step-title">${esc(sp.title)}</div>
+          <div class="ov-step-desc">${(sp.bullets || []).map(b => '&bull; ' + b).join('<br>')}</div>
+          ${sp.deliverables ? `<div class="ov-step-out"><b>산출물</b> ${sp.deliverables}</div>` : ''}
+        </div>`).join('');
+      return `<div class="ov-stage-col ${isBypassed ? 'bypassed-col' : ''}" style="border-top-color:${esc(st.accent)};">
+          <div class="ov-stage-head-row">
+            <span class="ov-stage-chip">${esc(st.chip)}</span>
+            <button class="ov-stage-mcp-btn" onclick="openStageMcpModal('${esc(st.mcp_tool || 'mcp_stage1_asset_discovery')}')">▶ ${esc(st.chip)} MCP</button>
+          </div>
+          <div>${statePill}</div>
+          <div class="ov-stage-name">${esc(st.name)}</div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:2px;">
+            ${st.methodology_doc ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.methodology_doc)}" target="_blank" rel="noopener">방법론</a>` : ""}
+            ${st.notebook ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.notebook)}" target="_blank" rel="noopener">노트북</a>` : ""}
+          </div>
+          ${steps}
+        </div>`;
+    }).join('');
   }
 
   // 4. Overview Loader
@@ -1966,33 +2961,21 @@ HTML_PAGE = r"""<!DOCTYPE html>
       const res = await fetch('/api/portal/profile');
       const p = await res.json();
       const ov = p.overview || {};
+      portalOverviewCache = ov;
+      if (ov.path_configurator) {
+        const pc = ov.path_configurator;
+        const eb = document.getElementById('ov-builder-eyebrow');
+        const ti = document.getElementById('ov-builder-title');
+        const ld = document.getElementById('ov-builder-lead');
+        if (eb) { eb.setAttribute('data-ko', pc.eyebrow_ko || ''); eb.setAttribute('data-en', pc.eyebrow_en || ''); eb.textContent = studioLang === 'en' ? pc.eyebrow_en : pc.eyebrow_ko; }
+        if (ti) { ti.setAttribute('data-ko', pc.title_ko || ''); ti.setAttribute('data-en', pc.title_en || ''); ti.innerHTML = studioLang === 'en' ? pc.title_en : pc.title_ko; }
+        if (ld) { ld.setAttribute('data-ko', pc.lead_ko || ''); ld.setAttribute('data-en', pc.lead_en || ''); ld.innerHTML = studioLang === 'en' ? pc.lead_en : pc.lead_ko; }
+      }
       document.getElementById('ov-s1-eyebrow').textContent = esc(ov.eyebrow);
       document.getElementById('ov-s1-title').textContent = esc(ov.title);
       document.getElementById('ov-s1-lead').innerHTML = esc(ov.lead);
 
-      const board = document.getElementById('ov-flow-board');
-      board.innerHTML = (ov.stages || []).map(st => {
-        const steps = (st.steps || []).map((sp, i) => `
-          ${i > 0 ? '<div class="ov-conn-v">&darr;</div>' : ''}
-          <div class="ov-step-box" style="border-left-color:${esc(st.accent)};" onclick="switchTab('${esc(st.stage_id || 'stage1')}')">
-            <div class="ov-step-badge" style="color:${esc(st.accent)};">${esc(sp.badge)}</div>
-            <div class="ov-step-title">${esc(sp.title)}</div>
-            <div class="ov-step-desc">${(sp.bullets || []).map(b => '&bull; ' + b).join('<br>')}</div>
-            ${sp.deliverables ? `<div class="ov-step-out"><b>산출물</b> ${sp.deliverables}</div>` : ''}
-          </div>`).join('');
-        return `<div class="ov-stage-col" style="border-top-color:${esc(st.accent)};">
-            <div class="ov-stage-head-row">
-              <span class="ov-stage-chip">${esc(st.chip)}</span>
-              <button class="ov-stage-mcp-btn" onclick="openStageMcpModal('${esc(st.mcp_tool || 'mcp_stage1_asset_discovery')}')">▶ ${esc(st.chip)} MCP</button>
-            </div>
-            <div class="ov-stage-name">${esc(st.name)}</div>
-            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:2px;">
-              ${st.methodology_doc ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.methodology_doc)}" target="_blank" rel="noopener">방법론</a>` : ""}
-              ${st.notebook ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.notebook)}" target="_blank" rel="noopener">노트북</a>` : ""}
-            </div>
-            ${steps}
-          </div>`;
-      }).join('');
+      renderOverviewPathBuilder();
 
       const gap = ov.feature_gap || {};
       document.getElementById('ov-s2-eyebrow').textContent = esc(gap.eyebrow);
