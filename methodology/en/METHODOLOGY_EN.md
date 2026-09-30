@@ -28,20 +28,22 @@ This repository (`agentic-ontology-starter`) is an **educational, test, and proj
 
 The default `track: "auto"` inspects `project.json` `tables`: if customer table CSV files are listed, it activates `standard` / `full`; if `tables` is empty, it activates `lite`. Customer documents placed in `customer_doc/` are converted verbatim by `pipeline/extract_docs.py` and loaded only after **Gate 0** (`data/output/gate0_report.json`) passes (`char_retention_ratio >= 0.95` per document, zero empty pages, zero placeholder strings). Tables not provided by the customer are never synthesized.
 
-| Track | Active Stages | Graph Engine | Target Scenario |
+| Track | Active Stages | Graph Engine (`graph_engine`) | Target Scenario |
 | :--- | :---: | :---: | :--- |
 | **Track 1 · Lite** | `Stage 1 -> 2 -> 4 -> 5(citation)` | `none` | Source documents only (`tables: {}`), no customer tables. `extract_docs.py` + `extract_wiki.py` build `doc_chunks.jsonl`, `entities.md`, and `concepts.md`. Stage 3 is skipped, the agent runs `execute_lite_doc_cycle()` with `[DOC_CHUNK_XXX]` citations, and Stage 5 scores `evidence_type: "citation"` CQs |
-| **Track 2 · Standard** | `Stage 1 -> 2 -> 3 -> 4` | `bigquery` (or Spanner DDL) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and GQL |
-| **Track 3 · Full** | `Stage 1 -> 2 -> 3 -> 4 -> 5` | `bigquery` | Full lifecycle including 4-tier lineage, Golden CQ 5 (`evidence_type: "sql"`), boundary benchmark (10x5), and Terraform Cloud Run deployment |
+| **Track 2 · Standard** | `Stage 1 -> 2 -> 3 -> 4` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and ISO GQL |
+| **Track 3 · Full** | `Stage 1 -> 2 -> 3 -> 4 -> 5` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Full lifecycle including 4-tier lineage, Golden CQ 5 (`evidence_type: "sql"`), boundary benchmark (10x5), and Terraform Cloud Run deployment |
 
-### 3.1 Customer Input Scenario Adaptation Matrix & 3-Tier Provenance
+### 3.1 5-Axis Graph Engine Selection Checklist & Customer Input Scenario Matrix
+
+In Stage 1 (`project.json` -> `data/output/input_manifest.json`), projects evaluate five axes (`source_system`, `latency_slo`, `concurrency`, `write_freshness`, `data_scale`) to choose `"bigquery"` (Default, Zero-ETL logical graph), `"spanner"` (Opt-in 100 PU online low-latency graph), or `"both"` (Dual-engine ingestion + BigQuery `EXTERNAL_QUERY` Graph Fabric federation over `spanner_fabric_conn`).
 
 | Scenario | Customer Input Assets | `project.json` Settings | Pipeline Execution & Stage Adaptation |
 | :--- | :--- | :--- | :--- |
 | **Scenario A1 (`lite`)** | Unstructured documents only (`customer_doc/*.pdf, *.docx`) | `"track": "auto"`, `"tables": {}` | `extract_docs.py` (Gate 0 >= 95%) -> `extract_wiki.py` (`entities.md` Node, `concepts.md` Edge) -> Skip Stage 3 -> Stage 4 `execute_lite_doc_cycle` (300,000-char chunk context) -> Stage 5 `evidence_type: "citation"` CQ scoring |
 | **Scenario A2 (Graph Halt)** | Unstructured documents only, but user forces `track: "full"` or `--stage 3` | `"track": "full"`, `"tables": {}` | Halts immediately before Stage 3 with explicit guidance: provide structured tables in `03_tables/` or switch `track` to `"lite"` / `"auto"` (zero synthetic table fabrication) |
-| **Scenario B (Partial Tables)** | Unstructured documents + partial CSVs (e.g., 2 of 6 tables) | `"track": "auto"`, `"tables": {"devices": "devices.csv", ...}` | Loads only customer-supplied tables (`provenance=CUSTOMER_PROVIDED`); missing tables are left empty (0 rows) and never backfilled with `telecom_sample` rows |
-| **Scenario C (Custom Domain)** | Non-telecom custom domain documents + custom table schemas | Custom `"tables"` + `"ingest_module"`, `"graph_module"`, `"mcp_module"`, `"engine_module"` | Dynamically imports domain-specific Python modules and `projects/<id>/config/lineage_spec.json` to run the 5-Stage pipeline on custom schemas |
+| **Scenario B (Standard BigQuery)** | Unstructured documents + structured CSVs | `"track": "auto"`, `"graph_engine": "bigquery"` | Loads customer-supplied tables (`provenance=CUSTOMER_PROVIDED`) into BigQuery and creates `STARTER_ONTOLOGY_GRAPH` (default Zero-ETL) |
+| **Scenario C (Spanner / Graph Fabric / Custom)** | Structured tables requiring sub-200ms online GQL or Graph Fabric federation | `"graph_engine": "spanner" \| "both"`, or custom `*_module` overrides | Provisions Cloud Spanner (`starter-spanner`, 100 PU, `starter_ontology_db`), loads all 10 tables, benchmarks BigQuery vs Spanner p50/p95 latency, and executes federated `EXTERNAL_QUERY(spanner_fabric_conn)` joins |
 
 Every ingested record and chunk carries one of three provenance tiers:
 - `CUSTOMER_PROVIDED`: Verbatim customer files (`customer_doc/*`, customer CSVs).
@@ -50,6 +52,7 @@ Every ingested record and chunk carries one of three provenance tiers:
 
 ## 4. Runtime Resources & 8 MCP Tools
 
-- **BigQuery Dataset**: `seanjung-poc.starter_ontology_dw` — 6 node tables (`tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_customer_contract`, `tb_domain_rules`, `tb_doc_chunks`), 4 edge tables (`edge_contract_device`, `edge_contract_plan`, `edge_subsidy_binding`, `edge_rule_applies_to_plan`), and `STARTER_ONTOLOGY_GRAPH`.
+- **BigQuery Dataset (Default)**: `seanjung-poc.starter_ontology_dw` — 6 node tables (`tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_customer_contract`, `tb_domain_rules`, `tb_doc_chunks`), 4 edge tables (`edge_contract_device`, `edge_contract_plan`, `edge_subsidy_binding`, `edge_rule_applies_to_plan`), and `STARTER_ONTOLOGY_GRAPH`.
+- **Cloud Spanner Graph (Opt-in 100 PU)**: `starter-spanner/starter_ontology_db` — identical 10 tables and `STARTER_ONTOLOGY_GRAPH` property graph, linked to BigQuery via `projects/924723860007/locations/asia-northeast3/connections/spanner_fabric_conn` (`EXTERNAL_QUERY`).
 - **Cloud Storage**: `gs://seanjung-poc-starter-ontology` (`raw/`, `parsed/`, `ontology/` 3-Layer Markdown and manifest).
-- **8 MCP Tools**: 5 Stage MCPs (`mcp_stage1_asset_discovery` .. `mcp_stage5_lineage_and_eval`) + 3 Runtime MCPs (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`).
+- **8 MCP Tools**: 5 Stage MCPs (`mcp_stage1_asset_discovery` .. `mcp_stage5_lineage_and_eval`) + 3 Runtime MCPs (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`), all supporting `engine="bigquery" | "spanner"`.

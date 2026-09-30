@@ -3,6 +3,15 @@
   "status": "OK",
   "track": "full",
   "track_reason": "track=full in project.json",
+  "graph_engine": "both",
+  "graph_engine_reason": "Dual-engine benchmark (BigQuery Property Graph default + Cloud Spanner Graph online serving) and Graph Fabric EXTERNAL_QUERY federation.",
+  "graph_engine_checklist": {
+    "source_system": "both_dw_and_oltp",
+    "latency_slo": "under_50ms_and_batch",
+    "concurrency": "mixed_analytical_and_serving",
+    "write_freshness": "streaming_and_daily",
+    "data_scale": "sub_tb_to_pb"
+  },
   "documents": [],
   "needs_ocr": []
 }

@@ -40,21 +40,33 @@ CQ 한 건의 필드:
 
 ## 이 Stage의 MCP: `mcp_stage1_asset_discovery`
 
-| Step | 실제 수행 (`src/agent/mcp_server.py`) |
+| Step | 실제 수행 (`src/agent/mcp_server.py`, `engine="bigquery" \| "spanner"`) |
 | :--- | :--- |
-| `profile_tables` | `__TABLES__`에서 테이블별 행 수·크기 조회 → `table_inventory` |
+| `profile_tables` | BigQuery `__TABLES__` 또는 Cloud Spanner `INFORMATION_SCHEMA.TABLES`에서 테이블별 행 수 조회 → `table_inventory` |
 | `scan_guides` | 이 MCP에서는 수행하지 않는다. 가이드 청킹은 `pipeline/ingest.py`의 `run_ingest()`가 한다 |
 | `prune_noise` | 대응 코드 없음 (Step 이름만 있음) |
 | `tag_pii_governance` | `tb_customer_contract.customer_id` 중 `^CUST_DEMO_[0-9]{3}$` 형식이 아닌 건수 → `pii_check.non_deidentified_ids` |
 
-`steps` 인자는 결과의 `executed_steps`에 기록된다. 현재 핸들러는 선택한 Step과 관계없이 위 두 쿼리를 모두 실행한다.
+`steps` 인자는 결과의 `executed_steps`에 기록된다. `engine` 인자(`"bigquery"` 기본 또는 `"spanner"`)에 따라 해당 엔진의 테이블과 PII 상태를 즉시 점검한다.
+
+## 5축 그래프 엔진 선택 체크리스트 (`graph_engine_checklist`)
+
+Stage 1에서 프로젝트 설정(`project.json`)에 아래 5개 축을 점검하여 물리 그래프 엔진(`"bigquery"` 기본 | `"spanner"` 선택 | `"both"` 듀얼 및 Graph Fabric)을 결정한다. `extract_docs.py`가 이 체크리스트를 `data/output/input_manifest.json`에 기록한다.
+
+| 점검 축 | `bigquery` (기본 · Zero-ETL) | `spanner` (선택 · 온라인 저지연) | `both` (듀얼 엔진 & Graph Fabric) |
+| :--- | :--- | :--- | :--- |
+| `source_system` | 원천 원장이 BigQuery DW에 위치 | 원천 원장이 Cloud Spanner/OLTP에 위치 | 운영 그래프(Spanner) + 분석/문서 청크(BigQuery) 결합 |
+| `latency_slo` | 수백 ms ~ 수 초(1~3s) 허용 | 수십~수백 ms (`p95 < 300ms`) 필수 | 온라인 탐색과 분석 질의 지연 시간 실측 비교 |
+| `concurrency` | 분석가·내부 에이전트 중·저빈도 질의 | 수백~수천 QPS 고빈도 온라인 서빙 | 온라인 API와 배치 평가 트래픽 분리 |
+| `write_freshness` | 일/시간 배치 또는 CDC 스트리밍 | 실시간 ACID 트랜잭션 즉시 반영 | 실시간 원장 + 분석 DW 연합 조회 |
+| `data_scale` | TB~PB 대규모 스캔, 유휴 비용 0원 | 고밀도 멀티홉 탐색, 최소 100 PU 상시 과금 | 100 PU Spanner + BigQuery `EXTERNAL_QUERY` |
 
 ## 절차
 
-1. **범위 정하기**: CQ에 답하는 데 필요한 문서·테이블을 파일 단위로 고른다. 파일 안의 문장은 줄이거나 고치지 않는다. 스타터는 가이드 2개, CSV 6개로 시작한다.
+1. **범위 및 엔진 정하기**: CQ에 답하는 데 필요한 문서·테이블을 파일 단위로 고르고, 위 5축 체크리스트로 `graph_engine`(`bigquery` 기본 / `spanner` / `both`)을 정한다. 파일 안의 문장은 줄이거나 고치지 않는다. 스타터는 가이드 2개, CSV 6개로 시작한다.
 2. **CQ 작성**: sql CQ는 `expected_math`, `verification_sql`, `grounded_chunk`를, citation CQ는 `expected_citation`, `expected_facts`를 채운다. 정답은 사람이 확정하고 `answer_confirmed_by`에 기록한다.
-3. **테이블 준비**: BigQuery 데이터셋과 테이블 10개는 Terraform(`terraform/bigquery.tf`)으로 만든다.
-4. **적재**: `run_ingest()`가 CSV 6개와 가이드 청크를 읽어 테이블 10개를 비우고(`TRUNCATE`) 다시 채운다(`INSERT`). 테이블마다 한 트랜잭션이며, 하나라도 실패하면 파이프라인이 멈춘다. 값은 코드에 쓰지 않고 CSV에서만 읽는다.
+3. **테이블 준비**: BigQuery 데이터셋·테이블 10개(`terraform/bigquery.tf`)와 선택 시 Cloud Spanner 인스턴스·데이터베이스·테이블 10개(`terraform/spanner.tf`)를 Terraform으로 만든다.
+4. **적재**: `run_ingest()`가 CSV 6개(전 행 `provenance`·`source_ref` 필수)와 가이드 청크를 읽어 설정된 엔진(`bigquery`, `spanner`, 또는 `both`)의 테이블 10개를 채운다.
 5. **확인**: `mcp_stage1_asset_discovery`로 행 수와 비식별 규칙 위반 건수를 확인한다.
 
 ## 산출물

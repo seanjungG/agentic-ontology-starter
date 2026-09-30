@@ -11,7 +11,7 @@
 
 - **코어 엔진 재작성 금지**: `src/web/studio_server.py`(6-Tab 스튜디오), `src/agent/mcp_server.py`(8종 MCP), `src/agent/reasoning_engine.py`(2-Pass MCP 및 Lite 청크 인용 에이전트), `pipeline/extract_docs.py` · `ingest.py` · `extract_wiki.py` · `graph_builder.py` · `validator.py` 구조를 임의로 다른 프레임워크나 다크 테마 UI로 재작성하지 마십시오.
 - **실데이터 무환각 원칙**: Mock SQLite나 가짜 하드코딩 응답을 생성하지 말고 `src/gcp_client.py`를 통해 실제 BigQuery(`BQ_DATASET_ID`), GCS(`GCS_BUCKET_NAME`), Vertex AI(`VERTEX_GEMINI_MODEL="gemini-3.8-flash"`)를 호출하십시오. 적재하는 데이터는 고객 자료 또는 그 파생 데이터여야 합니다(아래 고객 데이터 원칙).
-- **시나리오별 유연한 도메인 이식**: 새로운 도메인 데이터를 인입하고 온톨로지를 구축할 때는 `PROTOTYPING_PLAYBOOK.md`에 정의된 시나리오(`lite` 문서 전용 / `standard` DW+문서 / 커스텀 스키마 `*_module` 오버라이드 / `full` 리니지·평가 게이트)에 맞춰 교체하십시오.
+- **시나리오별 유연한 도메인 이식 및 5축 엔진 선택**: 새로운 도메인 데이터를 인입하고 온톨로지를 구축할 때는 `PROTOTYPING_PLAYBOOK.md`에 정의된 시나리오(`lite` 문서 전용 / `standard` DW+문서 BigQuery Graph 기본 / 5축 체크리스트 기반 Cloud Spanner Graph 선택 및 `both` 모드 `EXTERNAL_QUERY` 연합 조인 / 커스텀 스키마 `*_module` 오버라이드 / `full` 리니지·평가 게이트)에 맞춰 교체하십시오.
 - **고객·데이터 영역별 프로젝트**: 새 고객 데이터는 루트 샘플을 덮어쓰지 말고 `python3 new_project.py <id>`로 만든 `projects/<id>/`에 둡니다. 도메인 코드 차이는 `project.json`의 `*_module` 오버라이드로 처리하고 공용 코드에 프로젝트별 분기를 넣지 않습니다 ([`projects/_template/README.md`](projects/_template/README.md)).
 - **작업 추적 및 블로커 기록**: 진행 상황은 `00_dashboard.md`에 기록하고, GCP 권한/인증 이슈 등 사용자 조치가 필요한 사항은 임의 우회하지 말고 `backlog.md`에 기록한 뒤 안내하십시오.
 

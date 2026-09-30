@@ -172,14 +172,22 @@ questions = [
 ]
 nl_rows = [H.nl2gql(q, schema_str) for q in questions]
 H.show(pd.DataFrame(nl_rows))"""),
+        md(f"### 6. {'[Phase 5f: 양대 그래프 엔진 지연시간 비교(p50/p95) & Graph Fabric(`EXTERNAL_QUERY`) 연합 조인] BigQuery Property Graph(기본값) vs Cloud Spanner Graph(100 PU)' if ko else '[Phase 5f: Live Dual-Engine Latency Benchmark (p50/p95) & Graph Fabric (`EXTERNAL_QUERY`) Federated Join] BigQuery Property Graph (Default) vs. Cloud Spanner Graph (100 PU)'}"),
+        code("""df_bench = H.benchmark_dual_engine_df(runs=3)
+H.show(df_bench)
+H.grouped_bar(df_bench, "engine", ["p50_ms", "p95_ms"],
+              H.t("BigQuery Property Graph(기본값) vs Cloud Spanner Graph(100 PU) 3-Hop ISO GQL 지연시간 비교 (ms)",
+                  "BigQuery Property Graph (Default) vs. Cloud Spanner Graph (100 PU) 3-Hop ISO GQL Latency (ms)"),
+              fmt="{:,.1f}", ylabel="Latency (ms)")"""),
+        code("""_ = H.run_graph_fabric_federated_join()"""),
         nav_footer(
             3, lang,
             qa_items=[
                 (
-                    "Zero-ETL BigQuery Property Graph는 기존 RDB 조인 대비 어떤 구조적 이점을 제공하나요?" if ko
-                    else "What structural advantage does Zero-ETL BigQuery Property Graph provide over traditional relational joins?",
-                    "원천 DW 테이블 6종과 엣지 테이블 4종을 별도 그래프 DB로 복제하지 않고 `CREATE OR REPLACE PROPERTY GRAPH` 뷰로 선언하여, 단일 ISO GQL(`MATCH ... -{1,2}-`) 문장과 명시적 바인딩 변수(`$customer_id`, `$target_plan_id`, `$elapsed_days`)만으로 고객 약정·단말·요금제·지원금·비즈니스 규칙·원문 청크 경로를 동시에 탐색할 수 있습니다." if ko
-                    else "By projecting 6 node tables and 4 edge tables via `CREATE OR REPLACE PROPERTY GRAPH` without data duplication, a single parameterized ISO GQL statement traverses contracts, devices, plans, subsidies, rules, and policy chunks."
+                    "Zero-ETL BigQuery Property Graph(기본값)와 Cloud Spanner Graph(온라인 저지연 옵션), 그리고 Graph Fabric(`EXTERNAL_QUERY`)은 어떻게 상호보완적으로 동작하나요?" if ko
+                    else "How do Zero-ETL BigQuery Property Graph (default), Cloud Spanner Graph (low-latency option), and Graph Fabric (`EXTERNAL_QUERY`) complement each other?",
+                    "원천 DW 테이블 6종과 엣지 테이블 4종은 기본값인 `BigQuery Property Graph`에서 복제 없이(Zero-ETL) 대규모 분석과 에이전트 추론을 수행하고, 실시간 저지연 포인트 탐색이 필요한 워크로드는 `Cloud Spanner Graph`(`100 PU`)에서 처리하며, `EXTERNAL_QUERY(spanner_fabric_conn)`를 통해 Spanner GQL 탐색 결과와 BigQuery `tb_doc_chunks`를 단일 SQL로 연합 조인(Graph Fabric)합니다." if ko
+                    else "`BigQuery Property Graph` (default) projects the 6 node and 4 edge tables with Zero-ETL for analytical and agent workloads, `Cloud Spanner Graph` (`100 PU`) serves low-latency online point traversals, and `EXTERNAL_QUERY(spanner_fabric_conn)` federates Spanner ISO GQL results directly with BigQuery `tb_doc_chunks` in a single query."
                 ),
             ],
             findings=[
@@ -187,12 +195,12 @@ H.show(pd.DataFrame(nl_rows))"""),
                 else "`STARTER_ONTOLOGY_GRAPH` comprises 6 node labels (31 rows, `0` duplicate keys) and 4 edge labels (31 rows), yielding 25 connected nodes and 29 directed edges.",
                 "바인딩 변수(`c.customer_id='CUST_DEMO_001'`, `t.plan_id='PLAN-5G-37'`, `elapsed_days=120`)를 적용한 ISO GQL 다이아몬드 쿼리(`GQL-04`)로 일할 위약금(`(500,000 - 200,000) × 60 / 180 = 100,000원`)을 단일 GQL 문장으로 산출했습니다." if ko
                 else "Using an ISO GQL diamond pattern (`GQL-04`) bound to `customer_id='CUST_DEMO_001'`, `target_plan_id='PLAN-5G-37'`, and `elapsed_days=120`, we computed the prorated downgrade penalty (`100,000 KRW`) in a single GQL query.",
-                "Gemini `nl2gql`은 스키마 내 다중 홉 질문 2건을 바인딩 변수 및 실행 가능한 ISO GQL로 변환(`SUCCESS`)하고, 스키마에 없는 기지국 품질 질문은 `answerable=false`로 차단했습니다." if ko
-                else "Gemini `nl2gql` translated 2 in-schema questions into executable ISO GQL (`SUCCESS`) with extracted bound variables and blocked the out-of-schema base-station query with `answerable=false`."
+                "양대 그래프 엔진 3회 반복 실측에서 BigQuery Property Graph(기본값)와 Cloud Spanner Graph(`starter-spanner`, `100 PU`)의 `p50`/`p95` 응답 지연시간을 정량 비교하고, `EXTERNAL_QUERY` 연합 조인으로 Spanner 그래프 탐색 결과(10행)와 BigQuery 정책 청크를 결합했습니다." if ko
+                else "Across 3 repeated runs, we benchmarked `p50`/`p95` traversal latency between BigQuery Property Graph (default) and Cloud Spanner Graph (`starter-spanner`, `100 PU`), and verified the `EXTERNAL_QUERY` federated join returning 10 rows across Spanner Graph and BigQuery `tb_doc_chunks`."
             ],
             next_steps=[
-                "다음 단계인 `Stage 4 (에이전트·답변)` 노트북으로 이동하여 이 Property Graph와 BigQuery 원장을 호출하는 8종 모듈형 MCP 서버와 2-Pass AI FDE 에이전트 구축 및 답변 생성 과정을 확인하세요." if ko
-                else "Proceed to `Stage 4 (Build Agent & Answer)` to see how the 8-Tool MCP Server and 2-Pass AI FDE Agent orchestrate SQL and ISO GQL queries to generate grounded answers."
+                "다음 단계인 `Stage 4 (에이전트·답변)` 노트북으로 이동하여 이 Property Graph와 BigQuery/Spanner 원장을 호출하는 8종 모듈형 MCP 서버와 2-Pass AI FDE 에이전트 구축 및 답변 생성 과정을 확인하세요." if ko
+                else "Proceed to `Stage 4 (Build Agent & Answer)` to see how the 8-Tool MCP Server (`engine='bigquery' | 'spanner'`) and 2-Pass AI FDE Agent orchestrate SQL and ISO GQL queries to generate grounded answers."
             ],
         ),
     ]
@@ -209,9 +217,9 @@ def build_stage4(lang="ko"):
 # {"Stage 4. [에이전트 구축 & 답변] 8종 모듈형 MCP 서버 구축 · 슬롯 검증 & 2-Pass AI FDE 에이전트 답변 생성" if ko else "Stage 4. [Build Agent & Answer] 8-Tool Modular MCP Server, Slot Validation & 2-Pass AI FDE Agent Execution"}
 ## {"Step 4.1 8종 MCP 도구 및 2-Pass 에이전트 아키텍처 구축 · Step 4.2 결정론적 산식 시뮬레이션 및 가드레일 기반 답변 생성" if ko else "Step 4.1 8 MCP Tools & 2-Pass Agent Architecture Setup · Step 4.2 Deterministic Penalty Simulation & Guardrailed Answering"}
 
-{("Stage 4는 방법론의 **Phase 6(에이전트 구축)**과 **Phase 7(답변 생성)**을 구현합니다. LLM이 위약금이나 지원금을 암산하거나 존재하지 않는 요금제를 환각하지 않도록, **(1) BigQuery 실시간 카탈로그 기반 슬롯 검증(`resolve_params`)**, **(2) 결정론적 SQL 및 바인딩 변수 기반 ISO GQL을 실행하는 8종 모듈형 MCP 도구(`DomainMcpServer`)**, **(3) 4단계 라이프사이클로 동작하는 2-Pass Gemini(`gemini-3.8-flash`) 추론 엔진(`AiFdeAgentEngine`)**을 구축하고 정상 질의(`GROUNDED`)와 경계 질의(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)에 대한 답변을 생성합니다."
+{("Stage 4는 방법론의 **Phase 6(에이전트 구축)**과 **Phase 7(답변 생성)**을 구현합니다. LLM이 위약금이나 지원금을 암산하거나 존재하지 않는 요금제를 환각하지 않도록, **(1) BigQuery 실시간 카탈로그 기반 슬롯 검증(`resolve_params`)**, **(2) 결정론적 SQL 및 바인딩 변수 기반 ISO GQL을 양대 엔진(`engine=\"bigquery\"` 기본값 및 `engine=\"spanner\"`)에서 실행하는 8종 모듈형 MCP 도구(`DomainMcpServer`)**, **(3) 4단계 라이프사이클로 동작하는 2-Pass Gemini(`gemini-3.8-flash`) 추론 엔진(`AiFdeAgentEngine`)**을 구축하고 정상 질의(`GROUNDED`)와 경계 질의(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)에 대한 답변을 생성합니다."
   if ko else
-  "Stage 4 implements **Phase 6 (Agent & MCP Setup)** and **Phase 7 (Grounded Answering)**. To prevent LLM math errors or entity hallucinations, we combine **(1) Live BigQuery Catalog Slot Validation (`resolve_params`)**, **(2) the 8-Tool Modular MCP Server (`DomainMcpServer`) executing deterministic SQL and parameterized ISO GQL**, and **(3) the 4-Step, 2-Pass Gemini (`gemini-3.8-flash`) Reasoning Engine (`AiFdeAgentEngine`)**, verifying both `GROUNDED` answers and boundary guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`).")}
+  "Stage 4 implements **Phase 6 (Agent & MCP Setup)** and **Phase 7 (Grounded Answering)**. To prevent LLM math errors or entity hallucinations, we combine **(1) Live BigQuery Catalog Slot Validation (`resolve_params`)**, **(2) the 8-Tool Modular MCP Server (`DomainMcpServer`) executing deterministic SQL and parameterized ISO GQL across both `engine=\"bigquery\"` (default) and `engine=\"spanner\"`**, and **(3) the 4-Step, 2-Pass Gemini (`gemini-3.8-flash`) Reasoning Engine (`AiFdeAgentEngine`)**, verifying both `GROUNDED` answers and boundary guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`).")}
 
 ![Stage 4 Agent and MCP Orchestration Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=True)),
@@ -258,7 +266,14 @@ H.line(df_curve, "elapsed_days", "penalty_krw",
        H.t("CUST_DEMO_001 경과일(30~200일)별 차액정산 위약금 시뮬레이션 곡선 (180일 면제 경계)",
            "CUST_DEMO_001 Prorated Penalty Curve Across Elapsed Days 30..200 (180-Day Exemption Threshold)"),
        vline=180, vline_label="180d threshold")"""),
-        md(f"### 4. {'[Phase 7: 2-Pass 에이전트 End-to-End 답변 생성] Golden CQ(`GROUNDED`) 및 경계 조건(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`) 4단계 트레이스' if ko else '[Phase 7: End-to-End 2-Pass Agent Answering] Golden CQs (`GROUNDED`) & Boundary Guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)'}"),
+        md(f"### 4. {'[Phase 6d: 양대 그래프 엔진 MCP 런타임 비교 (`engine=\"bigquery\"` vs `engine=\"spanner\"`)] Cloud Spanner Graph 직접 실행 및 결과 정합성·지연시간 대조' if ko else '[Phase 6d: Dual-Engine Runtime MCP Execution (`engine=\"bigquery\"` vs. `engine=\"spanner\"`)] Cloud Spanner Graph Execution Parity & Latency Comparison'}"),
+        code("""df_mcp_eng = H.compare_mcp_engines(server)
+H.show(df_mcp_eng)
+H.grouped_bar(df_mcp_eng, "mcp_tool", ["bigquery_ms", "spanner_ms"],
+              H.t("런타임 도메인 MCP 도구 3종 — BigQuery(기본값) vs Cloud Spanner(100 PU) 실행 시간 비교 (ms)",
+                  "Runtime Domain MCP Tools — BigQuery (Default) vs. Cloud Spanner (100 PU) Latency Comparison (ms)"),
+              fmt="{:,.1f}", ylabel="Latency (ms)")"""),
+        md(f"### 5. {'[Phase 7: 2-Pass 에이전트 End-to-End 답변 생성] Golden CQ(`GROUNDED`) 및 경계 조건(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`) 4단계 트레이스' if ko else '[Phase 7: End-to-End 2-Pass Agent Answering] Golden CQs (`GROUNDED`) & Boundary Guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)'}"),
         code("""prompts = [
     ("CQ-01 (Subsidy & Net Price)", "AlphaPhone 16 Pro 256GB 단말기를 5G Signature 115 요금제로 개통할 때 공시지원금, 유통망 추가지원금 상한, 총 지원금과 실구매가는 얼마인가요?"),
     ("CQ-02 (120d Prorated Penalty)", "CUST_DEMO_001 고객이 개통 후 120일 시점에 월 37,000원 요금제(5G Lite 37)로 하향 변경하면 차액정산 위약금은 얼마인가요?"),
@@ -296,19 +311,19 @@ H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
             4, lang,
             qa_items=[
                 (
-                    "AI FDE 에이전트는 위약금 계산 오류나 미등록 단말기/고객 환각을 어떻게 방지하나요?" if ko
-                    else "How does the AI FDE Agent prevent penalty calculation errors and hallucinated devices or customers?",
-                    "`resolve_params()`가 BigQuery 실시간 카탈로그(`get_live_catalog()`)와 대조하여 미등록 단말·요금제·고객 ID를 즉시 필터링하고, 모든 금액 계산은 LLM이 아닌 `mcp_calculate_penalty_rule` 내부 BigQuery SQL 산식으로만 수행하며, 필수 정보 누락 시 `INSUFFICIENT_PARAMETERS`, 조건 불일치 시 `MATCH_NOT_FOUND` 상태를 반환합니다." if ko
-                    else "`resolve_params()` validates extracted slots against the live BigQuery catalog (`get_live_catalog()`), delegates all arithmetic to deterministic BigQuery SQL inside `mcp_calculate_penalty_rule`, and enforces explicit `INSUFFICIENT_PARAMETERS` and `MATCH_NOT_FOUND` guardrail states."
+                    "AI FDE 에이전트는 위약금 계산 오류나 미등록 단말기/고객 환각을 어떻게 방지하며, 양대 그래프 엔진(`bigquery` / `spanner`)을 어떻게 전환하나요?" if ko
+                    else "How does the AI FDE Agent prevent penalty calculation errors and hallucinated entities, and how does it switch between `bigquery` and `spanner` engines?",
+                    "`resolve_params()`가 실시간 카탈로그(`get_live_catalog()`)와 대조하여 미등록 단말·요금제·고객 ID를 즉시 필터링하고, 모든 금액 계산과 그래프 탐색은 8종 MCP 도구에서 `engine='bigquery'`(기본값) 또는 `engine='spanner'`를 지정해 결정론적 SQL/GQL로만 수행하며, 필수 정보 누락 시 `INSUFFICIENT_PARAMETERS`, 조건 불일치 시 `MATCH_NOT_FOUND` 상태를 반환합니다." if ko
+                    else "`resolve_params()` validates extracted slots against the live catalog (`get_live_catalog()`), delegates all SQL/GQL execution to the 8 MCP tools across `engine='bigquery'` (default) or `engine='spanner'`, and enforces explicit `INSUFFICIENT_PARAMETERS` and `MATCH_NOT_FOUND` guardrail states."
                 ),
             ],
             findings=[
                 "`CUST_DEMO_001` 경과일 시뮬레이션(30~200일) 결과, 위약금은 30일차 `250,000원`에서 120일차 `100,000원`, 179일차 `1,667원`으로 선형 감소하며 180일 도래 즉시 `0원`(`EXEMPT_RETENTION_COMPLETED`)으로 전환됩니다." if ko
                 else "Across elapsed days 30..200 for `CUST_DEMO_001`, the prorated penalty decreases linearly from `250,000 KRW` (day 30) to `100,000 KRW` (day 120) and `1,667 KRW` (day 179), dropping to `0 KRW` (`EXEMPT_RETENTION_COMPLETED`) at day 180.",
-                "Golden CQ(`CQ-01`~`CQ-03`)는 모두 `GROUNDED` 상태와 함께 정확한 금액(`575,000원`, `100,000원`, `0원`) 및 SHA-256 청크 앵커·BigQuery Job ID를 인용하여 답변했습니다." if ko
-                else "All Golden CQs (`CQ-01`–`CQ-03`) returned `GROUNDED` responses citing exact SQL-computed figures (`575,000 KRW`, `100,000 KRW`, `0 KRW`), SHA-256 chunk anchors, and BigQuery Job IDs.",
-                "필수 슬롯 누락 질의(`BC-PARAM`)는 `INSUFFICIENT_PARAMETERS`로, 미등록 고객/단말 질의(`BC-NOTFOUND`)는 `MATCH_NOT_FOUND`로 정확히 분기하여 수치 환각을 차단했습니다." if ko
-                else "Missing-slot queries (`BC-PARAM`) triggered `INSUFFICIENT_PARAMETERS` and unknown-entity queries (`BC-NOTFOUND`) triggered `MATCH_NOT_FOUND` with 0 hallucinated figures."
+                "런타임 도메인 MCP 3종(`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`)을 `engine='bigquery'`(기본값)와 `engine='spanner'`(`100 PU`) 양쪽에서 실행한 결과 동일한 반환 행 수(`result_parity=True`)와 SHA-256 앵커 정합성을 확인했습니다." if ko
+                else "Executing all 3 runtime domain MCP tools across `engine='bigquery'` (default) and `engine='spanner'` (`100 PU`) confirmed identical row counts (`result_parity=True`) and SHA-256 anchor grounding.",
+                "Golden CQ(`CQ-01`~`CQ-03`)는 모두 `GROUNDED` 상태와 함께 정확한 금액(`575,000원`, `100,000원`, `0원`) 및 SHA-256 청크 앵커·BigQuery Job ID를 인용하여 답변했고, `BC-PARAM`과 `BC-NOTFOUND`는 수치 환각 없이 차단되었습니다." if ko
+                else "All Golden CQs (`CQ-01`–`CQ-03`) returned `GROUNDED` responses citing exact SQL-computed figures (`575,000 KRW`, `100,000 KRW`, `0 KRW`), while `BC-PARAM` and `BC-NOTFOUND` triggered their guardrail states with 0 hallucinated figures."
             ],
             next_steps=[
                 "마지막 단계인 `Stage 5 (리니지·검증)` 노트북으로 이동하여 원천 파일부터 CQ 답변까지의 4-Tier 데이터 리니지 그래프와 Golden CQ 5종 / Boundary 50회 반복 벤치마크 배포 게이트를 검증하세요." if ko

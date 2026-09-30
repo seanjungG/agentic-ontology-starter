@@ -36,19 +36,22 @@
 | **Scenario A (`lite`)**<br>비정형 규정·약관·매뉴얼 문서만 있는 경우 | 고객 정형 테이블 없이 PDF/DOCX/MD 원본 문서만으로 원문 청크 + 위키(Entity/Concept) + `[DOC_CHUNK_XXX]` 인용 Q&A 및 Citation CQ 평가 구축 | **`lite`** (`"track": "auto"`, `"tables": {}`) | ① `customer_doc/*` 원본 배치 → `extract_docs.py` (Gate 0 `>=95%`)<br>② `extract_wiki.py` (`entities.md`, `concepts.md` 인용 검증 생성)<br>③ Stage 3 물리 그래프 생략 → Stage 4 `execute_lite_doc_cycle`<br>④ `04_cq/golden_competency_questions.json` (`"evidence_type": "citation"`) |
 | **Scenario A2 (그래프 요청 시 중단)**<br>문서만 있는데 그래프·SQL 평가를 요청한 경우 | 고객 테이블이 없는데 Stage 3 Property Graph나 SQL 평가를 강제 요청(`track: "full"` 또는 `--stage 3`)한 경우 | **즉시 중단 및 선택지 안내** | 가짜 CSV를 합성하지 않고 즉시 멈춘 뒤 사용자에게 확인:<br>(a) 고객 정형 CSV(`03_tables/`) 추가 제공 요청<br>(b) `track: "lite"`(문서 전용 트랙)로 전환<br>(c) 데모 목적 합성 데이터 명시 승인(`synthetic.allowed: true`, `SYNTHETIC_DEMO`) |
 | **Scenario B (표준 / 부분 테이블)**<br>정형 DW 테이블 + 비정형 정책 문서를 결합하는 경우 | 마스터/트랜잭션 CSV(전체 또는 일부)와 정책 문서를 결합해 ISO GQL 다중 홉 그래프 추론 + 2-Pass 에이전트 구축 | **`standard`** (`"track": "auto"`, `"graph_engine": "bigquery"`) | 고객이 실제로 제공한 테이블만 `project.json` `tables`에 등록·적재(`CUSTOMER_PROVIDED`)하고, 미제공 테이블은 빈 상태(0행)로 유지(샘플 데이터 혼합 금지) |
-| **Scenario C (커스텀 도메인 스키마 / Spanner)**<br>통신 외 타 산업군 커스텀 테이블 또는 Spanner DDL 확장 | 샘플 6종 CSV와 전혀 다른 도메인 스키마(제조·금융·유통·의료 등)를 연결하거나 `create_spanner_graph.sql` 이중 DDL 산출 | **`standard`** + `*_module` 오버라이드 | 공용 코드를 수정하지 않고 프로젝트 폴더 내 모듈을 `project.json`의 `"ingest_module"`, `"graph_module"`, `"mcp_module"`, `"engine_module"`로 지정 + `projects/<id>/config/lineage_spec.json` 작성 |
+| **Scenario C (커스텀 도메인 스키마 / Spanner & Graph Fabric)**<br>타 산업군 커스텀 테이블 또는 Cloud Spanner Graph + `EXTERNAL_QUERY` 확장 | 샘플 6종 CSV와 전혀 다른 도메인 스키마를 연결하거나, 5축 그래프 엔진 선택 체크리스트(`graph_engine_checklist`)에 따라 `graph_engine: "spanner"` 또는 `"both"`(BigQuery `EXTERNAL_QUERY` Graph Fabric 연합 조인)를 활성화 | **`standard`** / **`full`** + (`"spanner"` \| `"both"`) | `project.json`에 `graph_engine`(`"bigquery"` 기본 \| `"spanner"` \| `"both"`) 및 `graph_engine_checklist`(5축) 기록. 커스텀 스키마는 `*_module` 오버라이드로 지정 + `terraform.tfvars` `graph_engine` 프로비저닝 |
 | **Scenario D (`full`)**<br>감사 추적 리니지 & 50회 경계값 배포 게이트 완결 | 4계층 데이터 리니지 DAG + Golden CQ(`sql`/`citation`) + 경계값 10건×5회(50회) 벤치마크 통과 후 Cloud Run 배포 | **`full`** (`Stage 1 → 2 → 3 → 4 → 5`) | Scenario B/C 전체 + `04_cq/golden_competency_questions.json` & `boundary_cases.json` + `pipeline/validator.py` 실측(`input_manifest_sha256` 기록) + `terraform/terraform.tfvars` |
 
 ### 2.1 최신 문서 변환 · 위키 추출 · CQ 검증 핵심 산출물 예시
 
-1. **원문 변환 (`pipeline/extract_docs.py` → `01_guides/*.md`) 및 Gate 0 (`data/output/gate0_report.json`)**:
+1. **원문 변환 (`pipeline/extract_docs.py` → `01_guides/*.md`), Gate 0 (`data/output/gate0_report.json`) 및 5축 그래프 엔진 체크리스트 (`data/output/input_manifest.json`)**:
    - 모든 변환 마크다운 상단에 `<!-- provenance: source_file=customer_doc/... sha256=... extracted_at=... -->` 및 페이지 경계 `<!-- page: N -->` 기록.
    - `gate0_report.json`에서 문서별 `char_retention_ratio >= 0.95`, `empty_pages: []`, `placeholder_detected: false` 통과 필수.
+   - `input_manifest.json`에 `graph_engine`(`bigquery` 기본 | `spanner` | `both`), `graph_engine_reason`, `graph_engine_checklist`(`source_system`, `latency_slo`, `concurrency`, `write_freshness`, `data_scale`) 기록.
 2. **문서 청크 (`data/output/doc_chunks.jsonl`) 5대 출처 컬럼**:
    - `origin_type`(`EXTRACTED` / `CUSTOMER_PROVIDED`), `source_doc`, `source_sha256`, `extract_method`, `source_locator`(`page=1#article=18`) 및 `content_sha256`(`anchor_<12hex>`).
 3. **문서 기반 위키 추출 (`pipeline/extract_wiki.py` → `03_wiki/entities.md`, `concepts.md`, `data/output/wiki_extraction.json`)**:
    - `entities.md`는 핵심 비즈니스 엔티티(Node 후보), `concepts.md`는 엔티티 간 사전/사후 조건·제약 관계(`-[PRECONDITION|POSTCONDITION|CONSTRAINT]->`, Edge 후보)로 구조화하며, 각 항목의 `quote`(`<=300`자)가 실제 청크 원문에 존재하는지 대조해 불일치 항목은 자동 폐기(`entities_dropped_unverified_quote`, `concepts_dropped_unverified_quote` 기록).
-4. **Golden CQ (`04_cq/golden_competency_questions.json`) 및 평가 리포트 (`data/output/cq_benchmark_report.json`)**:
+4. **듀얼 그래프 엔진 벤치마크 및 Graph Fabric 연합 쿼리 (`pipeline/graph_builder.py` → `data/output/graph_topology.json`)**:
+   - BigQuery Property Graph(`STARTER_ONTOLOGY_GRAPH`)와 Cloud Spanner Graph(`STARTER_ONTOLOGY_GRAPH`) 양쪽에 대한 N-run `p50/p95` 탐색 지연 시간 실측 비교 및 `EXTERNAL_QUERY(spanner_fabric_conn)` 기반 연합 조인 결과 기록.
+5. **Golden CQ (`04_cq/golden_competency_questions.json`) 및 평가 리포트 (`data/output/cq_benchmark_report.json`)**:
    - `evidence_type: "sql"`(`verification_sql` + `expected_math` + `grounded_chunk`)과 `evidence_type: "citation"`(`expected_keywords` + `grounded_chunk`)을 구분 채점하며, 리포트에 `run_id`, `input_manifest_sha256`, `evidence_provenance`, `synthetic_basis`, `unconfirmed_cq_count`를 기록.
 
 ---
@@ -62,6 +65,9 @@
 | GCP 프로젝트 ID | `GCP_PROJECT_ID` | `seanjung-poc` | `src/gcp_client.py`, `Dockerfile` |
 | GCP 리전 | `GCP_LOCATION` | `asia-northeast3` | `src/gcp_client.py`, `Dockerfile` |
 | BigQuery 데이터셋 | `BQ_DATASET_ID` | `starter_ontology_dw` | `src/gcp_client.py`, `pipeline/*.py` |
+| Cloud Spanner 인스턴스 | `SPANNER_INSTANCE_ID` | `starter-spanner` (Opt-in 100 PU) | `src/gcp_client.py`, `terraform/spanner.tf` |
+| Cloud Spanner 데이터베이스 | `SPANNER_DATABASE_ID` | `starter_ontology_db` | `src/gcp_client.py`, `terraform/spanner.tf` |
+| BigQuery Spanner 연결 ID | `BQ_SPANNER_CONNECTION_ID` | `spanner_fabric_conn` | `pipeline/graph_builder.py`, `terraform/spanner.tf` |
 | Property Graph 명칭 | *(코드/설정 상수)* | `STARTER_ONTOLOGY_GRAPH` | `config/starter_config.json`, `pipeline/graph_builder.py` |
 | GCS 위키 버킷 | `GCS_BUCKET_NAME` | `seanjung-poc-starter-ontology` | `src/gcp_client.py`, `pipeline/ingest.py` |
 | Vertex AI 서빙 모델 | `VERTEX_GEMINI_MODEL` | `gemini-3.8-flash` | `src/gcp_client.py`, `src/agent/reasoning_engine.py` |

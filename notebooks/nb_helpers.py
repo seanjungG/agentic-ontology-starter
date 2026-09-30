@@ -33,10 +33,13 @@ from IPython.display import Markdown, display  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
 
 from src.agent.i18n_en import localize_en_obj, localize_en_str  # noqa: E402
-from src.gcp_client import (DEFAULT_DATASET_ID, DEFAULT_GEMINI_MODEL, DEFAULT_LOCATION,  # noqa: E402
-                            DEFAULT_PROJECT_ID, call_vertex_gemini, execute_bq_sql, get_gcp_token)
+from src.gcp_client import (DEFAULT_BQ_SPANNER_CONN, DEFAULT_DATASET_ID, DEFAULT_GEMINI_MODEL,  # noqa: E402
+                            DEFAULT_LOCATION, DEFAULT_PROJECT_ID, DEFAULT_SPANNER_DATABASE,
+                            DEFAULT_SPANNER_INSTANCE, call_vertex_gemini, execute_bq_sql,
+                            execute_spanner_sql, get_gcp_token)
 
 PROJECT, DATASET, LOCATION, MODEL = DEFAULT_PROJECT_ID, DEFAULT_DATASET_ID, DEFAULT_LOCATION, DEFAULT_GEMINI_MODEL
+SPANNER_INSTANCE, SPANNER_DB, BQ_CONN_ID = DEFAULT_SPANNER_INSTANCE, DEFAULT_SPANNER_DATABASE, DEFAULT_BQ_SPANNER_CONN
 FQ = f"{PROJECT}.{DATASET}"
 GRAPH = f"{FQ}.STARTER_ONTOLOGY_GRAPH"
 LANG = "ko"
@@ -680,8 +683,9 @@ def run_gql(gql_query: str, variables=None, title: str = None, show_df: bool = T
 
 # ------------------------------------------------------------------ MCP and agent views
 def show_tool(res, table_key=None, cols=None):
-    head = (f"**`{res.get('tool')}`** · status `{res.get('status')}` · steps `{', '.join(res.get('executed_steps', []))}` · "
-            f"BigQuery jobs {len(res.get('bq_job_ids', []))} ({res.get('bq_elapsed_ms', 0):,.0f} ms)")
+    eng = res.get("engine", "bigquery")
+    head = (f"**`{res.get('tool')}`** · engine `{eng}` · status `{res.get('status')}` · steps `{', '.join(res.get('executed_steps', []))}` · "
+            f"jobs {len(res.get('bq_job_ids', []))} ({res.get('bq_elapsed_ms', 0):,.1f} ms)")
     if res.get("summary"):
         head += f"\n\n{res['summary']}"
     extra_blocks = []
@@ -912,3 +916,220 @@ def recheck_cq(cq, agent):
     checks += [{"check": f"answer cites {cq['grounded_chunk']}", "passed": cq["grounded_chunk"] in body, "detail": ""},
                {"check": "answer_status == GROUNDED", "passed": res["answer_status"] == "GROUNDED", "detail": res["answer_status"]}]
     return res, pd.DataFrame(checks)
+
+
+# ------------------------------------------------------------------ Dual-Engine & Graph Fabric helpers
+def engine_selection_checklist_df():
+    """Returns the 5-Axis Graph Engine Selection Checklist table and active project engine config."""
+    manifest = read_json("data/output/input_manifest.json")
+    proj = read_json("config/project.json")
+    chk = manifest.get("graph_engine_checklist", {})
+    axes = [
+        ("source_system",
+         t("1. 원천 데이터 저장소 (Source System)", "1. Source Data System"),
+         t("BigQuery DW / Lakehouse 이미 적재 (Zero-ETL 기본값)", "Already in BigQuery DW / Lakehouse (Zero-ETL Default)"),
+         t("Cloud Spanner 또는 온라인 OLTP 원장", "Cloud Spanner or Online OLTP Ledger"),
+         t("DW 분석 원장 + 실시간 OLTP 원장 결합", "Combined DW Analytics + Real-Time OLTP")),
+        ("latency_slo",
+         t("2. 질의 응답 지연시간 목표 (p95 Latency SLO)", "2. Query Latency SLO (p95)"),
+         t("수백 ms ~ 수 초 (대화형 코파일럿·배치 분석)", "Sub-second to seconds (Interactive Copilot & Batch)"),
+         t("수십~150 ms 이하 (대고객 실시간 상담·포인트 탐색)", "< 50-150 ms (Customer-Facing Serving & Point Lookups)"),
+         t("저지연 서빙(Spanner) + 대규모 분석(BQ) 이원화", "Low-Latency Serving (Spanner) + Deep Analytics (BQ)")),
+        ("concurrency",
+         t("3. 동시 접속 처리량 (QPS / Concurrency)", "3. Concurrency & QPS Profile"),
+         t("사내 분석가·상담 에이전트 동시 질의 (수~수십 QPS)", "Internal Analysts & Agent Queries (Low-Medium QPS)"),
+         t("대규모 온라인 트래픽 (수백~수만 QPS)", "High-Concurrency Online Traffic (100s-10,000s QPS)"),
+         t("트랜잭션 서빙은 Spanner, 집계 분석은 BigQuery", "Transactional Serving on Spanner, Analytics on BigQuery")),
+        ("write_freshness",
+         t("4. 갱신 주기 및 트랜잭션 (Write & Freshness)", "4. Write Pattern & Freshness"),
+         t("일/시간 배치 또는 스트리밍 적재 위주", "Hourly/Daily Batch or Append Streaming"),
+         t("실시간 ACID 포인트 Upsert 및 외부 일관성", "Real-Time ACID Point Upsert & External Consistency"),
+         t("실시간 변경은 Spanner 기록 후 EXTERNAL_QUERY 연합 조회", "Real-Time Mutations in Spanner Joined via EXTERNAL_QUERY")),
+        ("data_scale",
+         t("5. 데이터 규모 및 비용 구조 (Scale & FinOps)", "5. Data Scale & FinOps Model"),
+         t("수 GB ~ PB급 대규모 스캔, 서버리스 과금 (기본값)", "GB to PB Scale Scans, Serverless Pricing (Default)"),
+         t("고성능 인덱스 기반 멀티홉 탐색 (100 PU~ 상시 과금)", "Index-Backed Multi-Hop Traversal (100 PU+ Provisioned)"),
+         t("핫 서빙 데이터(100 PU) + 콜드/전체 이력(BigQuery)", "Hot Operational Graph (100 PU) + Full History (BigQuery)")),
+    ]
+    rows = []
+    for key, label, bq_desc, sp_desc, both_desc in axes:
+        rows.append({
+            "axis": label,
+            "bigquery_default": bq_desc,
+            "spanner_opt_in": sp_desc,
+            "both_graph_fabric": both_desc,
+            "project_profile": chk.get(key, "-"),
+        })
+    md(t(
+        f"**프로젝트 그래프 엔진 설정 (`config/project.json`)**: `graph_engine=\"{proj.get('graph_engine', 'bigquery')}\"` "
+        f"(기본값: `bigquery` · Spanner 인스턴스: `{SPANNER_INSTANCE}/{SPANNER_DB}` · BigQuery 연결: `{BQ_CONN_ID}`)\n"
+        f"- **선정 사유 (`input_manifest.json`)**: {manifest.get('graph_engine_reason', '-')}",
+        f"**Project Graph Engine Config (`config/project.json`)**: `graph_engine=\"{proj.get('graph_engine', 'bigquery')}\"` "
+        f"(Default: `bigquery` · Spanner Instance: `{SPANNER_INSTANCE}/{SPANNER_DB}` · BigQuery Connection: `{BQ_CONN_ID}`)\n"
+        f"- **Selection Rationale (`input_manifest.json`)**: {manifest.get('graph_engine_reason', '-')}",
+    ))
+    return pd.DataFrame(rows)
+
+
+def benchmark_dual_engine_df(runs: int = 3):
+    """Runs N-run ISO GQL traversal benchmark across BigQuery Property Graph (default) and Cloud Spanner Graph."""
+    bq_gql = f"""GRAPH `{GRAPH}`
+MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode),
+      (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)
+WHERE c.customer_id = 'CUST_DEMO_001'
+RETURN c.customer_id AS customer_id, d.device_name AS device_name, p.plan_name AS plan_name,
+       r.rule_id AS rule_id, ap.source_chunk_id AS chunk_id
+ORDER BY r.rule_id"""
+    sp_gql = """GRAPH STARTER_ONTOLOGY_GRAPH
+MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode),
+      (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)
+WHERE c.customer_id = 'CUST_DEMO_001'
+RETURN c.customer_id AS customer_id, d.device_name AS device_name, p.plan_name AS plan_name,
+       r.rule_id AS rule_id, ap.source_chunk_id AS chunk_id
+ORDER BY r.rule_id"""
+
+    # Warm-up & N-run measurement
+    bq_times, bq_rows, bq_job = [], 0, None
+    for _ in range(runs):
+        r = execute_bq_sql(bq_gql)
+        if r.get("status") == "SUCCESS":
+            bq_times.append(float(r.get("elapsed_ms", 0)))
+            bq_rows = r.get("row_count", len(r.get("rows", [])))
+            bq_job = r.get("job_id")
+
+    # Warm-up 1 call on Spanner to prime keep-alive session before N measured runs
+    sp_probe = execute_spanner_sql(sp_gql)
+    sp_times, sp_rows, sp_status = [], 0, sp_probe.get("status", "SKIPPED")
+    if sp_status == "SUCCESS":
+        for _ in range(runs):
+            r = execute_spanner_sql(sp_gql)
+            if r.get("status") == "SUCCESS":
+                sp_times.append(float(r.get("elapsed_ms", 0)))
+                sp_rows = r.get("row_count", len(r.get("rows", [])))
+
+    def _stats(arr):
+        if not arr:
+            return 0.0, 0.0, 0.0
+        s = sorted(arr)
+        p50 = s[len(s) // 2]
+        p95 = s[min(len(s) - 1, int(len(s) * 0.95))]
+        return round(p50, 2), round(p95, 2), round(sum(s) / len(s), 2)
+
+    bq_p50, bq_p95, bq_avg = _stats(bq_times)
+    sp_p50, sp_p95, sp_avg = _stats(sp_times)
+
+    rows = [
+        {
+            "engine": "BigQuery Property Graph (Default)",
+            "resource_id": GRAPH,
+            "status": "SUCCESS" if bq_times else "CHECK",
+            "runs": len(bq_times),
+            "p50_ms": bq_p50,
+            "p95_ms": bq_p95,
+            "avg_ms": bq_avg,
+            "rows_returned": bq_rows,
+            "architecture_role": t("Zero-ETL DW 대규모 분석 및 기본 에이전트 추론", "Zero-ETL DW Analytics & Default Agent Reasoning"),
+        },
+        {
+            "engine": "Cloud Spanner Graph (100 PU)",
+            "resource_id": f"{SPANNER_INSTANCE}/{SPANNER_DB}/STARTER_ONTOLOGY_GRAPH",
+            "status": "SUCCESS" if sp_times else "SKIPPED_INACTIVE",
+            "runs": len(sp_times),
+            "p50_ms": sp_p50,
+            "p95_ms": sp_p95,
+            "avg_ms": sp_avg,
+            "rows_returned": sp_rows,
+            "architecture_role": t("인덱스/인터리빙 기반 온라인 저지연 멀티홉 탐색", "Index/Interleaved Online Low-Latency Multi-Hop Serving"),
+        },
+    ]
+    ratio_str = f"{round(bq_p50 / sp_p50, 1)}x" if sp_p50 > 0 else "N/A"
+    md(t(
+        f"**양대 그래프 엔진 실시간 3-Hop ISO GQL 벤치마크 (`N={runs}`회 반복 측정)**\n"
+        f"- **BigQuery Property Graph (기본값)**: `p50 = {bq_p50} ms` · `p95 = {bq_p95} ms` · Job `{bq_job}`\n"
+        f"- **Cloud Spanner Graph (`{SPANNER_INSTANCE}`, 100 PU)**: `p50 = {sp_p50} ms` · `p95 = {sp_p95} ms` (단일 포인트 탐색 지연시간 비율 `{ratio_str}`)",
+        f"**Live Dual-Engine 3-Hop ISO GQL Benchmark (`N={runs}` Repeated Runs)**\n"
+        f"- **BigQuery Property Graph (Default)**: `p50 = {bq_p50} ms` · `p95 = {bq_p95} ms` · Job `{bq_job}`\n"
+        f"- **Cloud Spanner Graph (`{SPANNER_INSTANCE}`, 100 PU)**: `p50 = {sp_p50} ms` · `p95 = {sp_p95} ms` (Point-lookup latency ratio `{ratio_str}`)",
+    ))
+    return pd.DataFrame(rows)
+
+
+def run_graph_fabric_federated_join():
+    """Executes BigQuery EXTERNAL_QUERY over Cloud Spanner Graph joined with BigQuery tb_doc_chunks."""
+    conn_spec = f"{PROJECT}.{LOCATION}.{BQ_CONN_ID}"
+    fed_sql = f"""SELECT
+  sp.customer_id,
+  sp.contract_type,
+  sp.elapsed_days,
+  sp.device_name,
+  sp.plan_name,
+  sp.monthly_fee_krw,
+  sp.rule_id,
+  sp.source_chunk_id,
+  c.section_title,
+  c.content_sha256
+FROM EXTERNAL_QUERY(
+  "{conn_spec}",
+  \"\"\"GRAPH STARTER_ONTOLOGY_GRAPH
+     MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode),
+           (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)
+     RETURN c.customer_id, c.contract_type, c.elapsed_days,
+            d.device_name, p.plan_name, p.monthly_fee_krw,
+            r.rule_id, ap.source_chunk_id
+     ORDER BY c.customer_id, r.rule_id\"\"\"
+) AS sp
+JOIN `{FQ}.tb_doc_chunks` AS c
+  ON c.chunk_id = sp.source_chunk_id
+ORDER BY sp.customer_id, sp.rule_id"""
+    df, meta = sql(fed_sql)
+    bvars = {
+        "EXTERNAL_QUERY connection": (conn_spec, t("BigQuery ↔ Cloud Spanner 연합 연결 리소스", "BigQuery to Cloud Spanner federated connection")),
+        "Spanner Graph": (f"{SPANNER_INSTANCE}/{SPANNER_DB}/STARTER_ONTOLOGY_GRAPH", t("원격 실행되는 온라인 프로퍼티 그래프", "Remote online property graph pushed down to Spanner")),
+        "BigQuery Join Table": (f"{FQ}.tb_doc_chunks", t("SHA-256 정책 청크 원장 조인 테이블", "BigQuery SHA-256 policy chunk table joined in-place")),
+    }
+    if meta.get("status") != "SUCCESS":
+        md(t(
+            f"- **Graph Fabric (`EXTERNAL_QUERY`) 상태**: `SKIPPED` (Spanner 연결 미활성 또는 권한 대기: `{meta.get('error', '')[:160]}`)",
+            f"- **Graph Fabric (`EXTERNAL_QUERY`) Status**: `SKIPPED` (Spanner connection inactive: `{meta.get('error', '')[:160]}`)",
+        ))
+        return pd.DataFrame()
+    hdr = (f"- **Graph Fabric (`EXTERNAL_QUERY`) Execution**: status `{meta.get('status')}` · "
+           f"BigQuery job `{meta.get('job_id')}` · `{meta.get('elapsed_ms') or 0:,.0f} ms` · `{len(df)} rows`\n\n")
+    stmt_lbl = t("2) 실행된 Graph Fabric 연합 쿼리 (BigQuery SQL + Spanner ISO GQL Pushdown)",
+                 "2) Executed Graph Fabric Federated Query (BigQuery SQL + Spanner ISO GQL Pushdown)")
+    md(hdr + _format_vars_md(bvars) + f"**{stmt_lbl}**\n```sql\n{fed_sql}\n```")
+    display(df)
+    return df
+
+
+def compare_mcp_engines(server):
+    """Executes the 3 Runtime Domain MCP tools across engine='bigquery' (default) and engine='spanner'."""
+    cases = [
+        ("mcp_lookup_customer_profile", {"customer_id": "CUST_DEMO_001"}),
+        ("mcp_calculate_penalty_rule", {"customer_id": "CUST_DEMO_001", "target_monthly_fee_krw": 37000, "elapsed_days": 120}),
+        ("mcp_query_graph_and_wiki", {"customer_id": "CUST_DEMO_001"}),
+    ]
+    rows = []
+    sp_gql_res = None
+    for tool_name, base_args in cases:
+        r_bq = server.execute_tool(tool_name, {**base_args, "engine": "bigquery"})
+        r_sp = server.execute_tool(tool_name, {**base_args, "engine": "spanner"})
+        if tool_name == "mcp_query_graph_and_wiki" and r_sp.get("status") == "SUCCESS":
+            sp_gql_res = r_sp
+        cnt_bq = r_bq.get("matched_rows_count", r_bq.get("matched_graph_paths_count", 0))
+        cnt_sp = r_sp.get("matched_rows_count", r_sp.get("matched_graph_paths_count", 0))
+        rows.append({
+            "mcp_tool": tool_name,
+            "bigquery_status": r_bq.get("status"),
+            "spanner_status": r_sp.get("status"),
+            "bigquery_ms": float(r_bq.get("bq_elapsed_ms", 0)),
+            "spanner_ms": float(r_sp.get("bq_elapsed_ms", 0)) if r_sp.get("status") == "SUCCESS" else 0.0,
+            "bq_rows": cnt_bq,
+            "spanner_rows": cnt_sp,
+            "result_parity": cnt_bq == cnt_sp and r_bq.get("status") == r_sp.get("status"),
+        })
+    if sp_gql_res:
+        show_tool(sp_gql_res, "matched_graph_paths",
+                  ["customer_id", "device_name", "plan_name", "rule_id", "relation_label_ko", "source_chunk_id", "anchor"])
+    return pd.DataFrame(rows)
+

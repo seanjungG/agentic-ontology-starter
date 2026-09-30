@@ -30,8 +30,12 @@ from src.gcp_client import (
     DEFAULT_DATASET_ID,
     DEFAULT_GCS_BUCKET,
     DEFAULT_PROJECT_ID,
+    DEFAULT_SPANNER_DATABASE,
+    DEFAULT_SPANNER_INSTANCE,
+    check_spanner_available,
     execute_bq_sql,
     upload_gcs_object,
+    upsert_spanner_rows,
 )
 
 
@@ -206,29 +210,29 @@ def _sample_tables_and_wiki(doc_table, chunks, guide_files):
     rules = _read_csv("data/input/03_tables/domain_rules.csv")
     rule_edges = _read_csv("data/input/03_tables/rule_plan_edges.csv")
     total_subsidy = {s["policy_id"]: int(s["basic_subsidy"]) + int(s["distribution_subsidy"]) for s in subsidies}
-    rule_cols = ("rule_id", "rule_name", "rule_category", "condition_expr", "formula_expr", "source_chunk_id", "description_ko")
+    rule_cols = ("rule_id", "rule_name", "rule_category", "condition_expr", "formula_expr", "source_chunk_id", "description_ko", "provenance", "source_ref")
     tables = {
         "tb_device_master": (
-            ("device_id", "device_name", "manufacturer", "storage_gb", "factory_price_krw", "release_date"),
+            ("device_id", "device_name", "manufacturer", "storage_gb", "factory_price_krw", "release_date", "provenance", "source_ref"),
             [(d["device_id"], f"{d['pet_name']} {d['storage']}", d["manufacturer"], int(re.sub(r"\D", "", d["storage"])),
-              int(d["factory_price"]), d["release_date"] or None) for d in devices]),
+              int(d["factory_price"]), d["release_date"] or None, d.get("provenance"), d.get("source_ref")) for d in devices]),
         "tb_plan_master": (
-            ("plan_id", "plan_name", "tier_category", "monthly_fee_krw", "min_maintenance_days", "selective_discount_rate"),
+            ("plan_id", "plan_name", "tier_category", "monthly_fee_krw", "min_maintenance_days", "selective_discount_rate", "provenance", "source_ref"),
             [(p["plan_id"], p["plan_name"], p["tier_category"], int(p["monthly_fee"]), int(p["min_maintenance_days"]),
-              float(p["selective_discount_rate"])) for p in plans]),
+              float(p["selective_discount_rate"]), p.get("provenance"), p.get("source_ref")) for p in plans]),
         "tb_subsidy_policy": (
-            ("policy_id", "device_id", "plan_id", "base_subsidy_krw", "additional_subsidy_cap_krw", "mandatory_retention_days", "effective_from"),
+            ("policy_id", "device_id", "plan_id", "base_subsidy_krw", "additional_subsidy_cap_krw", "mandatory_retention_days", "effective_from", "provenance", "source_ref"),
             [(s["policy_id"], s["device_id"], s["plan_id"], int(s["basic_subsidy"]), int(s["distribution_subsidy"]),
-              int(s["mandatory_retention_days"]), s["effective_start_date"]) for s in subsidies]),
+              int(s["mandatory_retention_days"]), s["effective_start_date"], s.get("provenance"), s.get("source_ref")) for s in subsidies]),
         "tb_customer_contract": (
             ("customer_id", "contract_id", "customer_segment", "age_group", "device_id", "plan_id", "contract_type",
-             "commitment_months", "elapsed_days", "granted_subsidy_krw", "welfare_status", "status"),
+             "commitment_months", "elapsed_days", "granted_subsidy_krw", "welfare_status", "status", "provenance", "source_ref"),
             [(c["customer_id"], c["contract_id"], c["customer_segment"], c["age_group"], c["device_id"], c["plan_id"],
               c["contract_type"], int(c["commitment_months"]), int(c["elapsed_days"]),
               0 if c["contract_type"] == "SELECTIVE_25PCT" else total_subsidy.get(c["policy_id"]),
-              c["welfare_status"], c["status"]) for c in contracts]),
+              c["welfare_status"], c["status"], c.get("provenance"), c.get("source_ref")) for c in contracts]),
         "tb_doc_chunks": doc_table,
-        "tb_domain_rules": (rule_cols, [tuple(r[k] for k in rule_cols) for r in rules]),
+        "tb_domain_rules": (rule_cols, [tuple(r.get(k) for k in rule_cols) for r in rules]),
         "edge_contract_device": (
             ("contract_id", "customer_id", "device_id", "edge_type"),
             [(c["contract_id"], c["customer_id"], c["device_id"], "USES_DEVICE") for c in contracts]),
@@ -239,8 +243,9 @@ def _sample_tables_and_wiki(doc_table, chunks, guide_files):
             ("policy_id", "device_id", "plan_id", "total_subsidy_krw", "edge_type"),
             [(s["policy_id"], s["device_id"], s["plan_id"], total_subsidy[s["policy_id"]], "HAS_SUBSIDY_POLICY") for s in subsidies]),
         "edge_rule_applies_to_plan": (
-            ("edge_id", "rule_id", "plan_id", "source_chunk_id", "relation_label_ko", "edge_type"),
-            [(e["edge_id"], e["rule_id"], e["plan_id"], e["source_chunk_id"], e["relation_label_ko"], "APPLIES_TO_PLAN") for e in rule_edges]),
+            ("edge_id", "rule_id", "plan_id", "source_chunk_id", "relation_label_ko", "edge_type", "provenance", "source_ref"),
+            [(e["edge_id"], e["rule_id"], e["plan_id"], e["source_chunk_id"], e["relation_label_ko"], "APPLIES_TO_PLAN",
+              e.get("provenance"), e.get("source_ref")) for e in rule_edges]),
     }
 
     # 3-Layer LLM-Wiki generated from the same parsed chunks / CSV rows (no values typed in code)
@@ -376,7 +381,8 @@ def run_ingest(
         with open(os.path.join(abs_wiki_dir, fn), "w", encoding="utf-8") as f:
             f.write(body)
 
-    uploaded_objects, bq_jobs = [], []
+    graph_engine = project.get("graph_engine") or "bigquery"
+    uploaded_objects, bq_jobs, spanner_jobs = [], [], []
     if sync_gcp:
         # 1. raw/ guides, parsed/ chunks and ontology/ wiki -> GCS bucket (Terraform-provisioned)
         # raw/ = original-text .md (01_guides) + the customer originals it was converted from (customer_doc/)
@@ -394,26 +400,50 @@ def run_ingest(
                 upload_gcs_object(obj, f.read(), bucket=DEFAULT_GCS_BUCKET, content_type=ctype)
             uploaded_objects.append(f"gs://{DEFAULT_GCS_BUCKET}/{obj}")
 
-        # 2. TRUNCATE + INSERT each BigQuery table in one transaction (auto rollback on error); any failed job stops the pipeline
-        for table, (cols, rows) in tables.items():
-            res = execute_bq_sql(
-                f"BEGIN TRANSACTION;\nTRUNCATE TABLE `{fq}.{table}`;\nINSERT INTO `{fq}.{table}` ({', '.join(cols)}) VALUES\n"
-                + ",\n".join("(" + ", ".join(_lit(v) for v in r) + ")" for r in rows) + ";\nCOMMIT TRANSACTION;")
-            bq_jobs.append({"table": table, "rows": len(rows), "job_id": res.get("job_id"), "status": res.get("status")})
-            if res.get("status") != "SUCCESS":
-                raise RuntimeError(f"BigQuery load failed ({table}): {str(res.get('error', ''))[:500]}")
+        # 2. TRUNCATE + INSERT each BigQuery table when graph_engine in ("bigquery", "both")
+        if graph_engine in ("bigquery", "both"):
+            for table, (cols, rows) in tables.items():
+                res = execute_bq_sql(
+                    f"BEGIN TRANSACTION;\nTRUNCATE TABLE `{fq}.{table}`;\nINSERT INTO `{fq}.{table}` ({', '.join(cols)}) VALUES\n"
+                    + ",\n".join("(" + ", ".join(_lit(v) for v in r) + ")" for r in rows) + ";\nCOMMIT TRANSACTION;")
+                bq_jobs.append({"table": table, "rows": len(rows), "job_id": res.get("job_id"), "status": res.get("status")})
+                if res.get("status") != "SUCCESS":
+                    raise RuntimeError(f"BigQuery load failed ({table}): {str(res.get('error', ''))[:500]}")
+
+        # 3. Direct CSV/Chunk Upsert into Cloud Spanner Graph tables when graph_engine in ("spanner", "both")
+        if graph_engine in ("spanner", "both"):
+            sp_avail = check_spanner_available()
+            if sp_avail.get("available"):
+                for table, (cols, rows) in tables.items():
+                    sres = upsert_spanner_rows(table, cols, rows, truncate_first=True)
+                    spanner_jobs.append({
+                        "table": table,
+                        "rows": len(rows),
+                        "job_id": sres.get("job_id"),
+                        "commit_timestamp": sres.get("commit_timestamp"),
+                        "status": sres.get("status"),
+                        "elapsed_ms": sres.get("elapsed_ms"),
+                    })
+                    if sres.get("status") != "SUCCESS":
+                        raise RuntimeError(f"Spanner load failed ({table}): {str(sres.get('error', ''))[:500]}")
+            elif graph_engine == "spanner":
+                raise RuntimeError(f"Cloud Spanner is not available for graph_engine=spanner: {sp_avail}")
 
     gcs_manifest = {
         "gcs_uri": f"gs://{DEFAULT_GCS_BUCKET}/",
         "bigquery_dataset": fq,
+        "spanner_database": f"projects/{DEFAULT_PROJECT_ID}/instances/{DEFAULT_SPANNER_INSTANCE}/databases/{DEFAULT_SPANNER_DATABASE}",
+        "graph_engine": graph_engine,
         "status": "LIVE_GCP_SYNCED" if sync_gcp else "LOCAL_ONLY",
         "uploaded_gcs_objects": uploaded_objects,
         "bigquery_load_jobs": bq_jobs,
+        "spanner_load_jobs": spanner_jobs,
         "sync_timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
         "validation": {
             "chunk_count": len(chunks),
             "guide_count": len(guide_files),
             "bigquery_tables_loaded": sum(j["status"] == "SUCCESS" for j in bq_jobs),
+            "spanner_tables_loaded": sum(j["status"] == "SUCCESS" for j in spanner_jobs),
         },
     }
     with open(os.path.join(abs_wiki_dir, "gcs_prototype_manifest.json"), "w", encoding="utf-8") as f:
@@ -421,7 +451,8 @@ def run_ingest(
 
     print(
         f"[INGEST SUCCESS] Processed {len(chunks)} chunks across {len(guide_files)} guides | "
-        f"GCS Uploaded: {len(uploaded_objects)} objects | BigQuery Loaded: {len(bq_jobs)} tables"
+        f"GCS Uploaded: {len(uploaded_objects)} objects | BigQuery Loaded: {len(bq_jobs)} tables | "
+        f"Spanner Loaded: {len(spanner_jobs)} tables (engine={graph_engine})"
     )
     return chunks
 

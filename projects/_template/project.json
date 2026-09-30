@@ -1,5 +1,5 @@
 {
-  "_readme": "Filled by new_project.py; edit freely. track auto: standard when tables lists customer CSVs (data/input/03_tables, each row with provenance and source_ref), else lite (documents only). synthetic.allowed stays false unless the user approves synthetic demo data. gcp: this project's BigQuery dataset and GCS bucket (provision with Terraform). Optional overrides for a schema that differs from the sample (paths relative to this folder): mcp_module / engine_module expose class DomainMcpServer / AiFdeAgentEngine; ingest_module / graph_module / validator_module expose run_ingest / build_graph / run_validation.",
+  "_readme": "Filled by new_project.py; edit freely. track auto: standard when tables lists customer CSVs (data/input/03_tables, each row with provenance and source_ref), else lite (documents only). synthetic.allowed stays false unless the user approves synthetic demo data. graph_engine: bigquery (default) | spanner | both, with 5-axis graph_engine_checklist recorded in Stage 1 input_manifest.json. gcp: this project's BigQuery dataset, GCS bucket, and optional Spanner instance/database (provision with Terraform).",
   "project_id": "",
   "project_name": "",
   "customer_org": "",
@@ -8,10 +8,21 @@
   "tables": [],
   "synthetic": {"allowed": false, "reason": ""},
   "graph_engine": "bigquery",
+  "graph_engine_reason": "Default Zero-ETL BigQuery Property Graph over existing analytical tables.",
+  "graph_engine_checklist": {
+    "source_system": "bigquery_dw",
+    "latency_slo": "seconds_ok",
+    "concurrency": "analytical_qps",
+    "write_freshness": "batch_or_hourly",
+    "data_scale": "tb_to_pb"
+  },
   "gcp": {
     "project_id": "",
     "dataset_id": "",
-    "gcs_bucket": ""
+    "gcs_bucket": "",
+    "spanner_instance_id": "",
+    "spanner_database_id": "",
+    "bq_spanner_connection_id": ""
   },
   "mcp_module": "",
   "engine_module": "",
