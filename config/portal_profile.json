@@ -38,14 +38,14 @@
           },
           {
             "step_key": "tag_pii_governance",
-            "badge": "STEP 1.2 · Governance",
-            "title": "고객 식별자 비식별화 & Golden CQ 정의",
+            "badge": "STEP 1.2 · Governance & 5-Axis Engine Selection",
+            "title": "비식별화 · Golden CQ · 5축 그래프 엔진 선택 체크리스트",
             "bullets": [
-              "실제 고객 식별자 제거 및 합성 ID(<code>CUST_DEMO_*</code>) 치환",
-              "Dataplex 거버넌스 태그 및 PII 보호 등급 매핑",
-              "핵심 비즈니스 검증 질문(Golden CQ 5종) 정답셋 확정"
+              "실제 고객 식별자 제거 및 합성 ID(<code>CUST_DEMO_*</code>) 치환, 전 행 <code>provenance</code>/<code>source_ref</code> 검증",
+              "5축 기준(<code>source_system</code> · <code>latency_slo</code> · <code>concurrency</code> · <code>write_freshness</code> · <code>data_scale</code>) 점검",
+              "기본값 <code>bigquery</code>(Zero-ETL) 및 선택형 <code>spanner</code> / <code>both</code>(Graph Fabric) 결정"
             ],
-            "deliverables": "D1.4 Golden CQ 명세 (CQ-01 ~ CQ-05)"
+            "deliverables": "D1.4 Golden CQ 명세 · input_manifest.json (5축 체크리스트 포함)"
           }
         ]
       },
@@ -85,7 +85,7 @@
       {
         "stage_id": "stage3",
         "chip": "STAGE 3",
-        "name": "듀얼 Property Graph 엔지니어링",
+        "name": "듀얼 Property Graph & Graph Fabric",
         "mcp_tool": "mcp_stage3_property_graph",
         "methodology_doc": "methodology/ko/03_stage3_property_graph_ko.md",
         "notebook": "notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb",
@@ -94,22 +94,22 @@
           {
             "step_key": "promote_dw_nodes",
             "badge": "STEP 3.1 · Stage 3. Graph",
-            "title": "Zero-ETL 정형 원장 노드 직접 승격",
+            "title": "Zero-ETL 정형 원장 승격 & 양대 엔진 동시 적재",
             "bullets": [
-              "정형 DW 테이블 4종을 복제 없이 물리 그래프 노드로 직접 투영",
+              "정형 DW 테이블 6종 + 엣지/청크 테이블 4종(총 10개 테이블) 동일 스키마 유지",
               "비정형 텍스트 내 중복 엔티티 0건 유지 (Anti-Redundancy)",
               "관계형 FK 엣지와 비정형 규칙 엣지(<code>APPLIES_RULE</code>, <code>GROUNDED_IN</code>) 결합"
             ],
-            "deliverables": "D3.1 graph_topology.json"
+            "deliverables": "D3.1 graph_topology.json (양대 엔진 p50/p95 벤치마크 포함)"
           },
           {
             "step_key": "synthesize_graph_ddl",
-            "badge": "STEP 3.2 · Dual Engine DDL",
-            "title": "BigQuery Graph & Spanner Graph 듀얼 DDL 합성",
+            "badge": "STEP 3.2 · Dual Engine & Fabric",
+            "title": "BigQuery(기본) · Spanner(선택) · EXTERNAL_QUERY 연동",
             "bullets": [
-              "<b>BigQuery Property Graph</b>: 대규모 DW 분석용 ISO SQL:2023 DDL",
-              "<b>Cloud Spanner Graph</b>: 초저지연 온라인 트랜잭션(OLTP)용 ISO GQL DDL",
-              "<code>starter_config.json</code>의 <code>graph_engine</code> 설정 하나로 즉시 전환"
+              "<b>BigQuery Property Graph (기본)</b>: Zero-ETL 논리 뷰 기반 대규모 DW 분석 (SQL:2023)",
+              "<b>Cloud Spanner Graph (선택)</b>: 100 PU 최소 구성 초저지연 온라인 멀티홉 탐색 (ISO GQL)",
+              "<b>Graph Fabric (both 모드)</b>: <code>EXTERNAL_QUERY(spanner_fabric_conn)</code> 연합 조인"
             ],
             "deliverables": "D3.2 create_property_graph.sql · D3.3 create_spanner_graph.sql"
           }

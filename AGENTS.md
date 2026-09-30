@@ -10,7 +10,7 @@
 ## 핵심 요약 (Quick Checklist)
 
 1. **임의 재작성 금지**: `src/web/studio_server.py`(6-Tab 스튜디오), `src/agent/mcp_server.py`(8종 MCP), `src/agent/reasoning_engine.py`(2-Pass MCP 및 Lite 청크 인용 에이전트), `pipeline/extract_docs.py` · `ingest.py` · `extract_wiki.py` · `graph_builder.py` · `validator.py`의 파이프라인 골격을 허물고 다른 프레임워크로 새로 짜지 마십시오.
-2. **시나리오별 유연한 프로토타이핑**: 새로운 도메인 적용 요청 시 [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)의 **Scenario A(문서 전용 Lite) / A2(문서 전용 상태에서 그래프 요청 시 멈춤·선택지 안내) / B(DW+문서 BigQuery Graph) / C(커스텀 도메인 `*_module` 오버라이드 및 Spanner Graph DDL) / D(Full-Stack 평가·배포)** 중 하나를 선택하십시오.
+2. **시나리오별 유연한 프로토타이핑 및 5축 그래프 엔진 선택**: 새로운 도메인 적용 요청 시 [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)의 **Scenario A(문서 전용 Lite) / A2(문서 전용 상태에서 그래프 요청 시 멈춤·선택지 안내) / B(DW+문서 BigQuery Property Graph 기본) / C(5축 체크리스트 기반 Cloud Spanner Graph 선택 또는 `both` 모드 `EXTERNAL_QUERY` Graph Fabric 연동) / D(Full-Stack 평가·배포)** 중 하나를 선택하십시오. 별도 지정이 없으면 `"graph_engine": "bigquery"`가 기본값입니다.
 3. **실데이터 원칙**: Mock SQLite나 가짜 하드코딩 응답을 만들지 말고 `src/gcp_client.py`로 실제 BigQuery·GCS·Vertex AI(`gemini-3.8-flash`)를 호출하십시오. 적재하는 데이터는 고객 자료 또는 그 파생 데이터여야 합니다(아래 고객 데이터 원칙).
 4. **라이트 테마 UI 유지**: `DESIGN.md`에 정의된 Apple/Google Enterprise 라이트 테마(`#f5f5f7` 배경, Pretendard 폰트, 44px 글로벌 탑바, 52px 6-Tab 서브바, `#0284c7` 시맨틱 허브 노드)를 100% 유지하십시오.
 5. **보안 및 배포**: API 키(Google API Key)나 로컬 절대 경로(로컬 사용자 홈 경로)를 절대 커밋하지 마십시오. GitHub 배포 시 작업 브랜치(`feat/...`) 푸시 후 `main --no-ff` 머지 절차를 따르십시오.

@@ -40,21 +40,33 @@ Fields of one CQ:
 
 ## MCP of this Stage: `mcp_stage1_asset_discovery`
 
-| Step | What the code does (`src/agent/mcp_server.py`) |
+| Step | What the code does (`src/agent/mcp_server.py`, `engine="bigquery" \| "spanner"`) |
 | :--- | :--- |
-| `profile_tables` | Reads row count and size per table from `__TABLES__` → `table_inventory` |
+| `profile_tables` | Reads row count per table from BigQuery `__TABLES__` or Cloud Spanner `INFORMATION_SCHEMA.TABLES` → `table_inventory` |
 | `scan_guides` | Not done by this MCP. Guide chunking is done by `run_ingest()` in `pipeline/ingest.py` |
 | `prune_noise` | No matching code (step name only) |
 | `tag_pii_governance` | Counts `tb_customer_contract.customer_id` values that do not match `^CUST_DEMO_[0-9]{3}$` → `pii_check.non_deidentified_ids` |
 
-The `steps` argument is recorded in `executed_steps` of the result. The current handler runs both queries above regardless of the selected steps.
+The `steps` argument is recorded in `executed_steps` of the result, and `engine` (`"bigquery"` default or `"spanner"`) routes table profiling and PII checks to the selected backend.
+
+## 5-Axis Graph Engine Selection Checklist (`graph_engine_checklist`)
+
+In Stage 1, projects evaluate five axes in `project.json` (persisted to `data/output/input_manifest.json` by `extract_docs.py`) to choose `"bigquery"` (Default, Zero-ETL), `"spanner"` (Opt-in low-latency online graph), or `"both"` (Dual-engine & Graph Fabric federation):
+
+| Checklist Axis | `bigquery` (Default · Zero-ETL) | `spanner` (Opt-in · Online Low-Latency) | `both` (Dual-Engine & Graph Fabric) |
+| :--- | :--- | :--- | :--- |
+| `source_system` | Master/history tables reside in BigQuery DW | Operational ledger resides in Cloud Spanner / OLTP | Combine operational Spanner graph with BigQuery text chunks |
+| `latency_slo` | 500 ms to 1-3 s acceptable for analytics/agents | Sub-300 ms (`p95 < 300ms`) required for online APIs | Benchmark online p50/p95 vs analytical query latency |
+| `concurrency` | Low-to-moderate concurrent analytical queries | High-QPS online point lookups and 3-5 hop traversals | Isolate online serving traffic from batch evaluation |
+| `write_freshness` | Hourly/daily batch or CDC streaming | Real-time ACID transactions with external consistency | Join real-time operational edges with analytical DW |
+| `data_scale` | TB-to-PB scans with zero idle compute cost | High-density pointer traversal (min 100 PU provisioned) | 100 PU Spanner + BigQuery `EXTERNAL_QUERY` |
 
 ## Procedure
 
-1. **Set the scope**: choose the documents and tables needed to answer the CQs, per file. Do not shorten or edit sentences inside a file. The starter begins with 2 guides and 6 CSV files.
+1. **Set scope and graph engine**: choose the documents and tables needed to answer the CQs, and record the 5-axis `graph_engine_checklist` and `graph_engine` (`bigquery` default / `spanner` / `both`) in `project.json`. The starter begins with 2 guides and 6 CSV files.
 2. **Write the CQs**: fill `expected_math`, `verification_sql` and `grounded_chunk` for sql CQs, and `expected_citation` and `expected_facts` for citation CQs. A person confirms the answers and is recorded in `answer_confirmed_by`.
-3. **Prepare the tables**: the BigQuery dataset and its 10 tables are created with Terraform (`terraform/bigquery.tf`).
-4. **Load**: `run_ingest()` reads the 6 CSV files and the guide chunks, empties the 10 tables (`TRUNCATE`) and refills them (`INSERT`). Each table is one transaction; any failure stops the pipeline. Values come only from the CSV files, not from code.
+3. **Prepare the tables**: the BigQuery dataset and its 10 tables (`terraform/bigquery.tf`) and optional Cloud Spanner instance/database/tables (`terraform/spanner.tf`) are created with Terraform.
+4. **Load**: `run_ingest()` reads the 6 CSV files (requiring `provenance` and `source_ref` on every row) and the guide chunks, loading the 10 tables into the configured engine (`bigquery`, `spanner`, or `both`).
 5. **Check**: run `mcp_stage1_asset_discovery` to confirm row counts and the number of de-identification violations.
 
 ## Deliverables

@@ -50,6 +50,22 @@ resource "google_cloud_run_v2_service" "studio" {
         name  = "VERTEX_GEMINI_MODEL"
         value = var.gemini_model
       }
+      env {
+        name  = "GRAPH_ENGINE_MODE"
+        value = var.graph_engine
+      }
+      env {
+        name  = "SPANNER_INSTANCE_ID"
+        value = local.enable_spanner ? google_spanner_instance.starter_spanner[0].name : ""
+      }
+      env {
+        name  = "SPANNER_DATABASE_ID"
+        value = local.enable_spanner ? google_spanner_database.starter_ontology_db[0].name : ""
+      }
+      env {
+        name  = "BQ_SPANNER_CONNECTION_ID"
+        value = local.enable_fabric ? google_bigquery_connection.spanner_fabric_conn[0].connection_id : ""
+      }
     }
   }
 

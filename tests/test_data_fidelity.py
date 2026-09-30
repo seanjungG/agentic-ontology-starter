@@ -153,6 +153,22 @@ class DataFidelityTest(unittest.TestCase):
             {"total_cqs": 20, "passed": 20, "test_results": rows, "run_id": "r1", "input_manifest_sha256": "old"}))
         self.assertEqual(build_eval_summary(self.root)["golden"]["status"], "STALE")
 
+    def test_t9_dual_engine_checklist_and_spanner_sql_rewrite(self):
+        self._put("customer_doc/rules.txt", ORIGINAL)
+        m = extract_project(self.root)
+        self.assertEqual(m.get("graph_engine"), "bigquery")
+        chk = m.get("graph_engine_checklist", {})
+        for key in ("source_system", "latency_slo", "concurrency", "write_freshness", "data_scale"):
+            self.assertIn(key, chk)
+        from src.agent.mcp_server import DomainMcpServer
+        srv = DomainMcpServer(root_dir=BASE_DIR)
+        rewritten = srv._to_spanner_sql(
+            f"SELECT COUNT(*) FROM GRAPH_TABLE(`{srv.graph}` MATCH (d:DeviceNode) COLUMNS (d.device_id))"
+        )
+        self.assertIn("GRAPH_TABLE(`STARTER_ONTOLOGY_GRAPH`", rewritten)
+        self.assertNotIn(srv.fq, rewritten)
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -27,10 +27,15 @@ DEFAULT_DATASET_ID = os.environ.get("BQ_DATASET_ID", "starter_ontology_dw")
 DEFAULT_LOCATION = os.environ.get("BQ_LOCATION", "asia-northeast3")
 DEFAULT_GCS_BUCKET = os.environ.get("GCS_WIKI_BUCKET", "seanjung-poc-starter-ontology")
 DEFAULT_GEMINI_MODEL = os.environ.get("VERTEX_GEMINI_MODEL", "gemini-3.8-flash")
+DEFAULT_SPANNER_INSTANCE = os.environ.get("SPANNER_INSTANCE_ID", "starter-spanner")
+DEFAULT_SPANNER_DATABASE = os.environ.get("SPANNER_DATABASE_ID", "starter_ontology_db")
+DEFAULT_BQ_SPANNER_CONN = os.environ.get("BQ_SPANNER_CONNECTION_ID", "spanner_fabric_conn")
 
-_CTX = ssl.create_default_context()  # verified TLS; honors SSL_CERT_FILE (e.g. /etc/ssl/cert.pem on macOS python.org builds)
+_CAFILE = os.environ.get("SSL_CERT_FILE") or ("/etc/ssl/cert.pem" if os.path.exists("/etc/ssl/cert.pem") else None)
+_CTX = ssl.create_default_context(cafile=_CAFILE)
 _CACHED_TOKEN: str = ""
 _TOKEN_EXPIRY: float = 0.0
+_SPANNER_SESSIONS: Dict[Tuple[str, str, str], Tuple[str, float]] = {}
 
 
 def get_gcp_token() -> str:
@@ -281,3 +286,280 @@ def call_vertex_gemini(
             "elapsed_ms": elapsed_ms,
             "text": "",
         }
+
+
+def check_spanner_available(
+    project_id: str = DEFAULT_PROJECT_ID,
+    instance_id: str = DEFAULT_SPANNER_INSTANCE,
+    database_id: str = DEFAULT_SPANNER_DATABASE,
+) -> Dict[str, Any]:
+    """Checks whether the Cloud Spanner instance and database are provisioned and READY."""
+    if not instance_id or not database_id:
+        return {"available": False, "reason": "SPANNER_INSTANCE_ID or SPANNER_DATABASE_ID is empty"}
+    token = get_gcp_token()
+    url = f"https://spanner.googleapis.com/v1/projects/{project_id}/instances/{instance_id}/databases/{database_id}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+    try:
+        with urllib.request.urlopen(req, context=_CTX, timeout=10) as resp:
+            info = json.loads(resp.read().decode("utf-8"))
+        state = info.get("state", "UNKNOWN")
+        return {"available": state == "READY", "state": state, "database": info.get("name")}
+    except urllib.error.HTTPError as e:
+        return {"available": False, "http_code": e.code, "error": e.read().decode("utf-8", errors="replace")[:500]}
+    except Exception as e:
+        return {"available": False, "error": repr(e)[:300]}
+
+
+def _get_spanner_session(
+    project_id: str = DEFAULT_PROJECT_ID,
+    instance_id: str = DEFAULT_SPANNER_INSTANCE,
+    database_id: str = DEFAULT_SPANNER_DATABASE,
+    force_new: bool = False,
+) -> str:
+    key = (project_id, instance_id, database_id)
+    now = time.time()
+    if not force_new and key in _SPANNER_SESSIONS:
+        sess_name, exp = _SPANNER_SESSIONS[key]
+        if now < exp:
+            return sess_name
+    token = get_gcp_token()
+    url = f"https://spanner.googleapis.com/v1/projects/{project_id}/instances/{instance_id}/databases/{database_id}/sessions"
+    req = urllib.request.Request(
+        url,
+        data=b"{}",
+        method="POST",
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, context=_CTX, timeout=15) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    sess_name = data["name"]
+    _SPANNER_SESSIONS[key] = (sess_name, now + 1200)
+    return sess_name
+
+
+def _parse_spanner_rows(fields: List[Dict[str, Any]], raw_rows: List[List[Any]]) -> List[Dict[str, Any]]:
+    parsed: List[Dict[str, Any]] = []
+    for row in raw_rows:
+        item: Dict[str, Any] = {}
+        for idx, f in enumerate(fields):
+            fname = f.get("name") or f"col_{idx}"
+            ftype = (f.get("type") or {}).get("code", "STRING").upper()
+            val = row[idx] if idx < len(row) else None
+            if val is not None:
+                if ftype == "INT64":
+                    try:
+                        val = int(val)
+                    except Exception:
+                        pass
+                elif ftype in ("FLOAT64", "FLOAT32", "NUMERIC"):
+                    try:
+                        val = float(val)
+                    except Exception:
+                        pass
+                elif ftype == "BOOL":
+                    val = val if isinstance(val, bool) else str(val).lower() == "true"
+            item[fname] = val
+        parsed.append(item)
+    return parsed
+
+
+import http.client
+import threading
+
+_SPANNER_LOCAL = threading.local()
+
+
+def _spanner_post_json(path: str, payload: Dict[str, Any], token: str, timeout: int = 30) -> Dict[str, Any]:
+    """Sends a POST request to spanner.googleapis.com reusing a thread-local HTTPS keep-alive connection."""
+    body = json.dumps(payload).encode("utf-8")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Content-Length": str(len(body)),
+        "Connection": "keep-alive",
+    }
+    for attempt in range(2):
+        conn: Optional[http.client.HTTPSConnection] = getattr(_SPANNER_LOCAL, "conn", None)
+        try:
+            if conn is None:
+                conn = http.client.HTTPSConnection("spanner.googleapis.com", timeout=timeout, context=_CTX)
+                _SPANNER_LOCAL.conn = conn
+            conn.request("POST", path, body=body, headers=headers)
+            resp = conn.getresponse()
+            raw = resp.read().decode("utf-8", errors="replace")
+            if resp.status >= 400:
+                raise urllib.error.HTTPError(
+                    f"https://spanner.googleapis.com{path}", resp.status, resp.reason, resp.headers, None
+                )
+            return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as he:
+            he.body_text = raw  # type: ignore[attr-defined]
+            raise
+        except Exception:
+            try:
+                if conn:
+                    conn.close()
+            except Exception:
+                pass
+            _SPANNER_LOCAL.conn = None
+            if attempt == 1:
+                raise
+    return {}
+
+
+def execute_spanner_sql(
+    sql: str,
+    project_id: str = DEFAULT_PROJECT_ID,
+    instance_id: str = DEFAULT_SPANNER_INSTANCE,
+    database_id: str = DEFAULT_SPANNER_DATABASE,
+) -> Dict[str, Any]:
+    """Executes a GoogleSQL or ISO GQL (GRAPH_TABLE) query on Cloud Spanner via REST API."""
+    t0 = time.perf_counter()
+    token = get_gcp_token()
+    for attempt in range(2):
+        try:
+            sess = _get_spanner_session(project_id, instance_id, database_id, force_new=(attempt > 0))
+            t_query = time.perf_counter()
+            res = _spanner_post_json(f"/v1/{sess}:executeSql", {"sql": sql}, token, timeout=30)
+            elapsed_ms = round((time.perf_counter() - t_query) * 1000, 2)
+            fields = res.get("metadata", {}).get("rowType", {}).get("fields", [])
+            rows = _parse_spanner_rows(fields, res.get("rows", []))
+            return {
+                "status": "SUCCESS",
+                "engine": "spanner",
+                "project_id": project_id,
+                "instance_id": instance_id,
+                "database_id": database_id,
+                "job_id": f"spanner:{instance_id}/{database_id}@{int(time.time()*1000)}",
+                "elapsed_ms": elapsed_ms,
+                "total_rows": len(rows),
+                "rows": rows,
+                "sql": sql,
+            }
+        except urllib.error.HTTPError as e:
+            err_body = getattr(e, "body_text", "") or (e.read().decode("utf-8", errors="replace") if e.fp else str(e))
+            if e.code == 404 and "Session not found" in err_body and attempt == 0:
+                continue
+            elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+            return {
+                "status": "ERROR",
+                "engine": "spanner",
+                "http_code": e.code,
+                "error": err_body,
+                "sql": sql,
+                "elapsed_ms": elapsed_ms,
+                "rows": [],
+            }
+        except Exception as e:
+            elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+            return {
+                "status": "ERROR",
+                "engine": "spanner",
+                "error": repr(e),
+                "sql": sql,
+                "elapsed_ms": elapsed_ms,
+                "rows": [],
+            }
+    return {"status": "ERROR", "engine": "spanner", "error": "Session retry exhausted", "sql": sql, "rows": []}
+
+
+def upsert_spanner_rows(
+    table: str,
+    cols: Tuple[str, ...],
+    rows: List[Tuple[Any, ...]],
+    truncate_first: bool = True,
+    project_id: str = DEFAULT_PROJECT_ID,
+    instance_id: str = DEFAULT_SPANNER_INSTANCE,
+    database_id: str = DEFAULT_SPANNER_DATABASE,
+) -> Dict[str, Any]:
+    """Truncates (optional) and inserts/updates rows in a Cloud Spanner table in a single transaction."""
+    t0 = time.perf_counter()
+    token = get_gcp_token()
+    sess = _get_spanner_session(project_id, instance_id, database_id)
+    mutations: List[Dict[str, Any]] = []
+    if truncate_first:
+        mutations.append({"delete": {"table": table, "keySet": {"all": True}}})
+    if rows:
+        enc_rows = [
+            [str(v) if isinstance(v, int) and not isinstance(v, bool) else v for v in r]
+            for r in rows
+        ]
+        mutations.append({
+            "insertOrUpdate": {
+                "table": table,
+                "columns": list(cols),
+                "values": enc_rows,
+            }
+        })
+    url = f"https://spanner.googleapis.com/v1/{sess}:commit"
+    payload = {"singleUseTransaction": {"readWrite": {}}, "mutations": mutations}
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        method="POST",
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, context=_CTX, timeout=30) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+        return {
+            "status": "SUCCESS",
+            "table": table,
+            "rows": len(rows),
+            "commit_timestamp": res.get("commitTimestamp"),
+            "job_id": f"spanner-commit:{table}@{res.get('commitTimestamp', '')}",
+            "elapsed_ms": elapsed_ms,
+        }
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", errors="replace")
+        return {
+            "status": "ERROR",
+            "table": table,
+            "http_code": e.code,
+            "error": err_body,
+            "elapsed_ms": round((time.perf_counter() - t0) * 1000, 2),
+        }
+
+
+def execute_spanner_ddl(
+    statements: List[str],
+    project_id: str = DEFAULT_PROJECT_ID,
+    instance_id: str = DEFAULT_SPANNER_INSTANCE,
+    database_id: str = DEFAULT_SPANNER_DATABASE,
+) -> Dict[str, Any]:
+    """Executes DDL statements on Cloud Spanner via updateDdl REST API and polls until completion."""
+    t0 = time.perf_counter()
+    token = get_gcp_token()
+    clean_stmts = [s.strip().rstrip(";").strip() for s in statements if s and s.strip()]
+    url = f"https://spanner.googleapis.com/v1/projects/{project_id}/instances/{instance_id}/databases/{database_id}/ddl"
+    req = urllib.request.Request(
+        url,
+        data=json.dumps({"statements": clean_stmts}).encode("utf-8"),
+        method="PATCH",
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, context=_CTX, timeout=30) as resp:
+            op = json.loads(resp.read().decode("utf-8"))
+        op_name = op.get("name", "")
+        while not op.get("done", False) and op_name:
+            time.sleep(1.5)
+            preq = urllib.request.Request(
+                f"https://spanner.googleapis.com/v1/{op_name}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            with urllib.request.urlopen(preq, context=_CTX, timeout=20) as presp:
+                op = json.loads(presp.read().decode("utf-8"))
+        elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+        if "error" in op:
+            return {"status": "ERROR", "operation": op_name, "error": json.dumps(op["error"]), "elapsed_ms": elapsed_ms}
+        return {"status": "SUCCESS", "operation": op_name, "elapsed_ms": elapsed_ms}
+    except urllib.error.HTTPError as e:
+        return {
+            "status": "ERROR",
+            "http_code": e.code,
+            "error": e.read().decode("utf-8", errors="replace"),
+            "elapsed_ms": round((time.perf_counter() - t0) * 1000, 2),
+        }
+

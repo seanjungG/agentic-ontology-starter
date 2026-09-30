@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1600, initial-scale=1.0">
+<title>Agentic Ontology Starter — GCP System Architecture</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+  :root {
+    --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+    /* Surfaces (DESIGN.md Light Enterprise Only) */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f7;
+    --bg-tertiary: #e8e8ed;
+    --bg-glass: rgba(255, 255, 255, 0.88);
+
+    /* Typography */
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+
+    /* Semantic Accents & Graph Node Palette */
+    --accent-blue: #0071e3;
+    --hub-sky-blue: #0284c7;
+    --node-indigo: #4f46e5;
+    --node-amber: #d97706;
+    --node-emerald: #059669;
+    --node-purple: #7c3aed;
+
+    /* Status Colors */
+    --status-pass: #16a34a;
+    --status-warn: #d97706;
+    --status-fail: #dc2626;
+
+    /* Borders & Radii */
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-default: rgba(0, 0, 0, 0.14);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-pill: 980px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    width: 1600px;
+    padding: 28px 32px;
+    letter-spacing: -0.012em;
+  }
+
+  .canvas {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 24px 28px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 20px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+  .title-group p {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+  }
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+  }
+  .pill.blue { background: rgba(0, 113, 227, 0.08); color: var(--accent-blue); border-color: rgba(0, 113, 227, 0.22); }
+  .pill.sky { background: rgba(2, 132, 199, 0.08); color: var(--hub-sky-blue); border-color: rgba(2, 132, 199, 0.22); }
+  .pill.indigo { background: rgba(79, 70, 229, 0.08); color: var(--node-indigo); border-color: rgba(79, 70, 229, 0.22); }
+  .pill.emerald { background: rgba(5, 150, 105, 0.08); color: var(--node-emerald); border-color: rgba(5, 150, 105, 0.22); }
+
+  /* 5-Column Pipeline Grid */
+  .stage-grid {
+    display: grid;
+    grid-template-columns: 270px 250px 390px 310px 270px;
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .stage-col {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+  .stage-col.highlight-graph {
+    background: linear-gradient(180deg, rgba(2, 132, 199, 0.04) 0%, rgba(79, 70, 229, 0.04) 100%);
+    border: 1.5px solid rgba(2, 132, 199, 0.28);
+  }
+
+  .stage-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .stage-tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--accent-blue);
+  }
+  .stage-tag.sky { color: var(--hub-sky-blue); }
+  .stage-tag.indigo { color: var(--node-indigo); }
+  .stage-tag.amber { color: var(--node-amber); }
+  .stage-tag.emerald { color: var(--node-emerald); }
+
+  .stage-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .stage-sub {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+  }
+
+  .card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card.engine-bq {
+    border-left: 3.5px solid var(--hub-sky-blue);
+  }
+  .card.engine-fabric {
+    background: rgba(2, 132, 199, 0.04);
+    border: 1px dashed rgba(2, 132, 199, 0.4);
+  }
+  .card.engine-spanner {
+    border-left: 3.5px solid var(--node-indigo);
+  }
+  .card.gate-box {
+    border-left: 3.5px solid var(--status-pass);
+  }
+  .card.agent-box {
+    border-left: 3.5px solid var(--node-amber);
+  }
+  .card.studio-box {
+    border-left: 3.5px solid var(--node-purple);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .card-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .mini-tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+  .mini-tag.default { background: rgba(2, 132, 199, 0.1); color: var(--hub-sky-blue); border-color: rgba(2, 132, 199, 0.25); }
+  .mini-tag.optin { background: rgba(79, 70, 229, 0.1); color: var(--node-indigo); border-color: rgba(79, 70, 229, 0.25); }
+  .mini-tag.pass { background: rgba(22, 163, 74, 0.1); color: var(--status-pass); border-color: rgba(22, 163, 74, 0.25); }
+  .mini-tag.amber { background: rgba(217, 119, 6, 0.1); color: var(--node-amber); border-color: rgba(217, 119, 6, 0.25); }
+
+  .card-body {
+    font-size: 11.2px;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+  .code-line {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: var(--bg-secondary);
+    padding: 5px 7px;
+    border-radius: 6px;
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .bullet-list li::before {
+    content: "• ";
+    color: var(--accent-blue);
+    font-weight: 700;
+  }
+
+  /* Bottom Infrastructure & Governance Strip */
+  .footer-strip {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-subtle);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .footer-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .footer-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+  }
+  .footer-val {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .footer-desc {
+    font-size: 10.8px;
+    color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/>
+        </svg>
+      </div>
+      <div class="title-group">
+        <h1>Agentic Ontology Starter — GCP System Architecture</h1>
+        <p>5-Stage Hybrid Ontology Pipeline · Dual Property Graph Engine (BigQuery Default + Cloud Spanner Opt-in) &amp; Graph Fabric Federation</p>
+      </div>
+    </div>
+    <div class="badge-row">
+      <span class="pill blue">[IaC] HashiCorp Terraform 1.8+</span>
+      <span class="pill sky">[DEFAULT] BigQuery Property Graph</span>
+      <span class="pill indigo">[OPT-IN] Cloud Spanner Graph (100 PU)</span>
+      <span class="pill emerald">[RUNTIME] Vertex AI Gemini + 8 MCP Tools</span>
+    </div>
+  </div>
+
+  <div class="stage-grid">
+    <!-- STAGE 1 -->
+    <div class="stage-col">
+      <div class="stage-header">
+        <span class="stage-tag">[STAGE 1 · ASSET &amp; CHECKLIST]</span>
+        <div class="stage-title">원천 자산 수집 및 엔진 선택</div>
+        <div class="stage-sub">원문 무손실 변환 · Gate 0 검증 · 5축 그래프 엔진 선택 체크리스트</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">[문서:가이드] 비정형 정책 원본</span>
+          <span class="mini-tag">extract_docs.py</span>
+        </div>
+        <div class="card-body">PDF/DOCX/MD 텍스트 레이어 직접 추출 (LLM 요약 금지). 원본 및 추출본 SHA-256 기록.</div>
+        <div class="code-line">customer_doc/* → 01_guides/*.md</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">[DB:마스터/트랜잭션] 정형 테이블</span>
+          <span class="mini-tag">6 CSVs</span>
+        </div>
+        <div class="card-body">단말·요금제·지원금·약정·규칙·엣지 6종 CSV. 모든 행에 <code>provenance</code> 및 <code>source_ref</code> 필수 포함.</div>
+        <div class="code-line">data/input/03_tables/*.csv</div>
+      </div>
+
+      <div class="card gate-box">
+        <div class="card-head">
+          <span class="card-title">Gate 0 &amp; 5축 엔진 점검표</span>
+          <span class="mini-tag pass">input_manifest.json</span>
+        </div>
+        <ul class="bullet-list">
+          <li>글자 수 ≥95% · 12-gram ≥90% · 조문 누락 0</li>
+          <li><strong>5축 점검</strong>: <code>source_system</code>, <code>latency_slo</code>, <code>concurrency</code>, <code>write_freshness</code>, <code>data_scale</code></li>
+          <li><code>project.json</code>: <code>bigquery | spanner | both</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div class="stage-col">
+      <div class="stage-header">
+        <span class="stage-tag emerald">[STAGE 2 · 3-LAYER OKF WIKI]</span>
+        <div class="stage-title">비정형 지식 컴파일 &amp; GCS</div>
+        <div class="stage-sub">SHA-256 해시 앵커링 및 3-Layer LLM-Wiki 객체 동기화</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">[위키:OKF] Cloud Storage 버킷</span>
+          <span class="mini-tag">GCS Native</span>
+        </div>
+        <div class="card-body">비정형 가이드 원문, 청크 JSONL, 3-Layer 마크다운 위키 및 JSON-LD 온톨로지 영구 보관.</div>
+        <div class="code-line">gs://&lt;project&gt;-starter-ontology/<br>├── raw/*.md &amp; parsed/doc_chunks.jsonl<br>└── ontology/{summary,entities,<br>&nbsp;&nbsp;&nbsp;&nbsp;concepts,rules}.md</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">SHA-256 패러그래프 앵커</span>
+          <span class="mini-tag">tb_doc_chunks</span>
+        </div>
+        <div class="card-body">문서 청크별 고유 식별자(<code>DOC_CHUNK_001..</code>)와 원문 해시(<code>anchor_&lt;12hex&gt;</code>)를 생성하여 에이전트 답변의 법적·정책적 근거로 바인딩.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">3-Track 데이터 성숙도 라우팅</span>
+          <span class="mini-tag">resolve_track()</span>
+        </div>
+        <ul class="bullet-list">
+          <li><strong>lite</strong>: 문서만 존재 (Stage 1→2→4)</li>
+          <li><strong>standard</strong>: 문서 + 고객 테이블 (Stage 1→2→3→4)</li>
+          <li><strong>full</strong>: 전 단계 + 벤치마크 (Stage 1→5)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STAGE 3 (DUAL ENGINE + FABRIC) -->
+    <div class="stage-col highlight-graph">
+      <div class="stage-header">
+        <span class="stage-tag sky">[STAGE 3 · DUAL PROPERTY GRAPH &amp; FABRIC]</span>
+        <div class="stage-title">듀얼 그래프 엔진 &amp; Graph Fabric</div>
+        <div class="stage-sub">동일 10개 테이블 스키마 · ISO SQL:2023 GQL <code>GRAPH_TABLE</code> 호환</div>
+      </div>
+
+      <div class="card engine-bq">
+        <div class="card-head">
+          <span class="card-title">Engine 1: BigQuery Property Graph</span>
+          <span class="mini-tag default">[DEFAULT · Zero-ETL]</span>
+        </div>
+        <div class="card-body">기존 BigQuery DW 6개 노드 테이블 + 4개 엣지 테이블 위에 물리 복제 없이 논리 뷰로 생성. 대규모 분석(TB~PB) 및 유휴 비용 0원.</div>
+        <div class="code-line">CREATE OR REPLACE PROPERTY GRAPH<br>`&lt;dataset&gt;.STARTER_ONTOLOGY_GRAPH`</div>
+      </div>
+
+      <div class="card engine-fabric">
+        <div class="card-head">
+          <span class="card-title">Graph Fabric 연동 (both 모드)</span>
+          <span class="mini-tag default">EXTERNAL_QUERY</span>
+        </div>
+        <div class="card-body">BigQuery Cloud Spanner Connection(<code>spanner_fabric_conn</code>)을 통해 Spanner 실시간 그래프 탐색 결과와 BigQuery 분석 원장·청크를 단일 SQL로 연합 조인.</div>
+        <div class="code-line">FROM EXTERNAL_QUERY('.../spanner_fabric_conn',<br>  'SELECT ... FROM GRAPH_TABLE(STARTER_ONTOLOGY_GRAPH ...)')</div>
+      </div>
+
+      <div class="card engine-spanner">
+        <div class="card-head">
+          <span class="card-title">Engine 2: Cloud Spanner Graph</span>
+          <span class="mini-tag optin">[OPT-IN · Low-Latency]</span>
+        </div>
+        <div class="card-body">Spanner Enterprise (최소 100 PU, <code>starter-spanner/starter_ontology_db</code>). 인덱스 포인터 기반 수십~수백 ms 온라인 멀티홉 탐색 및 실시간 트랜잭션 서빙.</div>
+        <div class="code-line">CREATE OR REPLACE PROPERTY GRAPH<br>STARTER_ONTOLOGY_GRAPH (10 Tables + 4 Edges)</div>
+      </div>
+    </div>
+
+    <!-- STAGE 4 -->
+    <div class="stage-col">
+      <div class="stage-header">
+        <span class="stage-tag amber">[STAGE 4 · AGENT &amp; 8 MCP SERVER]</span>
+        <div class="stage-title">AI FDE 추론 엔진 &amp; 8대 MCP</div>
+        <div class="stage-sub">Vertex AI Gemini + 8개 모듈형 MCP 도구 (양 엔진 완벽 지원)</div>
+      </div>
+
+      <div class="card agent-box">
+        <div class="card-head">
+          <span class="card-title">AiFdeAgentEngine (4-Step Loop)</span>
+          <span class="mini-tag amber">gemini-3.8-flash</span>
+        </div>
+        <ul class="bullet-list">
+          <li><strong>Step 1 (Decompose)</strong>: 라이브 카탈로그 기반 슬롯 추출</li>
+          <li><strong>Step 2 (Guardrail)</strong>: 질문 내 리터럴 수치·카탈로그 검증</li>
+          <li><strong>Step 3 (MCP Dispatch)</strong>: <code>engine="bigquery" | "spanner"</code> 실행</li>
+          <li><strong>Step 4 (Synthesis)</strong>: <code>rule_id</code> · <code>chunk_id</code> · <code>Job ID</code> 인용</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">8 Core Modular MCP Tools</span>
+          <span class="mini-tag">mcp_server.py</span>
+        </div>
+        <div class="card-body">모든 도구가 <code>engine</code> 파라미터에 따라 BigQuery SQL/GQL 또는 Spanner SQL/GQL로 즉시 라우팅.</div>
+        <div class="code-line">• Stage Pipeline MCPs (5종):<br>  mcp_stage1 .. mcp_stage5<br>• Runtime Domain MCPs (3종):<br>  - mcp_lookup_customer_profile<br>  - mcp_calculate_penalty_rule<br>  - mcp_query_graph_and_wiki</div>
+      </div>
+    </div>
+
+    <!-- STAGE 5 -->
+    <div class="stage-col">
+      <div class="stage-header">
+        <span class="stage-tag">[STAGE 5 · LINEAGE, EVAL &amp; STUDIO]</span>
+        <div class="stage-title">리니지 · 골든 CQ 평가 · 포털</div>
+        <div class="stage-sub">4-Tier 데이터 리니지 · Gate 1 검증 · Cloud Run 6-Tab Studio</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">[평가:CQ] Gate 1 &amp; Golden CQ</span>
+          <span class="mini-tag pass">validator.py</span>
+        </div>
+        <div class="card-body">독립 검증 SQL(<code>verification_sql</code>) 대조 및 Boundary 스트레스 테스트(N회 반복 일관성·안정성 실측).</div>
+        <div class="code-line">cq_benchmark_report.json<br>boundary_benchmark_results.json</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">4-Tier End-to-End Lineage DAG</span>
+          <span class="mini-tag">lineage_engine.py</span>
+        </div>
+        <div class="card-body"><code>[CONN]</code> → <code>[RAW]</code> → <code>[ETL]</code> → <code>[PII]</code> → <code>[SEM]</code> → <code>[MCP]</code> → <code>[AGENT]</code> 전 구간 감사 추적.</div>
+      </div>
+
+      <div class="card studio-box">
+        <div class="card-head">
+          <span class="card-title">Cloud Run 6-Tab Studio UI</span>
+          <span class="mini-tag">Port 8080</span>
+        </div>
+        <div class="card-body">Overview · Stage 1~5 통합 워크스페이스. Stage 3 듀얼 엔진 비교 및 Stage 4 실시간 엔진 셀렉터 제공.</div>
+        <div class="code-line">service: agentic-ontology-starter</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Strip -->
+  <div class="footer-strip">
+    <div class="footer-item">
+      <span class="footer-label">TERRAFORM IaC &amp; OPT-IN PROVISIONING</span>
+      <span class="footer-val">terraform/{main,bigquery,spanner,cloud_run}.tf</span>
+      <span class="footer-desc">var.graph_engine = "bigquery" (기본) | "spanner" | "both" 선언적 배포</span>
+    </div>
+    <div class="footer-item">
+      <span class="footer-label">LEAST-PRIVILEGE IAM GOVERNANCE</span>
+      <span class="footer-val">Runtime SA Roles (Database-Level)</span>
+      <span class="footer-desc">roles/bigquery.dataEditor · roles/spanner.databaseReader · roles/bigquery.connectionUser</span>
+    </div>
+    <div class="footer-item">
+      <span class="footer-label">DATA SYNCHRONIZATION PATTERNS</span>
+      <span class="footer-val">Direct CSV · EXTERNAL_QUERY · Reverse ETL</span>
+      <span class="footer-desc">초기 6종 CSV 동시 적재 · Graph Fabric 연합 쿼리 · 운영 시 Reverse ETL / Change Streams</span>
+    </div>
+    <div class="footer-item">
+      <span class="footer-label">ZERO-HALLUCINATION GUARANTEES</span>
+      <span class="footer-val">Gate 0 (Text) + Gate 1 (CQ) + Live SQL/GQL</span>
+      <span class="footer-desc">모든 수치는 실시간 쿼리 결과만 인용하며 SHA-256 청크 해시와 Job ID를 영구 기록</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

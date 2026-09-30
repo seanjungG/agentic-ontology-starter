@@ -289,8 +289,12 @@ class AiFdeAgentEngine:
             })
 
         dispatched, outputs, job_ids = [], {}, [cat["job_id"]]
+        eng_norm = "spanner" if str(engine or "bigquery").lower() == "spanner" else "bigquery"
+        eng_label = "Cloud Spanner Graph" if eng_norm == "spanner" else "BigQuery"
+        target_ds = self.server.spanner_uri if eng_norm == "spanner" else self.server.fq
+        target_graph = f"{self.server.spanner_instance_id}/{self.server.spanner_database_id}/{self.server.spanner_graph}" if eng_norm == "spanner" else self.server.graph
         for i, sg in enumerate(sub_goals):
-            res = self.server.execute_tool(sg["tool"], {**params, "engine": engine, "lang": "en" if en else "ko"})
+            res = self.server.execute_tool(sg["tool"], {**params, "engine": eng_norm, "lang": "en" if en else "ko"})
             outputs[sg["tool"]] = res
             job_ids += res.get("bq_job_ids", [])
             sql = res.get("executed_sql", "")
@@ -298,8 +302,8 @@ class AiFdeAgentEngine:
                 "step_index": i + 1, "tool_name": sg["tool"], "category": sg["category"], "reason": sg.get("goal", ""),
                 "output": res,
                 "intermediate_observation": (
-                    f"status={res.get('status')} · rows={res.get('matched_rows_count', res.get('matched_graph_paths_count', '-'))} · "
-                    f"BigQuery jobs={', '.join(res.get('bq_job_ids', [])) or '-'} ({res.get('bq_elapsed_ms', 0)} ms) · "
+                    f"engine={eng_norm} · status={res.get('status')} · rows={res.get('matched_rows_count', res.get('matched_graph_paths_count', '-'))} · "
+                    f"jobs={', '.join(res.get('bq_job_ids', [])) or '-'} ({res.get('bq_elapsed_ms', 0)} ms) · "
                     f"SQL: {sql[:700]}{' …' if len(sql) > 700 else ''}"),
             })
 
@@ -315,11 +319,11 @@ class AiFdeAgentEngine:
 
         clean_outputs = localize_en_obj(_strip_sql(outputs)) if en else _strip_sql(outputs)
         synth_prompt = (
-            f"[User Question]\n{query}\n\n[Applied Parameters]\n{json.dumps(params, ensure_ascii=False)}\n"
+            f"[User Question]\n{query}\n\n[Active Engine]\n{eng_label}\n\n[Applied Parameters]\n{json.dumps(params, ensure_ascii=False)}\n"
             f"[Parameter Validation Notes]\n{json.dumps(notes, ensure_ascii=False)}\n\n"
             f"[Tool Execution Results JSON]\n{json.dumps(clean_outputs, ensure_ascii=False, default=str)}"
             if en else
-            f"[사용자 질문]\n{query}\n\n[적용 파라미터]\n{json.dumps(params, ensure_ascii=False)}\n"
+            f"[사용자 질문]\n{query}\n\n[실행 엔진]\n{eng_label}\n\n[적용 파라미터]\n{json.dumps(params, ensure_ascii=False)}\n"
             f"[파라미터 검증 메모]\n{json.dumps(notes, ensure_ascii=False)}\n\n"
             f"[도구 실행 결과 JSON]\n{json.dumps(clean_outputs, ensure_ascii=False, default=str)}"
         )
@@ -342,21 +346,22 @@ class AiFdeAgentEngine:
             markdown = (f"{body}\n\n---\n"
                         f"- LLM: Vertex AI `{self.model_name}` (`{self.project_id}`) · 2 calls · {p_tok + c_tok:,} tokens "
                         f"(Prompt {p_tok:,} / Output {c_tok:,}) · {llm_ms:,.0f} ms\n"
-                        f"- BigQuery: `{self.server.fq}` · Graph `{self.server.graph}` · Jobs `{', '.join(job_ids)}`\n"
+                        f"- Engine ({eng_label}): `{target_ds}` · Graph `{target_graph}` · Jobs `{', '.join(job_ids)}`\n"
                         f"- Answer Status: `{answer_status}`")
-            obs_reason = (f"Tool statuses {json.dumps(statuses, ensure_ascii=False)} · BigQuery Jobs {len(job_ids)} · "
+            obs_reason = (f"Engine={eng_norm} · Tool statuses {json.dumps(statuses, ensure_ascii=False)} · Jobs {len(job_ids)} · "
                           f"Params {json.dumps({k: v for k, v in params.items() if v is not None}, ensure_ascii=False)}")
         else:
             markdown = (f"{body}\n\n---\n"
                         f"- LLM: Vertex AI `{self.model_name}` (`{self.project_id}`) · 2회 호출 · 토큰 {p_tok + c_tok:,} "
                         f"(입력 {p_tok:,} / 출력 {c_tok:,}) · {llm_ms:,.0f} ms\n"
-                        f"- BigQuery: `{self.server.fq}` · Graph `{self.server.graph}` · Jobs `{', '.join(job_ids)}`\n"
+                        f"- 엔진 ({eng_label}): `{target_ds}` · Graph `{target_graph}` · Jobs `{', '.join(job_ids)}`\n"
                         f"- 응답 상태: `{answer_status}`")
-            obs_reason = (f"도구 상태 {json.dumps(statuses, ensure_ascii=False)} · BigQuery Job {len(job_ids)}건 · "
+            obs_reason = (f"엔진={eng_norm} · 도구 상태 {json.dumps(statuses, ensure_ascii=False)} · Job {len(job_ids)}건 · "
                           f"파라미터 {json.dumps({k: v for k, v in params.items() if v is not None}, ensure_ascii=False)}")
         total = round(time.perf_counter() - t0, 2)
         return {
             "status": "SUCCESS",
+            "engine": eng_norm,
             "answer_status": answer_status,
             "query": query,
             "applied_params": params,
@@ -364,11 +369,11 @@ class AiFdeAgentEngine:
             "llm_telemetry": {"model": self.model_name, "project_id": self.project_id,
                               "decomposition_status": decomp.get("status"), "synthesis_status": synth.get("status"),
                               "prompt_tokens": p_tok, "candidates_tokens": c_tok, "elapsed_ms": round(llm_ms, 2)},
-            "bq_telemetry": {"dataset": self.server.fq, "graph": self.server.graph, "job_ids": job_ids,
+            "bq_telemetry": {"engine": eng_norm, "dataset": target_ds, "graph": target_graph, "job_ids": job_ids,
                              "tool_statuses": statuses},
             "lifecycle": {
                 "step_1_thought": {"model": self.model_name, "extracted_parameters": params, "sub_goals": sub_goals,
-                                   "execution_mode": "LIVE_GEMINI_BIGQUERY_CHAIN"},
+                                   "execution_mode": f"LIVE_GEMINI_{eng_norm.upper()}_CHAIN"},
                 "step_2_tool_dispatch": {"dispatched_tools": dispatched},
                 "step_3_observation": {"cross_domain_integration_reason": obs_reason},
                 "step_4_synthesis": {"markdown": markdown},

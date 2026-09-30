@@ -15,7 +15,9 @@ resource "google_bigquery_table" "tb_device_master" {
     { name = "manufacturer",      type = "STRING",  mode = "REQUIRED", description = "제조사" },
     { name = "storage_gb",        type = "INTEGER", mode = "REQUIRED", description = "내장 메모리 용량 (GB)" },
     { name = "factory_price_krw", type = "INTEGER", mode = "REQUIRED", description = "출고가 (KRW)" },
-    { name = "release_date",      type = "STRING",  mode = "NULLABLE", description = "출시일 (YYYY-MM-DD)" }
+    { name = "release_date",      type = "STRING",  mode = "NULLABLE", description = "출시일 (YYYY-MM-DD)" },
+    { name = "provenance",        type = "STRING",  mode = "NULLABLE", description = "데이터 출처 등급 (CUSTOMER_PROVIDED / EXTRACTED / SYNTHETIC_DEMO)" },
+    { name = "source_ref",         type = "STRING",  mode = "NULLABLE", description = "원천 파일/참조 경로" }
   ])
 }
 
@@ -32,7 +34,9 @@ resource "google_bigquery_table" "tb_plan_master" {
     { name = "tier_category",           type = "STRING",  mode = "REQUIRED", description = "요금제 등급 분류 (5G_HIGH, 5G_MID, 5G_LOW, 5G_WELFARE)" },
     { name = "monthly_fee_krw",         type = "INTEGER", mode = "REQUIRED", description = "월정액 요금 (KRW)" },
     { name = "min_maintenance_days",    type = "INTEGER", mode = "REQUIRED", description = "공시지원금 의무 유지 일수 (180일 등)" },
-    { name = "selective_discount_rate", type = "FLOAT",   mode = "REQUIRED", description = "선택약정 요금할인율 (0.25)" }
+    { name = "selective_discount_rate", type = "FLOAT",   mode = "REQUIRED", description = "선택약정 요금할인율 (0.25)" },
+    { name = "provenance",              type = "STRING",  mode = "NULLABLE", description = "데이터 출처 등급" },
+    { name = "source_ref",               type = "STRING",  mode = "NULLABLE", description = "원천 파일/참조 경로" }
   ])
 }
 
@@ -50,7 +54,9 @@ resource "google_bigquery_table" "tb_subsidy_policy" {
     { name = "base_subsidy_krw",           type = "INTEGER", mode = "REQUIRED", description = "공시지원금 (KRW)" },
     { name = "additional_subsidy_cap_krw", type = "INTEGER", mode = "REQUIRED", description = "유통망 추가지원금 상한 (공시지원금의 15%, KRW)" },
     { name = "mandatory_retention_days",   type = "INTEGER", mode = "REQUIRED", description = "최소 의무 유지기간 (180일)" },
-    { name = "effective_from",             type = "STRING",  mode = "NULLABLE", description = "시행 기준일" }
+    { name = "effective_from",             type = "STRING",  mode = "NULLABLE", description = "시행 기준일" },
+    { name = "provenance",                 type = "STRING",  mode = "NULLABLE", description = "데이터 출처 등급" },
+    { name = "source_ref",                  type = "STRING",  mode = "NULLABLE", description = "원천 파일/참조 경로" }
   ])
 }
 
@@ -73,7 +79,9 @@ resource "google_bigquery_table" "tb_customer_contract" {
     { name = "elapsed_days",        type = "INTEGER", mode = "REQUIRED", description = "개통 후 경과일수" },
     { name = "granted_subsidy_krw", type = "INTEGER", mode = "REQUIRED", description = "지급받은 총 지원금 (KRW)" },
     { name = "welfare_status",      type = "STRING",  mode = "REQUIRED", description = "복지 감면/특례 자격" },
-    { name = "status",              type = "STRING",  mode = "REQUIRED", description = "회선 상태" }
+    { name = "status",              type = "STRING",  mode = "REQUIRED", description = "회선 상태" },
+    { name = "provenance",          type = "STRING",  mode = "NULLABLE", description = "데이터 출처 등급" },
+    { name = "source_ref",           type = "STRING",  mode = "NULLABLE", description = "원천 파일/참조 경로" }
   ])
 }
 
@@ -113,7 +121,9 @@ resource "google_bigquery_table" "tb_domain_rules" {
     { name = "condition_expr",  type = "STRING", mode = "REQUIRED", description = "조건 논리식" },
     { name = "formula_expr",    type = "STRING", mode = "REQUIRED", description = "산출 수식" },
     { name = "source_chunk_id", type = "STRING", mode = "REQUIRED", description = "근거 청크 ID (FK)" },
-    { name = "description_ko",  type = "STRING", mode = "REQUIRED", description = "규칙 상세 설명" }
+    { name = "description_ko",  type = "STRING", mode = "REQUIRED", description = "규칙 상세 설명" },
+    { name = "provenance",      type = "STRING", mode = "NULLABLE", description = "데이터 출처 등급" },
+    { name = "source_ref",       type = "STRING", mode = "NULLABLE", description = "원천 파일/참조 경로" }
   ])
 }
 
@@ -176,6 +186,8 @@ resource "google_bigquery_table" "edge_rule_applies_to_plan" {
     { name = "plan_id",           type = "STRING", mode = "REQUIRED" },
     { name = "source_chunk_id",   type = "STRING", mode = "REQUIRED" },
     { name = "relation_label_ko", type = "STRING", mode = "REQUIRED" },
-    { name = "edge_type",         type = "STRING", mode = "REQUIRED" }
+    { name = "edge_type",         type = "STRING", mode = "REQUIRED" },
+    { name = "provenance",        type = "STRING", mode = "NULLABLE" },
+    { name = "source_ref",         type = "STRING", mode = "NULLABLE" }
   ])
 }

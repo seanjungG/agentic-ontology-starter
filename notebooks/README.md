@@ -102,16 +102,16 @@ flowchart TD
 | **Track 2 · Standard**<br>*(Zero-ETL Property Graph)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `"track": "standard"`<br>`"graph_engine": "bigquery"` (또는 `"spanner"`) | `stage1` → `stage2` → `stage3` → `stage4` | 정형 DW 마스터 원장 4종과 비정형 도메인 규칙을 **Zero-ETL BigQuery Property Graph(`6 Node × 4 Edge`)**로 결합하여, 다중 홉 ISO GQL 탐색과 `nl2gql`을 수행할 때 권장됩니다. |
 | **Track 3 · Full-Stack**<br>*(Enterprise Release Gate)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `"track": "full_stack"`<br>`"graph_engine": "bigquery"` | `stage0` → `stage1` → `stage2` → `stage3` → `stage4` → `stage5` | 원천 파일부터 답변까지의 **4-Tier 데이터 리니지**, **Golden CQ 5/5(100%) 자동 채점**, **Boundary 10건×5회(50회) 안정성 벤치마크**를 통과해야 하는 엔터프라이즈 운영 환경의 기본 트랙입니다. |
 
-### 2.2 물리 그래프 엔진 선택 흐름 (BigQuery Graph vs. Spanner Graph)
+### 2.2 물리 그래프 엔진 선택 흐름 및 Graph Fabric (BigQuery Graph vs. Spanner Graph & `both`)
 
-`Stage 3` 노트북(`stage3_property_graph_bigquery_spanner_{ko,en}.ipynb`)은 동일한 `6 Node × 4 Edge` 온톨로지 메타모델에 대해 두 가지 Google Cloud 네이티브 그래프 엔진 DDL을 모두 생성·비교합니다.
+`Stage 1` 노트북(`stage1_asset_and_cq_{ko,en}.ipynb`)은 **5축 그래프 엔진 선택 체크리스트**(`source_system`, `latency_slo`, `concurrency`, `write_freshness`, `data_scale`)를 점검하고, `Stage 3` 노트북(`stage3_property_graph_bigquery_spanner_{ko,en}.ipynb`)은 동일한 `6 Node × 4 Edge` 온톨로지 메타모델에 대해 **BigQuery Property Graph(기본값)**와 **Cloud Spanner Graph(`starter-spanner`, `100 PU`)**의 `N=3` 반복 `p50`/`p95` 지연시간 벤치마크 및 **`EXTERNAL_QUERY(spanner_fabric_conn)` Graph Fabric 연합 조인**을 실측하며, `Stage 4` 노트북(`stage4_agent_and_mcp_execution_{ko,en}.ipynb`)은 런타임 MCP 도구를 양대 엔진(`engine="bigquery" | "spanner"`)에서 직접 비교 실행합니다.
 
-| 비교 항목 | BigQuery Property Graph (기본 활성) | Cloud Spanner Graph (온라인 저지연 옵션) |
-| :--- | :--- | :--- |
-| **DDL 산출물** | [`data/output/create_property_graph.sql`](../data/output/create_property_graph.sql) | [`data/output/create_spanner_graph.sql`](../data/output/create_spanner_graph.sql) |
-| **데이터 복제 여부** | **Zero-ETL** (기존 BigQuery DW 10개 테이블 위에 메타데이터 뷰로 즉시 선언) | Spanner 인스턴스 내 인터리브드/외래키 테이블 적재 필요 |
-| **쿼리 문법** | ISO/IEC 39075 GQL (`GRAPH ... MATCH ... RETURN ...` / `GRAPH_TABLE`) | ISO/IEC 39075 GQL (`GRAPH ... MATCH ... RETURN ...`) |
-| **권장 선택 기준** | DW 원장 분석, 일괄/대화형 AI FDE 에이전트, 추가 인프라 비용 없이 즉시 도입 시 | 초당 수백~수천 건의 실시간 대고객 상담 트랜잭션(Sub-100ms SLA) 처리 시 |
+| 비교 항목 | BigQuery Property Graph (`"bigquery"`, 기본값) | Cloud Spanner Graph (`"spanner"`, 온라인 저지연 옵션) | Dual-Engine & Graph Fabric (`"both"`, 샘플 활성) |
+| :--- | :--- | :--- | :--- |
+| **DDL 산출물 / 리소스** | [`data/output/create_property_graph.sql`](../data/output/create_property_graph.sql) | [`data/output/create_spanner_graph.sql`](../data/output/create_spanner_graph.sql) (`starter-spanner`, `100 PU`) | 양대 그래프 동시 배포 + BigQuery 연결(`spanner_fabric_conn`) |
+| **데이터 복제 여부** | **Zero-ETL** (기존 BigQuery DW 10개 테이블 위에 메타데이터 뷰로 즉시 선언) | Spanner 인스턴스 내 인터리브드/외래키 테이블 적재(`pipeline/ingest.py`) | 온라인 원장은 Spanner, 정책 청크·이력 원장은 BigQuery 유지 |
+| **쿼리 문법** | ISO/IEC 39075 GQL (`GRAPH ... MATCH ...` / `GRAPH_TABLE`) | ISO/IEC 39075 GQL (`GRAPH STARTER_ONTOLOGY_GRAPH MATCH ...`) | `EXTERNAL_QUERY("...spanner_fabric_conn", "GRAPH ...")` 연합 조인 |
+| **권장 선택 기준** | DW 원장 분석, 대화형 AI FDE 에이전트, 추가 상시 비용 없이 즉시 도입 시 (기본값) | 대고객 실시간 상담·트랜잭션 제어(`p50 ~120ms` 저지연 포인트 탐색) | 실시간 OLTP 그래프 탐색 결과와 BigQuery 대규모 분석 테이블을 결합할 때 |
 
 ### 2.3 담당 직무(Role)별 추천 노트북 선택 경로
 

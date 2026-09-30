@@ -4,41 +4,41 @@
 
 ## Purpose
 
-The agent splits a question into parameters and sub-goals, calls MCP tools that query BigQuery, and answers only with values found in the tool results.
-Each answer carries the rule ID, the evidence chunk ID and the BigQuery job ID.
+The agent splits a question into parameters and sub-goals, calls the 8 MCP tools against the selected graph engine (`engine="bigquery"` default or `engine="spanner"`), and answers only with values found in the tool results.
+Each answer carries the rule ID, the evidence chunk ID, and the backend execution identifier (BigQuery job ID or Spanner database ID).
 
 ## Inputs
 
-- The user question (natural language)
-- The 10 BigQuery tables and `STARTER_ONTOLOGY_GRAPH` (Stages 1 to 3)
+- The user question (natural language) and graph engine selection (`"bigquery"` default \| `"spanner"`)
+- The 10 tables and `STARTER_ONTOLOGY_GRAPH` in BigQuery (`starter_ontology_dw`) or Cloud Spanner (`starter-spanner/starter_ontology_db`) (Stages 1 to 3)
 - A Vertex AI Gemini model (environment variable `VERTEX_GEMINI_MODEL`, default `gemini-3.8-flash`)
 
-The full list of the 8 MCPs is in section 4.2 of [METHODOLOGY_EN.md](./METHODOLOGY_EN.md). All of them are in `DomainMcpServer` in `src/agent/mcp_server.py`.
+The full list of the 8 MCPs is in section 4 of [METHODOLOGY_EN.md](./METHODOLOGY_EN.md). All of them are in `DomainMcpServer` in `src/agent/mcp_server.py` and support `engine="bigquery" | "spanner"`.
 
 ## MCP of this Stage
 
 ### `mcp_stage4_agent_orchestration`
 
-| Step | What the code does |
+| Step | What the code does (`engine="bigquery" \| "spanner"`) |
 | :--- | :--- |
 | `decompose_subgoals` | Not done by this MCP. The agent decomposes the question with Gemini |
 | `dispatch_domain_mcps` | Not done by this MCP. The agent calls the tools |
-| `verify_grounding_anchors` | Reads the 4 rules and their evidence chunk anchors (`tb_domain_rules` joined with `tb_doc_chunks`) → `active_rules` |
+| `verify_grounding_anchors` | Reads the 4 rules and their evidence chunk anchors (`tb_domain_rules` joined with `tb_doc_chunks`) on the selected engine → `active_rules` |
 
-The `steps` argument is recorded in `executed_steps` of the result. The current handler runs the query above regardless of the selected steps.
+The `steps` argument is recorded in `executed_steps` of the result.
 
 ### The 3 runtime MCPs
 
-Common arguments (`resolve_params`): `customer_id`, `device_name`, `storage_gb`, `plan_name`, `monthly_fee_krw`, `target_plan_name`, `target_monthly_fee_krw`, `elapsed_days`.
+Common arguments (`resolve_params`): `customer_id`, `device_name`, `storage_gb`, `plan_name`, `monthly_fee_krw`, `target_plan_name`, `target_monthly_fee_krw`, `elapsed_days`, `engine` (`"bigquery"` default \| `"spanner"`).
 If only `query` (natural language) is given, numbers and catalog names are extracted from the question with fixed rules. Device and plan names that are not in the catalog are dropped.
 
-| Tool | Steps | What it does | Returned status |
+| Tool | Steps | What it does (supports both `bigquery` and `spanner`) | Returned status |
 | :--- | :--- | :--- | :--- |
-| `mcp_lookup_customer_profile` | `lookup_contract`, `lookup_device_price`, `lookup_subsidy_policy` | Joins contract, device, plan and subsidy, computes the total subsidy and the installment principal, and attaches the evidence chunk of `RULE_SUBSIDY_CAP` | `SUCCESS`, `MATCH_NOT_FOUND` (returns the actual plan and subsidy lists) |
-| `mcp_calculate_penalty_rule` | `check_exemptions`, `compute_180d_prorated_clawback`, `compare_24m_tco` | Computes the penalty decision and the 24-month cost comparison in one SQL query (order below) | `SUCCESS`, `INSUFFICIENT_PARAMETERS` (neither customer ID nor device), `MATCH_NOT_FOUND` |
-| `mcp_query_graph_and_wiki` | `traverse_property_graph`, `fetch_okf_hash_anchor`, `verify_dw_schema` | Traverses paths with `GRAPH_TABLE` and joins the evidence chunk text ([Stage 3 GQL patterns](./03_stage3_property_graph_en.md)) | `SUCCESS`, `MATCH_NOT_FOUND` |
+| `mcp_lookup_customer_profile` | `lookup_contract`, `lookup_device_price`, `lookup_subsidy_policy` | Joins contract, device, plan and subsidy on the selected engine, computes the total subsidy and the installment principal, and attaches the evidence chunk of `RULE_SUBSIDY_CAP` | `SUCCESS`, `MATCH_NOT_FOUND` (returns the actual plan and subsidy lists) |
+| `mcp_calculate_penalty_rule` | `check_exemptions`, `compute_180d_prorated_clawback`, `compare_24m_tco` | Computes the penalty decision and the 24-month cost comparison in one SQL query on the selected engine (order below) | `SUCCESS`, `INSUFFICIENT_PARAMETERS` (neither customer ID nor device), `MATCH_NOT_FOUND` |
+| `mcp_query_graph_and_wiki` | `traverse_property_graph`, `fetch_okf_hash_anchor`, `verify_dw_schema` | Traverses paths with `GRAPH_TABLE` on the selected engine and joins the evidence chunk text ([Stage 3 GQL patterns](./03_stage3_property_graph_en.md)) | `SUCCESS`, `MATCH_NOT_FOUND` |
 
-Every tool returns a BigQuery error as `BQ_QUERY_ERROR` (it is not turned into 0 rows).
+Every tool returns a backend query error as `BQ_QUERY_ERROR` or `SPANNER_QUERY_ERROR` (it is not turned into 0 rows).
 
 Decision order of `mcp_calculate_penalty_rule`:
 

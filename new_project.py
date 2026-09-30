@@ -33,7 +33,8 @@ def main():
     ap.add_argument("--dataset", help="BigQuery dataset (default: <id>_dw with underscores)")
     ap.add_argument("--bucket", help="GCS bucket (default: <gcp-project>-<id>)")
     ap.add_argument("--track", default="auto", choices=["auto", "lite", "standard", "full"])
-    ap.add_argument("--engine", default="bigquery", choices=["bigquery", "spanner"])
+    ap.add_argument("--engine", default="bigquery", choices=["bigquery", "spanner", "both"])
+    ap.add_argument("--engine-reason", default="")
     a = ap.parse_args()
 
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{1,62}", a.project_id):
@@ -50,9 +51,13 @@ def main():
         meta = json.load(f)
     meta.update(project_id=a.project_id, project_name=a.name, customer_org=a.customer, domain=a.domain,
                 track=a.track, graph_engine=a.engine,
+                graph_engine_reason=a.engine_reason or meta.get("graph_engine_reason", ""),
                 gcp={"project_id": a.gcp_project,
                      "dataset_id": a.dataset or a.project_id.replace("-", "_") + "_dw",
-                     "gcs_bucket": a.bucket or f"{a.gcp_project}-{a.project_id}"})
+                     "gcs_bucket": a.bucket or f"{a.gcp_project}-{a.project_id}",
+                     "spanner_instance_id": "",
+                     "spanner_database_id": "",
+                     "bq_spanner_connection_id": ""})
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
         f.write("\n")

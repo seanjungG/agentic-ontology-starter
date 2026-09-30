@@ -7,33 +7,38 @@
 Stage 1·2에서 적재한 테이블을 복사하지 않고 그대로 그래프의 노드·엣지로 선언한다.
 에이전트는 `GRAPH_TABLE` 질의 한 번으로 여러 테이블을 따라가며 답의 경로(약정·단말 → 요금제 ← 규칙 → 근거 청크)를 얻는다.
 
-## 엔진 지원 범위
+## 엔진 지원 범위 및 Graph Fabric 연동
 
-| 엔진 | 스타터에서 지원하는 것 | 없는 것 |
+| 엔진 / 모드 | 스타터에서 지원하는 것 | 특징 및 권장 용도 |
 | :--- | :--- | :--- |
-| BigQuery Property Graph | DDL 생성, BigQuery에서 DDL 실행, 에이전트의 `GRAPH_TABLE` 조회 | - |
-| Cloud Spanner Graph | DDL 파일 생성만 (`data/output/create_spanner_graph.sql`) | 인스턴스 생성, DDL 적용, Spanner 조회 코드. `engine: "spanner"`를 넘겨도 조회는 BigQuery에서 실행되고, 값은 결과에 표기만 된다 |
+| **BigQuery Property Graph (`bigquery`, 기본)** | DDL 생성(`create_property_graph.sql`), BigQuery에서 DDL 실행, 에이전트 및 8종 MCP의 `GRAPH_TABLE` 조회 | Zero-ETL 무복제 논리 그래프, TB~PB급 분석, 유휴 비용 0원 |
+| **Cloud Spanner Graph (`spanner`, 선택)** | Terraform Opt-in 프로비저닝(`starter-spanner`, 100 PU, `starter_ontology_db`), 10개 테이블 적재, `STARTER_ONTOLOGY_GRAPH` DDL 적용, 에이전트 및 8종 MCP 실시간 GQL 조회 | 인덱스 포인터 기반 수십~수백 ms 초저지연 온라인 멀티홉 탐색 (`p50 ~120ms`) |
+| **Graph Fabric 연합 (`both` 모드)** | 양대 엔진 동시 적재·배포, N-run `p50/p95` 지연 시간 비교 벤치마크, BigQuery `EXTERNAL_QUERY(spanner_fabric_conn)` 연합 조인 | Spanner 실시간 그래프 탐색 결과와 BigQuery 문서 청크(`tb_doc_chunks`)를 복제 없이 단일 SQL로 조인 |
+
+> **운영 환경 동기화 패턴 (Production Sync)**:
+> - **BigQuery → Spanner (Reverse ETL)**: BigQuery 배치 집계 결과를 온라인 서빙 그래프로 내보낼 때는 BigQuery `EXPORT DATA` 또는 Dataflow `BigQueryToSpanner` 템플릿을 사용한다.
+> - **Spanner → BigQuery (Change Streams)**: 온라인 트랜잭션 원장의 실시간 변경분을 분석용 BigQuery DW로 반영할 때는 **Spanner Change Streams → Dataflow → BigQuery** CDC 파이프라인을 사용한다.
 
 ## 입력
 
-`terraform/bigquery.tf`로 만든 BigQuery 테이블 10개 (Stage 1·2에서 적재).
+`terraform/bigquery.tf` 및 `terraform/spanner.tf`로 만든 10개 테이블 (Stage 1·2에서 양쪽 엔진에 동일 스키마로 적재).
 
-- 노드용: `tb_customer_contract`, `tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_doc_chunks`, `tb_domain_rules`
-- 엣지용: `edge_contract_device`, `edge_contract_plan`, `edge_subsidy_binding`, `edge_rule_applies_to_plan`
+- 노드용 (6종): `tb_customer_contract`, `tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_doc_chunks`, `tb_domain_rules`
+- 엣지용 (4종): `edge_contract_device`, `edge_contract_plan`, `edge_subsidy_binding`, `edge_rule_applies_to_plan`
 
 ## 이 Stage의 MCP: `mcp_stage3_property_graph`
 
-| Step | 실제 수행 (`src/agent/mcp_server.py`) |
+| Step | 실제 수행 (`src/agent/mcp_server.py`, `engine="bigquery" \| "spanner"`) |
 | :--- | :--- |
-| `promote_dw_nodes` | 노드 테이블 6개의 행 수와 중복 키 수 → `node_tables`, `duplicate_keys_total` |
+| `promote_dw_nodes` | 선택된 엔진(`bigquery` 또는 `spanner`)에서 노드 테이블 6개의 행 수와 중복 키 수 조회 → `node_tables`, `duplicate_keys_total` |
 | `synthesize_graph_ddl` | 이 MCP에서는 수행하지 않는다. DDL 생성·실행은 `pipeline/graph_builder.py`의 `build_graph()`가 한다 |
-| `verify_gql_templates` | `GRAPH_TABLE`로 `(DeviceNode)-[HAS_SUBSIDY_POLICY]->(PlanNode)<-[APPLIES_TO_PLAN]-(DomainRuleNode)` 경로 수를 센다 → `gql_paths` |
-
-`steps` 인자는 결과의 `executed_steps`에 기록된다. 현재 핸들러는 선택한 Step과 관계없이 두 쿼리를 모두 실행한다.
+| `verify_gql_templates` | 선택된 엔진의 `STARTER_ONTOLOGY_GRAPH`에서 `GRAPH_TABLE`로 `(DeviceNode)-[HAS_SUBSIDY_POLICY]->(PlanNode)<-[APPLIES_TO_PLAN]-(DomainRuleNode)` 경로 수를 센다 → `gql_paths` |
 
 ## 절차 (`pipeline/graph_builder.py`의 `build_graph()`)
 
-1. **BigQuery DDL 생성**: `CREATE OR REPLACE PROPERTY GRAPH <프로젝트>.<데이터셋>.STARTER_ONTOLOGY_GRAPH` → `data/output/create_property_graph.sql`
+1. **BigQuery & Spanner DDL 생성**:
+   - `data/output/create_property_graph.sql` (BigQuery `CREATE OR REPLACE PROPERTY GRAPH <프로젝트>.<데이터셋>.STARTER_ONTOLOGY_GRAPH`)
+   - `data/output/create_spanner_graph.sql` (Cloud Spanner 10개 테이블 + `CREATE OR REPLACE PROPERTY GRAPH STARTER_ONTOLOGY_GRAPH`)
 
    | 노드 레이블 | 테이블 | 키 |
    | :--- | :--- | :--- |
@@ -51,13 +56,10 @@ Stage 1·2에서 적재한 테이블을 복사하지 않고 그대로 그래프�
    | `HAS_SUBSIDY_POLICY` | `edge_subsidy_binding` | 단말 → 요금제 (지원금 정책) |
    | `APPLIES_TO_PLAN` | `edge_rule_applies_to_plan` | 규칙 → 요금제 |
 
-2. **DDL 실행**: `deploy_live_bq=True`(기본값)이면 BigQuery에서 DDL을 실행한다.
-3. **검증 질의**: 약정 → 단말, 약정 → 요금제 ← 규칙 경로를 `GRAPH_TABLE`로 조회한다 (최대 10행).
-4. **노드 통계**: 노드 테이블 6개의 행 수와 중복 키 수를 센다.
-5. **Spanner DDL 생성**: 테이블 5개와 `StarterOntologyGraph`(노드 5, 엣지 3)를 파일로 쓴다. `tb_doc_chunks`와 `APPLIES_TO_PLAN`은 들어가지 않으며, 실행하지 않는다.
-6. **토폴로지 기록**: DDL 실행 Job, 검증 질의 결과, 노드 통계, 뷰어용 그래프 정의를 `data/output/graph_topology.json`에 쓴다.
-
-`DocChunkNode`는 노드로 선언되지만 연결된 엣지가 없다. 규칙과 근거 청크는 `APPLIES_TO_PLAN` 엣지의 `source_chunk_id` 속성으로 `tb_doc_chunks`에 조인해 연결한다.
+2. **DDL 실행**: 활성 엔진 설정에 따라 BigQuery 및 Cloud Spanner(`starter-spanner/starter_ontology_db`)에서 `CREATE OR REPLACE PROPERTY GRAPH` DDL을 실행한다.
+3. **양대 엔진 검증 질의 및 N-run 벤치마크**: 동일한 3-Hop `GRAPH_TABLE` 질의를 BigQuery와 Cloud Spanner에서 각각 5회 반복 실행하여 `p50_ms`, `p95_ms`, `mean_ms`와 반환 행 수를 측정한다.
+4. **Graph Fabric 연합 질의 (`EXTERNAL_QUERY`)**: `"both"` 모드에서는 `EXTERNAL_QUERY("projects/<project>/locations/asia-northeast3/connections/spanner_fabric_conn", ...)`를 실행해 Spanner Graph 멀티홉 결과와 BigQuery `tb_doc_chunks`를 실시간 조인한다.
+5. **토폴로지 기록**: 양대 엔진 배포 상태, 벤치마크(`engine_comparison_benchmark`), 연합 조인(`graph_fabric_federated_probe`), 노드 통계를 `data/output/graph_topology.json`에 기록한다.
 
 ## 에이전트가 쓰는 GQL 패턴 (`mcp_query_graph_and_wiki`)
 
@@ -66,32 +68,30 @@ Stage 1·2에서 적재한 테이블을 복사하지 않고 그대로 그래프�
 | 고객 ID 있음 | `(c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode), (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)` | 3 |
 | 고객 ID 없음 | `(d:DeviceNode)-[hs:HAS_SUBSIDY_POLICY]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)` | 2 |
 
-두 경우 모두 `ap.source_chunk_id`로 `tb_doc_chunks`를 조인해 근거 문단(`chunk_text`)과 앵커를 붙인다.
+두 경우 모두 `ap.source_chunk_id`로 `tb_doc_chunks`를 조인해 근거 문단(`chunk_text`)과 앵커를 붙인다 (`engine="bigquery"` 및 `engine="spanner"` 모두 동일하게 동작).
 
 ## 산출물
 
 | ID | 산출물 | 스타터에서 |
 | :--- | :--- | :--- |
-| `D3.1` | BigQuery Property Graph 물리 DDL 스크립트 | `data/output/create_property_graph.sql` (Spanner용 `create_spanner_graph.sql`은 생성만) |
+| `D3.1` | BigQuery & Spanner Property Graph 물리 DDL 스크립트 | `data/output/create_property_graph.sql`, `data/output/create_spanner_graph.sql` |
 | `D3.2` | 그래프 토폴로지 구조도 및 데이터플로우 명세서 | `data/output/graph_topology.json` |
-| `D3.3` | GQL 질의 패턴 카탈로그 및 템플릿 엔진 | 위 GQL 패턴 (`src/agent/mcp_server.py`, `pipeline/graph_builder.py`). 별도 카탈로그 파일은 없다 |
-| `D3.4` | SQL vs GQL 성능·비용 벤치마크 보고서 | 스타터 미포함 (측정 파일 없음) |
+| `D3.3` | GQL 질의 패턴 카탈로그 및 템플릿 엔진 | 위 GQL 패턴 (`src/agent/mcp_server.py`, `pipeline/graph_builder.py`) |
+| `D3.4` | BigQuery vs Spanner GQL 성능 벤치마크 및 Graph Fabric 검증 | `data/output/graph_topology.json` 내 `engine_comparison_benchmark` 및 `graph_fabric_federated_probe` |
 
 ## 게이트 (Gate 3)
 
 - [ ] `graph_topology.json`의 `live_bigquery_deployment.ddl_execution.status`가 `SUCCESS`다.
-- [ ] `gql_verification_probe.row_count`가 0보다 크다.
+- [ ] Spanner 활성 시 `live_spanner_deployment.ddl_execution.status`가 `SUCCESS`이고 `gql_verification_probe.row_count > 0`이다.
+- [ ] `both` 모드 시 `graph_fabric_federated_probe.status`가 `SUCCESS`다.
 - [ ] `metrics.duplicate_entity_nodes`와 Stage 3 MCP의 `duplicate_keys_total`이 0이다.
-- [ ] Spanner를 쓸 계획이면 `create_spanner_graph.sql`을 Spanner에 직접 적용하고 검증한다 (스타터 범위 밖).
 
 ## 스튜디오에서 보기
 
 [Stage 3. Property Graph 탭 열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3)
 
-- 위쪽 `BigQuery Property Graph` / `Cloud Spanner Graph` 전환: 오른쪽 DDL 뷰가 `create_property_graph.sql` / `create_spanner_graph.sql`로 바뀐다.
-- 왼쪽: Property Graph 뷰어 (`graph_topology.json`의 `vis_property_graph`).
-- `▶ 멀티홉 GQL 실행` 버튼: `mcp_query_graph_and_wiki`를 BigQuery에서 실행한다.
-- `▶ Stage 3 MCP 실행` 버튼 (오른쪽 위): 위 MCP를 실행한다.
+- 위쪽 `BigQuery Property Graph` / `Cloud Spanner Graph` 전환: 오른쪽 DDL 뷰가 바뀌고 선택 엔진이 전환된다.
+- 오른쪽 상단 `▶ 선택 엔진 GQL 실행` 및 `▶ 양대 엔진 비교 실행` 버튼: BigQuery와 Cloud Spanner에서 실시간 `GRAPH_TABLE` 멀티홉 탐색을 실행하고 지연 시간·결과를 비교한다.
 
 ## 노트북
 

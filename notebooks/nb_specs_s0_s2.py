@@ -329,14 +329,16 @@ cqs = H.read_json("data/input/04_cq/golden_competency_questions.json")
 H.show(H.check_cq_sql(cqs))
 bcs = H.read_json("data/input/04_cq/boundary_cases.json")
 H.show(bcs, ["case_id", "root_cause_code", "missing_context", "query", "expected_behavior"])"""),
+        md(f"### 6. {'[Phase 2e: 그래프 엔진 선택 5축 의사결정 체크리스트] BigQuery Property Graph(기본값) · Cloud Spanner Graph(100 PU) · Graph Fabric(`both`) 선정 기준 확인' if ko else '[Phase 2e: 5-Axis Graph Engine Selection Checklist] BigQuery Property Graph (Default) vs. Cloud Spanner Graph (100 PU) vs. Graph Fabric (`both`)'}"),
+        code("""H.show(H.engine_selection_checklist_df())"""),
         nav_footer(
             1, lang,
             qa_items=[
                 (
-                    "왜 온톨로지와 그래프를 만들기 전에 Golden CQ와 `verification_sql`을 먼저 정의하나요?" if ko
-                    else "Why do we define Golden CQs and `verification_sql` before building the ontology and graph?",
-                    "에이전트가 답해야 할 질문과 결정론적 정답 산식(`expected_math`, `verification_sql`, `grounded_chunk`)을 Stage 1에서 먼저 확정해야 불필요한 테이블 적재를 막고(Scoping), Stage 5에서 에이전트 답변을 SQL 실측치와 1:1 자동 대조할 수 있기 때문입니다." if ko
-                    else "Defining target CQs and deterministic ground-truth SQL (`expected_math`, `verification_sql`, `grounded_chunk`) in Stage 1 scopes only the necessary tables/guides and provides an automated grading oracle in Stage 5."
+                    "왜 온톨로지와 그래프를 만들기 전에 Golden CQ와 `verification_sql`, 그리고 5축 그래프 엔진 선택 체크리스트를 먼저 정의하나요?" if ko
+                    else "Why do we define Golden CQs, `verification_sql`, and the 5-Axis Graph Engine Selection Checklist before building the ontology and graph?",
+                    "에이전트가 답해야 할 질문과 결정론적 정답 산식(`expected_math`, `verification_sql`, `grounded_chunk`), 그리고 워크로드 특성(원천 저장소, 지연시간 SLO, 동시 처리량, 갱신 주기, 데이터 규모)에 따른 물리 그래프 엔진(`bigquery` 기본값 | `spanner` | `both`)을 Stage 1에서 먼저 확정해야 불필요한 테이블 적재나 인프라 과투자를 막고 Stage 3·5에서 정량 검증할 수 있기 때문입니다." if ko
+                    else "Defining target CQs, deterministic ground-truth SQL (`expected_math`, `verification_sql`, `grounded_chunk`), and the 5-Axis Graph Engine Selection Checklist (`bigquery` default | `spanner` | `both`) in Stage 1 scopes only the necessary tables/infrastructure and provides an automated grading oracle in Stage 3 and Stage 5."
                 ),
             ],
             findings=[
@@ -344,8 +346,8 @@ H.show(bcs, ["case_id", "root_cause_code", "missing_context", "query", "expected
                 else "All 10 tables (62 rows) in `starter_ontology_dw` are populated and verified via `INFORMATION_SCHEMA.COLUMNS`, with `0` de-identification violations across `CUST_DEMO_001~006`.",
                 "6명의 고객 약정 중 5건(`elapsed_days`: 45~120일)이 180일 의무유지 기간 이내에 있어 요금제 하향 시 일할 차액정산 또는 복지 면제 규칙 판정이 필요합니다." if ko
                 else "5 of the 6 customer contracts (`elapsed_days`: 45–120 days) are within the 180-day mandatory retention window, requiring prorated penalty or welfare exemption evaluation upon plan downgrade.",
-                "Golden CQ 5종(`CQ-01`~`CQ-05`)의 `verification_sql`을 BigQuery에서 직접 실행한 결과, `expected_math`와 5건 모두 일치(`match=True`)함을 확인했습니다." if ko
-                else "Executing `verification_sql` for all 5 Golden CQs (`CQ-01`–`CQ-05`) on live BigQuery matched `expected_math` in all 5 cases (`match=True`)."
+                "Golden CQ 5종(`CQ-01`~`CQ-05`)의 `verification_sql`을 BigQuery에서 직접 실행한 결과, `expected_math`와 5건 모두 일치(`match=True`)하며, 5축 그래프 엔진 체크리스트(`input_manifest.json`)를 통해 기본값인 `bigquery`와 듀얼 엔진(`both`) 구성 기준을 확인했습니다." if ko
+                else "Executing `verification_sql` for all 5 Golden CQs (`CQ-01`–`CQ-05`) on live BigQuery matched `expected_math` in all 5 cases (`match=True`), and the 5-Axis Graph Engine Selection Checklist (`input_manifest.json`) verified the selection criteria for `bigquery` (default), `spanner`, and `both` (Graph Fabric)."
             ],
             next_steps=[
                 "다음 단계인 `Stage 2 (파싱·통합)` 노트북으로 이동하여 비정형 정책 가이드 마크다운을 SHA-256 해시 앵커 청크로 파싱하고, Karpathy 3-Layer LLM-Wiki 및 시맨틱 온톨로지 그래프로 통합하는 과정을 확인하세요." if ko

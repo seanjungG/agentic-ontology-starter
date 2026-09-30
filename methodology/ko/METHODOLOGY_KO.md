@@ -28,26 +28,30 @@
 
 트랙은 프로젝트 `project.json`의 `track`으로 정한다. 기본값 `auto`는 `tables`에 등록된 고객 정형 CSV가 실제로 존재하면 `standard`, 문서만 있고 정형 CSV가 없으면 `lite`로 자동 결정한다.
 
-| 트랙 | 활성 Stage | 물리 그래프 엔진 | 적용 환경 및 동작 방식 |
+| 트랙 | 활성 Stage | 물리 그래프 엔진 (`graph_engine`) | 적용 환경 및 동작 방식 |
 | :--- | :---: | :---: | :--- |
 | **Track 1 · Lite** | `Stage 1 → 2 → 4 → 5(citation)` | `none` (청크·문서 기반 위키) | 정형 테이블 없이 원본 문서(`customer_doc/`)만 유입되었을 때. `extract_wiki.py`가 문서에서 `Entity`(Node)·`Concept`(Edge) 위키를 추출하고, 에이전트는 전체 청크(300,000자 한도)를 컨텍스트로 받아 `[DOC_CHUNK_XXX]`를 인용해 답하며 `evidence_type: "citation"` CQ로 채점한다 |
-| **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (또는 Spanner DDL) | 정형 DW 원장(`CUSTOMER_PROVIDED`)과 비정형 위키(`EXTRACTED`)를 Property Graph로 통합해 다중 홉 GQL 추론과 2-Pass MCP 오케스트레이션을 수행할 때 |
-| **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` | 선언형 리니지(`config/lineage_spec.json`), Golden CQ(`sql` + `citation`), 경계값 벤치마크(10건×5회) 및 Terraform Cloud Run 배포까지 전주기를 운영할 때 |
+| **Track 2 · Standard** | `Stage 1 → 2 → 3 → 4` | `bigquery` (기본) \| `spanner` (선택) \| `both` (Graph Fabric) | 정형 DW 원장(`CUSTOMER_PROVIDED`)과 비정형 위키(`EXTRACTED`)를 Property Graph로 통합해 다중 홉 GQL 추론과 2-Pass MCP 오케스트레이션을 수행할 때 |
+| **Track 3 · Full** | `Stage 1 → 2 → 3 → 4 → 5` | `bigquery` (기본) \| `spanner` (선택) \| `both` (Graph Fabric) | 선언형 리니지(`config/lineage_spec.json`), Golden CQ(`sql` + `citation`), 경계값 벤치마크(10건×5회) 및 Terraform Cloud Run 배포까지 전주기를 운영할 때 |
 
-### 3.1 유입 데이터 상황별 대응 및 데이터 출처(`provenance`) 원칙
+### 3.1 유입 데이터 상황별 대응, 5축 그래프 엔진 선택 체크리스트 및 출처(`provenance`) 원칙
 
+- **5축 그래프 엔진 선택 체크리스트 (`project.json` → `input_manifest.json`)**:
+  - Stage 1에서 `source_system`(원천 위치), `latency_slo`(응답 지연 목표), `concurrency`(동시 처리량), `write_freshness`(갱신 주기), `data_scale`(데이터 규모·비용) 5개 축을 점검해 `graph_engine`을 결정한다.
+  - **기본값(`"bigquery"`)**: Zero-ETL 논리 뷰 기반 대규모 분석 및 유휴 비용 0원.
+  - **선택형(`"spanner"`)**: Cloud Spanner Enterprise(최소 100 PU) 기반 수십~수백 ms 온라인 멀티홉 탐색.
+  - **듀얼·연동(`"both"`)**: 양쪽 엔진에 동일한 10개 테이블과 `STARTER_ONTOLOGY_GRAPH`를 적재하고, BigQuery `EXTERNAL_QUERY(spanner_fabric_conn)`를 통해 Spanner 실시간 그래프 탐색 결과와 BigQuery 문서 청크·원장을 단일 SQL로 연합 조인(Graph Fabric)한다.
 - **정형 테이블 없이 그래프(Stage 3)나 SQL 평가 요청 시**: 임의로 합성 테이블을 생성하지 않고 즉시 중단한 뒤 사용자에게 **(a) 고객 정형 CSV 추가 제공, (b) 문서 기반 물리 그래프(별도 설계), (c) 합성 데모 시드 사용(명시적 승인 필요)** 또는 **`lite` 트랙 전환**을 확인받는다.
 - **타 산업·신규 스키마 유입 시 모듈 오버라이드**: 통신 샘플과 다른 테이블 스키마가 들어오면 공용 파이프라인 코드를 수정하지 않고 `projects/<id>/project.json`의 `ingest_module`·`graph_module`·`mcp_module`·`engine_module`·`validator_module`에 프로젝트 전용 모듈을 지정한다.
 - **출처(`provenance`) 3등급 구분**: 모든 데이터는 `CUSTOMER_PROVIDED`(고객 직접 제공 CSV), `EXTRACTED`(고객 문서에서 코드로 추출한 청크·위키), `SYNTHETIC_DEMO`(기본 데모 전용 합성 시드)로 구분하며, 고객 프로젝트에는 데모 시드나 `industry_cases` 파일 적재를 차단한다.
 
-> 참고: Cloud Spanner Graph는 DDL 생성(`data/output/create_spanner_graph.sql`)을 지원하며, 라이브 쿼리 실행은 BigQuery Property Graph(`STARTER_ONTOLOGY_GRAPH`)를 사용한다.
-
 ## 4. 런타임 리소스 및 MCP 8종 명세
 
-### 4.1 BigQuery `starter_ontology_dw` (10개 테이블 + `STARTER_ONTOLOGY_GRAPH`)
+### 4.1 BigQuery `starter_ontology_dw` & Cloud Spanner `starter_ontology_db` (10개 테이블 + `STARTER_ONTOLOGY_GRAPH`)
 
-- **노드 테이블 6종**: `tb_device_master`(4), `tb_plan_master`(6), `tb_subsidy_policy`(6), `tb_customer_contract`(6), `tb_domain_rules`(4), `tb_doc_chunks`(5)
+- **노드 테이블 6종**: `tb_device_master`(4), `tb_plan_master`(6), `tb_subsidy_policy`(5), `tb_customer_contract`(6), `tb_domain_rules`(4), `tb_doc_chunks`(5)
 - **엣지 테이블 4종**: `edge_contract_device`(6), `edge_contract_plan`(6), `edge_subsidy_binding`(7), `edge_rule_applies_to_plan`(12)
+- **Graph Fabric 연결**: `projects/<project>/locations/asia-northeast3/connections/spanner_fabric_conn` (`EXTERNAL_QUERY` 연합 조인용)
 - **GCS 위키 버킷**: `gs://seanjung-poc-starter-ontology` (`raw/`, `parsed/`, `ontology/` 3-Layer 마크다운 및 매니페스트)
 
 ### 4.2 MCP 도구 8종 (`src/agent/mcp_server.py`)

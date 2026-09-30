@@ -55,8 +55,8 @@
 - 트랙은 프로젝트 `project.json`의 `track`으로 정합니다. 기본값 `auto`는 `tables`에 등록된 CSV가 있으면 `standard`, 없으면 `lite`로 정하고 이유를 `input_manifest.json`에 남깁니다.
   - **Scenario A (문서만 있음)** → `lite` (추출 → Gate 0 → 청크·문서 기반 위키 적재 → citation CQ 평가)
   - **Scenario A2 (문서만 있는데 그래프·SQL 평가 요청)** → 멈추고 묻습니다: (a) 고객에게 테이블 요청 (b) 문서 기반 물리 그래프(미구현, 별도 요청) (c) 합성 데모 데이터(승인 필요)
-  - **Scenario B (고객이 준 테이블 + 정책 문서)** → `standard`, `config/starter_config.json`의 `"graph_engine": "bigquery"` (`Stage 1 → 2 → 3 → 4`)
-  - **Scenario C (실시간 운영 그래프 DDL 필요)** → `standard` + `create_spanner_graph.sql`
+  - **Scenario B (고객이 준 테이블 + 정책 문서)** → `standard`, `project.json`의 `"graph_engine": "bigquery"` (기본값, Zero-ETL) (`Stage 1 → 2 → 3 → 4`)
+  - **Scenario C (실시간 운영 그래프 또는 Graph Fabric 연동 필요)** → 5축 그래프 엔진 선택 체크리스트(`source_system`, `latency_slo`, `concurrency`, `write_freshness`, `data_scale`)를 점검하여 `project.json`의 `"graph_engine"`을 `"spanner"` 또는 `"both"`(`EXTERNAL_QUERY` 연합 조인)로 설정
   - **Scenario D (리니지 + 50회 경계값 평가 + 배포 게이트)** → `full` (`Stage 1 → 2 → 3 → 4 → 5`)
 - `industry_cases/`의 참조 템플릿(제조·금융·리테일·통신 8종)은 스키마와 규칙 구조 참고용입니다. 데이터를 복사하면 `SYNTHETIC_DEMO` 표시와 사용자 승인이 필요합니다.
 
@@ -69,10 +69,10 @@
 
 ### Step 2. 인제스트 및 3-Layer 위키 컴파일 수정 (`pipeline/ingest.py`)
 - `DOMAIN_RULES`는 원문 조항을 인용해 `source_chunk_id`·인용문과 함께 정의합니다. `lite`에서는 `pipeline/extract_wiki.py`가 청크에서 entity(node)·concept(edge)를 뽑고, 인용이 청크에 없는 항목은 제외합니다.
-- `python3 pipeline/ingest.py`를 실행하여 `data/llm_wiki/*.md`, `tb_doc_chunks`(SHA-256 해시 포함), `tb_domain_rules`, 정형 테이블·엣지 테이블을 BigQuery와 GCS에 실제 적재합니다.
+- `python3 pipeline/ingest.py`를 실행하여 `data/llm_wiki/*.md`, `tb_doc_chunks`(SHA-256 해시 포함), `tb_domain_rules`, 정형 테이블·엣지 테이블을 설정된 엔진(`bigquery` 기본 | `spanner` | `both`)과 GCS에 실제 적재합니다.
 
-### Step 3. Property Graph DDL 갱신 (`pipeline/graph_builder.py`)
-- (Track 2/3인 경우) 새 노드 테이블과 엣지 테이블을 묶는 `CREATE OR REPLACE PROPERTY GRAPH` DDL을 갱신하고 `python3 pipeline/graph_builder.py`로 BigQuery에 그래프를 생성합니다.
+### Step 3. Property Graph DDL 갱신 및 양대 엔진 검증 (`pipeline/graph_builder.py`)
+- (Track 2/3인 경우) 새 노드 테이블과 엣지 테이블을 묶는 `CREATE OR REPLACE PROPERTY GRAPH` DDL을 갱신하고 `python3 pipeline/graph_builder.py`로 BigQuery Property Graph(및 `"spanner"`/`"both"` 설정 시 Cloud Spanner Graph + `EXTERNAL_QUERY` 연합 조인)를 생성·검증합니다.
 
 ### Step 4. 런타임 MCP 도구 3종 및 에이전트 슬롯 연결 (`src/agent/mcp_server.py`, `src/agent/reasoning_engine.py`)
 - Stage MCP 5종(`mcp_stage1_asset_discovery` ~ `mcp_stage5_lineage_and_eval`)의 함수 시그니처는 그대로 유지합니다.

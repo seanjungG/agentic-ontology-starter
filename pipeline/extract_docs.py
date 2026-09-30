@@ -87,6 +87,30 @@ def _strip_repeats(pages: list) -> tuple:
     return pages, removed
 
 
+DEFAULT_ENGINE_CHECKLIST = {
+    "source_system": "bigquery_dw",
+    "latency_slo": "seconds_ok",
+    "concurrency": "analytical_qps",
+    "write_freshness": "batch_or_hourly",
+    "data_scale": "tb_to_pb",
+}
+
+
+def _engine_manifest_fields(root: str) -> dict:
+    meta_path = os.path.join(root, "config/project.json" if os.path.abspath(root) == BASE_DIR else "project.json")
+    meta = {}
+    if os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+    raw_cl = meta.get("graph_engine_checklist") or {}
+    checklist = {k: raw_cl.get(k) or v for k, v in DEFAULT_ENGINE_CHECKLIST.items()}
+    return {
+        "graph_engine": meta.get("graph_engine") or "bigquery",
+        "graph_engine_reason": meta.get("graph_engine_reason") or "",
+        "graph_engine_checklist": checklist,
+    }
+
+
 def extract_project(root: str, track: dict = None) -> dict:
     """track: {"track", "track_reason"} from src.project_context.resolve_track, recorded in the manifest."""
     src_dir, out_dir = os.path.join(root, DOC_DIR), os.path.join(root, GUIDE_DIR)
@@ -115,7 +139,7 @@ def extract_project(root: str, track: dict = None) -> dict:
                      "chars_original": len(nonws("".join(raw))), "chars_written": len(nonws("".join(pages))),
                      "removed_header_footer_lines": removed})
     manifest = {"extractor": "pipeline/extract_docs.py", "status": "NEEDS_OCR" if needs_ocr else "OK",
-                **(track or {}), "documents": docs, "needs_ocr": needs_ocr}
+                **(track or {}), **_engine_manifest_fields(root), "documents": docs, "needs_ocr": needs_ocr}
     with open(os.path.join(root, MANIFEST), "w", encoding="utf-8", newline="\n") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
         f.write("\n")

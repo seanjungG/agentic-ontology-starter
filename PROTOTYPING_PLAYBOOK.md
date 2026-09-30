@@ -113,18 +113,21 @@
 
 ---
 
-### Scenario C: 실시간 운영 인터락 · Spanner Graph DDL이 필요한 경우 (`Track 2 + Spanner`)
+### Scenario C: 실시간 운영 인터락 · Cloud Spanner Graph 및 Graph Fabric 연동이 필요한 경우 (`Track 2/3 + Spanner / Both`)
 
-- **적합한 경우**: 분석용 BigQuery Property Graph뿐 아니라, **실시간 온라인 트랜잭션(OLTP) 환경인 Cloud Spanner Graph로의 이관·병행 아키텍처(`INTERLEAVE IN PARENT`)**를 고객에게 함께 제시해야 할 때.
+- **적합한 경우**: 분석용 BigQuery Property Graph(기본값)뿐 아니라, **5축 그래프 엔진 선택 체크리스트**(`source_system`, `latency_slo`, `concurrency`, `write_freshness`, `data_scale`) 점검 결과 실시간 온라인 트랜잭션(OLTP, 수십~수백 ms) 서빙을 위한 **Cloud Spanner Graph(최소 100 PU)** 또는 **BigQuery `EXTERNAL_QUERY` 기반 Graph Fabric 연합 조인(`both` 모드)**이 필요할 때.
 - **Step-by-Step 수정 포인트**:
-  - Scenario B의 1~5단계를 동일하게 수행하면서, `pipeline/graph_builder.py`의 `build_spanner_ddl()` 함수가 새 도메인 노드/엣지 스키마에 맞는 `data/output/create_spanner_graph.sql`을 생성하도록 매핑합니다.
-  - 스튜디오 `Stage 3. Property Graph` 탭에서 BigQuery Graph DDL과 Spanner Graph DDL을 나란히 비교 시연할 수 있습니다.
+  1. `project.json`: `"graph_engine"`을 `"spanner"` 또는 `"both"`로 설정하고 `"graph_engine_checklist"` 5축 판단 근거를 기록합니다. (별도 지정이 없을 때의 기본값은 `"bigquery"`입니다.)
+  2. `terraform/terraform.tfvars`: `graph_engine = "both"`(또는 `"spanner"`) 설정 후 `python3 terraform/apply_terraform.py`를 실행하여 Spanner 인스턴스(`starter-spanner`, 100 PU), 데이터베이스(`starter_ontology_db`), BigQuery Spanner 연결(`spanner_fabric_conn`)을 선언적으로 프로비저닝합니다.
+  3. `python3 pipeline/ingest.py`와 `python3 pipeline/graph_builder.py`를 실행하면 양쪽 엔진에 10개 테이블과 `STARTER_ONTOLOGY_GRAPH`가 배포되고, N-run `p50/p95` 비교 벤치마크 및 `EXTERNAL_QUERY` 연합 조인이 검증됩니다.
+  4. 스튜디오 `Stage 3. Property Graph` 및 `Stage 4. Agent & MCP` 탭에서 `BigQuery Graph (Default)`와 `Spanner Graph (Online)`를 실시간 전환하며 8종 MCP 도구를 모두 실행할 수 있습니다.
 
 #### Jetski / Cursor 복사-붙여넣기 프롬프트 (Scenario C)
 ```text
 @01_prod.md @GEMINI.md @PROTOTYPING_PLAYBOOK.md 를 먼저 읽고 준수해줘.
-[Scenario C: BigQuery Property Graph + Cloud Spanner Graph 이중 DDL 프로토타이핑]을 수행해줘.
-Scenario B 절차에 더해 pipeline/graph_builder.py의 build_spanner_ddl()이 우리 도메인 엔티티의 부모-자식 계층(INTERLEAVE IN PARENT)을 반영한 data/output/create_spanner_graph.sql을 생성하도록 업데이트하고 python3 pipeline/graph_builder.py를 실행해줘.
+[Scenario C: BigQuery Property Graph(기본) + Cloud Spanner Graph(선택) & Graph Fabric(both) 프로토타이핑]을 수행해줘.
+1. project.json의 graph_engine_checklist 5축(source_system, latency_slo, concurrency, write_freshness, data_scale)을 점검해 기록하고 graph_engine을 "both"(또는 "spanner")로 설정해줘.
+2. pipeline/ingest.py와 pipeline/graph_builder.py를 실행해 양쪽 엔진에 테이블과 STARTER_ONTOLOGY_GRAPH를 반영하고, BigQuery vs Spanner p50/p95 지연 시간 비교 및 EXTERNAL_QUERY 연합 조인 결과를 보고해줘.
 ```
 
 ---

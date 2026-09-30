@@ -1,13 +1,37 @@
 {
-  "_readme": "Project metadata for the bundled sample (repository root). Added projects live in projects/<id>/project.json (see new_project.py). Empty gcp values fall back to src/gcp_client.py defaults (env GCP_PROJECT_ID, BQ_DATASET_ID, GCS_WIKI_BUCKET).",
+  "_readme": "Project metadata for the bundled sample (repository root). Added projects live in projects/<id>/project.json (see new_project.py). Empty gcp values fall back to src/gcp_client.py defaults (env GCP_PROJECT_ID, BQ_DATASET_ID, GCS_WIKI_BUCKET, SPANNER_INSTANCE_ID, SPANNER_DATABASE_ID, BQ_SPANNER_CONNECTION_ID).",
   "project_id": "starter-telecom-sample",
   "project_name": "Telecom Subsidy & Contract (De-identified Sample)",
   "customer_org": "Sample",
   "domain": "Device subsidy, plan-change penalty, 24-month TCO",
   "track": "full",
-  "tables": ["data/input/03_tables/devices.csv", "data/input/03_tables/plans.csv", "data/input/03_tables/subsidies.csv",
-             "data/input/03_tables/customer_contracts.csv", "data/input/03_tables/domain_rules.csv", "data/input/03_tables/rule_plan_edges.csv"],
-  "synthetic": {"allowed": true, "reason": "De-identified demo data bundled with the starter; not customer data."},
-  "graph_engine": "bigquery",
-  "gcp": {"project_id": "", "dataset_id": "", "gcs_bucket": ""}
+  "tables": [
+    "data/input/03_tables/devices.csv",
+    "data/input/03_tables/plans.csv",
+    "data/input/03_tables/subsidies.csv",
+    "data/input/03_tables/customer_contracts.csv",
+    "data/input/03_tables/domain_rules.csv",
+    "data/input/03_tables/rule_plan_edges.csv"
+  ],
+  "synthetic": {
+    "allowed": true,
+    "reason": "De-identified demo data bundled with the starter; not customer data."
+  },
+  "graph_engine": "both",
+  "graph_engine_reason": "Dual-engine benchmark (BigQuery Property Graph default + Cloud Spanner Graph online serving) and Graph Fabric EXTERNAL_QUERY federation.",
+  "graph_engine_checklist": {
+    "source_system": "both_dw_and_oltp",
+    "latency_slo": "under_50ms_and_batch",
+    "concurrency": "mixed_analytical_and_serving",
+    "write_freshness": "streaming_and_daily",
+    "data_scale": "sub_tb_to_pb"
+  },
+  "gcp": {
+    "project_id": "",
+    "dataset_id": "",
+    "gcs_bucket": "",
+    "spanner_instance_id": "",
+    "spanner_database_id": "",
+    "bq_spanner_connection_id": ""
+  }
 }

@@ -4,41 +4,41 @@
 
 ## 목적
 
-에이전트가 질문을 파라미터와 하위 목표로 나누고, BigQuery를 조회하는 MCP 도구를 호출한 뒤, 도구 결과에 있는 값만으로 답하게 한다.
-답변에는 규칙 ID, 근거 청크 ID, BigQuery Job ID가 들어간다.
+에이전트가 질문을 파라미터와 하위 목표로 나누고, 선택된 물리 엔진(`engine="bigquery"` 기본 또는 `engine="spanner"`)을 조회하는 8종 MCP 도구를 호출한 뒤, 도구 결과에 있는 값만으로 답하게 한다.
+답변에는 규칙 ID, 근거 청크 ID, 실행 백엔드 식별자(BigQuery Job ID 또는 Spanner Database ID)가 들어간다.
 
 ## 입력
 
-- 사용자 질문 (자연어)
-- BigQuery 테이블 10개와 `STARTER_ONTOLOGY_GRAPH` (Stage 1~3)
+- 사용자 질문 (자연어) 및 그래프 엔진 선택(`"bigquery"` 기본 \| `"spanner"`)
+- BigQuery(`starter_ontology_dw`) 또는 Cloud Spanner(`starter-spanner/starter_ontology_db`) 테이블 10개와 `STARTER_ONTOLOGY_GRAPH` (Stage 1~3)
 - Vertex AI Gemini 모델 (환경 변수 `VERTEX_GEMINI_MODEL`, 기본값 `gemini-3.8-flash`)
 
-MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 있다. 모두 `src/agent/mcp_server.py`의 `DomainMcpServer`에 있다.
+MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 있다. 모두 `src/agent/mcp_server.py`의 `DomainMcpServer`에 있으며 `engine="bigquery" | "spanner"`를 모두 지원한다.
 
 ## 이 Stage의 MCP
 
 ### `mcp_stage4_agent_orchestration`
 
-| Step | 실제 수행 |
+| Step | 실제 수행 (`engine="bigquery" \| "spanner"`) |
 | :--- | :--- |
 | `decompose_subgoals` | 이 MCP에서는 수행하지 않는다. 하위 목표 분해는 에이전트가 Gemini로 한다 |
 | `dispatch_domain_mcps` | 이 MCP에서는 수행하지 않는다. 도구 호출은 에이전트가 한다 |
-| `verify_grounding_anchors` | 규칙 4개와 근거 청크 앵커를 조회한다 (`tb_domain_rules`와 `tb_doc_chunks` 조인) → `active_rules` |
+| `verify_grounding_anchors` | 선택된 엔진(`bigquery` 또는 `spanner`)에서 규칙 4개와 근거 청크 앵커를 조회한다 (`tb_domain_rules`와 `tb_doc_chunks` 조인) → `active_rules` |
 
-`steps` 인자는 결과의 `executed_steps`에 기록된다. 현재 핸들러는 선택한 Step과 관계없이 위 조회를 실행한다.
+`steps` 인자는 결과의 `executed_steps`에 기록된다.
 
 ### 런타임 MCP 3종
 
-공통 인자(`resolve_params`): `customer_id`, `device_name`, `storage_gb`, `plan_name`, `monthly_fee_krw`, `target_plan_name`, `target_monthly_fee_krw`, `elapsed_days`.
+공통 인자(`resolve_params`): `customer_id`, `device_name`, `storage_gb`, `plan_name`, `monthly_fee_krw`, `target_plan_name`, `target_monthly_fee_krw`, `elapsed_days`, `engine`(`"bigquery"` 기본 \| `"spanner"`).
 인자 없이 `query`(자연어)만 주면 질문의 숫자와 카탈로그 이름을 규칙 기반으로 뽑는다. 카탈로그에 없는 단말·요금제 이름은 버린다.
 
-| 도구 | Steps | 수행 | 반환 상태 |
+| 도구 | Steps | 수행 (`bigquery` & `spanner` 양대 엔진 지원) | 반환 상태 |
 | :--- | :--- | :--- | :--- |
-| `mcp_lookup_customer_profile` | `lookup_contract`, `lookup_device_price`, `lookup_subsidy_policy` | 약정·단말·요금제·지원금을 조인해 총지원금과 할부원금을 계산하고 `RULE_SUBSIDY_CAP`의 근거 청크를 붙인다 | `SUCCESS`, `MATCH_NOT_FOUND` (실제 요금제·지원금 목록을 함께 반환) |
-| `mcp_calculate_penalty_rule` | `check_exemptions`, `compute_180d_prorated_clawback`, `compare_24m_tco` | 위약금 판정과 24개월 비용 비교를 SQL 한 번으로 계산한다 (아래 순서) | `SUCCESS`, `INSUFFICIENT_PARAMETERS` (고객 ID와 단말이 모두 없을 때), `MATCH_NOT_FOUND` |
-| `mcp_query_graph_and_wiki` | `traverse_property_graph`, `fetch_okf_hash_anchor`, `verify_dw_schema` | `GRAPH_TABLE` 경로 탐색 후 근거 청크 원문을 조인한다 ([Stage 3 GQL 패턴](./03_stage3_property_graph_ko.md)) | `SUCCESS`, `MATCH_NOT_FOUND` |
+| `mcp_lookup_customer_profile` | `lookup_contract`, `lookup_device_price`, `lookup_subsidy_policy` | 선택된 엔진에서 약정·단말·요금제·지원금을 조인해 총지원금과 할부원금을 계산하고 `RULE_SUBSIDY_CAP`의 근거 청크를 붙인다 | `SUCCESS`, `MATCH_NOT_FOUND` (실제 요금제·지원금 목록을 함께 반환) |
+| `mcp_calculate_penalty_rule` | `check_exemptions`, `compute_180d_prorated_clawback`, `compare_24m_tco` | 선택된 엔진에서 위약금 판정과 24개월 비용 비교를 SQL 한 번으로 계산한다 (아래 순서) | `SUCCESS`, `INSUFFICIENT_PARAMETERS` (고객 ID와 단말이 모두 없을 때), `MATCH_NOT_FOUND` |
+| `mcp_query_graph_and_wiki` | `traverse_property_graph`, `fetch_okf_hash_anchor`, `verify_dw_schema` | 선택된 엔진의 `STARTER_ONTOLOGY_GRAPH`에서 `GRAPH_TABLE` 경로 탐색 후 근거 청크 원문을 조인한다 ([Stage 3 GQL 패턴](./03_stage3_property_graph_ko.md)) | `SUCCESS`, `MATCH_NOT_FOUND` |
 
-BigQuery 오류는 모든 도구에서 `BQ_QUERY_ERROR`로 반환한다 (0건으로 바꾸지 않는다).
+백엔드 쿼리 오류는 `BQ_QUERY_ERROR` 또는 `SPANNER_QUERY_ERROR`로 반환한다 (0건으로 바꾸지 않는다).
 
 `mcp_calculate_penalty_rule`의 판정 순서:
 

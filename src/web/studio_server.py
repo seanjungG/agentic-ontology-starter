@@ -1268,6 +1268,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div class="ov-card">
           <div class="ov-card-head">
             <span class="ov-eyebrow teal">SECTION 2 · HYBRID ONTOLOGY &amp; DUAL GRAPH ENGINE ARCHITECTURE</span>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <span class="badge human">Default: BigQuery Property Graph</span>
+              <span class="badge indigo">Opt-in: Cloud Spanner Graph + EXTERNAL_QUERY</span>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="/docs/architecture/gcp_system_architecture.html" target="_blank" rel="noopener">GCP 시스템 아키텍처 다이어그램 (HTML)</a>
+            </div>
           </div>
           <h2 class="ov-h2" data-ko="비정형 3-Layer Wiki + 정형 Zero-ETL 듀얼 Property Graph + 8대 모듈형 MCP 아키텍처" data-en="Unstructured 3-Layer Wiki + Zero-ETL Dual Property Graph + 8 Modular MCP Architecture">비정형 3-Layer Wiki + 정형 Zero-ETL 듀얼 Property Graph + 8대 모듈형 MCP 아키텍처</h2>
           <div class="ov-diagram-zone">
@@ -1313,29 +1318,29 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
               <div class="ovd-band b-indigo">
                 <div class="ovd-band-head">
-                  <span class="ovd-band-title">BAND 2 · Structured DW &amp; Dual Property Graph Track (Stage 3 · BigQuery Graph / Spanner Graph)</span>
-                  <span class="ovd-band-sub">create_property_graph.sql (ISO SQL:2023) &harr; create_spanner_graph.sql (ISO GQL)</span>
+                  <span class="ovd-band-title">BAND 2 · Structured DW &amp; Dual Property Graph Track (Stage 3 · BigQuery Graph [Default] / Spanner Graph [Opt-in] / Graph Fabric)</span>
+                  <span class="ovd-band-sub">create_property_graph.sql (ISO SQL:2023) &harr; create_spanner_graph.sql (ISO GQL) &harr; EXTERNAL_QUERY(spanner_fabric_conn)</span>
                 </div>
                 <div class="ovd-flow">
                   <div class="ovd-node">
-                    <span class="ovd-node-kicker">DE-IDENTIFIED DW LEDGERS</span>
-                    <span class="ovd-node-title">정형 마스터 원장 4종</span>
-                    <span class="ovd-node-desc"><code>customer_contracts</code>, <code>devices</code>, <code>plans</code>, <code>subsidies</code></span>
+                    <span class="ovd-node-kicker">5-AXIS ENGINE CHECKLIST</span>
+                    <span class="ovd-node-title">5축 그래프 엔진 선택 기준</span>
+                    <span class="ovd-node-desc"><code>source_system</code> &middot; <code>latency_slo</code> &middot; <code>concurrency</code> &middot; <code>write_freshness</code> &middot; <code>data_scale</code></span>
                   </div>
                   <div class="ovd-node hi-indigo">
-                    <span class="ovd-node-kicker">ZERO-ETL PROMOTION</span>
-                    <span class="ovd-node-title">무복제 물리 노드 승격</span>
-                    <span class="ovd-node-desc">데이터 복제 없이 원장 PK/FK를 그래프 노드·엣지로 직접 투영</span>
-                  </div>
-                  <div class="ovd-node hi-indigo">
-                    <span class="ovd-node-kicker">ENGINE A · OLAP</span>
+                    <span class="ovd-node-kicker">ENGINE A · DEFAULT (OLAP)</span>
                     <span class="ovd-node-title">BigQuery Property Graph</span>
-                    <span class="ovd-node-desc">대규모 DW 분석 및 <code>GRAPH_TABLE()</code> 멀티홉 추론</span>
+                    <span class="ovd-node-desc">Zero-ETL 무복제 논리 그래프 &middot; 대규모 DW 분석 및 유휴 비용 0원</span>
                   </div>
                   <div class="ovd-node hi-indigo">
-                    <span class="ovd-node-kicker">ENGINE B · OLTP</span>
+                    <span class="ovd-node-kicker">ENGINE B · OPT-IN (OLTP)</span>
                     <span class="ovd-node-title">Cloud Spanner Graph</span>
-                    <span class="ovd-node-desc">초저지연 실시간 트랜잭션 및 고빈도 온라인 GQL 서빙</span>
+                    <span class="ovd-node-desc">100 PU 최소 구성 &middot; 인덱스 포인터 기반 수십~수백 ms 실시간 멀티홉 탐색</span>
+                  </div>
+                  <div class="ovd-node hi-indigo">
+                    <span class="ovd-node-kicker">GRAPH FABRIC (BOTH MODE)</span>
+                    <span class="ovd-node-title">BigQuery EXTERNAL_QUERY</span>
+                    <span class="ovd-node-desc"><code>spanner_fabric_conn</code>을 통해 Spanner 실시간 그래프와 BigQuery 원장·청크 연합 조인</span>
                   </div>
                 </div>
               </div>
@@ -1349,12 +1354,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
                   <div class="ovd-node hi-purple">
                     <span class="ovd-node-kicker">PIPELINE AUTOMATION</span>
                     <span class="ovd-node-title">Stage 1~5 파이프라인 MCP</span>
-                    <span class="ovd-node-desc">각 Stage의 세부 Step 배열(<code>steps=[...]</code>) 선택·단독 실행</span>
+                    <span class="ovd-node-desc">각 Stage의 세부 Step 배열(<code>steps=[...]</code>) 및 <code>engine</code> 선택 실행</span>
                   </div>
                   <div class="ovd-node hi-purple">
                     <span class="ovd-node-kicker">RUNTIME DOMAIN MCP</span>
                     <span class="ovd-node-title">런타임 실행 MCP 3종</span>
-                    <span class="ovd-node-desc">고객원장 조회 &middot; 결정론적 위약금/TCO 산식 &middot; 그래프/위키 탐색</span>
+                    <span class="ovd-node-desc">고객원장 조회 &middot; 결정론적 위약금/TCO 산식 &middot; 듀얼 그래프/위키 탐색</span>
                   </div>
                   <div class="ovd-node">
                     <span class="ovd-node-kicker">4-TIER LINEAGE</span>
@@ -1364,7 +1369,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
                   <div class="ovd-node">
                     <span class="ovd-node-kicker">CLOSED-LOOP EVAL</span>
                     <span class="ovd-node-title">Golden CQ 5 &amp; Boundary 10</span>
-                    <span class="ovd-node-desc">실제 에이전트(Gemini + BigQuery) 반복 실행 결과로 정확도·강건성 실측 (pipeline/validator.py)</span>
+                    <span class="ovd-node-desc">실제 에이전트(Gemini + BigQuery/Spanner) 반복 실행 결과로 정확도·강건성 실측</span>
                   </div>
                 </div>
               </div>
@@ -1579,17 +1584,22 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <div class="pane-card">
             <div class="pane-head">
               <span class="pane-title" id="st3-ddl-title">BigQuery ISO SQL:2023 Property Graph DDL (create_property_graph.sql)</span>
-              <div style="display:flex; gap:6px;">
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <button class="subnav-action-btn" style="padding:3px 10px; font-size:11px;" onclick="copyActiveGraphDdl()">DDL 복사</button>
-                <button class="subnav-action-btn" style="padding:3px 10px; font-size:11px; color:var(--apple-blue);" onclick="runSampleGqlTraversal()">▶ 멀티홉 GQL 실행</button>
+                <button class="subnav-action-btn" style="padding:3px 10px; font-size:11px; color:var(--apple-blue);" onclick="runSampleGqlTraversal()">▶ 선택 엔진 GQL 실행</button>
+                <button class="subnav-action-btn" style="padding:3px 10px; font-size:11px; color:var(--apple-indigo);" onclick="runDualEngineComparison()">▶ 양대 엔진 비교 실행</button>
               </div>
             </div>
-            <div class="pane-body" style="display:flex; flex-direction:column; gap:12px;">
-              <pre class="code-pre-light" id="st3-ddl-code" style="flex:1; max-height:310px;">-- Loading Property Graph DDL...</pre>
-              <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; padding:12px 14px; font-size:12px; color:#0f172a;" id="st3-gql-result">
+            <div class="pane-body" style="display:flex; flex-direction:column; gap:10px;">
+              <pre class="code-pre-light" id="st3-ddl-code" style="flex:1; max-height:245px;">-- Loading Property Graph DDL...</pre>
+              <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px 12px; font-size:11.5px; color:#0f172a;" id="st3-benchmark-box">
+                <div style="font-weight:800; color:#4f46e5; margin-bottom:4px;">[Dual-Engine Benchmark &amp; Graph Fabric (EXTERNAL_QUERY) Telemetry]</div>
+                <div style="color:#475569;">Loading measured BigQuery vs. Cloud Spanner p50/p95 latency and Graph Fabric federation status...</div>
+              </div>
+              <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; padding:10px 12px; font-size:12px; color:#0f172a;" id="st3-gql-result">
                 <div style="font-weight:800; color:#0f766e; margin-bottom:4px;">[GQL Multi-Hop Traversal Preview]</div>
                 <code>MATCH (c:CustomerContractNode)-[:BOUND_TO_POLICY]->(s:SubsidyNode)-[:REQUIRES_PLAN]->(p:PlanNode)&lt;-[:APPLIES_RULE]-(r:DomainRuleNode)-[:GROUNDED_IN]->(ch:DocChunkNode)</code>
-                <div style="margin-top:6px; color:#334155;">우측 상단의 <b>▶ 멀티홉 GQL 실행</b> 버튼을 클릭하면 <code>mcp_query_graph_and_wiki</code> 어댑터를 통한 3-Hop 탐색 결과를 즉시 검증합니다.</div>
+                <div style="margin-top:6px; color:#334155;">우측 상단의 <b>▶ 선택 엔진 GQL 실행</b> 또는 <b>▶ 양대 엔진 비교 실행</b> 버튼을 클릭하면 실시간 멀티홉 탐색 결과를 검증합니다.</div>
               </div>
             </div>
           </div>
@@ -1626,6 +1636,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <span style="font-size:13.5px; font-weight:800; color:var(--apple-text-primary); margin-left:6px;" id="agent-mode-title">동적 하위 목표 분해 &amp; 결정론적 MCP 체이닝 콘솔</span>
             </div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <div class="apple-segmented-control">
+                <button class="segment-btn active" id="st4-btn-bq" onclick="selectGraphEngine('bigquery')">BigQuery Graph (Default)</button>
+                <button class="segment-btn" id="st4-btn-sp" onclick="selectGraphEngine('spanner')">Spanner Graph (Online)</button>
+              </div>
               <a class="subnav-action-btn" style="text-decoration:none; padding:3px 9px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/04_stage4_agent_and_mcp_ko.md" target="_blank" rel="noopener">방법론 (Stage 4)</a>
               <a class="subnav-action-btn" style="text-decoration:none; padding:3px 9px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 4)</a>
               <span class="badge approved" id="agent-engine-pill">Engine: BigQuery Graph</span>
@@ -1935,12 +1949,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
       const k = ['bigquery', 'spanner'][idx];
       b.classList.toggle('active', k === engineKey);
     });
-    const bqBtn = document.getElementById('st3-btn-bq');
-    const spBtn = document.getElementById('st3-btn-sp');
-    if (bqBtn && spBtn) {
-      bqBtn.classList.toggle('active', engineKey === 'bigquery');
-      spBtn.classList.toggle('active', engineKey === 'spanner');
-    }
+    ['st3', 'st4'].forEach(prefix => {
+      const bqBtn = document.getElementById(prefix + '-btn-bq');
+      const spBtn = document.getElementById(prefix + '-btn-sp');
+      if (bqBtn && spBtn) {
+        bqBtn.classList.toggle('active', engineKey === 'bigquery');
+        spBtn.classList.toggle('active', engineKey === 'spanner');
+      }
+    });
     if (globalGraph) updateStage3DdlView();
   }
 
@@ -2223,6 +2239,38 @@ HTML_PAGE = r"""<!DOCTYPE html>
     document.getElementById('st3-ddl-code').textContent = isSpanner
       ? (globalGraph.spanner_ddl || '-- Spanner DDL not loaded')
       : (globalGraph.ddl || '-- BigQuery DDL not loaded');
+
+    const benchBox = document.getElementById('st3-benchmark-box');
+    if (benchBox) {
+      const topo = globalGraph.topology || {};
+      const cmp = topo.engine_comparison_benchmark || {};
+      const bq = cmp.bigquery || cmp.bigquery_property_graph || {};
+      const sp = cmp.spanner || cmp.cloud_spanner_graph || {};
+      const fab = topo.graph_fabric_federated_probe || {};
+      benchBox.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-weight:800; color:#4f46e5;">[Dual-Engine Benchmark &amp; Graph Fabric (EXTERNAL_QUERY) Telemetry]</span>
+          <span class="badge approved">${esc(cmp.runs_per_engine || cmp.runs || 5)}-Run Measured</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; font-family:var(--font-mono); font-size:11px;">
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px;">
+            <strong style="color:#0284c7;">BigQuery Graph (Default)</strong><br>
+            p50: <b>${esc(bq.p50_ms ?? '-')} ms</b> &middot; p95: <b>${esc(bq.p95_ms ?? '-')} ms</b><br>
+            Rows: ${esc(bq.row_count ?? bq.rows_returned ?? '-')} &middot; Zero-ETL View
+          </div>
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px;">
+            <strong style="color:#4f46e5;">Spanner Graph (Opt-in)</strong><br>
+            p50: <b>${esc(sp.p50_ms ?? '-')} ms</b> &middot; p95: <b>${esc(sp.p95_ms ?? '-')} ms</b><br>
+            Rows: ${esc(sp.row_count ?? sp.rows_returned ?? '-')} &middot; 100 PU Online
+          </div>
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px;">
+            <strong style="color:#059669;">Graph Fabric (EXTERNAL_QUERY)</strong><br>
+            Status: <b>${esc(fab.status || '-')}</b> (${esc(fab.elapsed_ms ?? '-')} ms)<br>
+            Conn: <code>spanner_fabric_conn</code> (${esc(fab.row_count ?? '-')} rows)
+          </div>
+        </div>
+      `;
+    }
   }
 
   function renderPropertyGraph() {
@@ -2278,6 +2326,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   async function runSampleGqlTraversal() {
     const box = document.getElementById('st3-gql-result');
+    box.innerHTML = `<div style="color:#0f766e; font-weight:700;">Running GQL traversal on ${esc(activeGraphEngine.toUpperCase())}...</div>`;
     const res = await fetch('/api/mcp/execute', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -2285,10 +2334,44 @@ HTML_PAGE = r"""<!DOCTYPE html>
     });
     const d = await res.json();
     box.innerHTML = `
-      <div style="font-weight:800; color:#0f766e; margin-bottom:4px;">[GQL Multi-Hop Execution Result · Engine: ${esc(d.graph_engine || activeGraphEngine).toUpperCase()}]</div>
-      <div style="font-family:var(--font-mono); font-size:11.5px; margin-bottom:4px;">Graph: <b>${esc(d.graph_name)}</b> &middot; Hops: <b>${d.traversal_hops}</b> &middot; Matched Nodes: <b>${d.matched_nodes}</b></div>
+      <div style="font-weight:800; color:#0f766e; margin-bottom:4px;">[GQL Multi-Hop Execution Result · Engine: ${esc(d.graph_engine || activeGraphEngine).toUpperCase()} (${esc(d.elapsed_ms ?? '-')} ms)]</div>
+      <div style="font-family:var(--font-mono); font-size:11.5px; margin-bottom:4px;">Graph: <b>${esc(d.graph_name)}</b> &middot; Hops: <b>${d.traversal_hops}</b> &middot; Matched Nodes: <b>${d.matched_nodes}</b> &middot; Backend: <code>${esc(d.bq_job_id || d.spanner_database || '-')}</code></div>
       <div style="font-family:var(--font-mono); font-size:11.5px; color:#1e293b;">Path: ${esc(d.gql_path)}</div>
       <div style="margin-top:4px; font-size:11.5px; color:#059669; font-weight:700;">Grounded Anchors: ${(d.grounded_anchors || []).join(' · ')}</div>
+    `;
+  }
+
+  async function runDualEngineComparison() {
+    const box = document.getElementById('st3-gql-result');
+    box.innerHTML = `<div style="color:#4f46e5; font-weight:700;">Running live BigQuery Property Graph vs. Cloud Spanner Graph comparison...</div>`;
+    const [bqRes, spRes] = await Promise.all([
+      fetch('/api/mcp/execute', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ tool_name: 'mcp_query_graph_and_wiki', args: { engine: 'bigquery' } })
+      }).then(r => r.json()),
+      fetch('/api/mcp/execute', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ tool_name: 'mcp_query_graph_and_wiki', args: { engine: 'spanner' } })
+      }).then(r => r.json())
+    ]);
+    box.innerHTML = `
+      <div style="font-weight:800; color:#4f46e5; margin-bottom:6px;">[Live Side-by-Side Execution · BigQuery Property Graph vs. Cloud Spanner Graph]</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-family:var(--font-mono); font-size:11px;">
+        <div style="background:#ffffff; border:1px solid #bae6fd; border-radius:6px; padding:8px;">
+          <strong style="color:#0284c7;">1. BigQuery Property Graph (SQL:2023)</strong><br>
+          Status: <b>${esc(bqRes.status)}</b> &middot; Latency: <b>${esc(bqRes.elapsed_ms ?? '-')} ms</b><br>
+          Matched Rows: <b>${esc(bqRes.matched_nodes)}</b> &middot; Job: <code>${esc(bqRes.bq_job_id || '-')}</code><br>
+          Anchors: ${(bqRes.grounded_anchors || []).join(', ')}
+        </div>
+        <div style="background:#ffffff; border:1px solid #c7d2fe; border-radius:6px; padding:8px;">
+          <strong style="color:#4f46e5;">2. Cloud Spanner Graph (ISO GQL)</strong><br>
+          Status: <b>${esc(spRes.status)}</b> &middot; Latency: <b>${esc(spRes.elapsed_ms ?? '-')} ms</b><br>
+          Matched Rows: <b>${esc(spRes.matched_nodes)}</b> &middot; DB: <code>${esc(spRes.spanner_database || '-')}</code><br>
+          Anchors: ${(spRes.grounded_anchors || []).join(', ')}
+        </div>
+      </div>
     `;
   }
 
@@ -2922,6 +3005,16 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(HTML_PAGE.encode("utf-8"))
             return
+        if path in ("/docs/architecture/gcp_system_architecture.html", "/docs/architecture/gcp_system_architecture.png"):
+            arch_path = os.path.join(BASE_DIR, path.lstrip("/"))
+            if os.path.isfile(arch_path):
+                ctype = "image/png" if path.endswith(".png") else "text/html; charset=utf-8"
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.end_headers()
+                with open(arch_path, "rb") as f:
+                    self.wfile.write(f.read())
+                return
         if path == "/api/config":
             return self._json(load_json_file(STARTER_CONFIG_PATH, {}))
         if path == "/api/industry_cases":

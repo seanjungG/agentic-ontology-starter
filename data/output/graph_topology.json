@@ -1,17 +1,20 @@
 {
+  "graph_engine_mode": "both",
+  "default_runtime_engine": "bigquery",
   "graph_name": "seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH",
-  "spanner_graph_name": "StarterOntologyGraph",
-  "architecture_principle": "Dual-Engine Zero-ETL Property Graph (Entity=Node, Concept=Edge)",
+  "spanner_graph_name": "STARTER_ONTOLOGY_GRAPH",
+  "spanner_database_uri": "projects/seanjung-poc/instances/starter-spanner/databases/starter_ontology_db",
+  "architecture_principle": "Dual-Engine Property Graph & Graph Fabric Federation (Entity=Node, Concept=Edge)",
   "live_bigquery_deployment": {
     "ddl_execution": {
       "status": "SUCCESS",
-      "job_id": "job_YF1SPysPgrIHm2ov-z9CgtDSzpJ9",
-      "elapsed_ms": 753.61
+      "job_id": "job_q3tbUQXRCZlCmpUclpvCBWTH039Z",
+      "elapsed_ms": 2368.46
     },
     "gql_verification_probe": {
       "status": "SUCCESS",
-      "job_id": "job_ClXd3PnOJnPlHu724zLw-naEKVI0",
-      "elapsed_ms": 582.18,
+      "job_id": "job_I0WwK3l1bY4HCoxOKS6EWR7fOjmj",
+      "elapsed_ms": 552.12,
       "row_count": 10,
       "sample_rows": [
         {
@@ -45,7 +48,7 @@
     },
     "node_table_stats": {
       "status": "SUCCESS",
-      "job_id": "job_DRxZcX0KNYdVBDillNM9FVu53oWb",
+      "job_id": "job_04CnanAyzWGjQ92OOJxc3DPWioSf",
       "tables": [
         {
           "table_id": "tb_customer_contract",
@@ -79,6 +82,165 @@
         }
       ]
     }
+  },
+  "live_spanner_deployment": {
+    "status": "SUCCESS",
+    "instance_id": "starter-spanner",
+    "database_id": "starter_ontology_db",
+    "ddl_execution": {
+      "status": "SUCCESS",
+      "operation": "projects/seanjung-poc/instances/starter-spanner/databases/starter_ontology_db/operations/_auto_op_bc78cc2297c6a55c",
+      "elapsed_ms": 8720.67
+    },
+    "gql_verification_probe": {
+      "status": "SUCCESS",
+      "job_id": "spanner:starter-spanner/starter_ontology_db@1790743057540",
+      "elapsed_ms": 132.73,
+      "row_count": 10,
+      "sample_rows": [
+        {
+          "customer_id": "CUST_DEMO_001",
+          "contract_id": "CONTRACT_DEMO_101",
+          "device_name": "Galaxy S26 Ultra 256GB",
+          "plan_name": "5G Premier Essential",
+          "monthly_fee_krw": 85000,
+          "rule_name": "180일 기준선(45,000원) 의무유지 및 일할 차액위약금 규칙",
+          "relation_label_ko": "180일 기준선 유지 의무 적용"
+        },
+        {
+          "customer_id": "CUST_DEMO_001",
+          "contract_id": "CONTRACT_DEMO_101",
+          "device_name": "Galaxy S26 Ultra 256GB",
+          "plan_name": "5G Premier Essential",
+          "monthly_fee_krw": 85000,
+          "rule_name": "24개월 공시지원금 vs 25% 선택약정 총비용(TCO) 비교 규칙",
+          "relation_label_ko": "24개월 공시 vs 선택약정 비교 적용"
+        },
+        {
+          "customer_id": "CUST_DEMO_002",
+          "contract_id": "CONTRACT_DEMO_102",
+          "device_name": "Galaxy S26 Ultra 256GB",
+          "plan_name": "5G Premier Super",
+          "monthly_fee_krw": 130000,
+          "rule_name": "180일 기준선(45,000원) 의무유지 및 일할 차액위약금 규칙",
+          "relation_label_ko": "180일 기준선 유지 의무 적용"
+        }
+      ]
+    },
+    "node_table_stats": {
+      "status": "SUCCESS",
+      "job_id": "spanner:starter-spanner/starter_ontology_db@1790743058220",
+      "tables": [
+        {
+          "table_id": "tb_customer_contract",
+          "row_count": 6,
+          "duplicate_keys": 0
+        },
+        {
+          "table_id": "tb_device_master",
+          "row_count": 4,
+          "duplicate_keys": 0
+        },
+        {
+          "table_id": "tb_plan_master",
+          "row_count": 6,
+          "duplicate_keys": 0
+        },
+        {
+          "table_id": "tb_subsidy_policy",
+          "row_count": 5,
+          "duplicate_keys": 0
+        },
+        {
+          "table_id": "tb_domain_rules",
+          "row_count": 4,
+          "duplicate_keys": 0
+        },
+        {
+          "table_id": "tb_doc_chunks",
+          "row_count": 5,
+          "duplicate_keys": 0
+        }
+      ]
+    }
+  },
+  "engine_comparison_benchmark": {
+    "runs_per_engine": 5,
+    "query_pattern": "(c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode), (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[:APPLIES_TO_PLAN]-(r:DomainRuleNode)",
+    "bigquery": {
+      "engine": "BigQuery Property Graph",
+      "runs_ms": [
+        552.12,
+        669.39,
+        537.4,
+        552.15,
+        688.78
+      ],
+      "p50_ms": 552.15,
+      "p95_ms": 688.78,
+      "row_count": 10
+    },
+    "spanner": {
+      "engine": "Cloud Spanner Graph",
+      "runs_ms": [
+        132.73,
+        126.59,
+        120.3,
+        90.22,
+        81.25
+      ],
+      "p50_ms": 120.3,
+      "p95_ms": 132.73,
+      "row_count": 10
+    },
+    "identical_row_count": true
+  },
+  "graph_fabric_federated_probe": {
+    "status": "SUCCESS",
+    "connection_id": "projects/seanjung-poc/locations/asia-northeast3/connections/spanner_fabric_conn",
+    "job_id": "job_b-unK4W0wf3MmfMfYIIrWIC3W4pP",
+    "elapsed_ms": 1610.42,
+    "row_count": 10,
+    "sample_rows": [
+      {
+        "customer_id": "CUST_DEMO_001",
+        "contract_id": "CONTRACT_DEMO_101",
+        "device_name": "Galaxy S26 Ultra 256GB",
+        "plan_name": "5G Premier Essential",
+        "monthly_fee_krw": 85000,
+        "rule_id": "RULE_SIX_PLAN_180D",
+        "rule_name": "180일 기준선(45,000원) 의무유지 및 일할 차액위약금 규칙",
+        "source_chunk_id": "DOC_CHUNK_002",
+        "section_title": "Baseline Plan Commitment (Six-Plan Rule)",
+        "anchor": "anchor_3003b683cea0"
+      },
+      {
+        "customer_id": "CUST_DEMO_001",
+        "contract_id": "CONTRACT_DEMO_101",
+        "device_name": "Galaxy S26 Ultra 256GB",
+        "plan_name": "5G Premier Essential",
+        "monthly_fee_krw": 85000,
+        "rule_id": "RULE_TCO_24M",
+        "rule_name": "24개월 공시지원금 vs 25% 선택약정 총비용(TCO) 비교 규칙",
+        "source_chunk_id": "DOC_CHUNK_005",
+        "section_title": "24-Month Contract TCO Comparison Rule",
+        "anchor": "anchor_4fbaf9c5cba8"
+      },
+      {
+        "customer_id": "CUST_DEMO_002",
+        "contract_id": "CONTRACT_DEMO_102",
+        "device_name": "Galaxy S26 Ultra 256GB",
+        "plan_name": "5G Premier Super",
+        "monthly_fee_krw": 130000,
+        "rule_id": "RULE_SIX_PLAN_180D",
+        "rule_name": "180일 기준선(45,000원) 의무유지 및 일할 차액위약금 규칙",
+        "source_chunk_id": "DOC_CHUNK_002",
+        "section_title": "Baseline Plan Commitment (Six-Plan Rule)",
+        "anchor": "anchor_3003b683cea0"
+      }
+    ],
+    "executed_sql": "SELECT\n  sp.customer_id,\n  sp.contract_id,\n  sp.device_name,\n  sp.plan_name,\n  sp.monthly_fee_krw,\n  sp.rule_id,\n  sp.rule_name,\n  sp.source_chunk_id,\n  ch.section_title,\n  ch.content_sha256 AS anchor\nFROM EXTERNAL_QUERY(\n  'projects/seanjung-poc/locations/asia-northeast3/connections/spanner_fabric_conn',\n  '''SELECT customer_id, contract_id, device_name, plan_name, monthly_fee_krw, rule_id, rule_name, source_chunk_id\n     FROM GRAPH_TABLE(\n       STARTER_ONTOLOGY_GRAPH\n       MATCH (c:CustomerContractNode)-[:USES_DEVICE]->(d:DeviceNode),\n             (c)-[:SUBSCRIBES_PLAN]->(p:PlanNode)<-[e:APPLIES_TO_PLAN]-(r:DomainRuleNode)\n       COLUMNS (\n         c.customer_id AS customer_id,\n         c.contract_id AS contract_id,\n         d.device_name AS device_name,\n         p.plan_name AS plan_name,\n         p.monthly_fee_krw AS monthly_fee_krw,\n         r.rule_id AS rule_id,\n         r.rule_name AS rule_name,\n         e.source_chunk_id AS source_chunk_id\n       )\n     )'''\n) AS sp\nLEFT JOIN `seanjung-poc.starter_ontology_dw.tb_doc_chunks` ch\n  ON ch.chunk_id = sp.source_chunk_id\nORDER BY sp.customer_id, sp.rule_id\nLIMIT 10",
+    "error": null
   },
   "structured_dw_nodes": [
     "CustomerContractNode",

@@ -1,6 +1,8 @@
 {
   "gcs_uri": "gs://seanjung-poc-starter-ontology/",
   "bigquery_dataset": "seanjung-poc.starter_ontology_dw",
+  "spanner_database": "projects/seanjung-poc/instances/starter-spanner/databases/starter_ontology_db",
+  "graph_engine": "both",
   "status": "LIVE_GCP_SYNCED",
   "uploaded_gcs_objects": [
     "gs://seanjung-poc-starter-ontology/raw/sample_policy_guide.md",
@@ -16,68 +18,151 @@
     {
       "table": "tb_device_master",
       "rows": 4,
-      "job_id": "job_ExDH4T7sz1THgy4_AYquDXYvRcup",
+      "job_id": "job_cZvwjquIC_6vqZpRQw4kwwbyfmjn",
       "status": "SUCCESS"
     },
     {
       "table": "tb_plan_master",
       "rows": 6,
-      "job_id": "job_wnY_wpnNtFDFRID5sgmL0v6Sb46-",
+      "job_id": "job_yDiEttEe8YFMb0NOvpztub76n8w1",
       "status": "SUCCESS"
     },
     {
       "table": "tb_subsidy_policy",
       "rows": 5,
-      "job_id": "job_2gZVheUj-bMObNdm6dDzgTECyujy",
+      "job_id": "job_BOtW9NOHtPyQfwbmY2w8xOUFVTLY",
       "status": "SUCCESS"
     },
     {
       "table": "tb_customer_contract",
       "rows": 6,
-      "job_id": "job_Vr9tfI-An4Hec3zyzfGOGNUsZB7R",
+      "job_id": "job_Dlf3PkG9qGTOe5w8ZafA-ulVN4zu",
       "status": "SUCCESS"
     },
     {
       "table": "tb_doc_chunks",
       "rows": 5,
-      "job_id": "job_FxooMGI0PXjLgGtE_-S8X6WYtm1k",
+      "job_id": "job_OTGOUvVwW7gq-RmVBfRiz3ZVMfbP",
       "status": "SUCCESS"
     },
     {
       "table": "tb_domain_rules",
       "rows": 4,
-      "job_id": "job_-A88YNfCaQqtpagSYk2tBGSxE3su",
+      "job_id": "job_nO77gOY7S0hmWuaAm-pFkhh_Xsvk",
       "status": "SUCCESS"
     },
     {
       "table": "edge_contract_device",
       "rows": 6,
-      "job_id": "job_-0XSqulbiCgg6zell483YDjZM3PJ",
+      "job_id": "job_kYIHjaXeY5b9emyu15wtSdpfX2TM",
       "status": "SUCCESS"
     },
     {
       "table": "edge_contract_plan",
       "rows": 6,
-      "job_id": "job_wcyrA0FNOGz8FIhJghsv0grCfj50",
+      "job_id": "job_b4ZocaEDt6wL4BhOhAsjQAZp9RBe",
       "status": "SUCCESS"
     },
     {
       "table": "edge_subsidy_binding",
       "rows": 5,
-      "job_id": "job_vwFKim1TI7_TJhBoYGWYJiyGIJK9",
+      "job_id": "job_mXL_E77Z6vOT_Uamp9ldZ6SEjgih",
       "status": "SUCCESS"
     },
     {
       "table": "edge_rule_applies_to_plan",
       "rows": 12,
-      "job_id": "job_M46Al5W4a_WlHAPmJMSMR7Yi7Ufa",
+      "job_id": "job_soBySX7tMKQv8uCWuTJ8hVHiz5JK",
       "status": "SUCCESS"
     }
   ],
-  "sync_timestamp": "2026-09-29T22:48:54+09:00",
+  "spanner_load_jobs": [
+    {
+      "table": "tb_device_master",
+      "rows": 4,
+      "job_id": "spanner-commit:tb_device_master@2026-09-30T04:33:01.899110Z",
+      "commit_timestamp": "2026-09-30T04:33:01.899110Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 3768.4
+    },
+    {
+      "table": "tb_plan_master",
+      "rows": 6,
+      "job_id": "spanner-commit:tb_plan_master@2026-09-30T04:33:02.783113Z",
+      "commit_timestamp": "2026-09-30T04:33:02.783113Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 884.62
+    },
+    {
+      "table": "tb_subsidy_policy",
+      "rows": 5,
+      "job_id": "spanner-commit:tb_subsidy_policy@2026-09-30T04:33:03.586244Z",
+      "commit_timestamp": "2026-09-30T04:33:03.586244Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 817.02
+    },
+    {
+      "table": "tb_customer_contract",
+      "rows": 6,
+      "job_id": "spanner-commit:tb_customer_contract@2026-09-30T04:33:04.558126Z",
+      "commit_timestamp": "2026-09-30T04:33:04.558126Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 978.41
+    },
+    {
+      "table": "tb_doc_chunks",
+      "rows": 5,
+      "job_id": "spanner-commit:tb_doc_chunks@2026-09-30T04:33:04.775409Z",
+      "commit_timestamp": "2026-09-30T04:33:04.775409Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 196.52
+    },
+    {
+      "table": "tb_domain_rules",
+      "rows": 4,
+      "job_id": "spanner-commit:tb_domain_rules@2026-09-30T04:33:05.647841Z",
+      "commit_timestamp": "2026-09-30T04:33:05.647841Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 886.06
+    },
+    {
+      "table": "edge_contract_device",
+      "rows": 6,
+      "job_id": "spanner-commit:edge_contract_device@2026-09-30T04:33:06.572294Z",
+      "commit_timestamp": "2026-09-30T04:33:06.572294Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 926.32
+    },
+    {
+      "table": "edge_contract_plan",
+      "rows": 6,
+      "job_id": "spanner-commit:edge_contract_plan@2026-09-30T04:33:07.471194Z",
+      "commit_timestamp": "2026-09-30T04:33:07.471194Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 905.13
+    },
+    {
+      "table": "edge_subsidy_binding",
+      "rows": 5,
+      "job_id": "spanner-commit:edge_subsidy_binding@2026-09-30T04:33:08.325100Z",
+      "commit_timestamp": "2026-09-30T04:33:08.325100Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 879.71
+    },
+    {
+      "table": "edge_rule_applies_to_plan",
+      "rows": 12,
+      "job_id": "spanner-commit:edge_rule_applies_to_plan@2026-09-30T04:33:09.322453Z",
+      "commit_timestamp": "2026-09-30T04:33:09.322453Z",
+      "status": "SUCCESS",
+      "elapsed_ms": 956.36
+    }
+  ],
+  "sync_timestamp": "2026-09-30T13:33:09+09:00",
   "validation": {
     "chunk_count": 5,
     "guide_count": 2,
-    "bigquery_tables_loaded": 10
+    "bigquery_tables_loaded": 10,
+    "spanner_tables_loaded": 10
   }
 }

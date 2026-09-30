@@ -5,19 +5,19 @@ CREATE OR REPLACE PROPERTY GRAPH `seanjung-poc.starter_ontology_dw.STARTER_ONTOL
     `seanjung-poc.starter_ontology_dw.tb_customer_contract`
       KEY (contract_id)
       LABEL CustomerContractNode
-      PROPERTIES (contract_id, customer_id, customer_segment, age_group, device_id, plan_id, contract_type, commitment_months, elapsed_days, granted_subsidy_krw, welfare_status, status),
+      PROPERTIES (contract_id, customer_id, customer_segment, age_group, device_id, plan_id, contract_type, commitment_months, elapsed_days, granted_subsidy_krw, welfare_status, status, provenance, source_ref),
     `seanjung-poc.starter_ontology_dw.tb_device_master`
       KEY (device_id)
       LABEL DeviceNode
-      PROPERTIES (device_id, device_name, manufacturer, storage_gb, factory_price_krw, release_date),
+      PROPERTIES (device_id, device_name, manufacturer, storage_gb, factory_price_krw, release_date, provenance, source_ref),
     `seanjung-poc.starter_ontology_dw.tb_plan_master`
       KEY (plan_id)
       LABEL PlanNode
-      PROPERTIES (plan_id, plan_name, tier_category, monthly_fee_krw, min_maintenance_days, selective_discount_rate),
+      PROPERTIES (plan_id, plan_name, tier_category, monthly_fee_krw, min_maintenance_days, selective_discount_rate, provenance, source_ref),
     `seanjung-poc.starter_ontology_dw.tb_subsidy_policy`
       KEY (policy_id)
       LABEL SubsidyNode
-      PROPERTIES (policy_id, device_id, plan_id, base_subsidy_krw, additional_subsidy_cap_krw, mandatory_retention_days, effective_from),
+      PROPERTIES (policy_id, device_id, plan_id, base_subsidy_krw, additional_subsidy_cap_krw, mandatory_retention_days, effective_from, provenance, source_ref),
     `seanjung-poc.starter_ontology_dw.tb_doc_chunks`
       KEY (chunk_id)
       LABEL DocChunkNode
@@ -25,7 +25,7 @@ CREATE OR REPLACE PROPERTY GRAPH `seanjung-poc.starter_ontology_dw.STARTER_ONTOL
     `seanjung-poc.starter_ontology_dw.tb_domain_rules`
       KEY (rule_id)
       LABEL DomainRuleNode
-      PROPERTIES (rule_id, rule_name, rule_category, condition_expr, formula_expr, source_chunk_id, description_ko)
+      PROPERTIES (rule_id, rule_name, rule_category, condition_expr, formula_expr, source_chunk_id, description_ko, provenance, source_ref)
   )
   EDGE TABLES (
     `seanjung-poc.starter_ontology_dw.edge_contract_device`
@@ -51,5 +51,5 @@ CREATE OR REPLACE PROPERTY GRAPH `seanjung-poc.starter_ontology_dw.STARTER_ONTOL
       SOURCE KEY (rule_id) REFERENCES `seanjung-poc.starter_ontology_dw.tb_domain_rules` (rule_id)
       DESTINATION KEY (plan_id) REFERENCES `seanjung-poc.starter_ontology_dw.tb_plan_master` (plan_id)
       LABEL APPLIES_TO_PLAN
-      PROPERTIES (edge_id, rule_id, plan_id, source_chunk_id, relation_label_ko, edge_type)
+      PROPERTIES (edge_id, rule_id, plan_id, source_chunk_id, relation_label_ko, edge_type, provenance, source_ref)
   );
