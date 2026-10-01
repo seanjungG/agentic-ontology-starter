@@ -17,12 +17,44 @@ Spec-driven enterprise data lineage (DAG) engine for Stage 5.
 import json
 import os
 import time
-from collections import deque
+from collections import Counter, deque
 from typing import Any, Dict
 
 from src.gcp_client import execute_bq_sql, execute_spanner_sql, list_gcs_objects
 
 COL_X0, COL_DX, ROW_Y0 = 80, 380, 60
+
+
+def lane_layout(nodes, ci, lanes, gap=72, lgap=34, y0=70) -> Dict[str, int]:
+    """y per node id: document/table lane bands stacked in "lanes" order; merged (kind "merge") and shared nodes
+    are centered on the line between document and table lanes; shared nodes in a lane or merged column go below them."""
+    kind = {ln["id"]: ln["kind"] for ln in lanes}
+    lane = {n["id"]: n.get("lane") if n.get("lane") in kind else None for n in nodes}
+    cnt = Counter((ci[i], ln) for i, ln in lane.items())
+    stacked = [ln["id"] for ln in lanes if ln["kind"] != "merge" and ln["id"] in lane.values()]
+    rows = {ln: max(v for (c, x), v in cnt.items() if x == ln) for ln in stacked}
+    top, acc = {}, y0
+    for ln in stacked:
+        top[ln], acc = acc, acc + rows[ln] * gap + lgap
+    t = acc - lgap - y0
+    doc_end = max((top[x] + rows[x] * gap for x in stacked if kind[x] == "doc"), default=None)
+    tbl_top = min((top[x] for x in stacked if kind[x] == "table"), default=None)
+    mid = (doc_end + tbl_top) // 2 if doc_end and tbl_top else y0 + t // 2
+    merged = {c for (c, x) in cnt if x and kind[x] == "merge"}
+    m_h = max([v for (c, x), v in cnt.items() if x and kind[x] == "merge"] or [0]) * gap
+    has_lane = {c for (c, x) in cnt if x in top}
+    seen, y = Counter(), {}
+    for n in nodes:
+        i, c, ln = n["id"], ci[n["id"]], lane[n["id"]]
+        k, m = seen[(c, ln)], cnt[(c, ln)]
+        seen[(c, ln)] += 1
+        if ln in top:
+            y[i] = top[ln] + (rows[ln] - m) * gap // 2 + k * gap
+        elif (ln and kind[ln] == "merge") or (c not in has_lane and c not in merged):
+            y[i] = mid - (m * gap - 20) // 2 + k * gap
+        else:
+            y[i] = (y0 + t if c in has_lane else mid + m_h // 2) + lgap + k * gap
+    return y
 LIVE_TTL_SEC = 120
 GRAPH_SQL = ("SELECT property_graph_name AS g, property_graph_metadata_json AS m "
              "FROM {src}INFORMATION_SCHEMA.PROPERTY_GRAPHS")
@@ -99,6 +131,7 @@ class LineageEngine:
         counts = {k: sum(1 for v in ci.values() if v == k) for k in set(ci.values())}
         step = {k: 72 if m > 8 else 92 for k, m in counts.items()}
         height = max([counts[k] * step[k] for k in counts] or [0])
+        lane_y = lane_layout(visible, ci, spec["lanes"]) if spec.get("lanes") else {}
         per_col: Dict[int, int] = {}
         nodes = []
         for n in visible:
@@ -107,7 +140,7 @@ class LineageEngine:
             node = {**n, "col": c, "resource": self._fill(n.get("resource")), "volume": self._fill(n.get("volume")),
                     "volume_en": self._fill(n.get("volume_en") or n.get("volume")), "live": False, "live_src": ""}
             node.setdefault("x", COL_X0 + c * COL_DX)
-            node.setdefault("y", ROW_Y0 + (height - counts[c] * step[c]) // 2 + idx * step[c])
+            node.setdefault("y", lane_y.get(n["id"], ROW_Y0 + (height - counts[c] * step[c]) // 2 + idx * step[c]))
             measured, src = None, ""
             if n.get("bq_table"):
                 rows = live["rows"].get(n["bq_table"])
@@ -134,7 +167,7 @@ class LineageEngine:
 
         measured_nodes = [n for n in nodes if n["live_src"]]
         return {
-            "metadata": {"title": spec.get("title", ""), "fq": self.vars["fq"], "bq_status": live["status"],
+            "metadata": {"title": spec.get("title", ""), "fq": self.vars["fq"], "bq_status": live["status"], "lanes": spec.get("lanes", []),
                          "bq_job_id": live.get("job_id"), "bq_error": "; ".join(live["errors"]) or None,
                          "bq_nodes": len(measured_nodes), "live_nodes": sum(1 for n in measured_nodes if n["live"])},
             "stats": {"total_nodes": len(nodes), "total_edges": len(uniq), "total_categories": len(cats),

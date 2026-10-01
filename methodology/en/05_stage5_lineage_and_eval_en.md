@@ -25,7 +25,7 @@ Trace end-to-end data lineage from raw files (CSVs and policy guides) through Bi
 
 Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio lineage view (`src/lineage/lineage_engine.py`, `/api/lineage/{graph,trace,explain}`).
 
-- Spec: 7 category columns (data connection → GCP raw sources → data transformations → domain rules → ontology semantic → MCP → agents and evaluation), 3 presets, nodes, and edges. The sample has 37 nodes and 67 edges; each column is centred vertically.
+- Spec: 7 category columns (data connection → GCP raw sources → data transformations → domain rules → ontology semantic → MCP → agents and evaluation), 3 presets, nodes, and edges. The sample has 37 nodes and 67 edges. If the spec has `lanes`, nodes are placed in lanes; otherwise each column is centred vertically.
 - Structure rule: list only resources that the pipeline code actually reads or writes (GCS `raw/`, `parsed/`, `ontology/` uploads in `pipeline/ingest.py`, the 10 BigQuery tables, the Spanner graph when `graph_engine` is `spanner` or `both`, and agent final answer → rubric judge in `pipeline/validator.py`). Do not add virtual connectors or missing tables; update the spec when the code changes.
 - Volumes are measured on request (120 s cache): `bq_table` → BigQuery `__TABLES__` row count, `gcs_prefix` → GCS object count, `bq_graph` / `spanner_graph` → node and edge table count from `INFORMATION_SCHEMA.PROPERTY_GRAPHS`. A failed lookup is shown as `lookup failed` and is not replaced by another value. Only nodes without a measurement key (such as MCP tools) show the spec text.
 - There is no hidden layer. Domain rules are always shown in their own column.
@@ -38,10 +38,11 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 - Unstructured: RAW → parsing → parsed → re-extraction gate → `latest` → one box per ontology document. Relations between documents are not drawn as edges; their count is shown on the document box.
 - Edge tables: one box per kind.
 - Column layout: node columns (entity documents, node tables) come first and edge columns (concept documents, edge tables) follow in separate columns. Nodes and edges are not mixed in one column.
+- Lanes: up to the ontology stage, each document and each table gets its own horizontal lane. Structured tables are not grouped into one dataset box. Node tables, edge tables and the Property Graph form one Graph layer, which shows where documents and tables merge.
 - Agent inputs: the Wiki Agent reads the ontology `latest` on GCS (no BigQuery box); the BQG Agent reads the Property Graph.
 - A remote MCP server box that re-exposes the same full tool set is omitted (it adds no lineage information).
 
-The starter spec (`config/lineage_spec.json`) has one box per structured table (`RAW_TB_*`), one box per edge-table kind (`TR_EDGE_*`) and no remote MCP server box. Unstructured data flows guides → chunker (`TR_CHUNKER`) → GCS `parsed/` and a single Wiki box (`SEM_WIKI`); there is no re-extraction gate, no `latest` and no per-document box. There is one agent box, `AGENT_FDE`.
+The starter spec (`config/lineage_spec.json`) has one box per structured table (`RAW_TB_*`), one box per edge-table kind (`TR_EDGE_*`) and no remote MCP server box. Unstructured data flows guides → chunker (`TR_CHUNKER`) → GCS `parsed/` and a single Wiki box (`SEM_WIKI`); there is no re-extraction gate, no `latest` and no per-document box. There is one agent box, `AGENT_FDE`. Lanes: 2 documents (`DOC_POLICY`, `DOC_WELFARE`), 5 tables (`TBL_*`) and 1 Graph layer (`GRAPH`: node and edge tables, BigQuery and Spanner Graph). The starter processes both guides into one chunk table, so the chunker and `parsed/` boxes sit in a shared document lane (`DOC_SHARED`).
 
 ## Procedure (`pipeline/validator.py`)
 
