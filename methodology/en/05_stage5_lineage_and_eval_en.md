@@ -37,6 +37,7 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 - Structured: one box per table. A table and its graph label share one box.
 - Unstructured: RAW → parsing → parsed → re-extraction gate → `latest` → one box per ontology document. Relations between documents are not drawn as edges; their count is shown on the document box.
 - Edge tables: one box per kind.
+- Column layout: node columns (entity documents, node tables) come first and edge columns (concept documents, edge tables) follow in separate columns. Nodes and edges are not mixed in one column.
 - Agent inputs: the Wiki Agent reads the ontology `latest` on GCS (no BigQuery box); the BQG Agent reads the Property Graph.
 - A remote MCP server box that re-exposes the same full tool set is omitted (it adds no lineage information).
 
@@ -87,7 +88,7 @@ The starter spec (`config/lineage_spec.json`) has one box per structured table (
 - Evaluation screen order: A overall results → B CQ verification → C rubric criteria.
 - Rubric dimension names, definitions and judge instructions have Korean fields (`name_ko`, `desc_ko`, `judge_instructions_ko`) shown in Korean mode. The judge script keeps using the base fields.
 - Selecting a CQ shows the actual agent answer, the ground truth, per-dimension scores, deduction reasons and the retrieved evidence (chunks, rules, executed queries with job IDs).
-- The Overview shows only a summary: dimension averages, number of CQs with deductions, per-CQ score and a short evidence and deduction summary. It links to the evaluation screen for detail.
+- The Overview shows only a summary: dimension averages, number of CQs with deductions, per-CQ score and a short evidence and deduction summary. Clicking a CQ row expands its detail inside the same table. There is no direct link to the evaluation screen (use the tab when needed).
 
 The current starter implementation differs. The Stage 5 tab shows the Golden CQ table (expected, actual, evidence anchor, verdict) and the boundary table (`src/web/studio_server.py`). There is no per-CQ detail (dimension scores, deduction reasons, retrieved evidence), and `config/eval_rubric.json` has a single `description` field per dimension.
 

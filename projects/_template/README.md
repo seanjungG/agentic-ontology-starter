@@ -71,6 +71,7 @@ python3 run_pipeline.py --project acme-claims
 | `bq_table` | - | 지정하면 BigQuery `__TABLES__` 실측 행 수를 볼륨으로 표시 |
 | `volume` / `volume_en` | - | `bq_table`이 없을 때 표시할 값. 추정 수치는 적지 않음 |
 | `desc` / `desc_en` | - | 상세 패널 설명 |
+| `col` | - | 표시 열 번호. 지정하면 카테고리 열 대신 이 열에 놓는다. 노드 테이블 열 다음에 엣지 테이블 열을 따로 둘 때 사용 |
 | `x`, `y` | - | 생략하면 카테고리 열 기준 자동 배치 |
 
 - 엣지: `{"source": "<id>", "target": "<id>", "label": "<관계>"}`. 왼쪽에서 오른쪽으로 흐르게 하고 같은 열 안의 엣지는 피합니다.

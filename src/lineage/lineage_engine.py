@@ -94,17 +94,19 @@ class LineageEngine:
         visible = [n for n in spec.get("nodes", []) if n.get("cat") in col]
         live = self._measure(visible)
 
-        counts = {c: sum(1 for n in visible if n["cat"] == c) for c in col}
-        step = {c: 72 if k > 8 else 92 for c, k in counts.items()}
-        height = max([counts[c] * step[c] for c in col] or [0])
-        per_col: Dict[str, int] = {}
+        # column = optional spec "col" (e.g. node tables before edge tables), else the category order
+        ci = {n["id"]: n.get("col", col[n["cat"]]) for n in visible}
+        counts = {k: sum(1 for v in ci.values() if v == k) for k in set(ci.values())}
+        step = {k: 72 if m > 8 else 92 for k, m in counts.items()}
+        height = max([counts[k] * step[k] for k in counts] or [0])
+        per_col: Dict[int, int] = {}
         nodes = []
         for n in visible:
-            c = n["cat"]
+            c = ci[n["id"]]
             idx = per_col[c] = per_col.get(c, -1) + 1
-            node = {**n, "resource": self._fill(n.get("resource")), "volume": self._fill(n.get("volume")),
+            node = {**n, "col": c, "resource": self._fill(n.get("resource")), "volume": self._fill(n.get("volume")),
                     "volume_en": self._fill(n.get("volume_en") or n.get("volume")), "live": False, "live_src": ""}
-            node.setdefault("x", COL_X0 + col[c] * COL_DX)
+            node.setdefault("x", COL_X0 + c * COL_DX)
             node.setdefault("y", ROW_Y0 + (height - counts[c] * step[c]) // 2 + idx * step[c])
             measured, src = None, ""
             if n.get("bq_table"):
@@ -136,7 +138,7 @@ class LineageEngine:
                          "bq_job_id": live.get("job_id"), "bq_error": "; ".join(live["errors"]) or None,
                          "bq_nodes": len(measured_nodes), "live_nodes": sum(1 for n in measured_nodes if n["live"])},
             "stats": {"total_nodes": len(nodes), "total_edges": len(uniq), "total_categories": len(cats),
-                      "category_counts": counts},
+                      "category_counts": {c: sum(1 for n in visible if n["cat"] == c) for c in col}},
             "categories": cats, "presets": spec.get("presets", []), "nodes": nodes, "edges": uniq,
         }
 
