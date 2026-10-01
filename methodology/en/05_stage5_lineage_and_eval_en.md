@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Trace 4-tier data lineage from raw files (CSVs and policy guides) through BigQuery tables, `STARTER_ONTOLOGY_GRAPH`, and the 8 MCP tools to the agent, then verify the 5 Golden CQs and 10 boundary benchmark cases (×5 runs) before production deployment.
+Trace end-to-end data lineage from raw files (CSVs and policy guides) through BigQuery tables, `STARTER_ONTOLOGY_GRAPH`, and the 8 MCP tools to the agent, then verify the 5 Golden CQs and 10 boundary benchmark cases (×5 runs) before production deployment.
 
 ## Inputs
 
@@ -25,15 +25,16 @@ Trace 4-tier data lineage from raw files (CSVs and policy guides) through BigQue
 
 Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio lineage view (`src/lineage/lineage_engine.py`, `/api/lineage/{graph,trace,explain}`).
 
-- Spec: category columns (data connection → raw sources → transformations → PII and validation rules → ontology semantic → MCP → agents), presets, nodes, and edges. The sample has 36 nodes and 53 edges.
-- Volume: nodes with `bq_table` show the live BigQuery `__TABLES__` row count (green badge); other nodes show the value written in the spec.
-- The PII column is hidden by default; edges through hidden nodes are drawn from upstream to downstream (sample: hidden 31/45, shown 36/53).
+- Spec: 7 category columns (data connection → GCP raw sources → data transformations → domain rules → ontology semantic → MCP → agents and evaluation), 3 presets, nodes, and edges. The sample has 37 nodes and 67 edges; each column is centred vertically.
+- Structure rule: list only resources that the pipeline code actually reads or writes (GCS `raw/`, `parsed/`, `ontology/` uploads in `pipeline/ingest.py`, the 10 BigQuery tables, the Spanner graph when `graph_engine` is `spanner` or `both`, and agent final answer → rubric judge in `pipeline/validator.py`). Do not add virtual connectors or missing tables; update the spec when the code changes.
+- Volumes are measured on request (120 s cache): `bq_table` → BigQuery `__TABLES__` row count, `gcs_prefix` → GCS object count, `bq_graph` / `spanner_graph` → node and edge table count from `INFORMATION_SCHEMA.PROPERTY_GRAPHS`. A failed lookup is shown as `lookup failed` and is not replaced by another value. Only nodes without a measurement key (such as MCP tools) show the spec text.
+- There is no hidden layer. Domain rules are always shown in their own column.
 - Clicking a node highlights its upstream and downstream paths (BFS) and opens a detail panel (metadata, volume source, direct upstream and downstream, rule-based summary) with a link to the Stage 4 agent.
 - Per-project specs live in `projects/<id>/config/lineage_spec.json` (see [`projects/_template/README.md`](../../projects/_template/README.md)).
 
 ## Procedure (`pipeline/validator.py`)
 
-1. **4-Tier Lineage Mapping**:
+1. **Record-level lineage join (`build_4tier_lineage`)**:
    - Tier 0 (Raw Files): `sample_policy_guide.md`, `sample_welfare_exemption_guide.md`, 6 CSV files (or external customer documents/tables)
    - Tier 1 (Anchored Chunks): `tb_doc_chunks` (`DOC_CHUNK_001`–`005`, `content_sha256`, `origin_type`, `extract_method`, `source_locator`)
    - Tier 2 (Domain Rules & Bridges): `tb_domain_rules`, `edge_rule_applies_to_plan` (or `03_wiki/entities.md`, `concepts.md`)

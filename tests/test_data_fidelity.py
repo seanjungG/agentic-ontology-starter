@@ -168,6 +168,18 @@ class DataFidelityTest(unittest.TestCase):
         self.assertIn("GRAPH_TABLE(`STARTER_ONTOLOGY_GRAPH`", rewritten)
         self.assertNotIn(srv.fq, rewritten)
 
+    def test_t10_track_driven_project_workbench(self):
+        from src.web.project_workbench import recommend_gcp_resources, get_workbench_state
+        rec_std = recommend_gcp_resources("saas-sla-demo", "standard", "bigquery")
+        self.assertEqual(rec_std["dataset_id"], "saas_sla_demo_dw")
+        self.assertEqual(rec_std["graph_name"], "SAAS_SLA_DEMO_ONTOLOGY_GRAPH")
+        rec_lite = recommend_gcp_resources("policy-lite", "lite", "none")
+        self.assertEqual(rec_lite["graph_name"], "")
+        wb_lite = get_workbench_state({"project_id": "tmp", "root": self.root, "track": "lite", "graph_engine": "none"})
+        self.assertEqual(wb_lite["stages"]["stage3"]["status"], "BYPASSED")
+        wb_std = get_workbench_state({"project_id": "tmp", "root": self.root, "track": "standard", "graph_engine": "bigquery"})
+        self.assertEqual(wb_std["stages"]["stage3"]["status"], "PENDING")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -101,7 +101,7 @@
 | **Scenario A · 문서 전용 퀵스타트** | 고객 테이블 없이 **원본 문서(PDF·DOCX·MD·TXT)**만으로 원문 청크 + 3-Layer 위키 + 청크 인용 에이전트 Q&A 구축 | `lite` (`track: auto`) | `Stage 1 → 2 → 4` | `customer_doc/*`, `04_cq/*` (citation CQ), `portal_profile.json` |
 | **Scenario B · DW + 문서 하이브리드** *(기본 권장)* | **마스터/트랜잭션 CSV(DW 테이블) + 정책 문서**를 결합해 **BigQuery Property Graph(`ISO GQL`) 다중 홉 추론** 수행 | `standard` (`graph_engine: "bigquery"`) | `Stage 1 → 2 → 3 → 4` | `data/input/*`, `project.json`, `ingest.py` + `graph_builder.py`, `mcp_server.py`, `portal_profile.json` |
 | **Scenario C · 저지연 온라인 그래프 & Graph Fabric 확장** | Scenario B + 실시간 서빙용 **Cloud Spanner Graph(100 PU)** 및 **BigQuery `EXTERNAL_QUERY` 연합 조인(`both` 모드)** 동시 구성 | `standard` / `full` (`graph_engine: "spanner"` or `"both"`) | `Stage 1 → 2 → 3 → 4` | Scenario B + `terraform/terraform.tfvars` (`graph_engine = "both"`), `pipeline/graph_builder.py` |
-| **Scenario D · 감사 리니지 & 배포 게이트** | **4계층 리니지 시각화 + Golden CQ 5건 + 경계값 50회 라이브 평가 게이트** 통과 및 Cloud Run 배포 | `full` | `Stage 1 → 2 → 3 → 4 → 5` | Scenario B/C + `data/input/04_cq/*`, `pipeline/validator.py`, `terraform/terraform.tfvars` |
+| **Scenario D · 감사 리니지 & 배포 게이트** | **엔드투엔드 리니지 시각화 + Golden CQ 5건 + 경계값 50회 라이브 평가 게이트** 통과 및 Cloud Run 배포 | `full` | `Stage 1 → 2 → 3 → 4 → 5` | Scenario B/C + `data/input/04_cq/*`, `pipeline/validator.py`, `terraform/terraform.tfvars` |
 
 ### 2.4 터미널 수동 실행 가이드 (CLI Quickstart & Terraform)
 
@@ -124,7 +124,7 @@ python3 pipeline/graph_builder.py      # Stage 3: BigQuery/Spanner Property Grap
 python3 pipeline/validator.py          # Stage 5: Golden CQ 5건 및 경계값 10건×5회 라이브 평가
 
 # 3. 6-Tab 통합 웹 스튜디오 로컬 실행 (http://127.0.0.1:8080)
-python3 -m src.web.studio_server 8080
+PORT=8080 python3 -m src.web.studio_server
 
 # 4. 새 고객/도메인 프로젝트 격리 생성
 python3 new_project.py acme-claims --name "Acme Claims" --customer "Acme" --domain "Claims review" --graph-engine bigquery
@@ -191,7 +191,7 @@ Stage 1에서 프로젝트 설정(`config/project.json`의 `graph_engine` 및 `g
 | **3. 파싱 (Parse)**<br>**4. 통합 (Integrate)** | **Stage 2** | `pipeline/ingest.py` 정규식 청킹 & SHA-256 해시 앵커 대조, 3-Layer Wiki(`summary`, `entities`, `concepts`, `rules`) 컴파일, BigQuery & Spanner 10개 테이블 적재 | [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage2) | [KO](./methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md) · [EN](./methodology/en/02_stage2_wiki_and_semantic_graph_en.md) | [KO](./notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) · [EN](./notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) |
 | **5. 구축 (Build Graph)** | **Stage 3** | 6 Node × 4 Edge 메타모델 설계도, **BigQuery Property Graph & Cloud Spanner Graph DDL 합성/배포**, **양대 엔진 N-run p50/p95 지연 시간 실측 비교**, **BigQuery `EXTERNAL_QUERY` Graph Fabric 연합 조인** | [`Stage 3. Property Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage3) | [KO](./methodology/ko/03_stage3_property_graph_ko.md) · [EN](./methodology/en/03_stage3_property_graph_en.md) | [KO](./notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) · [EN](./notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) |
 | **6. 에이전트 구축 (Agent)**<br>**7. 답변 (Answer)** | **Stage 4** | 2-Pass 에이전트 & **8종 MCP 도구(`engine="bigquery" \| "spanner"` 양대 엔진 지원)**, 카탈로그 슬롯 파싱, 런타임 양대 엔진 GQL/SQL 실행, Golden CQ & 경계 답변 | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | [KO](./methodology/ko/04_stage4_agent_and_mcp_ko.md) · [EN](./methodology/en/04_stage4_agent_and_mcp_en.md) | [KO](./notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](./notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
-| **8. 검증 (Verify & Gate)** | **Stage 5** | 4-Tier 데이터 리니지 멀티파타이트 도식, `pipeline/validator.py` 실시간 CQ 재검증, Boundary 50회 평가 & Gate 1~5 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | [KO](./methodology/ko/05_stage5_lineage_and_eval_ko.md) · [EN](./methodology/en/05_stage5_lineage_and_eval_en.md) | [KO](./notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](./notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
+| **8. 검증 (Verify & Gate)** | **Stage 5** | `config/lineage_spec.json` 기반 리니지 DAG(원천 문서·GCS·BigQuery 테이블·BigQuery/Spanner 그래프·위키·에이전트·평가, 볼륨은 BQ 행 수·GCS 객체 수·그래프 테이블 수 실측), `pipeline/validator.py` CQ 재검증(인용·사실·LLM 루브릭), Boundary 50회 평가 & Gate 1~5 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | [KO](./methodology/ko/05_stage5_lineage_and_eval_ko.md) · [EN](./methodology/en/05_stage5_lineage_and_eval_en.md) | [KO](./notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](./notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
 
 ---
 

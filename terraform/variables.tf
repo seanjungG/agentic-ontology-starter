@@ -37,7 +37,7 @@ variable "cloud_run_service_name" {
 variable "container_image" {
   description = "Studio container image built by Cloud Build"
   type        = string
-  default     = "asia-northeast3-docker.pkg.dev/seanjung-poc/cloud-run-source-deploy/agentic-ontology-starter:goal159-v1"
+  default     = "asia-northeast3-docker.pkg.dev/seanjung-poc/cloud-run-source-deploy/agentic-ontology-starter:goal164-v1"
 }
 
 variable "gemini_model" {

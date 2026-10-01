@@ -61,6 +61,10 @@ In Stage 1, projects evaluate five axes in `project.json` (persisted to `data/ou
 | `write_freshness` | Hourly/daily batch or CDC streaming | Real-time ACID transactions with external consistency | Join real-time operational edges with analytical DW |
 | `data_scale` | TB-to-PB scans with zero idle compute cost | High-density pointer traversal (min 100 PU provisioned) | 100 PU Spanner + BigQuery `EXTERNAL_QUERY` |
 
+## Optional extension: asset metadata search (Spanner)
+
+When the number of assets grows, BigQuery and Spanner table metadata (from Dataplex) and wiki entity and rule metadata can be turned into search text and loaded into Spanner. Assets are then found with full-text search (`TOKENLIST` + `SEARCH INDEX`), then vector similarity (`COSINE_DISTANCE`), then a 1-hop GQL relationship expansion. This is not part of the default starter pipeline.
+
 ## Procedure
 
 1. **Set scope and graph engine**: choose the documents and tables needed to answer the CQs, and record the 5-axis `graph_engine_checklist` and `graph_engine` (`bigquery` default / `spanner` / `both`) in `project.json`. The starter begins with 2 guides and 6 CSV files.

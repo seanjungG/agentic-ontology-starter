@@ -75,6 +75,13 @@ For document-only projects (`track: "lite"`) without structured customer tables,
   - `INVALID_CITATION`: The response cited a chunk ID that does not exist in `doc_chunks.jsonl`.
   - `CONTEXT_LIMIT`: Total document chunk characters exceeded the `300,000`-character context limit.
 
+### Tool granularity and composite questions
+
+- Each tool has one lookup responsibility (for example subsidy lookup, penalty calculation, rule and chunk check) and returns its status and BigQuery job ID with the result. Empty slots are never filled with hard-coded or default values.
+- Tools that return the same data under different names are merged into one; the others remain as aliases.
+- A composite question (several conditions or entities) is split into several tool calls during planning, and the answer is written from tool results only. If a required value is not in the data, the agent says so instead of estimating it.
+- Check tool coverage with questions outside the evaluation set (other device, plan and day combinations from the catalog). Record possible overfitting when a score was tuned on the same questions.
+
 ## Deliverables
 
 | ID | Deliverable | In the starter |

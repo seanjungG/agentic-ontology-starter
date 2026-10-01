@@ -22,7 +22,7 @@
 | **3. 파싱 · 4. 통합** | **Stage 2** | 3-Layer 위키 · 시맨틱 그래프 | [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage2) | `mcp_stage2_wiki_and_semantic` | `D2.1`~`D2.6` | [가이드](./02_stage2_wiki_and_semantic_graph_ko.md) · [KO](../../notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) · [EN](../../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) |
 | **5. 구축** | **Stage 3** | Property Graph · ISO GQL | [`Stage 3. Property Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage3) | `mcp_stage3_property_graph` | `D3.1`~`D3.4` | [가이드](./03_stage3_property_graph_ko.md) · [KO](../../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) · [EN](../../notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) |
 | **6. 에이전트 · 7. 답변** | **Stage 4** | MCP 스위트 · 에이전트 오케스트레이션 | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 런타임 3종 | `D4.1`~`D4.4` | [가이드](./04_stage4_agent_and_mcp_ko.md) · [KO](../../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
-| **8. 검증** | **Stage 5** | 4계층 리니지 · 평가 · 배포 게이트 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`~`D5.5` | [가이드](./05_stage5_lineage_and_eval_ko.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
+| **8. 검증** | **Stage 5** | 엔드투엔드 리니지 · 평가 · 배포 게이트 | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`~`D5.5` | [가이드](./05_stage5_lineage_and_eval_ko.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
 
 ## 3. 도입 트랙 (3-Track Adoption Model) 및 예측 불가능한 데이터 유입 시 분기
 
@@ -73,4 +73,4 @@
 - **Stage 2 (`D2.1`~`D2.6`)**: 3-Layer 위키(`data/llm_wiki/`), SHA-256 해시 앵커(`tb_doc_chunks`), JSON-LD 시맨틱 그래프(`data/output/ontology.jsonld`).
 - **Stage 3 (`D3.1`~`D3.4`)**: BigQuery Property Graph DDL(`create_property_graph.sql`), Spanner Graph DDL(`create_spanner_graph.sql`), GQL 탐색 패턴 검증.
 - **Stage 4 (`D4.1`~`D4.4`)**: MCP 8종 서버(`mcp_server.py`), 2-패스 Gemini 에이전트(`reasoning_engine.py`), 근거·가드레일 검증.
-- **Stage 5 (`D5.1`~`D5.5`)**: 4계층 리니지, Golden CQ 리포트(`cq_benchmark_report.json`), 경계값 10×5 리포트(`boundary_benchmark_results.json`), Terraform·Cloud Run 배포 패키지.
+- **Stage 5 (`D5.1`~`D5.5`)**: 엔드투엔드 리니지, Golden CQ 리포트(`cq_benchmark_report.json`), 경계값 10×5 리포트(`boundary_benchmark_results.json`), Terraform·Cloud Run 배포 패키지.

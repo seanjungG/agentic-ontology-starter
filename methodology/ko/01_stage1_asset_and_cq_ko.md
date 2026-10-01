@@ -61,6 +61,10 @@ Stage 1에서 프로젝트 설정(`project.json`)에 아래 5개 축을 점검�
 | `write_freshness` | 일/시간 배치 또는 CDC 스트리밍 | 실시간 ACID 트랜잭션 즉시 반영 | 실시간 원장 + 분석 DW 연합 조회 |
 | `data_scale` | TB~PB 대규모 스캔, 유휴 비용 0원 | 고밀도 멀티홉 탐색, 최소 100 PU 상시 과금 | 100 PU Spanner + BigQuery `EXTERNAL_QUERY` |
 
+## 선택 확장: 자산 메타 검색 (Spanner)
+
+자산이 많아지면 BigQuery·Spanner 테이블 메타(Dataplex)와 위키의 엔티티·규칙 메타를 검색용 텍스트로 정리해 Spanner에 적재하고, 전문 검색(`TOKENLIST` + `SEARCH INDEX`) → 벡터 유사도(`COSINE_DISTANCE`) → GQL 1-hop 관계 확장 순서로 자산을 찾을 수 있다. 스타터팩 기본 파이프라인에는 포함하지 않는다.
+
 ## 절차
 
 1. **범위 및 엔진 정하기**: CQ에 답하는 데 필요한 문서·테이블을 파일 단위로 고르고, 위 5축 체크리스트로 `graph_engine`(`bigquery` 기본 / `spanner` / `both`)을 정한다. 파일 안의 문장은 줄이거나 고치지 않는다. 스타터는 가이드 2개, CSV 6개로 시작한다.

@@ -218,7 +218,7 @@ def draw_eight_phase_flow():
         (t("7. 답변 (Answer & GQL)", "7. Answer & GQL"),
          t("Stage 4.2 · NL2GQL & 근거 인용 합성", "Stage 4.2\nNL2GQL & Grounded Synthesis"), "#1A73E8", (2, 0)),
         (t("8. 검증 (Verify & Gate)", "8. Verify & Gate"),
-         t("Stage 5.1~5.2 · 4-Tier 리니지 & 50회 평가", "Stage 5.1~5.2\n4-Tier Lineage & 50-Trial Eval"), "#D93025", (3, 0)),
+         t("Stage 5.1~5.2 · 엔드투엔드 리니지 & 50회 평가", "Stage 5.1~5.2\nEnd-to-End Lineage & 50-Trial Eval"), "#D93025", (3, 0)),
     ]
     fig, ax = plt.subplots(figsize=(12.2, 4.3))
     ax.axis("off")

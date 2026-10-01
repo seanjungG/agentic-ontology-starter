@@ -1,20 +1,20 @@
 {
   "_readme": "Stage 5 lineage spec. Keep the categories (column order = left to right), add nodes and edges for this project. Field list: README.md in the project folder.",
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "title": "",
   "categories": [
     {"id": "DATA_CONNECTION", "tag": "CONN", "name": "Data Connection", "name_ko": "데이터 연결", "color": "#d97706"},
     {"id": "RAW_DATASETS", "tag": "RAW", "name": "GCP Raw Sources", "name_ko": "GCP 원천 데이터", "color": "#b45309"},
     {"id": "DATA_TRANSFORMATION", "tag": "ETL", "name": "Data Transformations", "name_ko": "데이터 변환", "color": "#059669"},
-    {"id": "PII_RULES", "tag": "PII", "name": "PII & Validation Rules", "name_ko": "PII·검증 규칙", "color": "#e11d48", "pii": true},
+    {"id": "DOMAIN_RULES", "tag": "RULE", "name": "Domain Rules", "name_ko": "도메인 규칙", "color": "#e11d48"},
     {"id": "ONTOLOGY_SEMANTIC", "tag": "SEM", "name": "Ontology Semantic (Property Graph)", "name_ko": "온톨로지 시맨틱 (Property Graph)", "color": "#0284c7"},
     {"id": "DOMAIN_ONTOLOGY_MCP", "tag": "MCP", "name": "Domain Ontology (MCP)", "name_ko": "도메인 온톨로지 (MCP)", "color": "#2563eb"},
-    {"id": "INTELLIGENT_AGENTS", "tag": "AGENT", "name": "Intelligent Agents", "name_ko": "지능형 에이전트", "color": "#0f172a"}
+    {"id": "INTELLIGENT_AGENTS", "tag": "AGENT", "name": "Agents & Evaluation", "name_ko": "에이전트·평가", "color": "#0f172a"}
   ],
   "presets": [
     {"id": "RAW", "label": "원천 ➔ 정제", "label_en": "Raw ➔ Refined", "cats": ["DATA_CONNECTION", "RAW_DATASETS", "DATA_TRANSFORMATION"]},
-    {"id": "SEMANTIC", "label": "정제 ➔ 온톨로지 시맨틱 (Property Graph)", "label_en": "Refined ➔ Semantic (Property Graph)", "cats": ["DATA_TRANSFORMATION", "PII_RULES", "ONTOLOGY_SEMANTIC"]},
-    {"id": "AGENT", "label": "도메인 온톨로지(MCP) ➔ AI FDE", "label_en": "Domain Ontology (MCP) ➔ AI FDE", "cats": ["ONTOLOGY_SEMANTIC", "DOMAIN_ONTOLOGY_MCP", "INTELLIGENT_AGENTS"]}
+    {"id": "SEMANTIC", "label": "정제 ➔ 온톨로지 시맨틱 (Property Graph)", "label_en": "Refined ➔ Semantic (Property Graph)", "cats": ["DATA_TRANSFORMATION", "DOMAIN_RULES", "ONTOLOGY_SEMANTIC"]},
+    {"id": "AGENT", "label": "도메인 온톨로지(MCP) ➔ AI FDE·평가", "label_en": "Domain Ontology (MCP) ➔ AI FDE & Eval", "cats": ["ONTOLOGY_SEMANTIC", "DOMAIN_ONTOLOGY_MCP", "INTELLIGENT_AGENTS"]}
   ],
   "nodes": [],
   "edges": []

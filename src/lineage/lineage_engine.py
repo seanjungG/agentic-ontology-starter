@@ -7,26 +7,40 @@
 Spec-driven enterprise data lineage (DAG) engine for Stage 5.
 
 - Graph structure comes from the project's `config/lineage_spec.json` (see `projects/_template/`).
-- Nodes with `bq_table` get their row count from BigQuery `__TABLES__`; `live` is true only when fetched.
-- Categories flagged `pii` are hidden by default; their nodes are bypassed (upstream -> downstream).
-- Nodes without `x`/`y` are laid out in category columns (same layout as the main studio lineage view).
+  The spec describes what the pipeline code actually reads and writes; edit it when the code changes.
+- Volumes are measured on request, never typed into the spec:
+  `bq_table` -> BigQuery `__TABLES__` row count, `gcs_prefix` -> GCS object count,
+  `bq_graph` / `spanner_graph` -> node/edge table count from `INFORMATION_SCHEMA.PROPERTY_GRAPHS`.
+  A failed lookup is shown as "lookup failed"; `live` is true only for measured values.
+- Nodes without `x`/`y` are laid out in category columns, each column centred vertically.
 """
 import json
 import os
 import time
 from collections import deque
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from src.gcp_client import execute_bq_sql
+from src.gcp_client import execute_bq_sql, execute_spanner_sql, list_gcs_objects
 
 COL_X0, COL_DX, ROW_Y0 = 80, 380, 60
 LIVE_TTL_SEC = 120
+GRAPH_SQL = ("SELECT property_graph_name AS g, property_graph_metadata_json AS m "
+             "FROM {src}INFORMATION_SCHEMA.PROPERTY_GRAPHS")
+
+
+def _graph_counts(res: Dict[str, Any]) -> Dict[str, str]:
+    out = {}
+    for r in res.get("rows", []):
+        m = json.loads(r.get("m") or r.get("property_graph_metadata_json") or "{}")
+        out[r.get("g") or r.get("property_graph_name")] = \
+            f"{len(m.get('nodeTables', []))} node / {len(m.get('edgeTables', []))} edge tables"
+    return out
 
 
 class LineageEngine:
     def __init__(self, spec_path: str, variables: Dict[str, str]):
         self.spec_path = spec_path
-        self.vars = variables  # project_id, dataset_id, fq, bucket, model -> `{name}` placeholders in the spec
+        self.vars = variables  # project_id, dataset_id, fq, bucket, model, spanner_* -> `{name}` placeholders
         self._live: Dict[str, Any] = {}
         self._live_at = 0.0
 
@@ -42,67 +56,93 @@ class LineageEngine:
             s = s.replace("{" + k + "}", str(v))
         return s
 
-    def _live_rows(self) -> Dict[str, Any]:
+    def _measure(self, nodes) -> Dict[str, Any]:
         if self._live and time.time() - self._live_at < LIVE_TTL_SEC:
             return self._live
-        res = execute_bq_sql(f"SELECT table_id, row_count FROM `{self.vars['fq']}.__TABLES__`",
-                             project_id=self.vars["project_id"])
-        ok = res.get("status") == "SUCCESS"
-        self._live = {"status": res.get("status"), "job_id": res.get("job_id"),
-                      "error": None if ok else str(res.get("error", ""))[:300],
-                      "rows": {r["table_id"]: int(r["row_count"]) for r in res.get("rows", [])} if ok else {}}
-        self._live_at = time.time()
-        return self._live
+        live: Dict[str, Any] = {"status": "SKIPPED", "rows": {}, "gcs": {}, "bq_graph": {}, "spanner_graph": {}, "errors": []}
+        if any(n.get("bq_table") for n in nodes):
+            res = execute_bq_sql(f"SELECT table_id, row_count FROM `{self.vars['fq']}.__TABLES__`",
+                                 project_id=self.vars["project_id"])
+            live.update(status=res.get("status"), job_id=res.get("job_id"))
+            if res.get("status") == "SUCCESS":
+                live["rows"] = {r["table_id"]: int(r["row_count"]) for r in res.get("rows", [])}
+            else:
+                live["errors"].append(f"__TABLES__: {str(res.get('error', ''))[:200]}")
+        for p in {n["gcs_prefix"] for n in nodes if n.get("gcs_prefix")}:
+            try:
+                live["gcs"][p] = len(list_gcs_objects(prefix=p, bucket=self.vars["bucket"]))
+            except Exception as e:  # noqa: BLE001 - shown in the UI as a failed lookup
+                live["errors"].append(f"gs://{self.vars['bucket']}/{p}: {str(e)[:200]}")
+        if any(n.get("bq_graph") for n in nodes):
+            res = execute_bq_sql(GRAPH_SQL.format(src=f"`{self.vars['fq']}`."), project_id=self.vars["project_id"])
+            live["bq_graph"] = _graph_counts(res) if res.get("status") == "SUCCESS" else {}
+            if res.get("status") != "SUCCESS":
+                live["errors"].append(f"BigQuery PROPERTY_GRAPHS: {str(res.get('error', ''))[:200]}")
+        if any(n.get("spanner_graph") for n in nodes) and self.vars.get("spanner_instance"):
+            res = execute_spanner_sql(GRAPH_SQL.format(src=""), project_id=self.vars["project_id"],
+                                      instance_id=self.vars["spanner_instance"], database_id=self.vars["spanner_database"])
+            live["spanner_graph"] = _graph_counts(res) if res.get("status") == "SUCCESS" else {}
+            if res.get("status") != "SUCCESS":
+                live["errors"].append(f"Spanner PROPERTY_GRAPHS: {str(res.get('error', ''))[:200]}")
+        self._live, self._live_at = live, time.time()
+        return live
 
-    def build_graph(self, include_pii: bool = False) -> Dict[str, Any]:
+    def build_graph(self) -> Dict[str, Any]:
         spec = self._spec()
-        cats = [c for c in spec.get("categories", []) if include_pii or not c.get("pii")]
+        cats = spec.get("categories", [])
         col = {c["id"]: i for i, c in enumerate(cats)}
-        raw_nodes = spec.get("nodes", [])
-        visible = [n for n in raw_nodes if n.get("cat") in col]
-        hidden = {n["id"] for n in raw_nodes} - {n["id"] for n in visible}
-        live = self._live_rows() if any(n.get("bq_table") for n in visible) else {"status": "SKIPPED", "rows": {}}
+        visible = [n for n in spec.get("nodes", []) if n.get("cat") in col]
+        live = self._measure(visible)
 
-        per_col: Dict[str, int] = {}
         counts = {c: sum(1 for n in visible if n["cat"] == c) for c in col}
+        step = {c: 72 if k > 8 else 92 for c, k in counts.items()}
+        height = max([counts[c] * step[c] for c in col] or [0])
+        per_col: Dict[str, int] = {}
         nodes = []
         for n in visible:
-            idx = per_col[n["cat"]] = per_col.get(n["cat"], -1) + 1
+            c = n["cat"]
+            idx = per_col[c] = per_col.get(c, -1) + 1
             node = {**n, "resource": self._fill(n.get("resource")), "volume": self._fill(n.get("volume")),
-                    "volume_en": self._fill(n.get("volume_en") or n.get("volume")), "live": False}
-            node.setdefault("x", COL_X0 + col[n["cat"]] * COL_DX)
-            node.setdefault("y", ROW_Y0 + idx * (72 if counts[n["cat"]] > 8 else 92))
-            rows = live["rows"].get(n.get("bq_table"))
-            if rows is not None:
-                node.update(volume=f"{rows:,} rows", volume_en=f"{rows:,} rows", live=True)
+                    "volume_en": self._fill(n.get("volume_en") or n.get("volume")), "live": False, "live_src": ""}
+            node.setdefault("x", COL_X0 + col[c] * COL_DX)
+            node.setdefault("y", ROW_Y0 + (height - counts[c] * step[c]) // 2 + idx * step[c])
+            measured, src = None, ""
+            if n.get("bq_table"):
+                rows = live["rows"].get(n["bq_table"])
+                measured, src = (f"{rows:,} rows" if rows is not None else None), f"BigQuery __TABLES__ ({live.get('job_id') or '-'})"
+            elif n.get("gcs_prefix"):
+                k = live["gcs"].get(n["gcs_prefix"])
+                measured, src = (f"{k} objects" if k is not None else None), "GCS JSON API objects.list"
+            elif n.get("bq_graph"):
+                measured, src = live["bq_graph"].get(self._fill(n["bq_graph"])), "BigQuery INFORMATION_SCHEMA.PROPERTY_GRAPHS"
+            elif n.get("spanner_graph"):
+                measured, src = live["spanner_graph"].get(self._fill(n["spanner_graph"])), "Spanner INFORMATION_SCHEMA.PROPERTY_GRAPHS"
+            if measured:
+                node.update(volume=measured, volume_en=measured, live=True, live_src=src)
+            elif src:
+                node.update(volume="조회 실패", volume_en="lookup failed", live_src=src)
             nodes.append(node)
 
-        edges = [dict(e) for e in spec.get("edges", [])]
-        for h in hidden:  # bypass hidden (PII) nodes so the flow stays connected
-            ins = [e for e in edges if e["target"] == h]
-            outs = [e for e in edges if e["source"] == h]
-            edges = [e for e in edges if h not in (e["source"], e["target"])]
-            edges += [{"source": i["source"], "target": o["target"], "label": o.get("label", "")} for i in ins for o in outs]
         ids, seen, uniq = {n["id"] for n in nodes}, set(), []
-        for e in edges:
+        for e in spec.get("edges", []):
             key = (e["source"], e["target"])
             if key not in seen and e["source"] in ids and e["target"] in ids:
                 seen.add(key)
-                uniq.append(e)
+                uniq.append(dict(e))
 
-        bq_nodes = [n for n in nodes if n.get("bq_table")]
+        measured_nodes = [n for n in nodes if n["live_src"]]
         return {
             "metadata": {"title": spec.get("title", ""), "fq": self.vars["fq"], "bq_status": live["status"],
-                         "bq_job_id": live.get("job_id"), "bq_error": live.get("error"),
-                         "bq_nodes": len(bq_nodes), "live_nodes": sum(1 for n in bq_nodes if n["live"])},
+                         "bq_job_id": live.get("job_id"), "bq_error": "; ".join(live["errors"]) or None,
+                         "bq_nodes": len(measured_nodes), "live_nodes": sum(1 for n in measured_nodes if n["live"])},
             "stats": {"total_nodes": len(nodes), "total_edges": len(uniq), "total_categories": len(cats),
-                      "category_counts": counts, "pii_layer_visible": include_pii},
+                      "category_counts": counts},
             "categories": cats, "presets": spec.get("presets", []), "nodes": nodes, "edges": uniq,
         }
 
-    def trace(self, node_id: str, include_pii: bool = False) -> Dict[str, Any]:
+    def trace(self, node_id: str) -> Dict[str, Any]:
         """BFS upstream and downstream from `node_id`."""
-        g = self.build_graph(include_pii)
+        g = self.build_graph()
         nodes = {n["id"]: n for n in g["nodes"]}
         if node_id not in nodes:
             return {"error": f"Node '{node_id}' not found in lineage graph."}
@@ -129,15 +169,14 @@ class LineageEngine:
             "downstream": {"count": len(down_ids), "nodes": sorted(down_ids), "edges": down_edges},
         }
 
-    def explain(self, node_id: str, include_pii: bool = False, lang: str = "ko") -> Dict[str, Any]:
+    def explain(self, node_id: str, lang: str = "ko") -> Dict[str, Any]:
         """Rule-based summary of a node's position in the lineage (no LLM call)."""
-        t = self.trace(node_id, include_pii)
+        t = self.trace(node_id)
         if "error" in t:
             return {**t, "explanation": "Node not found." if lang == "en" else "노드를 찾을 수 없습니다."}
         n, up, down = t["selected_node"], t["upstream"]["count"], t["downstream"]["count"]
         vol = n.get("volume_en" if lang == "en" else "volume") or "-"
-        src = ("BigQuery __TABLES__ (live)" if n["live"] else "lineage spec") if lang == "en" else \
-              ("BigQuery __TABLES__ 실측" if n["live"] else "리니지 스펙 기재값")
+        src = n["live_src"] if n["live"] else ("lineage spec" if lang == "en" else "리니지 스펙 기재값")
         if lang == "en":
             text = (f"[{n.get('title_en') or n['title']}] belongs to the {n['cat']} tier (resource: {n['resource']}). "
                     f"It depends on {up} upstream node(s) and affects {down} downstream node(s). "
