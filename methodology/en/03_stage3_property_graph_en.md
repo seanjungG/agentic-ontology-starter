@@ -70,6 +70,15 @@ The 10 tables created by `terraform/bigquery.tf` and `terraform/spanner.tf` (loa
 
 In both cases `tb_doc_chunks` is joined on `ap.source_chunk_id` to attach the evidence paragraph (`chunk_text`) and its anchor (supported on both `engine="bigquery"` and `engine="spanner"`).
 
+## Recommended method: build the graph from the ontology folder only
+
+- The only input for graph design and data loading is the ontology folder. A loader reads the graph structure block in the frontmatter of the entity and concept documents ([Stage 2](./02_stage2_wiki_and_semantic_graph_en.md)) and produces the entity, relation and rule table rows and the graph metadata (node and edge lists). Node and edge tables are not maintained by hand.
+- Load scripts contain no hard-coded `INSERT ... VALUES`. Terraform owns the table schemas and the graph DDL; the loader owns the rows.
+- Structured ledger tables are loaded from the source data and linked to the ontology documents through `dw_mapping` (table and column).
+- Pre-load check: 0 links to missing source files and 0 anchor mismatches. Loading stops if the check fails.
+
+The current starter implementation differs. The graph is built from the 10 tables loaded from CSV in Stages 1 and 2, and the node and edge labels and the DDL are defined in code in `pipeline/graph_builder.py`. Rule rows come from `domain_rules.csv` and rule-to-plan links from `rule_plan_edges.csv`. There is no loader that reads frontmatter.
+
 ## Deliverables
 
 | ID | Deliverable | In the starter |
@@ -103,7 +112,7 @@ In both cases `tb_doc_chunks` is joined on `ap.source_chunk_id` to attach the ev
 
 BigQuery Property Graph (`CREATE OR REPLACE PROPERTY GRAPH`) requires physical BigQuery node and edge tables. When a customer project provides only unstructured documents (`01_raw_docs/`, `01_guides/`) without structured table CSVs:
 
-- **Option 1 (`track: "auto"` or `"lite"` — Recommended)**: Stage 3 is automatically skipped, and the pipeline proceeds directly from Stage 2 (`03_wiki/entities.md`, `concepts.md`, `doc_chunks.jsonl`) to Stage 4 (`execute_lite_doc_cycle`).
+- **Option 1 (`track: "auto"` or `"lite"` — Recommended)**: Stage 3 is automatically skipped, and the pipeline proceeds directly from Stage 2 (`03_wiki/entities.md`, `concepts.md`, `doc_chunks.jsonl`) to Stage 4 (`_lite_cycle`).
 - **Option 2 (`track: "full"` or `--stage 3` forced — Scenario A2)**: The pipeline halts immediately before Stage 3 without fabricating synthetic tables, outputting guidance to either supply structured CSVs (`03_tables/`) or switch `track` to `"lite"` / `"auto"`.
 
 ### 2) Custom Domain Schemas (Scenario C)

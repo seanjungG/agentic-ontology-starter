@@ -14,7 +14,7 @@
 | ① 트랙·엔진·테이블 목록 | `projects/<id>/project.json` (`track`: 기본 `"auto"`, `graph_engine`, `gcp`, `tables`, `synthetic.allowed`) |
 | ② 고객 원본 문서 & 입력 자산 | `projects/<id>/customer_doc/*` (`extract_docs.py`가 `01_guides/*.md`로 원문 변환 후 Gate 0 `>=95%` 검증) · `data/input/03_tables/*` (고객 CSV만, `provenance` 필수) · `data/input/04_cq/*` (`sql` 또는 `citation`) |
 | ③ 문서 기반 위키 / 인제스트·그래프 | `lite` 트랙은 `extract_wiki.py`가 `entities.md`(Node)·`concepts.md`(Edge) 자동 추출(`<=300`자 인용 검증). 커스텀 스키마는 복사본을 `projects/<id>/`에 두고 `project.json`의 `ingest_module` · `graph_module`로 지정 |
-| ④ 에이전트 런타임 & 화면 프로필 | `lite` 트랙은 `execute_lite_doc_cycle`(`[DOC_CHUNK_XXX]` 인용 강제) 자동 실행. 커스텀 스키마는 `mcp_module` · `engine_module` 지정 + `projects/<id>/config/portal_profile.json` 수정 |
+| ④ 에이전트 런타임 & 화면 프로필 | `lite` 트랙은 `_lite_cycle`(`[DOC_CHUNK_XXX]` 인용 강제) 자동 실행. 커스텀 스키마는 `mcp_module` · `engine_module` 지정 + `projects/<id>/config/portal_profile.json` 수정 |
 | ⑤ Stage 5 리니지 & 평가 | `projects/<id>/config/lineage_spec.json` 작성 + `python3 pipeline/validator.py --project <id>` (`input_manifest_sha256` 기록) |
 
 실행: `python3 run_pipeline.py --project <id>` (데이터셋·버킷은 Terraform으로 먼저 생성). 상세: [`projects/_template/README.md`](projects/_template/README.md)

@@ -98,7 +98,7 @@ flowchart TD
 
 | 선택 트랙 (Adoption Track) | 실행 Stage 순서 | `starter_config.json` 설정 | 필수 실행 노트북 (`ko/` 또는 `en/`) | 적합한 도입 시나리오 및 기대 효과 |
 | :--- | :--- | :--- | :--- | :--- |
-| **Track 1 · Lite**<br>*(Wiki + Rule SQL Agent)* | `Stage 1 → Stage 2 → Stage 4` | `"track": "lite"`<br>`"graph_engine": "none"` | `stage1` → `stage2` → `stage4` | 물리 프로퍼티 그래프 구축 없이 **비정형 정책 가이드의 SHA-256 청킹(3-Layer LLM-Wiki)**과 **결정론적 SQL 산식(`mcp_calculate_penalty_rule`)**만으로 1~2주 내에 근거 인용 에이전트를 빠르게 기동할 때 적합합니다. |
+| **Track 1 · Lite**<br>*(Doc Chunk Context Agent)* | `Stage 1 → Stage 2 → Stage 4` | `"track": "lite"`<br>`"graph_engine": "none"` | `stage1` → `stage2` → `stage4` | 물리 프로퍼티 그래프 구축 없이 **비정형 정책 가이드의 SHA-256 청킹**만으로 근거 인용 에이전트를 빠르게 기동할 때 적합합니다. 에이전트(`_lite_cycle`)는 `tb_doc_chunks` 전체 행을 컨텍스트로 넣어 `[DOC_CHUNK_XXX]` 인용으로 답합니다. |
 | **Track 2 · Standard**<br>*(Zero-ETL Property Graph)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `"track": "standard"`<br>`"graph_engine": "bigquery"` (또는 `"spanner"`) | `stage1` → `stage2` → `stage3` → `stage4` | 정형 DW 마스터 원장 4종과 비정형 도메인 규칙을 **Zero-ETL BigQuery Property Graph(`6 Node × 4 Edge`)**로 결합하여, 다중 홉 ISO GQL 탐색과 `nl2gql`을 수행할 때 권장됩니다. |
 | **Track 3 · Full-Stack**<br>*(Enterprise Release Gate)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `"track": "full_stack"`<br>`"graph_engine": "bigquery"` | `stage0` → `stage1` → `stage2` → `stage3` → `stage4` → `stage5` | 원천 파일부터 답변까지의 **엔드투엔드 데이터 리니지**, **Golden CQ 5/5(100%) 자동 채점**, **Boundary 10건×5회(50회) 안정성 벤치마크**를 통과해야 하는 엔터프라이즈 운영 환경의 기본 트랙입니다. |
 

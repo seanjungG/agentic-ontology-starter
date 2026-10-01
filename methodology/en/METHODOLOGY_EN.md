@@ -30,7 +30,7 @@ The default `track: "auto"` inspects `project.json` `tables`: if customer table 
 
 | Track | Active Stages | Graph Engine (`graph_engine`) | Target Scenario |
 | :--- | :---: | :---: | :--- |
-| **Track 1 · Lite** | `Stage 1 -> 2 -> 4 -> 5(citation)` | `none` | Source documents only (`tables: {}`), no customer tables. `extract_docs.py` + `extract_wiki.py` build `doc_chunks.jsonl`, `entities.md`, and `concepts.md`. Stage 3 is skipped, the agent runs `execute_lite_doc_cycle()` with `[DOC_CHUNK_XXX]` citations, and Stage 5 scores `evidence_type: "citation"` CQs |
+| **Track 1 · Lite** | `Stage 1 -> 2 -> 4 -> 5(citation)` | `none` | Source documents only (`tables: {}`), no customer tables. `extract_docs.py` + `extract_wiki.py` build `doc_chunks.jsonl`, `entities.md`, and `concepts.md`. Stage 3 is skipped, the agent runs `_lite_cycle()` with `[DOC_CHUNK_XXX]` citations, and Stage 5 scores `evidence_type: "citation"` CQs |
 | **Track 2 · Standard** | `Stage 1 -> 2 -> 3 -> 4` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and ISO GQL |
 | **Track 3 · Full** | `Stage 1 -> 2 -> 3 -> 4 -> 5` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Full lifecycle including end-to-end lineage, Golden CQ 5 (`evidence_type: "sql"`), boundary benchmark (10x5), and Terraform Cloud Run deployment |
 
@@ -40,7 +40,7 @@ In Stage 1 (`project.json` -> `data/output/input_manifest.json`), projects evalu
 
 | Scenario | Customer Input Assets | `project.json` Settings | Pipeline Execution & Stage Adaptation |
 | :--- | :--- | :--- | :--- |
-| **Scenario A1 (`lite`)** | Unstructured documents only (`customer_doc/*.pdf, *.docx`) | `"track": "auto"`, `"tables": {}` | `extract_docs.py` (Gate 0 >= 95%) -> `extract_wiki.py` (`entities.md` Node, `concepts.md` Edge) -> Skip Stage 3 -> Stage 4 `execute_lite_doc_cycle` (300,000-char chunk context) -> Stage 5 `evidence_type: "citation"` CQ scoring |
+| **Scenario A1 (`lite`)** | Unstructured documents only (`customer_doc/*.pdf, *.docx`) | `"track": "auto"`, `"tables": {}` | `extract_docs.py` (Gate 0 >= 95%) -> `extract_wiki.py` (`entities.md` Node, `concepts.md` Edge) -> Skip Stage 3 -> Stage 4 `_lite_cycle` (300,000-char chunk context) -> Stage 5 `evidence_type: "citation"` CQ scoring |
 | **Scenario A2 (Graph Halt)** | Unstructured documents only, but user forces `track: "full"` or `--stage 3` | `"track": "full"`, `"tables": {}` | Halts immediately before Stage 3 with explicit guidance: provide structured tables in `03_tables/` or switch `track` to `"lite"` / `"auto"` (zero synthetic table fabrication) |
 | **Scenario B (Standard BigQuery)** | Unstructured documents + structured CSVs | `"track": "auto"`, `"graph_engine": "bigquery"` | Loads customer-supplied tables (`provenance=CUSTOMER_PROVIDED`) into BigQuery and creates `STARTER_ONTOLOGY_GRAPH` (default Zero-ETL) |
 | **Scenario C (Spanner / Graph Fabric / Custom)** | Structured tables requiring sub-200ms online GQL or Graph Fabric federation | `"graph_engine": "spanner" \| "both"`, or custom `*_module` overrides | Provisions Cloud Spanner (`starter-spanner`, 100 PU, `starter_ontology_db`), loads all 10 tables, benchmarks BigQuery vs Spanner p50/p95 latency, and executes federated `EXTERNAL_QUERY(spanner_fabric_conn)` joins |

@@ -32,6 +32,16 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
 - Clicking a node highlights its upstream and downstream paths (BFS) and opens a detail panel (metadata, volume source, direct upstream and downstream, rule-based summary) with a link to the Stage 4 agent.
 - Per-project specs live in `projects/<id>/config/lineage_spec.json` (see [`projects/_template/README.md`](../../projects/_template/README.md)).
 
+### Recommended lineage structure
+
+- Structured: one box per table. A table and its graph label share one box.
+- Unstructured: RAW → parsing → parsed → re-extraction gate → `latest` → one box per ontology document. Relations between documents are not drawn as edges; their count is shown on the document box.
+- Edge tables: one box per kind.
+- Agent inputs: the Wiki Agent reads the ontology `latest` on GCS (no BigQuery box); the BQG Agent reads the Property Graph.
+- A remote MCP server box that re-exposes the same full tool set is omitted (it adds no lineage information).
+
+The starter spec (`config/lineage_spec.json`) has one box per structured table (`RAW_TB_*`), one box per edge-table kind (`TR_EDGE_*`) and no remote MCP server box. Unstructured data flows guides → chunker (`TR_CHUNKER`) → GCS `parsed/` and a single Wiki box (`SEM_WIKI`); there is no re-extraction gate, no `latest` and no per-document box. There is one agent box, `AGENT_FDE`.
+
 ## Procedure (`pipeline/validator.py`)
 
 1. **Record-level lineage join (`build_4tier_lineage`)**:
@@ -42,7 +52,7 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
    - Tier 4 (Golden CQ Answers): `CQ-01`–`CQ-05` agent responses and grounded citations
 2. **Golden CQ Validation (`run_validation`) — `evidence_type` Branching**:
    - **`evidence_type: "sql"` (`full` track)**: Verifies that independent BigQuery `verification_sql` matches `expected_math` and that the live agent answer (`AiFdeAgentEngine.execute_cycle`) contains the exact numbers and `grounded_chunk`.
-   - **`evidence_type: "citation"` (`lite` track)**: Verifies that the document-context agent answer (`execute_lite_doc_cycle`) cites `grounded_chunk` (`DOC_CHUNK_XXX`) and includes at least one keyword from `expected_keywords`.
+   - **`evidence_type: "citation"` (`lite` track)**: Verifies that the document-context agent answer (`_lite_cycle`) cites `grounded_chunk` (`DOC_CHUNK_XXX`) and includes at least one keyword from `expected_keywords`.
    - **`status: "UNCONFIRMED"` CQs**: Questions without customer-confirmed ground truth are counted separately in `unconfirmed_cq_count` rather than being auto-passed as 100%.
    - **Final-answer rubric (`_judge`)**: Value-presence checks alone can pass an answer that addresses a different question. An LLM judge (same Gemini model) therefore scores the agent's final answer: relevance 20 · accuracy 30 · completeness 20 · grounding 15 · actionability 15. The judge sees only the question, the expected answer, the tool outputs the agent actually retrieved, and the text of the chunks it cited. Relevance below 8 caps the total at 40; each number not found in the evidence costs grounding at least 3 points. A verdict other than `PASS` marks the CQ `FAILED` (`RUBRIC_PARTIAL` / `RUBRIC_FAIL`).
    - **Duplicate-answer check**: If two different CQs get answers with 3-gram Jaccard ≥ 0.5, both fail with `DUPLICATE_ANSWER`. Identical answers to different questions mean retrieval or generation ignored the question.
@@ -71,6 +81,15 @@ Part A of `Stage 5. Lineage & Eval` is the same canvas DAG as the main studio li
    - **`UNCONFIRMED: N cases`**: Displays confirmed CQ pass rate separately from `unconfirmed_cq_count`.
 5. **Boundary Benchmark (`run_boundary`)**:
    - Executes 10 boundary questions (`GROUNDED`, `MATCH_NOT_FOUND`, `INSUFFICIENT_PARAMETERS`) for 5 iterations (50 live runs) and records `avg_success_rate`, `avg_consistency_rate`, and `avg_intent_stability` in `data/output/boundary_benchmark_results.json`.
+
+## Recommended method: evaluation screen layout
+
+- Evaluation screen order: A overall results → B CQ verification → C rubric criteria.
+- Rubric dimension names, definitions and judge instructions have Korean fields (`name_ko`, `desc_ko`, `judge_instructions_ko`) shown in Korean mode. The judge script keeps using the base fields.
+- Selecting a CQ shows the actual agent answer, the ground truth, per-dimension scores, deduction reasons and the retrieved evidence (chunks, rules, executed queries with job IDs).
+- The Overview shows only a summary: dimension averages, number of CQs with deductions, per-CQ score and a short evidence and deduction summary. It links to the evaluation screen for detail.
+
+The current starter implementation differs. The Stage 5 tab shows the Golden CQ table (expected, actual, evidence anchor, verdict) and the boundary table (`src/web/studio_server.py`). There is no per-CQ detail (dimension scores, deduction reasons, retrieved evidence), and `config/eval_rubric.json` has a single `description` field per dimension.
 
 ## Deliverables
 
