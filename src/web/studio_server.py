@@ -10,7 +10,7 @@ Agentic Ontology Studio Server (Starter Pack v2.0)
   * 44px Global Navigation Bar with Official Google 'G' Vector SVG + KOR/ENG Pill Switch
   * 52px Local Sub-navigation Bar (`.ac-localnav` + `.compact-pill-bar`) with 6 Compressed Stage Tabs:
       0. Overview | Stage 1. Asset | Stage 2. Wiki & Semantic Graph | Stage 3. Property Graph | Stage 4. Agent & MCP | Stage 5. Lineage & Eval
-  * Interactive vis-network Graphs (`Entity=Node`, `Concept=Edge`, Sky Blue/Teal Hubs, 1.15px Edges, Korean Business Labels)
+  * Interactive vis-network Graphs (`Entity=Node`, `Concept=Edge`, Teal hub in Stage 3 only, 1.15px Edges, Korean Business Labels)
   * 3-Track Data Maturity (`lite: 1→2→4`, `standard: 1→2→3→4`, `full: 1→5`) & Dual Graph Engine Adapter (`BigQuery Property Graph` <-> `Cloud Spanner Graph`)
   * 8 Core Modular MCPs (5 Stage Pipeline MCPs with selectable `steps` + 3 Runtime Execution MCPs)
 """
@@ -1918,9 +1918,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <!-- Right: Interactive vis-network Semantic Graph -->
           <div class="pane-card">
             <div class="pane-head">
-              <span class="pane-title" data-ko="시맨틱 온톨로지 그래프 (Entity=Node · Concept=Edge · Sky Blue 허브)" data-en="Semantic Ontology Graph (Entity=Node · Concept=Edge · Sky Blue Hub)">시맨틱 온톨로지 그래프 (Entity=Node · Concept=Edge · Sky Blue 허브)</span>
+              <span class="pane-title" data-ko="시맨틱 온톨로지 그래프 (Entity=Node · Concept=Edge)" data-en="Semantic Ontology Graph (Entity=Node · Concept=Edge)">시맨틱 온톨로지 그래프 (Entity=Node · Concept=Edge)</span>
               <div style="display:flex; gap:6px; align-items:center;">
-                <span class="badge human" style="background:#e0f2fe; color:#0369a1;">Hub #0284c7</span>
                 <span class="badge approved">Edge 1.15px</span>
                 <button class="subnav-action-btn" style="padding:3px 9px; font-size:11px;" onclick="renderSemanticGraph()">Fit Graph</button>
               </div>
@@ -3526,30 +3525,32 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const container = document.getElementById('semantic-graph-canvas');
     if (!container || !globalGraph || !window.vis) return;
     const sg = ((globalGraph.topology || {}).vis_semantic_graph) || { nodes: [], edges: [] };
+    // Summary hub node and its CONTAINS_ENTITY hub edges are not drawn (entity = node, concept = edge only).
+    const semNodes = sg.nodes.filter(n => n.group !== 'hub');
+    const semEdges = sg.edges.filter(e => !e.is_hub);
 
-    const nodes = new vis.DataSet(sg.nodes.map(n => ({
+    const nodes = new vis.DataSet(semNodes.map(n => ({
       id: n.id,
       label: studioLang === 'en' ? n.label_en : n.label_ko,
-      shape: n.group === 'hub' ? 'hexagon' : 'dot',
-      size: n.group === 'hub' ? 26 : (n.group === 'entity' ? 19 : 16),
+      shape: 'dot',
+      size: n.group === 'entity' ? 19 : 16,
       color: {
         background: n.color,
         border: '#ffffff',
         highlight: { background: n.color, border: '#0f172a' }
       },
-      font: { color: '#0f172a', size: 12, face: 'Pretendard, sans-serif', bold: n.group === 'hub' },
+      font: { color: '#0f172a', size: 12, face: 'Pretendard, sans-serif' },
       raw: n
     })));
 
-    const edges = new vis.DataSet(sg.edges.map((e, i) => ({
+    const edges = new vis.DataSet(semEdges.map((e, i) => ({
       id: 'se-' + i,
       from: e.from,
       to: e.to,
-      label: e.is_hub ? e.label_en : (studioLang === 'en' ? e.label_en : e.label_ko),
-      width: e.is_hub ? 0.85 : 1.15,
-      dashes: e.is_hub,
+      label: studioLang === 'en' ? e.label_en : e.label_ko,
+      width: 1.15,
       arrows: { to: { enabled: true, scaleFactor: 0.55 } },
-      color: { color: e.is_hub ? '#94a3b8' : '#64748b', highlight: '#0284c7' },
+      color: { color: '#64748b', highlight: '#0284c7' },
       font: { size: 10, color: '#475569', align: 'middle', background: 'rgba(255,255,255,0.85)' }
     })));
 
@@ -4163,7 +4164,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
   // Same column layout as src/lineage/lineage_engine.py (restores positions after node drags)
   function untangleLineageLayout() {
     if (!lineageGraph) return;
-    const cols = lineageGraph.categories.map(c => lineageGraph.nodes.filter(n => n.cat === c.id));
+    const last = Math.max(0, ...lineageGraph.nodes.map(n => n.col));
+    const cols = Array.from({ length: last + 1 }, (_, k) => lineageGraph.nodes.filter(n => n.col === k));
     const height = Math.max(0, ...cols.map(ns => ns.length * (ns.length > 8 ? 72 : 92)));
     cols.forEach((ns, col) => {
       const step = ns.length > 8 ? 72 : 92;
