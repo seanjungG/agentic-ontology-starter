@@ -64,15 +64,15 @@ MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 
 
 질문 하나에 Gemini를 2번 호출하며, 결과에 토큰 수와 BigQuery Job ID가 기록된다.
 
-### 2) `lite` 트랙 (문서 전용 1-Pass 청크 컨텍스트 런타임: `execute_lite_doc_cycle()`)
+### 2) `lite` 트랙 (문서 전용 1-Pass 청크 컨텍스트 런타임: `AiFdeAgentEngine._lite_cycle()`)
 
-고객이 정형 CSV 없이 문서(`01_raw_docs/`, `03_wiki/`)만 투입한 프로젝트(`track: "lite"`)에서는 BigQuery SQL MCP 대신 추출된 `doc_chunks.jsonl` 및 `entities.md`/`concepts.md` 컨텍스트(최대 `300,000`자 한도)를 기반으로 1-Pass 응답을 생성한다.
+고객이 정형 CSV 없이 문서(`01_raw_docs/`, `03_wiki/`)만 투입한 프로젝트(`track: "lite"`)에서는 BigQuery SQL MCP 대신 BigQuery `tb_doc_chunks`의 전체 청크 행(`get_doc_chunks`)을 컨텍스트(`lite.max_context_chars` 기본 `300,000`자 한도, 초과 시 `CONTEXT_LIMIT`로 중단)로 넣어 1-Pass 응답을 생성한다.
 
 - **인용 강제**: 모든 답변 문장은 반드시 출처 청크 ID를 `[DOC_CHUNK_XXX]` 형식으로 인용해야 한다.
 - **인용 검증 상태**:
-  - `GROUNDED`: 답변 내 `[DOC_CHUNK_XXX]` 인용이 실제 프로젝트 `doc_chunks.jsonl`에 존재하는 유효한 청크 ID임이 확인된 상태.
+  - `GROUNDED`: 답변 내 `[DOC_CHUNK_XXX]` 인용이 이번 호출에서 조회한 `tb_doc_chunks` 청크 ID에 존재함이 확인된 상태.
   - `NO_CITATION`: 답변에 `[DOC_CHUNK_XXX]` 인용이 누락된 상태.
-  - `INVALID_CITATION`: 실제 `doc_chunks.jsonl`에 존재하지 않는 청크 ID를 환각 인용한 상태.
+  - `INVALID_CITATION`: 조회한 `tb_doc_chunks`에 없는 청크 ID를 환각 인용한 상태.
   - `CONTEXT_LIMIT`: 문서 청크 텍스트 합계가 `300,000`자를 초과하여 컨텍스트 주입이 제한된 상태.
 
 ### 도구 단위와 복합 질문 원칙
@@ -81,6 +81,41 @@ MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 
 - 같은 데이터를 다른 이름으로 돌려주는 도구는 하나로 합치고 나머지는 별칭으로 둔다.
 - 복합 질문(조건·엔티티가 여럿)은 계획 수립 단계에서 여러 도구 호출로 나누고, 답변은 도구 결과만으로 쓴다. 필요한 값이 데이터에 없으면 산정하지 않고 없다고 답한다.
 - 평가셋 밖 질문(카탈로그의 다른 단말·요금제·일수 조합)으로 도구 범위를 함께 점검한다. 같은 문항으로 반복 조정한 점수는 과적합 가능성을 함께 기록한다.
+
+## 권장 방법: Wiki Agent와 BQG Agent 비교
+
+두 에이전트의 차이는 근거를 가져오는 곳이다. 같은 질문으로 둘을 실행해 근거 위치, 단계별 소요 시간, 토큰을 비교한다.
+
+| 단계 | Wiki Agent | BQG Agent |
+| :---: | :--- | :--- |
+| 1 | GCS 위키 목차(index) 읽기 | 슬롯 추출 (Flash) |
+| 2 | Flash가 목차를 보고 열 엔티티·개념 문서 선택 | Property Graph GQL 조회 |
+| 3 | 선택 문서와 관계 1단계 문서를 GCS에서 읽기 | 조회 값으로 코드 계산 |
+| 4 | Flash 답변 (문서 ID + 앵커 인용) | Flash 답변 |
+| BigQuery·그래프 | 사용하지 않음 | 사용 |
+
+- 두 에이전트 모두 응답에 단계별 소요 시간과 토큰 사용량(Vertex `usageMetadata`의 입력·출력·thinking)을 기록한다.
+- 문서를 통째로 넣는 방식은 청크 검색보다 입력 토큰이 늘어난다(참고 사례: 약 3배). 읽는 문서 수와 문서당 글자 상한을 함께 기록한다.
+
+스타터의 현재 구현은 다르다. 에이전트는 `AiFdeAgentEngine` 하나이며 Wiki Agent와 BQG Agent를 따로 두지 않는다.
+
+- `lite` 트랙: GCS 위키 목차나 문서별 파일을 읽지 않고, `tb_doc_chunks` 전체 행을 Gemini 1회 호출 컨텍스트에 넣는다(`_lite_cycle`).
+- `standard`/`full` 트랙: MCP 도구가 BigQuery 또는 Spanner를 실제로 조회한다.
+- 토큰은 호출 합계의 입력(`prompt_tokens`)·출력(`candidates_tokens`)만 기록하고 thinking 토큰은 기록하지 않는다. 시간은 도구별 `tool_elapsed_ms`, `bq_elapsed_ms`와 전체 소요 시간을 기록한다.
+
+## 권장 방법: AI FDE 도구 구성과 리소스 표시
+
+- 에이전트 도구함에는 업무 질문에 답하는 조회 도구만 둔다. 상태 요약만 하고 데이터를 조회하지 않는 방법론 Stage 도구는 에이전트 도구로 제공하지 않고, 상태만 점검하는 "5개 Stage 전체 실행" 버튼도 두지 않는다.
+- 계획 수립 호출마다 사용자 질문(목표)을 함께 넘기고, 하위 목표는 `id`, `intent`, `tool`, `reason`, `status`로 구조화해 표시한다.
+- 도구 호출마다 리소스 사용량을 표시한다: BigQuery job ID, 반환 행, 처리 바이트, 캐시 적중, 쿼리 시간, 조회 테이블, 실행 SQL. 응답에는 계획·답변 호출의 토큰 사용량을 표시한다.
+- 프리셋 질문은 비즈니스 / 엔지니어링 / 복합(여러 도메인) 시나리오로 나누고, 실제 데이터에 있는 값(단말·요금제·거래 ID·기간)으로 쓴다. 프리셋은 모두 실행해 결과 상태를 기록한다(참고 사례: 14건 중 14건 `SUCCESS`).
+
+스타터의 현재 구현:
+
+- Stage MCP 5종은 실제 검증 쿼리(테이블 목록·행 수, 중복 키, GQL 경로 수 등)를 실행하므로 그대로 둔다. 에이전트 도구 목록(`get_tool_catalog()`)에도 8종이 모두 들어 있다.
+- 하위 목표 필드는 `id`, `goal`, `tool`, `category`이며 `intent`·`status`는 없다. 분해는 Gemini 1회 호출이다.
+- 도구 결과에는 `bq_jobs`(job ID·엔진·상태·소요 ms·반환 행·SQL), `bq_job_ids`, `bq_elapsed_ms`, `executed_sql`, `tool_elapsed_ms`가 들어간다. 처리 바이트, 캐시 적중, 조회 테이블 목록은 기록하지 않는다.
+- 프리셋은 Stage 4 콘솔의 CQ 샘플 버튼(`CQ-02`~`CQ-05`)이며 시나리오 분류는 없다.
 
 ## 산출물
 
@@ -112,7 +147,7 @@ MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 
 
 ## 내 데이터에 적용하기
 
-1. **문서 전용 프로젝트 (`lite` 트랙)**: 별도 코드 수정 없이 `execute_lite_doc_cycle()`이 자동으로 `doc_chunks.jsonl`과 `03_wiki/`를 읽어 `[DOC_CHUNK_XXX]` 인용 기반으로 동작한다.
+1. **문서 전용 프로젝트 (`lite` 트랙)**: 별도 코드 수정 없이 `_lite_cycle()`이 `tb_doc_chunks` 전체 청크를 읽어 `[DOC_CHUNK_XXX]` 인용 기반으로 동작한다.
 2. **커스텀 도메인 테이블 (Scenario C)**: 샘플 6종 CSV와 다른 도메인 테이블 스키마를 쓸 경우, `project.json`에 `"mcp_module"`과 `"engine_module"`을 지정하여 도메인 전용 MCP 핸들러와 에이전트 엔진을 주입한다.
 3. **도구 SQL 및 정규식 수정**: 기본 템플릿을 수정할 경우 런타임 MCP 3종의 SQL, `get_live_catalog()`, `extract_params_from_text()`(고객 ID 정규식 `CUST_[A-Z]+_\d{3}`), 프롬프트(`DECOMPOSE_SYS`, `SYNTH_SYS`)를 도메인에 맞게 변경한다.
 4. **모델**: `VERTEX_GEMINI_MODEL`로 지정한다.

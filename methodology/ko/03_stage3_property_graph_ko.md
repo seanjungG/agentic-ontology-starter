@@ -70,6 +70,15 @@ Stage 1·2에서 적재한 테이블을 복사하지 않고 그대로 그래프�
 
 두 경우 모두 `ap.source_chunk_id`로 `tb_doc_chunks`를 조인해 근거 문단(`chunk_text`)과 앵커를 붙인다 (`engine="bigquery"` 및 `engine="spanner"` 모두 동일하게 동작).
 
+## 권장 방법: 온톨로지 폴더만으로 그래프 구성
+
+- 그래프 설계와 데이터 적재의 입력은 온톨로지 폴더 하나다. 로더가 엔티티·개념 문서 frontmatter의 그래프 구조 블록([Stage 2](./02_stage2_wiki_and_semantic_graph_ko.md))을 읽어 엔티티·관계·규칙 테이블 행과 그래프 메타데이터(노드·엣지 목록)를 만든다. 노드·엣지 표를 손으로 따로 관리하지 않는다.
+- 적재 스크립트에 하드코딩 `INSERT ... VALUES`를 두지 않는다. 테이블 스키마와 그래프 DDL은 Terraform, 행 적재는 로더가 맡는다.
+- 정형 원장 테이블은 원천 데이터에서 적재하고, 온톨로지 문서와는 `dw_mapping`(테이블·컬럼)으로 연결한다.
+- 적재 전 검사: 없는 원천 파일 링크 0건, 앵커 불일치 0건. 실패하면 적재를 중단한다.
+
+스타터의 현재 구현은 다르다. 그래프는 Stage 1·2에서 CSV로 적재한 10개 테이블로 만들고, 노드·엣지 라벨과 DDL은 `pipeline/graph_builder.py`에 코드로 정의되어 있다. 규칙 행은 `domain_rules.csv`, 규칙→요금제 연결은 `rule_plan_edges.csv`에서 온다. frontmatter를 읽는 로더는 없다.
+
 ## 산출물
 
 | ID | 산출물 | 스타터에서 |

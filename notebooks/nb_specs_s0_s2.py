@@ -154,7 +154,7 @@ def build_stage0(lang="ko"):
 
 | {"트랙 (Track)" if ko else "Track"} | {"활성 Stage" if ko else "Active Stages"} | {"물리 그래프 엔진" if ko else "Graph Engine"} | {"적용 목적 및 권장 시나리오" if ko else "Target Scenario"} |
 | :--- | :--- | :--- | :--- |
-| **Track 1 · Lite** | `Stage 1 → Stage 2 → Stage 4` | `none` | {"고객 테이블 없이 원본 문서만 있을 때. 원문 청크와 문서 기반 위키로 에이전트가 청크 ID를 인용해 답하고 citation CQ로 채점한다" if ko else "Source documents only, no customer tables. The agent answers from source chunks and the document-based Wiki with chunk ID citations; citation CQs are scored"} |
+| **Track 1 · Lite** | `Stage 1 → Stage 2 → Stage 4` | `none` | {"고객 테이블 없이 원본 문서만 있을 때. 원문 청크로 문서 기반 위키를 만들고, 에이전트는 `tb_doc_chunks` 전체를 컨텍스트로 받아 청크 ID를 인용해 답하며 citation CQ로 채점한다" if ko else "Source documents only, no customer tables. Source chunks build the document-based Wiki; the agent receives all `tb_doc_chunks` rows as context and answers with chunk ID citations; citation CQs are scored"} |
 | **Track 2 · Standard** | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `bigquery` / `spanner` | {"정형 DW 원장 4종과 비정형 규칙을 Zero-ETL Property Graph로 결합해 다중 홉 ISO GQL 추론을 수행할 때" if ko else "Unifying 4 structured DW ledgers and unstructured rules into a Zero-ETL Property Graph for multi-hop ISO GQL"} |
 | **Track 3 · Full-Stack** | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `bigquery` | {"엔드투엔드 데이터 리니지, Golden CQ 5건(100%), 경계값 10건×5회(50회) 벤치마크 및 Cloud Run 배포 게이트까지 운영할 때" if ko else "Full lifecycle operation including end-to-end lineage, 5 Golden CQs, 50-trial boundary benchmark, and Cloud Run release gates"} |"""),
         code(_bootstrap_code(lang, with_agent=True)),
@@ -371,6 +371,40 @@ H.show(bcs, ["case_id", "root_cause_code", "missing_context", "query", "expected
     ]
 
 
+S2_SELF_MD_KO = """### 5. [온톨로지 자기완결성 점검] 엔티티·개념 문서가 원문 근거를 스스로 담고 있는가
+
+**권장 방법**
+- 온톨로지 레이어의 엔티티·개념 문서마다 원문에서 요약한 핵심 사실을 원문 값, 문단 앵커, 짧은 인용과 함께 담는다. 원문에 없는 값은 쓰지 않는다.
+- 그래프 설계와 그래프 데이터 적재는 온톨로지 폴더만으로 동작한다(frontmatter 기반 로더, 하드코딩 INSERT 없음).
+- 검색은 온톨로지 문서를 먼저 보고, 부족하면 파싱 청크로 보완한다.
+- 자산 레지스트리는 고객이 제공한 입력 문서만 관리한다(자동 수집한 규칙·용어 항목은 넣지 않는다).
+- 승격 전 재추출 게이트 스크립트가 앵커·값·커버리지를 검사한다. `latest` 승격은 별도 단계이며 사람 검토 기록을 남긴다.
+
+**스타터의 현재 구조 (권장 방법과 다름)**
+- 위키는 집계 파일 4종(`summary.md`, `entities.md`, `concepts.md`, `rules.md`)과 `ontology.jsonld`이며, 엔티티별 개별 문서가 아니다. GCS 위치는 `gs://seanjung-poc-starter-ontology/ontology/`이다.
+- `entities.md`는 CSV 테이블 행(`data/input/03_tables/*.csv`)에서 생성되고, `concepts.md`는 그래프 모델의 엣지 4종을 설명한다. 둘 다 문단 앵커가 없다. `rules.md`의 규칙은 `DOC_CHUNK` 앵커를 가진다.
+- 물리 그래프는 온톨로지 폴더가 아니라 BigQuery 테이블 위에 선언된다(`pipeline/graph_builder.py`, Stage 3).
+- 재추출 게이트와 `latest` 승격 단계는 없다. 가장 가까운 장치는 Lite 트랙의 `pipeline/extract_wiki.py`로, 인용문이 원문 청크에 그대로 있는 항목만 남긴다.
+
+아래 셀은 로컬 위키 파일과 `ontology.jsonld`에서 항목 수와 청크 앵커(`DOC_CHUNK_*` 또는 `anchor_<12hex>`)를 가진 항목 수를 센다."""
+S2_SELF_MD_EN = """### 5. [Ontology Self-Sufficiency Check] Do entity and concept documents carry their own source evidence?
+
+**Recommended method**
+- Each entity/concept document in the ontology layer carries the key facts summarized from the source, with source values, paragraph anchors and short quotes. Values not present in the source are not allowed.
+- Graph design and graph data load work from the ontology folder alone (frontmatter-driven loader, no hard-coded INSERTs).
+- Search reads ontology documents first and falls back to parsed chunks.
+- The asset registry tracks only customer-provided input documents (no auto-harvested rule or glossary items).
+- Before promotion, a re-extraction gate script checks anchors, values and coverage. Promotion to `latest` is a separate step with a recorded human review.
+
+**The starter's current structure (differs from the method)**
+- The wiki is 4 aggregate files (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) plus `ontology.jsonld`, not one document per entity. GCS location: `gs://seanjung-poc-starter-ontology/ontology/`.
+- `entities.md` is generated from CSV table rows (`data/input/03_tables/*.csv`) and `concepts.md` describes the 4 edge types of the graph model; neither carries paragraph anchors. Rules in `rules.md` carry `DOC_CHUNK` anchors.
+- The physical graph is declared over BigQuery tables (`pipeline/graph_builder.py`, Stage 3), not loaded from the ontology folder.
+- There is no re-extraction gate and no `latest` promotion step. The closest mechanism is the Lite track's `pipeline/extract_wiki.py`, which keeps only items whose quote appears verbatim in the source chunk.
+
+The cell below counts, in the local wiki files and `ontology.jsonld`, the items and the items carrying a chunk anchor (`DOC_CHUNK_*` or `anchor_<12hex>`)."""
+
+
 def build_stage2(lang="ko"):
     ko = lang == "ko"
     banner_file = "stage2_parse_integrate_flow_ko.png" if ko else "stage2_parse_integrate_flow_en.png"
@@ -445,6 +479,18 @@ H.draw_graph(uniq_nodes, edges,
                  "Live BigQuery DocChunk ⇠ Rule (GROUNDED_IN) & Rule → Plan (APPLIES_TO_PLAN) Semantic Bridge Graph"),
              layout="layers", figsize=(11.8, 5.4), node_size=1850,
              legend={"Doc Chunk (#9334E6)": "#9334E6", "Domain Rule (#F9AB00)": "#F9AB00", "Tariff Plan (#0284c7)": "#0284c7"})"""),
+        md(S2_SELF_MD_KO if ko else S2_SELF_MD_EN),
+        code(r"""import re
+wiki_dir = H.ROOT / "data/llm_wiki" / H.LANG
+anchor_rows = []
+for fname in ("entities.md", "concepts.md", "rules.md"):
+    items = [ln for ln in (wiki_dir / fname).read_text(encoding="utf-8").splitlines() if re.match(r"^(- `|### `|\d+\. `)", ln)]
+    anchor_rows.append({"file": f"data/llm_wiki/{H.LANG}/{fname}", "items": len(items),
+                        "items_with_chunk_anchor": sum(bool(re.search(r"DOC_CHUNK_\d+|anchor_[0-9a-f]{12}", ln)) for ln in items)})
+ont_chunks = [g for g in ont.get("@graph", []) if g.get("@type") == "DocChunk"]
+anchor_rows.append({"file": "data/output/ontology.jsonld (DocChunk)", "items": len(ont_chunks),
+                    "items_with_chunk_anchor": sum(bool(g.get("hashAnchor")) for g in ont_chunks)})
+H.show(pd.DataFrame(anchor_rows))"""),
         nav_footer(
             2, lang,
             qa_items=[

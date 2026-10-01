@@ -25,7 +25,7 @@ python3 run_pipeline.py --project acme-claims
 | `data/input/01_guides` · `03_tables` · `04_cq` · `05_glossary` | 원문 변환본(직접 쓰지 않음) · 고객이 준 CSV(행마다 `provenance`·`source_ref`) · Golden CQ/바운더리 질의(`evidence_type` sql 또는 citation) · 용어집 |
 | `data/output`, `data/llm_wiki` | 파이프라인 산출물 (`input_manifest.json`, `gate0_report.json`, `doc_chunks.jsonl`, `wiki_extraction.json`, `entities.md`, `concepts.md` 포함) |
 
-`tables`가 비어 있으면 트랙은 `lite`로 정해지고 테이블 없이 문서만 적재합니다(`extract_docs.py` → `extract_wiki.py` → `execute_lite_doc_cycle`). 고객이 주지 않은 테이블은 만들지 않습니다(`AGENTS.md` 고객 데이터 원칙).
+`tables`가 비어 있으면 트랙은 `lite`로 정해지고 테이블 없이 문서만 적재합니다(`extract_docs.py` → `extract_wiki.py` → `_lite_cycle`). 고객이 주지 않은 테이블은 만들지 않습니다(`AGENTS.md` 고객 데이터 원칙).
 
 도메인 스키마가 샘플과 다르면 공용 코드(`pipeline/`, `src/agent/`)를 고치지 말고, 공용 파일을 이 폴더에 복사해 수정한 뒤 `project.json`에 경로(프로젝트 폴더 기준)를 적습니다. 서버 코드에 프로젝트별 `if` 분기를 추가하지 않습니다.
 

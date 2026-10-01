@@ -71,6 +71,47 @@
 - **Quote**: "제2조(의무 유지 기간) 할인 반환금 면제를 위한 최소 유지 기간은 개통일로부터 180일로 한다."
 ```
 
+## 권장 방법: 온톨로지 레이어 자기충족
+
+온톨로지 폴더만으로 그래프 설계·적재와 질의응답이 가능하도록 엔티티·개념 문서를 쓴다.
+
+| 항목 | 권장 방법 |
+| :--- | :--- |
+| 문서 내용 | 문서 1건 = 엔티티 또는 개념 1개. 요약 + 원문의 수치·조건·예외(원문 순서). 값마다 parsed 문단 앵커와 짧은 원문 인용을 붙인다 |
+| 원문에 없는 값 | 쓰지 않는다. 정형 값은 테이블·컬럼 매핑만 적고 실제 값은 적재 데이터에서 읽는다 |
+| frontmatter | 그래프 구조 블록(노드 라벨·속성·관계, 관계마다 앵커), 근거(앵커·인용·값), 추출 모델, 검토 상태 |
+| 재추출 게이트 | 승격 전에 스크립트로 검사한다: 앵커가 parsed에 실재, 인용이 해당 앵커 원문의 부분 문자열, 모든 수치가 인용에 존재, parsed 수치 커버리지(예: 문서별 90% 이상). 통과한 항목만 기록한다 |
+| `latest` 승격 | 게이트 통과 버전을 `latest`로 올리는 일은 별도 단계로 하고, 사람 검토 기록 여부(검토자 또는 "검토 기록 없음")를 함께 남긴다 |
+| 검색 순서 | 온톨로지 문서를 먼저 검색하고, 근거가 없을 때만 parsed 청크를 본다. 답변에 근거 단계(ontology / parsed fallback)를 적는다 |
+| 자산 레지스트리 | 고객이 제공한 입력 문서만 관리한다. 추출 중 자동 생성된 규칙·용어 항목은 레지스트리에 넣지 않고 온톨로지 레이어에서 본다 |
+
+```yaml
+---
+type: Concept            # Entity | Concept
+id: CON-001
+title: 할인 반환금 면제 최소 유지 조건
+source_doc: parsed/<doc>/parsed_document.md
+graph:
+  label: PolicyRule
+  properties: {min_retention_days: "180"}   # 원문 값만
+  relations:
+    - {type: PRECONDITION, target: ENT-001, anchor: sec-02-p01}
+evidence:
+  - {anchor: sec-02-p01, quote: "<원문 그대로>", values: ["180"]}
+dw_mapping:              # 값 없이 테이블·컬럼만
+  - {table: <table>, column: <column>}
+extracted_by: <실제 모델명>
+review: {status: unverified, reviewer: null}
+---
+```
+
+스타터의 현재 구현은 다음이 다르다.
+
+- GCS `gs://seanjung-poc-starter-ontology/ontology/`에는 문서별 파일이 아니라 `entities.md`, `concepts.md`, `rules.md`, `summary.md`, `ontology.jsonld` 5개 파일이 올라간다.
+- 앵커는 청크 본문의 SHA-256(청크 단위)이며 문단 앵커가 아니다. 표준 트랙 Wiki는 CSV 행과 청크에서 코드로 만든다.
+- `extract_wiki.py`는 인용구가 청크 원문에 있는지만 검사한다. 수치 검사, 커버리지 검사, 별도 `latest` 승격 단계는 없다.
+- 검색 fallback이 없다. `standard`/`full`은 규칙의 `source_chunk_id`로 청크를 조인하고, `lite`는 `tb_doc_chunks` 전체 행을 Gemini 컨텍스트에 넣는다(`src/agent/reasoning_engine.py` `_lite_cycle`).
+
 ## 산출물
 
 | ID | 산출물 | 스타터에서 |
@@ -88,6 +129,7 @@
 - [ ] 문서 기반 위키(`extract_wiki.py`) 추출 항목의 모든 `quote`가 원문 청크에 실제 존재한다(불일치 항목은 자동 폐기됨).
 - [ ] 정형 테이블이 있는 프로젝트는 `tb_domain_rules.source_chunk_id`가 모두 `tb_doc_chunks`에 있다.
 - [ ] Lite 트랙은 이 게이트를 통과하면 Stage 3를 건너뛰고 Stage 4로 넘어간다.
+- [ ] (권장, 스타터 미구현) 엔티티·개념 문서가 재추출 게이트(앵커·인용·수치·커버리지)를 통과한 뒤 `latest`로 승격되고, 사람 검토 기록 여부가 적혀 있다.
 
 ## 스튜디오에서 보기
 

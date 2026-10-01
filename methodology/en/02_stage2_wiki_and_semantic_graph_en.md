@@ -95,6 +95,47 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 }
 ```
 
+## Recommended method: self-sufficient ontology layer
+
+Write the entity and concept documents so that graph design, graph loading and Q&A work from the ontology folder alone.
+
+| Item | Recommended method |
+| :--- | :--- |
+| Document content | One document = one entity or concept. Summary + the source values, conditions and exceptions (in source order). Every value carries a parsed paragraph anchor and a short source quote |
+| Values not in the source | Not allowed. For structured values, record only the table and column mapping; read the actual values from the loaded data |
+| Frontmatter | Graph structure block (node label, properties, relations with an anchor per relation), evidence (anchor, quote, values), extraction model, review status |
+| Re-extraction gate | A script checks before promotion: the anchor exists in parsed, the quote is a substring of that anchor's text, every value appears in the quote, coverage of parsed values (for example 90% or more per document). Only passing items are written |
+| Promotion to `latest` | Promoting a passing version to `latest` is a separate step, and the human review record is stated (reviewer, or "no review record") |
+| Search order | Search the ontology documents first; read parsed chunks only when no evidence is found. The answer states the evidence level (ontology / parsed fallback) |
+| Asset registry | Tracks only input documents provided by the customer. Rule and glossary items generated during extraction are not added to the registry; they are viewed in the ontology layer |
+
+```yaml
+---
+type: Concept            # Entity | Concept
+id: CON-001
+title: Minimum retention for discount clawback exemption
+source_doc: parsed/<doc>/parsed_document.md
+graph:
+  label: PolicyRule
+  properties: {min_retention_days: "180"}   # source values only
+  relations:
+    - {type: PRECONDITION, target: ENT-001, anchor: sec-02-p01}
+evidence:
+  - {anchor: sec-02-p01, quote: "<verbatim source text>", values: ["180"]}
+dw_mapping:              # table and column only, no values
+  - {table: <table>, column: <column>}
+extracted_by: <actual model name>
+review: {status: unverified, reviewer: null}
+---
+```
+
+The current starter implementation differs as follows.
+
+- GCS `gs://seanjung-poc-starter-ontology/ontology/` holds 5 files, not one file per document: `entities.md`, `concepts.md`, `rules.md`, `summary.md`, `ontology.jsonld`.
+- Anchors are the SHA-256 of the chunk text (one per chunk), not paragraph anchors. The standard-track Wiki is built by code from CSV rows and chunks.
+- `extract_wiki.py` only checks that each quote exists in its chunk. There is no value check, no coverage check and no separate `latest` promotion step.
+- There is no search fallback. `standard`/`full` join chunks through the rules' `source_chunk_id`; `lite` puts all `tb_doc_chunks` rows into the Gemini context (`_lite_cycle` in `src/agent/reasoning_engine.py`).
+
 ## Deliverables
 
 | ID | Deliverable | In the starter |
@@ -112,6 +153,7 @@ The `steps` argument is recorded in `executed_steps` of the result. The current 
 - [ ] Every `tb_domain_rules.source_chunk_id` exists in `tb_doc_chunks`. Check the chunks with attached rules in `anchored_chunks` of the Stage 2 MCP result.
 - [ ] The manifest `status` is `LIVE_GCP_SYNCED` and `validation.bigquery_tables_loaded` is 10.
 - [ ] On the Lite track, passing this gate moves the work to Stage 4.
+- [ ] (Recommended, not implemented in the starter) Entity and concept documents pass the re-extraction gate (anchors, quotes, values, coverage) before promotion to `latest`, and the human review record is stated.
 
 ## View in the studio
 

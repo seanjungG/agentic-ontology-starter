@@ -2904,7 +2904,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             tag: '[런타임:Lite]',
             title: isEn ? 'Lite Document Citation Agent' : 'Lite 문서 청크 인용 에이전트',
             desc: isEn ? 'Injects up to 300k chars of anchored chunks into Gemini with strict [DOC_CHUNK_*] grounding.' : '최대 300,000자 원문 청크와 위키를 컨텍스트로 주입하여 [DOC_CHUNK_*] 인용 답변 생성.',
-            meta: 'execute_lite_doc_cycle()'
+            meta: '_lite_cycle()'
           },
           {
             key: 'mcp_8tools',
@@ -3089,7 +3089,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         color: '#7c3aed',
         script: st.runtime === 'lite_agent' ? 'src/agent/reasoning_engine.py (Lite)' : 'src/agent/mcp_server.py + reasoning_engine.py',
         gcp: `Vertex AI Gemini + ${st.engine === 'spanner' ? 'Spanner GQL' : (st.engine === 'both' ? 'BQ + Spanner Fabric' : 'BigQuery SQL/GQL')}`,
-        artifact: st.runtime === 'lite_agent' ? 'execute_lite_doc_cycle ([DOC_CHUNK_*])' : '8 Modular MCP Tools + Deterministic Math',
+        artifact: st.runtime === 'lite_agent' ? '_lite_cycle ([DOC_CHUNK_*])' : '8 Modular MCP Tools + Deterministic Math',
         note: st.runtime === 'lite_agent'
           ? (isEn ? 'Answers questions directly from anchored document chunks without SQL/GQL table joins.' : 'SQL/그래프 조인 없이 원문 청크 컨텍스트(최대 300k자) 기반으로 [DOC_CHUNK_*] 인용 답변 생성')
           : (isEn ? 'Chains 5 Stage MCPs + 3 Runtime MCPs (Contract, Penalty/TCO formula, Graph/Wiki traversal).' : 'Stage 1~5 파이프라인 MCP와 런타임 도메인 MCP 3종(원장·위약금산식·그래프탐색) 체이닝')

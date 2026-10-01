@@ -64,15 +64,15 @@ The 24-month cost is computed for both paths: public subsidy `(factory price - t
 
 Each question calls Gemini twice, and the result records the token count and the BigQuery job IDs.
 
-### 2) `lite` Track (1-Pass Document-Chunk Context Runtime: `execute_lite_doc_cycle()`)
+### 2) `lite` Track (1-Pass Document-Chunk Context Runtime: `AiFdeAgentEngine._lite_cycle()`)
 
-For document-only projects (`track: "lite"`) without structured customer tables, the engine bypasses BigQuery SQL MCPs and answers directly from the project's `doc_chunks.jsonl` and `03_wiki/entities.md` · `concepts.md` context (up to `300,000` characters).
+For document-only projects (`track: "lite"`) without structured customer tables, the engine bypasses BigQuery SQL MCPs and answers from every chunk row of BigQuery `tb_doc_chunks` (`get_doc_chunks`) placed in context (limit `lite.max_context_chars`, default `300,000` characters; above it the answer stops with `CONTEXT_LIMIT`).
 
 - **Mandatory Citation**: Every factual claim in the response must cite a valid chunk ID in `[DOC_CHUNK_XXX]` format.
 - **Citation Verification Statuses**:
-  - `GROUNDED`: Every cited `[DOC_CHUNK_XXX]` exists in the project's `doc_chunks.jsonl`.
+  - `GROUNDED`: Every cited `[DOC_CHUNK_XXX]` exists among the `tb_doc_chunks` chunk IDs read in this call.
   - `NO_CITATION`: The response failed to include any `[DOC_CHUNK_XXX]` citation.
-  - `INVALID_CITATION`: The response cited a chunk ID that does not exist in `doc_chunks.jsonl`.
+  - `INVALID_CITATION`: The response cited a chunk ID that is not among the `tb_doc_chunks` chunk IDs read in this call.
   - `CONTEXT_LIMIT`: Total document chunk characters exceeded the `300,000`-character context limit.
 
 ### Tool granularity and composite questions
@@ -81,6 +81,41 @@ For document-only projects (`track: "lite"`) without structured customer tables,
 - Tools that return the same data under different names are merged into one; the others remain as aliases.
 - A composite question (several conditions or entities) is split into several tool calls during planning, and the answer is written from tool results only. If a required value is not in the data, the agent says so instead of estimating it.
 - Check tool coverage with questions outside the evaluation set (other device, plan and day combinations from the catalog). Record possible overfitting when a score was tuned on the same questions.
+
+## Recommended method: Wiki Agent vs BQG Agent
+
+The two agents differ in where they get their evidence. Run both on the same question and compare the evidence location, the time per step and the tokens.
+
+| Step | Wiki Agent | BQG Agent |
+| :---: | :--- | :--- |
+| 1 | Read the GCS wiki index | Slot extraction (Flash) |
+| 2 | Flash reads the index and selects the entity and concept documents to open | GQL query over the Property Graph |
+| 3 | Read the selected documents and their 1-hop related documents from GCS | Calculation in code from the queried values |
+| 4 | Flash writes the answer (document ID + anchor citation) | Flash writes the answer |
+| BigQuery and graph | Not used | Used |
+
+- Both agents record time per step and token usage (input, output and thinking from Vertex `usageMetadata`) in the response.
+- Passing whole documents uses more input tokens than chunk search (reference case: about 3 times). Record the number of documents read and the character limit per document.
+
+The current starter implementation differs. There is one agent, `AiFdeAgentEngine`; there are no separate Wiki and BQG agents.
+
+- `lite` track: does not read a GCS wiki index or per-document files; it puts all `tb_doc_chunks` rows into the context of one Gemini call (`_lite_cycle`).
+- `standard`/`full` tracks: the MCP tools run real BigQuery or Spanner queries.
+- Tokens are recorded as call totals of input (`prompt_tokens`) and output (`candidates_tokens`) only; thinking tokens are not recorded. Time is recorded per tool (`tool_elapsed_ms`, `bq_elapsed_ms`) and in total.
+
+## Recommended method: AI FDE tools and resource display
+
+- The agent toolbox holds only lookup tools that answer business questions. Methodology stage tools that only summarize status and query no data are not offered as agent tools, and there is no "run all 5 stages" button that only checks status.
+- Every planner call receives the user question (goal), and sub-goals are shown in a structured form: `id`, `intent`, `tool`, `reason`, `status`.
+- Every tool call shows its resource usage: BigQuery job IDs, rows returned, bytes processed, cache hit, query time, tables used, executed SQL. The response shows the token usage of the planner and answer calls.
+- Preset questions are grouped into business / engineering / multi-domain scenarios and use values that exist in the data (device, plan, transaction ID, period). Run every preset and record the result status (reference case: 14 of 14 `SUCCESS`).
+
+Current starter implementation:
+
+- The 5 Stage MCPs run real validation queries (table inventory and row counts, duplicate keys, GQL path count, etc.) and stay as they are. All 8 tools are also in the agent tool list (`get_tool_catalog()`).
+- Sub-goal fields are `id`, `goal`, `tool`, `category`; there is no `intent` or `status`. Decomposition is one Gemini call.
+- Tool results contain `bq_jobs` (job ID, engine, status, elapsed ms, rows returned, SQL), `bq_job_ids`, `bq_elapsed_ms`, `executed_sql`, `tool_elapsed_ms`. Bytes processed, cache hit and the list of tables used are not recorded.
+- Presets are the sample CQ buttons (`CQ-02` to `CQ-05`) in the Stage 4 console, without scenario groups.
 
 ## Deliverables
 
@@ -112,7 +147,7 @@ For document-only projects (`track: "lite"`) without structured customer tables,
 
 ## Apply to your data
 
-1. **Document-only projects (`lite` track)**: `execute_lite_doc_cycle()` automatically reads `doc_chunks.jsonl` and `03_wiki/` without SQL edits and enforces `[DOC_CHUNK_XXX]` citations.
+1. **Document-only projects (`lite` track)**: `_lite_cycle()` reads every `tb_doc_chunks` chunk without SQL edits and enforces `[DOC_CHUNK_XXX]` citations.
 2. **Custom domain tables (Scenario C)**: when your table schema differs from the 6-table telecom sample, set `"mcp_module"` and `"engine_module"` in `project.json` to inject domain-specific MCP handlers and agent prompts.
 3. **Tool SQL and regex**: if modifying the default template, edit the SQL of the 3 runtime MCPs, `get_live_catalog()`, `extract_params_from_text()` (customer ID regex `CUST_[A-Z]+_\d{3}`), and prompts (`DECOMPOSE_SYS`, `SYNTH_SYS`).
 4. **Model**: set it with `VERTEX_GEMINI_MODEL`.

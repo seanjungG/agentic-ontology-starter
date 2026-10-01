@@ -266,6 +266,9 @@ H.line(df_curve, "elapsed_days", "penalty_krw",
        H.t("CUST_DEMO_001 경과일(30~200일)별 차액정산 위약금 시뮬레이션 곡선 (180일 면제 경계)",
            "CUST_DEMO_001 Prorated Penalty Curve Across Elapsed Days 30..200 (180-Day Exemption Threshold)"),
        vline=180, vline_label="180d threshold")"""),
+        code("""H.md(H.t("#### MCP 호출별 BigQuery 리소스 (`bq_jobs`: job_id · rows · elapsed_ms)", "#### BigQuery resources per MCP call (`bq_jobs`: job_id, rows, elapsed_ms)"))
+H.show(pd.DataFrame([{"tool": r["tool"], "job_id": j["job_id"], "engine": j["engine"], "status": j["status"], "rows": j["rows"], "elapsed_ms": j["elapsed_ms"]}
+                     for r in (r_prof, r_pen, r_gql) for j in r.get("bq_jobs", [])]))"""),
         md(f"### 4. {'[Phase 6d: 양대 그래프 엔진 MCP 런타임 비교 (`engine=\"bigquery\"` vs `engine=\"spanner\"`)] Cloud Spanner Graph 직접 실행 및 결과 정합성·지연시간 대조' if ko else '[Phase 6d: Dual-Engine Runtime MCP Execution (`engine=\"bigquery\"` vs. `engine=\"spanner\"`)] Cloud Spanner Graph Execution Parity & Latency Comparison'}"),
         code("""df_mcp_eng = H.compare_mcp_engines(server)
 H.show(df_mcp_eng)
@@ -285,7 +288,8 @@ runs = []
 for qid, q in prompts:
     res = agent.execute_cycle(q)
     H.show_agent(res, title=qid)
-    runs.append(H.agent_row(res, qid.split()[0]))
+    runs.append({**H.agent_row(res, qid.split()[0]), "prompt_tokens": res["llm_telemetry"]["prompt_tokens"],
+                 "completion_tokens": res["llm_telemetry"]["candidates_tokens"]})
 df_runs = pd.DataFrame(runs)
 H.show(df_runs)
 H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
@@ -301,12 +305,14 @@ runs = []
 for qid, q in prompts:
     res = agent.execute_cycle(q)
     H.show_agent(res, title=qid)
-    runs.append(H.agent_row(res, qid.split()[0]))
+    runs.append({**H.agent_row(res, qid.split()[0]), "prompt_tokens": res["llm_telemetry"]["prompt_tokens"],
+                 "completion_tokens": res["llm_telemetry"]["candidates_tokens"]})
 df_runs = pd.DataFrame(runs)
 H.show(df_runs)
 H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
               H.t("질의 시나리오별 Gemini 2-Pass 추론 시간 vs BigQuery SQL/GQL 실행 시간 (ms)",
                   "Gemini 2-Pass LLM Inference vs. BigQuery SQL/GQL Latency by Scenario (ms)"))"""),
+        md(S4_AGENTS_MD_KO if ko else S4_AGENTS_MD_EN),
         nav_footer(
             4, lang,
             qa_items=[
@@ -333,12 +339,77 @@ H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
     ]
 
 
+S4_AGENTS_MD_KO = """### 6. Wiki Agent와 BQG Agent의 차이 및 사용량 보고
+
+방법론은 두 에이전트를 근거를 가져오는 곳으로 구분한다.
+
+| 구분 | Wiki Agent (방법론) | BQG Agent (방법론) |
+| :--- | :--- | :--- |
+| 근거 | GCS의 온톨로지 위키 파일 | BigQuery Property Graph |
+| 절차 | GCS 위키 목차 읽기 → Flash가 엔티티·개념 파일 선택 → 선택한 파일(+관계 1단계) 읽기 → Flash가 파일 내용만으로 답변 | 슬롯 추출 → Property Graph에 파라미터 GQL 조회 → 코드로 계산 → 답변 |
+| BigQuery·그래프 | 사용하지 않음 | 사용 |
+| 사용량 보고 | 호출별 토큰(Vertex `usageMetadata`: 입력·출력·thinking), 단계별 지연시간 | 같은 항목 + 쿼리별 BigQuery job ID, 행 수, 소요 ms |
+
+Wiki Agent를 따로 두는 이유는 물리 그래프 없이 Stage 2 산출물만으로 규정·산식 CQ에 답할 수 있는지 확인하기 위해서다.
+
+**스타터 구현 (방법론과 다름)**
+- 스타터에는 GCS Wiki Agent가 없다. GCS 온톨로지는 `gs://seanjung-poc-starter-ontology/ontology/{entities.md, concepts.md, rules.md, summary.md, ontology.jsonld}`이며, 엔티티별 파일이 아니라 집계 파일이다.
+- Lite 트랙(`src/agent/reasoning_engine.py` `_lite_cycle`): `tb_doc_chunks` 전체 행을 Gemini 컨텍스트에 넣고 청크 ID 인용을 검사한다. BigQuery 조회 1회, 그래프는 쓰지 않는다.
+- Standard/Full 트랙(이 노트북): `AiFdeAgentEngine`이 MCP 도구를 호출하고, 도구는 실제 BigQuery/Spanner 쿼리를 실행한다. 각 결과에 `bq_jobs`(job_id, rows, elapsed_ms, status, sql)와 `executed_sql`이 담긴다. bytes processed와 cache hit는 스타터 기록에 없다.
+- 토큰: `llm_telemetry.prompt_tokens`/`candidates_tokens`(Vertex `usageMetadata`의 `promptTokenCount`/`candidatesTokenCount`, 분해·합성 호출 합계). thinking 토큰은 스타터가 기록하지 않는다.
+
+**위 실행 결과에서 확인할 곳**: 섹션 3의 MCP 호출별 표(job ID, rows, elapsed ms), 섹션 5의 `df_runs`(prompt/completion 토큰, BigQuery job 수, LLM ms와 BigQuery ms)."""
+S4_AGENTS_MD_EN = """### 6. Wiki Agent vs BQG Agent, and usage reporting
+
+The method separates the two agents by where they get evidence.
+
+| Item | Wiki Agent (method) | BQG Agent (method) |
+| :--- | :--- | :--- |
+| Evidence | Ontology wiki files on GCS | BigQuery Property Graph |
+| Steps | Read the wiki index on GCS → Flash selects entity/concept files → read those files (+1 hop of relations) → Flash answers from file content only | Slot extraction → parameterized GQL over the property graph → calculation in code → answer |
+| BigQuery and graph | Not used | Used |
+| Usage reported | Tokens per call (Vertex `usageMetadata`: prompt, completion, thinking) and latency per step | Same, plus BigQuery job ID, rows and elapsed ms per query |
+
+A separate Wiki Agent checks whether Stage 2 output alone, without the physical graph, can answer rule and formula CQs.
+
+**Starter implementation (differs from the method)**
+- The starter has no GCS Wiki Agent. Its GCS ontology is `gs://seanjung-poc-starter-ontology/ontology/{entities.md, concepts.md, rules.md, summary.md, ontology.jsonld}`: aggregate files, not one file per entity.
+- Lite track (`src/agent/reasoning_engine.py` `_lite_cycle`): puts all `tb_doc_chunks` rows into the Gemini context and checks chunk ID citations. One BigQuery read, no graph.
+- Standard/Full track (this notebook): `AiFdeAgentEngine` calls MCP tools that run real BigQuery/Spanner queries. Each result carries `bq_jobs` (job_id, rows, elapsed_ms, status, sql) and `executed_sql`. Bytes processed and cache hit are not in the starter's record.
+- Tokens: `llm_telemetry.prompt_tokens` / `candidates_tokens` (`promptTokenCount` / `candidatesTokenCount` from Vertex `usageMetadata`, summed over the decomposition and synthesis calls). The starter does not record thinking tokens.
+
+**Where to read these values above**: the per-call table in Section 3 (job ID, rows, elapsed ms) and `df_runs` in Section 5 (prompt/completion tokens, BigQuery job count, LLM ms vs BigQuery ms)."""
+
 H_LINEAGE_MD_KO = ("#### 스튜디오 리니지 DAG (`config/lineage_spec.json`) 실측\n"
                    "스튜디오 `Stage 5` 리니지와 같은 엔진(`src/lineage/lineage_engine.py`)입니다. "
-                   "볼륨은 BigQuery `__TABLES__` 행 수, GCS 객체 수, `INFORMATION_SCHEMA.PROPERTY_GRAPHS` 노드·엣지 테이블 수를 지금 조회한 값이며, 실패하면 `lookup failed`로 남습니다.")
+                   "볼륨은 BigQuery `__TABLES__` 행 수, GCS 객체 수, `INFORMATION_SCHEMA.PROPERTY_GRAPHS` 노드·엣지 테이블 수를 지금 조회한 값이며, 실패하면 `lookup failed`로 남습니다.\n\n"
+                   "**구조 원칙 (방법론)**: 정형 테이블은 테이블당 박스 1개, 엣지 테이블은 종류당 박스 1개로 그린다. "
+                   "비정형 문서는 RAW → parsed → 재추출 게이트 → latest → 온톨로지 문서당 박스 1개로 흐르고, Wiki Agent 입력은 GCS의 온톨로지 latest다. 원격 MCP 서버 박스는 그리지 않는다.\n\n"
+                   "**스타터 스펙**: 정형 테이블(`RAW_TB_*`)과 엣지 테이블(`TR_EDGE_*`)은 각각 박스 1개이고, 그래프 계층에 테이블별 노드 레이블 박스(`SEM_NODE_*`)가 따로 있다. "
+                   "비정형 문서는 가이드 박스 2개 → 청커(`tb_doc_chunks`) → GCS `parsed/`와 위키 박스 1개(`gs://{bucket}/ontology/`)로 흐른다. "
+                   "재추출 게이트, `latest` 승격, 온톨로지 문서별 박스, Wiki Agent 박스는 없고 원격 MCP 서버 박스도 없다.")
 H_LINEAGE_MD_EN = ("#### Studio lineage DAG (`config/lineage_spec.json`), measured\n"
                    "Same engine as the studio `Stage 5` lineage (`src/lineage/lineage_engine.py`). "
-                   "Volumes are BigQuery `__TABLES__` row counts, GCS object counts and node/edge table counts from `INFORMATION_SCHEMA.PROPERTY_GRAPHS`, queried now; a failed lookup stays `lookup failed`.")
+                   "Volumes are BigQuery `__TABLES__` row counts, GCS object counts and node/edge table counts from `INFORMATION_SCHEMA.PROPERTY_GRAPHS`, queried now; a failed lookup stays `lookup failed`.\n\n"
+                   "**Structure principle (method)**: one box per structured table and one box per edge-table kind. "
+                   "Unstructured documents flow RAW → parsed → re-extraction gate → latest → one box per ontology document; the Wiki Agent input is the ontology latest on GCS. The remote MCP server is not drawn as a box.\n\n"
+                   "**Starter spec**: structured tables (`RAW_TB_*`) and edge tables (`TR_EDGE_*`) have one box each, and the graph layer has a separate node-label box per table (`SEM_NODE_*`). "
+                   "Unstructured documents flow from 2 guide boxes → chunker (`tb_doc_chunks`) → GCS `parsed/` and one wiki box (`gs://{bucket}/ontology/`). "
+                   "There is no re-extraction gate, no `latest` promotion, no per-document ontology box, no Wiki Agent box and no remote MCP server box.")
+
+S5_EVAL_MD_KO = ("#### 평가 표시 순서: A 전체 결과 → B CQ별 검증 → C 루브릭 기준\n"
+                 "A는 통과 수, 루브릭 평균, 감점 CQ 수, 축별 평균이다. B는 CQ마다 기대값과 검증 SQL 결과, 점수·판정·감점 수, "
+                 "근거(인용 청크, 검증 job ID, 에이전트 BigQuery job 수, 심사 요약)와 실제 답변 발췌다. C는 루브릭 축 정의다. "
+                 "값은 모두 `data/output/cq_benchmark_report.json`에서 읽는다. 스타터 리포트의 루브릭 설명은 영문만 있다"
+                 "(`name_ko`, `desc_ko`, `judge_instructions_ko` 필드 없음). 답변 원문은 한국어로 저장되어 있어 영문 노트북은 답변 발췌 대신 심사 요약만 보여준다. "
+                 "마지막으로 `CQ-02`를 지금 다시 실행해 채점 조건을 확인한다.")
+S5_EVAL_MD_EN = ("#### Evaluation order: A overall results → B per-CQ verification → C rubric criteria\n"
+                 "A is the pass count, rubric average, number of CQs with deductions and per-axis averages. B is, per CQ, the expected value and "
+                 "verification SQL result, score, verdict and deduction count, and evidence (cited chunk, verification job ID, agent BigQuery job count, judge summary). "
+                 "C is the rubric axis definitions. All values are read from `data/output/cq_benchmark_report.json`. "
+                 "The starter report stores rubric descriptions in English only (no `name_ko`, `desc_ko`, `judge_instructions_ko` fields). "
+                 "The answer text is stored in Korean, so the Korean notebook adds an answer excerpt per CQ and this English notebook shows the judge summary only. "
+                 "Finally, `CQ-02` is re-run now to check the grading conditions.")
 
 
 def build_stage5(lang="ko"):
@@ -392,10 +463,27 @@ H.md(f"**nodes `{lg['stats']['total_nodes']}` · edges `{lg['stats']['total_edge
 H.show(pd.DataFrame([{"category": n["cat"], "node": n["id"], "volume": n["volume_en"], "measured": n["live"], "source": n["live_src"]}
                      for n in lg["nodes"] if n["live_src"]]))"""),
         md(f"### 2. {'[Phase 8b: Golden CQ 5종 정량 감사 (`pipeline/validator.py`)] 벤치마크 리포트 분석 및 실시간 에이전트 4대 채점 조건 재검증 (`recheck_cq`)' if ko else '[Phase 8b: 5 Golden CQs Deterministic Audit (`pipeline/validator.py`)] Benchmark Report & Live Agent Re-Verification (`recheck_cq`)'}"),
+        md(S5_EVAL_MD_KO if ko else S5_EVAL_MD_EN),
         code("""df_cq = pd.DataFrame(cq_rep["test_results"])
-H.md(f"**Golden CQ Benchmark `{cq_rep['benchmark_id']}`** · Evaluated `{cq_rep['evaluated_at']}` · Model `{cq_rep['model']}` · Passed **`{cq_rep['passed']}/{cq_rep['total_cqs']} ({cq_rep['accuracy_rate']}%)`**")
-H.show(df_cq, ["cq_id", "category", "status", "verification_status", "grounded_chunk", "llm_tokens", "elapsed_s", "verification_job_id"])
-H.bar(df_cq, "cq_id", "elapsed_s", H.t("Golden CQ별 에이전트 2-Pass 응답 소요 시간 (초)", "Golden CQ Agent 2-Pass Elapsed Time (s)"), fmt="{:.2f}")
+H.md(H.t("#### A. 전체 결과", "#### A. Overall results"))
+H.md(f"**Golden CQ Benchmark `{cq_rep['benchmark_id']}`** · Evaluated `{cq_rep['evaluated_at']}` · Model `{cq_rep['model']}` · Passed **`{cq_rep['passed']}/{cq_rep['total_cqs']} ({cq_rep['accuracy_rate']}%)`** · "
+     f"Rubric avg `{cq_rep['rubric_avg_total']}` · CQs with deductions `{sum(1 for r in cq_rep['test_results'] if r['rubric']['deductions'])}` · LLM tokens `{cq_rep['llm_tokens_total']:,}`")
+H.show(pd.DataFrame([cq_rep["rubric_axis_avg"]]))
+
+H.md(H.t("#### B. CQ별 검증 (점수 · 근거 · 실제 답변)", "#### B. Per-CQ verification (score and evidence)"))
+df_cq["score"] = df_cq["rubric"].map(lambda r: r["scores"]["total"])
+df_cq["verdict"] = df_cq["rubric"].map(lambda r: r["verdict"])
+df_cq["deductions"] = df_cq["rubric"].map(lambda r: len(r["deductions"]))
+df_cq["judge_summary"] = df_cq["rubric"].map(lambda r: r["summary"])
+df_cq["agent_bq_jobs"] = df_cq["agent_bq_job_ids"].map(len)
+H.show(df_cq, ["cq_id", "status", "expected_math", "verification_sql_result", "verification_job_id", "score", "verdict", "deductions",
+               "grounded_chunk", "agent_bq_jobs", "llm_tokens", "elapsed_s", "judge_summary"])
+""" + ("""for r in cq_rep["test_results"]:
+    H.md(f"**{r['cq_id']}** · {r['query']}\\n\\n" + "\\n".join("> " + ln.lstrip("# ") if ln.strip() else ">" for ln in r["answer_excerpt"].splitlines()[:10]))
+""" if ko else "") + """H.bar(df_cq, "cq_id", "elapsed_s", H.t("Golden CQ별 에이전트 2-Pass 응답 소요 시간 (초)", "Golden CQ Agent 2-Pass Elapsed Time (s)"), fmt="{:.2f}")
+
+H.md(H.t("#### C. 루브릭 기준", "#### C. Rubric criteria"))
+H.show(pd.DataFrame(cq_rep["rubric"]))
 
 cqs = H.read_json("data/input/04_cq/golden_competency_questions.json")
 res_cq2, df_chk = H.recheck_cq(cqs[1], agent)

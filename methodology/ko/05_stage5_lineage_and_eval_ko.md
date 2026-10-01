@@ -32,6 +32,16 @@
 - 노드 클릭: 상·하류 BFS 하이라이트, 상세 패널(메타데이터·볼륨 출처·직접 상/하류·규칙 기반 요약), Stage 4 에이전트 질의 연결.
 - 프로젝트별 스펙은 `projects/<id>/config/lineage_spec.json`에 작성합니다 ([`projects/_template/README.md`](../../projects/_template/README.md)).
 
+### 권장 리니지 구조
+
+- 정형: 테이블마다 박스 1개. 테이블과 그 그래프 라벨은 한 박스로 둔다.
+- 비정형: RAW → 파싱 → parsed → 재추출 게이트 → `latest` → 온톨로지 문서마다 박스 1개. 문서 간 관계는 엣지로 그리지 않고 문서 박스에 건수로 적는다.
+- 엣지 테이블: 종류마다 박스 1개.
+- 에이전트 입력: Wiki Agent는 GCS의 온톨로지 `latest`(BigQuery 박스 없음), BQG Agent는 Property Graph.
+- 같은 도구 전체를 다시 노출하는 원격 MCP 서버 박스는 넣지 않는다(리니지 정보가 없다).
+
+스타터 스펙(`config/lineage_spec.json`)은 정형 테이블별 박스(`RAW_TB_*`), 엣지 테이블 종류별 박스(`TR_EDGE_*`)를 두고 원격 MCP 서버 박스가 없다. 비정형은 가이드 → 청크 분할(`TR_CHUNKER`) → GCS `parsed/` 및 Wiki 박스 1개(`SEM_WIKI`)이며, 재추출 게이트·`latest`·문서별 박스는 없다. 에이전트 박스는 `AGENT_FDE` 하나다.
+
 ## 절차 (`pipeline/validator.py`)
 
 1. **레코드 단위 리니지 조인 (`build_4tier_lineage`)**:
@@ -42,7 +52,7 @@
    - Tier 4 (Golden CQ Answers): `CQ-01`~`CQ-05` 에이전트 응답 및 근거 인용
 2. **Golden CQ 결정론적 검증 (`run_validation`) — `evidence_type` 분기 채점**:
    - **`evidence_type: "sql"` (`full` 트랙)**: 독립 실행한 BigQuery `verification_sql` 결과가 `expected_math`와 일치하는지, 그리고 에이전트(`AiFdeAgentEngine.execute_cycle`) 실시간 답변이 정답 수치와 `grounded_chunk`를 포함하는지 검증한다.
-   - **`evidence_type: "citation"` (`lite` 트랙)**: 에이전트(`execute_lite_doc_cycle`) 답변에 `grounded_chunk`(`DOC_CHUNK_XXX`) 인용이 포함되어 있고 `expected_keywords` 중 최소 1개 이상이 포함되는지 검증한다.
+   - **`evidence_type: "citation"` (`lite` 트랙)**: 에이전트(`_lite_cycle`) 답변에 `grounded_chunk`(`DOC_CHUNK_XXX`) 인용이 포함되어 있고 `expected_keywords` 중 최소 1개 이상이 포함되는지 검증한다.
    - **`status: "UNCONFIRMED"` 문항 처리**: 고객이 정답(`expected_math` 또는 `expected_keywords`)을 아직 확정하지 않은 문항은 자동 통과(100%)로 위장하지 않고 `unconfirmed_cq_count`로 별도 집계한다.
    - **최종 답변 루브릭 채점 (`_judge`)**: 값 포함 검사만으로는 질문과 다른 답을 해도 통과할 수 있다. 그래서 에이전트 최종 답변을 LLM 심사(같은 Gemini 모델)가 질문 적합성 20 · 정확성 30 · 완결성 20 · 근거 충실도 15 · 명확성 15로 채점한다. 심사에는 질문, 정답, 에이전트가 실제 조회한 도구 결과와 인용 청크 원문만 넣는다. 질문 적합성 8점 미만이면 총점 상한 40, 근거에 없는 수치는 항목당 3점 이상 감점. 판정이 `PASS`가 아니면 문항은 `FAILED`(`RUBRIC_PARTIAL`/`RUBRIC_FAIL`).
    - **중복 답변 검사**: 서로 다른 문항의 답변 3-gram Jaccard가 0.5 이상이면 두 문항 모두 `DUPLICATE_ANSWER`로 실패 처리한다. 질문이 다른데 답이 같다는 것은 조회나 답변 생성이 질문을 반영하지 못했다는 신호다.
@@ -72,6 +82,15 @@
 5. **경계값 10건 × 5회 라이브 벤치마크 (`run_boundary`)**:
    - 정상 근거 질의(`GROUNDED`), 조건 미일치(`MATCH_NOT_FOUND`), 필수 파라미터 누락(`INSUFFICIENT_PARAMETERS`)이 섞인 10개 질문을 각 5회(총 50회) 실행한다.
    - 통과율(`avg_success_rate`), 문항 내 일관성(`avg_consistency_rate`), 의도 안정성(`avg_intent_stability`)을 측정해 `data/output/boundary_benchmark_results.json`에 기록한다.
+
+## 권장 방법: 평가 화면 구성
+
+- 평가 화면 순서: A 총 결과 → B CQ 검증 → C 루브릭 기준.
+- 루브릭 차원명·정의·심사 지침에 한글 필드(`name_ko`, `desc_ko`, `judge_instructions_ko`)를 두고 한글 모드에서 표시한다. 심사 스크립트는 기준 필드를 그대로 쓴다.
+- CQ를 선택하면 에이전트 실제 답변, 정답, 차원별 점수, 감점 사유, 조회 근거(청크, 규칙, job ID가 붙은 실행 쿼리)를 보여 준다.
+- Overview에는 요약만 둔다: 차원별 평균, 감점 CQ 수, CQ별 점수와 짧은 근거·감점 요약. 상세는 평가 화면으로 연결한다.
+
+스타터의 현재 구현은 다르다. Stage 5 탭은 Golden CQ 표(기대값·실측값·근거 앵커·판정)와 경계값 표를 보여 준다(`src/web/studio_server.py`). CQ별 상세(차원 점수·감점 사유·조회 근거)는 없고, `config/eval_rubric.json`의 차원 설명은 `description` 한 필드다.
 
 ## 산출물
 
