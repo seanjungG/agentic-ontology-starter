@@ -1421,6 +1421,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
   #lineage-world-container { position: absolute; top: 0; left: 0; width: 3400px; height: 1400px; transform-origin: 0 0; }
   #lineage-edges-svg, #lineage-nodes-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
   #lineage-edges-svg { z-index: 10; }
+  .lineage-lane-band rect { fill-opacity: 0.05; stroke-opacity: 0.35; stroke-dasharray: 5 4; }
+  .lineage-lane-band.lane-merge rect { fill-opacity: 0.07; stroke-opacity: 0.5; stroke-dasharray: none; }
+  .lineage-lane-band text { font-family: 'Pretendard', -apple-system, sans-serif; font-size: 20px; font-weight: 700; }
   #lineage-nodes-layer { z-index: 20; }
   .lineage-empty { position: absolute; top: 40px; left: 40px; font-size: 13px; color: var(--apple-text-secondary); pointer-events: auto; }
   .lineage-node-card { position: absolute; width: 290px; height: 52px; background: #ffffff; border: 1.2px solid rgba(15, 23, 42, 0.18); border-radius: 6px; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1); display: flex; align-items: center; padding: 0 8px 0 0; cursor: pointer; pointer-events: auto; transition: box-shadow 0.15s ease, opacity 0.2s, border-color 0.15s; }
@@ -3923,6 +3926,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
       const g = await (await fetch('/api/lineage/graph')).json();
       if (!g.nodes) throw new Error(g.error || 'invalid response');
       lineageGraph = g;
+      g.nodes.forEach(n => { n.x0 = n.x; n.y0 = n.y; });
     } catch (e) {
       lineageGraph = null;
       document.getElementById('lineage-nodes-layer').innerHTML = `<div class="lineage-empty">Lineage API error: ${esc(e.message)}</div>`;
@@ -3998,7 +4002,19 @@ HTML_PAGE = r"""<!DOCTYPE html>
     world.style.height = Math.max(1400, b.maxY) + 'px';
     const nm = Object.fromEntries(lineageGraph.nodes.map(n => [n.id, n]));
     const hl = lineageActiveTrace ? new Set(lineageActiveTrace.highlighted_edges.map(e => e.source + '>' + e.target)) : null;
-    document.getElementById('lineage-edges-svg').innerHTML = lineageGraph.edges.map(e => {
+    // lane bands: one per document / table up to the ontology stage, one merged graph layer (spec "lanes")
+    const laned = lineageGraph.nodes.filter(n => n.lane && (lineageGraph.metadata.lanes || []).some(l => l.id === n.lane && l.kind !== 'merge'));
+    const lx1 = Math.min(...laned.map(n => n.x)) - 16, lx2 = Math.max(...laned.map(n => n.x)) + LN_W + 16;
+    const bands = (lineageGraph.metadata.lanes || []).map(l => {
+      const ns = lineageGraph.nodes.filter(n => n.lane === l.id);
+      if (!ns.length) return '';
+      const m = l.kind === 'merge';
+      const x1 = m ? Math.min(...ns.map(n => n.x)) - 16 : lx1, x2 = m ? Math.max(...ns.map(n => n.x)) + LN_W + 16 : lx2;
+      const y1 = Math.min(...ns.map(n => n.y)) - 34, y2 = Math.max(...ns.map(n => n.y)) + LN_H + 12;
+      return `<g class="lineage-lane-band lane-${esc(l.kind)}"><rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="12" fill="${esc(l.color)}" stroke="${esc(l.color)}"></rect>`
+        + `<text x="${x1 + 12}" y="${y1 + 22}" fill="${esc(l.color)}">${esc(studioLang === 'en' ? l.en : l.ko)}</text></g>`;
+    }).join('');
+    document.getElementById('lineage-edges-svg').innerHTML = bands + lineageGraph.edges.map(e => {
       const s = nm[e.source], t = nm[e.target];
       if (!s || !t) return '';
       const x1 = s.x + LN_W, y1 = s.y + LN_H / 2, x2 = t.x, y2 = t.y + LN_H / 2, dx = Math.max(40, Math.abs(x2 - x1) * 0.5);
@@ -4164,17 +4180,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
   // Same column layout as src/lineage/lineage_engine.py (restores positions after node drags)
   function untangleLineageLayout() {
     if (!lineageGraph) return;
-    const last = Math.max(0, ...lineageGraph.nodes.map(n => n.col));
-    const cols = Array.from({ length: last + 1 }, (_, k) => lineageGraph.nodes.filter(n => n.col === k));
-    const height = Math.max(0, ...cols.map(ns => ns.length * (ns.length > 8 ? 72 : 92)));
-    cols.forEach((ns, col) => {
-      const step = ns.length > 8 ? 72 : 92;
-      ns.forEach((n, i) => {
-        n.x = 80 + col * 380;
-        n.y = 60 + Math.floor((height - ns.length * step) / 2) + i * step;
-        const el = document.getElementById('lineage-card-' + n.id);
-        if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
-      });
+    // restore the server layout (column order, document/table lanes, merged graph layer)
+    lineageGraph.nodes.forEach(n => {
+      n.x = n.x0; n.y = n.y0;
+      const el = document.getElementById('lineage-card-' + n.id);
+      if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
     });
     renderLineageEdges();
     fitLineageView();

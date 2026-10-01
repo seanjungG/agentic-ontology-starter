@@ -25,7 +25,7 @@
 
 `Stage 5. Lineage & Eval` Part A는 메인 스튜디오 리니지와 같은 캔버스 DAG입니다 (`src/lineage/lineage_engine.py`, `/api/lineage/{graph,trace,explain}`).
 
-- 스펙: 카테고리 7열(데이터 연결 → GCP 원천 → 데이터 변환 → 도메인 규칙 → 온톨로지 시맨틱 → MCP → 에이전트·평가), 프리셋 3종, 노드, 엣지. 샘플은 37 노드 / 67 엣지이며 열마다 세로 중앙에 배치합니다.
+- 스펙: 카테고리 7열(데이터 연결 → GCP 원천 → 데이터 변환 → 도메인 규칙 → 온톨로지 시맨틱 → MCP → 에이전트·평가), 프리셋 3종, 노드, 엣지. 샘플은 37 노드 / 67 엣지입니다. 스펙에 `lanes`가 있으면 레인 배치, 없으면 열마다 세로 중앙에 배치합니다.
 - 구조 원칙: 파이프라인 코드가 실제로 읽고 쓰는 자원만 적습니다 (`pipeline/ingest.py`의 GCS `raw/`·`parsed/`·`ontology/` 업로드, BigQuery 10개 테이블, `graph_engine`이 `spanner`/`both`일 때 Spanner Graph, 에이전트 최종 답변 → `pipeline/validator.py` 루브릭 심사). 가상 커넥터나 없는 테이블은 넣지 않고, 코드가 바뀌면 스펙도 함께 고칩니다.
 - 볼륨은 요청 시 실측합니다 (120초 캐시): `bq_table` → BigQuery `__TABLES__` 행 수, `gcs_prefix` → GCS 객체 수, `bq_graph`/`spanner_graph` → `INFORMATION_SCHEMA.PROPERTY_GRAPHS`의 노드·엣지 테이블 수. 조회에 실패하면 `조회 실패`로 표시하고 다른 값으로 채우지 않습니다. 측정 키가 없는 노드(MCP 도구 등)만 스펙 설명값을 표시합니다.
 - 숨김 계층은 두지 않습니다. 도메인 규칙은 별도 열로 항상 표시합니다.
@@ -38,10 +38,11 @@
 - 비정형: RAW → 파싱 → parsed → 재추출 게이트 → `latest` → 온톨로지 문서마다 박스 1개. 문서 간 관계는 엣지로 그리지 않고 문서 박스에 건수로 적는다.
 - 엣지 테이블: 종류마다 박스 1개.
 - 열 배치: 노드(엔티티 문서·노드 테이블) 열을 앞에, 엣지(개념 문서·엣지 테이블) 열을 그 뒤에 따로 둔다. 노드와 엣지를 한 열에 섞지 않는다.
+- 레인: 온톨로지 단계까지는 문서마다, 테이블마다 가로 레인 하나를 두어 따로 흐르게 한다. 정형 테이블을 데이터셋 박스 하나로 묶지 않는다. 노드 테이블·엣지 테이블·Property Graph는 하나의 Graph 레이어로 묶어 문서와 테이블이 여기서 합쳐지는 것을 보여 준다.
 - 에이전트 입력: Wiki Agent는 GCS의 온톨로지 `latest`(BigQuery 박스 없음), BQG Agent는 Property Graph.
 - 같은 도구 전체를 다시 노출하는 원격 MCP 서버 박스는 넣지 않는다(리니지 정보가 없다).
 
-스타터 스펙(`config/lineage_spec.json`)은 정형 테이블별 박스(`RAW_TB_*`), 엣지 테이블 종류별 박스(`TR_EDGE_*`)를 두고 원격 MCP 서버 박스가 없다. 비정형은 가이드 → 청크 분할(`TR_CHUNKER`) → GCS `parsed/` 및 Wiki 박스 1개(`SEM_WIKI`)이며, 재추출 게이트·`latest`·문서별 박스는 없다. 에이전트 박스는 `AGENT_FDE` 하나다.
+스타터 스펙(`config/lineage_spec.json`)은 정형 테이블별 박스(`RAW_TB_*`), 엣지 테이블 종류별 박스(`TR_EDGE_*`)를 두고 원격 MCP 서버 박스가 없다. 비정형은 가이드 → 청크 분할(`TR_CHUNKER`) → GCS `parsed/` 및 Wiki 박스 1개(`SEM_WIKI`)이며, 재추출 게이트·`latest`·문서별 박스는 없다. 에이전트 박스는 `AGENT_FDE` 하나다. 레인은 문서 2개(`DOC_POLICY`, `DOC_WELFARE`), 테이블 5개(`TBL_*`), Graph 레이어 1개(`GRAPH`: 노드·엣지 테이블, BigQuery·Spanner Graph)다. 스타터는 두 가이드를 한 청크 테이블로 처리하므로 청크·`parsed/` 박스는 문서 공통 레인(`DOC_SHARED`)에 둔다.
 
 ## 절차 (`pipeline/validator.py`)
 
