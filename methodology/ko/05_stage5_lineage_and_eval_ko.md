@@ -4,7 +4,7 @@
 
 ## 목적
 
-원천 자산(CSV·가이드 문서)부터 BigQuery 테이블, Property Graph(`STARTER_ONTOLOGY_GRAPH`), MCP 도구(8종), 에이전트까지 이어지는 4계층 데이터 리니지를 확인하고, Golden CQ 5건과 경계값 질의 10건(×5회 반복)을 통과했는지 검증해 배포 여부를 판정한다.
+원천 자산(CSV·가이드 문서)부터 BigQuery 테이블, Property Graph(`STARTER_ONTOLOGY_GRAPH`), MCP 도구(8종), 에이전트까지 이어지는 엔드투엔드 데이터 리니지를 확인하고, Golden CQ 5건과 경계값 질의 10건(×5회 반복)을 통과했는지 검증해 배포 여부를 판정한다.
 
 ## 입력
 
@@ -25,15 +25,16 @@
 
 `Stage 5. Lineage & Eval` Part A는 메인 스튜디오 리니지와 같은 캔버스 DAG입니다 (`src/lineage/lineage_engine.py`, `/api/lineage/{graph,trace,explain}`).
 
-- 스펙: 카테고리 열(데이터 연결 → 원천 → 변환 → PII·검증 규칙 → 온톨로지 시맨틱 → MCP → 에이전트), 프리셋, 노드, 엣지. 샘플은 36 노드 / 53 엣지.
-- 볼륨: `bq_table`을 지정한 노드는 BigQuery `__TABLES__` 실측 행 수(초록 배지), 나머지는 스펙 기재값을 표시합니다.
-- PII 열은 기본 숨김이며, 숨긴 노드를 거치는 엣지는 상류→하류로 이어 표시합니다 (샘플: 숨김 31/45, 표시 36/53).
+- 스펙: 카테고리 7열(데이터 연결 → GCP 원천 → 데이터 변환 → 도메인 규칙 → 온톨로지 시맨틱 → MCP → 에이전트·평가), 프리셋 3종, 노드, 엣지. 샘플은 37 노드 / 67 엣지이며 열마다 세로 중앙에 배치합니다.
+- 구조 원칙: 파이프라인 코드가 실제로 읽고 쓰는 자원만 적습니다 (`pipeline/ingest.py`의 GCS `raw/`·`parsed/`·`ontology/` 업로드, BigQuery 10개 테이블, `graph_engine`이 `spanner`/`both`일 때 Spanner Graph, 에이전트 최종 답변 → `pipeline/validator.py` 루브릭 심사). 가상 커넥터나 없는 테이블은 넣지 않고, 코드가 바뀌면 스펙도 함께 고칩니다.
+- 볼륨은 요청 시 실측합니다 (120초 캐시): `bq_table` → BigQuery `__TABLES__` 행 수, `gcs_prefix` → GCS 객체 수, `bq_graph`/`spanner_graph` → `INFORMATION_SCHEMA.PROPERTY_GRAPHS`의 노드·엣지 테이블 수. 조회에 실패하면 `조회 실패`로 표시하고 다른 값으로 채우지 않습니다. 측정 키가 없는 노드(MCP 도구 등)만 스펙 설명값을 표시합니다.
+- 숨김 계층은 두지 않습니다. 도메인 규칙은 별도 열로 항상 표시합니다.
 - 노드 클릭: 상·하류 BFS 하이라이트, 상세 패널(메타데이터·볼륨 출처·직접 상/하류·규칙 기반 요약), Stage 4 에이전트 질의 연결.
 - 프로젝트별 스펙은 `projects/<id>/config/lineage_spec.json`에 작성합니다 ([`projects/_template/README.md`](../../projects/_template/README.md)).
 
 ## 절차 (`pipeline/validator.py`)
 
-1. **4계층 데이터 리니지 구성**:
+1. **레코드 단위 리니지 조인 (`build_4tier_lineage`)**:
    - Tier 0 (Raw Files): `sample_policy_guide.md`, `sample_welfare_exemption_guide.md`, CSV 6종 (또는 외부 프로젝트 문서·데이터)
    - Tier 1 (Anchored Chunks): `tb_doc_chunks` (`DOC_CHUNK_001`~`005`, `content_sha256`, `origin_type`, `extract_method`, `source_locator`)
    - Tier 2 (Domain Rules & Bridges): `tb_domain_rules`, `edge_rule_applies_to_plan` (또는 `03_wiki/entities.md`, `concepts.md`)

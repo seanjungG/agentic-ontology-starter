@@ -54,7 +54,7 @@ SLIDES_EN = [
                 ["1. Data & Wiki Layer", "BigQuery DW (10 Tables) + GCS 3-Layer OKF Wiki", "pipeline/ingest.py · data/llm_wiki/en/", "10 tables loaded · SHA-256 anchors"],
                 ["2. Semantic & Graph Layer", "BigQuery SQL:2023 Property Graph (ISO GQL) + Spanner DDL", "pipeline/graph_builder.py · create_property_graph.sql", "0 duplicate keys · Multi-hop GQL paths"],
                 ["3. Tool & Reasoning Layer", "DomainMcpServer (8 Tools) + AiFdeAgentEngine (2-Pass)", "src/agent/mcp_server.py · reasoning_engine.py", "GROUNDED / INSUFFICIENT / MATCH_NOT_FOUND"],
-                ["4. Lineage & Release Layer", "4-Tier Lineage + Dual Validator + Terraform Cloud Run", "pipeline/validator.py · terraform/*.tf", "Golden CQ 5/5 · Boundary 50 live runs"]
+                ["4. Lineage & Release Layer", "End-to-End Lineage + Dual Validator + Terraform Cloud Run", "pipeline/validator.py · terraform/*.tf", "Golden CQ 5/5 · Boundary 50 live runs"]
             ]
         },
         "takeaway": "Core Rule: Bind unstructured policy clauses (SHA-256 anchors) and structured DW tables (PK/FK) into a unified graph and deterministic MCP tools to eliminate free-form guessing.",
@@ -159,7 +159,7 @@ SLIDES_EN = [
                 "accent": "#4F46E5",
                 "bullets": [
                     "Phases 6–7 (Stage 4): 5 Stage MCPs + 3 Runtime MCPs and 2-Pass Gemini orchestration",
-                    "Phase 8 (Stage 5): 4-Tier data lineage, 5 Golden CQs, and 50-run boundary benchmark",
+                    "Phase 8 (Stage 5): end-to-end data lineage, 5 Golden CQs, and 50-run boundary benchmark",
                     "Deliverables: D4.1–D4.4 and D5.1–D5.5 (Terraform Cloud Run deployment package)"
                 ]
             }
@@ -216,7 +216,7 @@ SLIDES_EN = [
                 "accent": "#4F46E5",
                 "bullets": [
                     "Active Stages: Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5",
-                    "Graph Engine: bigquery + 4-Tier Lineage + Dual Validator Gate",
+                    "Graph Engine: bigquery + End-to-End Lineage + Dual Validator Gate",
                     "Best For: Enterprise audit traceability, 10×5 boundary testing, and Terraform Cloud Run release"
                 ]
             }
@@ -612,7 +612,7 @@ SLIDES_EN = [
             "headers": ["Category", "MCP Tool Name (`src/agent/mcp_server.py`)", "Internal Execution Steps", "Key Output Payload & Status Codes"],
             "rows": [
                 ["Stages 1–3", "mcp_stage1 / stage2 / stage3", "profile_tables, tag_pii / bind_semantic_bridges / verify_gql_templates", "Table row counts, PII check (0), anchored chunks, GQL path count"],
-                ["Stages 4–5", "mcp_stage4 / stage5", "verify_grounding_anchors / build_4tier_lineage, run_golden_cq_suite", "4 active rules, 4-tier lineage (18 rows), Golden CQ & Boundary reports"],
+                ["Stages 4–5", "mcp_stage4 / stage5", "verify_grounding_anchors / build_4tier_lineage, run_golden_cq_suite", "4 active rules, end-to-end lineage (18 rows), Golden CQ & Boundary reports"],
                 ["Runtime 1", "mcp_lookup_customer_profile", "lookup_contract → lookup_device_price → lookup_subsidy_policy", "Contract ledger, total subsidy, installment principal, DOC_CHUNK_001"],
                 ["Runtime 2", "mcp_calculate_penalty_rule", "check_exemptions → compute_180d_prorated_clawback → compare_24m_tco", "Exemption status, prorated penalty KRW, 24M TCO matrix (SUCCESS / INSUFFICIENT)"],
                 ["Runtime 3", "mcp_query_graph_and_wiki", "traverse_property_graph → fetch_okf_hash_anchor → verify_dw_schema", "Matched GQL paths, rule formulas, source chunk text & SHA-256 hash"]
@@ -684,7 +684,7 @@ SLIDES_EN = [
         "slide_no": 13,
         "badge": "MODULE 05 · STAGE 5 OVERVIEW",
         "accent": "#0F9D58",
-        "title": "Stage 5. 4-Tier End-to-End Data Lineage & Impact Traceability (`D5.1`–`D5.2`)",
+        "title": "Stage 5. End-to-End Data Lineage & Impact Traceability (`D5.1`–`D5.2`)",
         "subtitle": "Full auditability from Raw Files (`Tier 0`) → Hashed Chunks (`Tier 1`) → Rules & Bridges (`Tier 2`) → Property Graph (`Tier 3`) → Agent Answers (`Tier 4`)",
         "banner_img": "stage5_lineage_eval_flow_en.png",
         "cards": [
@@ -728,9 +728,9 @@ SLIDES_EN = [
                 ["Tier 3 → Tier 4", "STARTER_ONTOLOGY_GRAPH → 8 MCPs → Gemini 2-Pass Answer", "rule_id + source_chunk_id + bq_job_id", "Flags Golden CQs (CQ-01–05) whose expected ground truth must be re-verified"]
             ]
         },
-        "takeaway": "4-Tier Lineage: When a single paragraph in a policy document changes, one query traces every affected business rule, rate plan, customer contract, and CQ.",
+        "takeaway": "End-to-End Lineage: When a single paragraph in a policy document changes, one query traces every affected business rule, rate plan, customer contract, and CQ.",
         "speaker_notes": (
-            "[Instructor Guide — Slide 13: Stage 5 4-Tier Data Lineage]\n"
+            "[Instructor Guide — Slide 13: Stage 5 End-to-End Data Lineage]\n"
             "• Demonstrate `Stage 5. Lineage & Eval` in the Studio or `notebooks/en/stage5_lineage_and_evaluation_en.ipynb`.\n"
             "• Explain how the 18 lineage paths connect `CUST_DEMO_001`–`006` through their devices and rate plans to the 4 domain rules and 5 hashed document chunks."
         )
@@ -805,7 +805,7 @@ SLIDES_EN = [
                 "bullets": [
                     "0. Overview: 8-Phase architecture diagram, active track badge, 1-click Stage 1–5 runner",
                     "Stages 1–3 Tabs: Asset inventory, 3-Layer Wiki viewer, Semantic & Property Graph canvas",
-                    "Stages 4–5 Tabs: 8 MCP tool runner, 2-Pass Agent console, 4-Tier Lineage & Eval dashboard"
+                    "Stages 4–5 Tabs: 8 MCP tool runner, 2-Pass Agent console, End-to-End Lineage & Eval dashboard"
                 ]
             },
             {
@@ -837,7 +837,7 @@ SLIDES_EN = [
                 ["Stage 2", "stage2_wiki_and_semantic_graph_en.ipynb", "stage2_wiki_and_semantic_graph_ko.ipynb", "SHA-256 chunking, 3-Layer Wiki inspection, and DocChunk-Rule-Plan bridge graph"],
                 ["Stage 3", "stage3_property_graph_bigquery_spanner_en.ipynb", "stage3_property_graph_bigquery_spanner_ko.ipynb", "BigQuery Property Graph vs. Spanner DDL comparison and 2-Hop/3-Hop ISO GQL queries"],
                 ["Stage 4", "stage4_agent_and_mcp_execution_en.ipynb", "stage4_agent_and_mcp_execution_ko.ipynb", "8 MCP tool executions, 180-day penalty & 24M TCO charts, and live 2-Pass Gemini traces"],
-                ["Stage 5", "stage5_lineage_and_evaluation_en.ipynb", "stage5_lineage_and_evaluation_ko.ipynb", "4-Tier lineage graph visualization, Golden CQ 5/5 report, and 50-run boundary charts"]
+                ["Stage 5", "stage5_lineage_and_evaluation_en.ipynb", "stage5_lineage_and_evaluation_ko.ipynb", "end-to-end lineage graph visualization, Golden CQ 5/5 report, and 50-run boundary charts"]
             ]
         },
         "takeaway": "Symmetric Bilingual Packaging: methodology/{ko,en}/, data/llm_wiki/{ko,en}/, notebooks/{ko,en}/, and slides/{ko,en}/ mirror each other 1:1.",

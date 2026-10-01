@@ -29,7 +29,7 @@
 
 ## 2. 예측 불가능한 외부 고객 입력 시나리오별 프로토타이핑 진입점 (`PROTOTYPING_PLAYBOOK.md` 요약)
 
-신규 고객·데이터 영역을 부트스트랩할 때는 루트 샘플을 덮어쓰지 않고 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 생성한 뒤, 반입된 고객 자산 형태에 따라 아래 시나리오로 대응합니다. 상세 가이드와 복사 가능한 프롬프트는 [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)를 참조하십시오.
+신규 고객·데이터 영역을 부트스트랩할 때는 루트 샘플을 덮어쓰지 않고 스튜디오 포털(`0. Overview` 및 상단 바)의 **`+ 선택 트랙으로 신규 프로젝트 생성`** 워크벤치(`src/web/project_workbench.py`) 또는 `python3 new_project.py <id> --name "<이름>"`으로 `projects/<id>/`를 생성한 뒤, 추천된 GCP 리소스명(BigQuery Dataset `<id>_dw`, GCS `projects/<id>/ontology/`, Property Graph `<ID_UPPER>_ONTOLOGY_GRAPH`)과 함께 각 Stage 탭 상단 워크벤치에서 파일 업로드 → 최신 Gemini(`gemini-3.8-flash` / `gemini-3.1-pro-preview`) 시맨틱 변환 → 단계별 승인(Approve & GCP 반영)으로 진행합니다. 워크벤치는 원문에 근거(청크·인용 구절)가 없는 항목을 버리고, 입력 누락·Gemini 응답 오류·BigQuery 실패 시 `ERROR`로 멈추며, 샘플 데이터를 자동으로 넣지 않습니다. Stage 5 승인은 에이전트를 CQ마다 실제 호출해 인용·사실·LLM 루브릭으로 채점합니다. 상세 가이드와 복사 가능한 프롬프트는 [`PROTOTYPING_PLAYBOOK.md`](PROTOTYPING_PLAYBOOK.md)를 참조하십시오.
 
 | 상황 (Scenario) | 고객 투입 자산 및 목표 | 트랙 (`project.json` `track`) | 파이프라인 동작 및 수정 지점 |
 | :--- | :--- | :---: | :--- |
@@ -37,7 +37,7 @@
 | **Scenario A2 (그래프 요청 시 중단)**<br>문서만 있는데 그래프·SQL 평가를 요청한 경우 | 고객 테이블이 없는데 Stage 3 Property Graph나 SQL 평가를 강제 요청(`track: "full"` 또는 `--stage 3`)한 경우 | **즉시 중단 및 선택지 안내** | 가짜 CSV를 합성하지 않고 즉시 멈춘 뒤 사용자에게 확인:<br>(a) 고객 정형 CSV(`03_tables/`) 추가 제공 요청<br>(b) `track: "lite"`(문서 전용 트랙)로 전환<br>(c) 데모 목적 합성 데이터 명시 승인(`synthetic.allowed: true`, `SYNTHETIC_DEMO`) |
 | **Scenario B (표준 / 부분 테이블)**<br>정형 DW 테이블 + 비정형 정책 문서를 결합하는 경우 | 마스터/트랜잭션 CSV(전체 또는 일부)와 정책 문서를 결합해 ISO GQL 다중 홉 그래프 추론 + 2-Pass 에이전트 구축 | **`standard`** (`"track": "auto"`, `"graph_engine": "bigquery"`) | 고객이 실제로 제공한 테이블만 `project.json` `tables`에 등록·적재(`CUSTOMER_PROVIDED`)하고, 미제공 테이블은 빈 상태(0행)로 유지(샘플 데이터 혼합 금지) |
 | **Scenario C (커스텀 도메인 스키마 / Spanner & Graph Fabric)**<br>타 산업군 커스텀 테이블 또는 Cloud Spanner Graph + `EXTERNAL_QUERY` 확장 | 샘플 6종 CSV와 전혀 다른 도메인 스키마를 연결하거나, 5축 그래프 엔진 선택 체크리스트(`graph_engine_checklist`)에 따라 `graph_engine: "spanner"` 또는 `"both"`(BigQuery `EXTERNAL_QUERY` Graph Fabric 연합 조인)를 활성화 | **`standard`** / **`full`** + (`"spanner"` \| `"both"`) | `project.json`에 `graph_engine`(`"bigquery"` 기본 \| `"spanner"` \| `"both"`) 및 `graph_engine_checklist`(5축) 기록. 커스텀 스키마는 `*_module` 오버라이드로 지정 + `terraform.tfvars` `graph_engine` 프로비저닝 |
-| **Scenario D (`full`)**<br>감사 추적 리니지 & 50회 경계값 배포 게이트 완결 | 4계층 데이터 리니지 DAG + Golden CQ(`sql`/`citation`) + 경계값 10건×5회(50회) 벤치마크 통과 후 Cloud Run 배포 | **`full`** (`Stage 1 → 2 → 3 → 4 → 5`) | Scenario B/C 전체 + `04_cq/golden_competency_questions.json` & `boundary_cases.json` + `pipeline/validator.py` 실측(`input_manifest_sha256` 기록) + `terraform/terraform.tfvars` |
+| **Scenario D (`full`)**<br>감사 추적 리니지 & 50회 경계값 배포 게이트 완결 | 엔드투엔드 데이터 리니지 DAG + Golden CQ(`sql`/`citation`) + 경계값 10건×5회(50회) 벤치마크 통과 후 Cloud Run 배포 | **`full`** (`Stage 1 → 2 → 3 → 4 → 5`) | Scenario B/C 전체 + `04_cq/golden_competency_questions.json` & `boundary_cases.json` + `pipeline/validator.py` 실측(`input_manifest_sha256` 기록) + `terraform/terraform.tfvars` |
 
 ### 2.1 최신 문서 변환 · 위키 추출 · CQ 검증 핵심 산출물 예시
 
@@ -86,7 +86,7 @@
 | [`config/project.json`](config/project.json) · [`projects/_template/`](projects/_template/README.md) | 기본 샘플 프로젝트 메타 · 고객/데이터 영역별 프로젝트 템플릿 (`new_project.py`로 생성) | 새 고객은 `projects/<id>/project.json`에서 수정 |
 | [`config/starter_config.json`](config/starter_config.json) | 3-Track 활성 단계, 그래프 엔진, MCP 도구 목록 정의 | 기본 유지 (`project.json` 우선) |
 | [`config/portal_profile.json`](config/portal_profile.json) | 스튜디오 헤더 타이틀, 도메인 배지, Stage별 설명, 샘플 질의 정의 | `projects/<id>/config/portal_profile.json` 수정 |
-| [`config/lineage_spec.json`](config/lineage_spec.json) | Stage 5 리니지 DAG 스펙 (카테고리·노드·엣지, `bq_table` 실측 행 수) | `projects/<id>/config/lineage_spec.json` 수정 |
+| [`config/lineage_spec.json`](config/lineage_spec.json) | Stage 5 리니지 DAG 스펙 (카테고리·노드·엣지; `bq_table` 행 수, `gcs_prefix` 객체 수, `bq_graph`/`spanner_graph` 테이블 수를 요청 시 실측) | `projects/<id>/config/lineage_spec.json` 수정 |
 | [`data/input/`](data/input/) | `01_guides/`(원문 변환본), `03_tables/`(CSV), `04_cq/`(CQ·경계값), `05_glossary/`(용어사전) | `projects/<id>/customer_doc/` 및 `data/input/`에 배치 |
 | [`industry_cases/`](industry_cases/README.md) | 제조·금융·리테일·통신 4대 산업군 8종 비식별 참조 스키마·규칙 템플릿 | 스키마·규칙 설계 참조용 |
 | [`pipeline/extract_docs.py`](pipeline/extract_docs.py) | `customer_doc/` 원본(PDF/DOCX/MD/TXT) 원문 변환, 반복 머리글 제거, 조문/문단 청킹 및 Gate 0(`gate0_report.json`) 검증 | 코어 유지 |

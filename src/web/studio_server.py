@@ -22,6 +22,19 @@ sys.path.insert(0, BASE_DIR)
 
 from src.lineage.lineage_engine import LineageEngine
 from src.project_context import cached, get_engine, get_project, list_projects, resolve_track
+from src.web.project_workbench import (
+    DEFAULT_GEMINI_MODEL,
+    SUPPORTED_GEMINI_MODELS,
+    approve_workbench_step,
+    create_new_project_workspace,
+    execute_custom_project_agent_query,
+    get_workbench_state,
+    recommend_gcp_resources,
+    reconfigure_project_track,
+    run_workbench_step,
+    seed_sample_domain_files,
+    upload_project_files,
+)
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -63,7 +76,8 @@ def get_lineage(project):
         srv = eng.server
         return LineageEngine(os.path.join(p["root"], LINEAGE_SPEC_PATH), {
             "project_id": srv.project_id, "fq": srv.fq, "dataset_id": srv.fq.split(".", 1)[1],
-            "bucket": srv.gcs_bucket, "model": eng.model_name})
+            "bucket": srv.gcs_bucket, "model": eng.model_name,
+            "spanner_instance": srv.spanner_instance_id, "spanner_database": srv.spanner_database_id})
     return cached(project, "lineage", build)
 
 
@@ -1402,7 +1416,6 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .lineage-preset-btn:hover { color: var(--apple-text-primary); background: rgba(0, 0, 0, 0.04); }
   .lineage-preset-btn.active { background: var(--apple-bg-primary); color: var(--apple-blue); border-color: rgba(0, 113, 227, 0.2); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); font-weight: 700; }
   .lineage-icon-btn { height: 30px; min-width: 30px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border-radius: 8px; }
-  #btn-toggle-pii.pii-on { background: rgba(225, 29, 72, 0.12); color: #e11d48; border-color: #e11d48; }
   .lineage-canvas-viewport { position: relative; height: 640px; overflow: hidden; cursor: grab; border: 1px solid var(--apple-border-subtle); border-radius: 14px; background-color: #edf0f5; background-image: radial-gradient(rgba(203, 213, 225, 0.6) 1px, transparent 1px); background-size: 20px 20px; user-select: none; }
   .lineage-canvas-viewport:active { cursor: grabbing; }
   #lineage-world-container { position: absolute; top: 0; left: 0; width: 3400px; height: 1400px; transform-origin: 0 0; }
@@ -1449,6 +1462,174 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .lineage-citation-text { font-size: 11.5px; color: var(--apple-blue); line-height: 1.5; white-space: pre-wrap; }
   .lineage-btn-ask-agent { width: 100%; margin-top: 10px; background: var(--apple-blue); color: #ffffff; border: none; padding: 7px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .lineage-btn-ask-agent:hover { background: var(--apple-blue-hover); }
+
+  /* 9. Track-Driven Project Workbench & Step-by-Step Approval (GRILL-011) */
+  .view-mode-pill.bypassed-tab {
+    opacity: 0.65;
+    border: 1px dashed #94a3b8 !important;
+  }
+  .tab-bypass-chip {
+    display: inline-block;
+    margin-left: 5px;
+    padding: 1px 6px;
+    font-size: 9.5px;
+    font-weight: 800;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    vertical-align: middle;
+  }
+  .stage-workbench-bar {
+    background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
+    border: 1.5px solid #93c5fd;
+    border-left: 4px solid var(--apple-blue);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.06);
+  }
+  .wb-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .wb-stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .wb-step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  .wb-step-pill.current {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
+  }
+  .wb-step-pill.st-APPROVED {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+    color: #065f46;
+  }
+  .wb-step-pill.st-TRANSFORMED {
+    background: #eff6ff;
+    border-color: #60a5fa;
+    color: #1e40af;
+  }
+  .wb-step-pill.st-BYPASSED {
+    background: #f1f5f9;
+    border-style: dashed;
+    color: #64748b;
+  }
+  .wb-upload-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px dashed #60a5fa;
+    border-radius: 10px;
+    padding: 9px 12px;
+  }
+  .wb-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(148, 163, 184, 0.28);
+  }
+  .wb-summary-text {
+    font-size: 12px;
+    color: #1e293b;
+    line-height: 1.5;
+    flex: 1;
+    min-width: 260px;
+    white-space: pre-line;
+  }
+  .wb-btn-run {
+    background: #ffffff;
+    color: var(--apple-blue);
+    border: 1.5px solid var(--apple-blue);
+    border-radius: 8px;
+    padding: 6px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .wb-btn-run:hover {
+    background: rgba(0, 113, 227, 0.08);
+  }
+  .wb-btn-approve {
+    background: #059669;
+    color: #ffffff;
+    border: 1.5px solid #047857;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .wb-btn-approve:hover {
+    background: #047857;
+  }
+  .lite-bypass-banner {
+    display: none;
+    background: #fffbeb;
+    border: 1.5px solid #fcd34d;
+    border-left: 4px solid #f59e0b;
+    border-radius: 12px;
+    padding: 14px 18px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .np-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .np-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .np-field label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #334155;
+  }
+  .np-input {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: #0f172a;
+    background: #ffffff;
+  }
 </style>
 </head>
 <body>
@@ -1470,6 +1651,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <span class="hdr-project-label">Project</span>
           <select id="hdr-project-select" class="hdr-project-select" onchange="switchProject(this.value)"></select>
         </div>
+        <button class="subnav-action-btn" style="padding:3px 10px; font-size:11px; border-color:var(--apple-blue); color:var(--apple-blue); font-weight:700;" onclick="openNewProjectModal()" data-ko="+ 선택 트랙으로 신규 프로젝트" data-en="+ New Project with Track">+ 선택 트랙으로 신규 프로젝트</button>
         <span class="hdr-meta-badge">Starter Pack v2.0</span>
         <span class="hdr-meta-badge teal" id="hdr-track-badge">Track 3 · Full-Stack</span>
         <span class="hdr-meta-badge indigo" id="hdr-engine-badge">BigQuery Property Graph</span>
@@ -1489,13 +1671,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div class="ac-localnav-content">
       <div class="compact-pill-bar" id="main-tab-ribbon">
         <button class="view-mode-pill active" data-tab="overview" onclick="switchTab('overview')">0. Overview</button>
-        <button class="view-mode-pill" data-tab="stage1" onclick="switchTab('stage1')">Stage 1. Asset</button>
-        <button class="view-mode-pill" data-tab="stage2" onclick="switchTab('stage2')">Stage 2. Wiki &amp; Semantic Graph</button>
-        <button class="view-mode-pill" data-tab="stage3" onclick="switchTab('stage3')">Stage 3. Property Graph</button>
-        <button class="view-mode-pill" data-tab="stage4" onclick="switchTab('stage4')">Stage 4. Agent &amp; MCP</button>
-        <button class="view-mode-pill" data-tab="stage5" onclick="switchTab('stage5')">Stage 5. Lineage &amp; Eval</button>
+        <button class="view-mode-pill" data-tab="stage1" onclick="switchTab('stage1')" id="tab-btn-stage1">Stage 1. Asset</button>
+        <button class="view-mode-pill" data-tab="stage2" onclick="switchTab('stage2')" id="tab-btn-stage2">Stage 2. Wiki &amp; Semantic Graph</button>
+        <button class="view-mode-pill" data-tab="stage3" onclick="switchTab('stage3')" id="tab-btn-stage3">Stage 3. Property Graph</button>
+        <button class="view-mode-pill" data-tab="stage4" onclick="switchTab('stage4')" id="tab-btn-stage4">Stage 4. Agent &amp; MCP</button>
+        <button class="view-mode-pill" data-tab="stage5" onclick="switchTab('stage5')" id="tab-btn-stage5">Stage 5. Lineage &amp; Eval</button>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
+        <button class="subnav-action-btn" style="border-color:#0d9488; color:#0f766e; font-weight:700;" onclick="openNewProjectModal()" data-ko="+ 선택 트랙으로 프로젝트 생성 &amp; 워크벤치 시작" data-en="+ Create Project with Selected Track">+ 선택 트랙으로 프로젝트 생성 &amp; 워크벤치 시작</button>
         <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage1_asset_discovery')">▶ Run Stage MCP</button>
       </div>
     </div>
@@ -1563,7 +1746,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <span class="ov-eyebrow teal" data-ko="ASSEMBLED STARTER PACK BLUEPRINT · 선택 조합 패키지 구현 구성도" data-en="ASSEMBLED STARTER PACK BLUEPRINT · PACKAGE IMPLEMENTATION VIEW">ASSEMBLED STARTER PACK BLUEPRINT · 선택 조합 패키지 구현 구성도</span>
               <span class="badge human" id="ov-pkg-active-badge">Track 3 · Full-Stack + BigQuery Property Graph</span>
             </div>
-            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;" id="ov-pkg-kpi-pills"></div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;" id="ov-pkg-kpi-pills"></div>
+              <button class="wb-btn-run" onclick="applyTrackToCurrentProject()" data-ko="현재 프로젝트에 선택 트랙/엔진 즉시 적용" data-en="Apply Track/Engine to Current Project">현재 프로젝트에 선택 트랙/엔진 즉시 적용</button>
+              <button class="wb-btn-approve" onclick="openNewProjectModal()" data-ko="+ 선택 트랙으로 신규 프로젝트 생성 (파일 업로드 &amp; Gemini 스텝별 승인)" data-en="+ Create New Project with Selected Track (Upload &amp; Step-by-Step Gemini)">+ 선택 트랙으로 신규 프로젝트 생성 (파일 업로드 &amp; Gemini 스텝별 승인)</button>
+            </div>
           </div>
           <h2 class="ov-h2" id="ov-pkg-title">선택한 구성 항목으로 조립된 스타터팩 패키지 아키텍처 &amp; 구현 명세</h2>
           <p class="ov-lead" id="ov-pkg-subtitle" style="margin-bottom:12px;"></p>
@@ -1616,6 +1803,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage1">
       <div style="display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
+        <div id="wb-bar-stage1"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
             <span class="badge human">STAGE 1 · ASSET DISCOVERY &amp; GOVERNANCE</span>
@@ -1697,6 +1885,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage2">
       <div style="display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
+        <div id="wb-bar-stage2"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
             <span class="badge llm">STAGE 2 · 3-LAYER LLM-WIKI &amp; SEMANTIC GRAPH</span>
@@ -1750,6 +1939,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage3">
       <div style="display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
+        <div id="wb-bar-stage3"></div>
+        <div id="st3-lite-bypass-banner" class="lite-bypass-banner"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
             <span class="badge indigo">STAGE 3 · DUAL PROPERTY GRAPH ENGINEERING</span>
@@ -1814,7 +2005,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <!-- TAB 4: STAGE 4. AGENT & MCP (8 Modular MCPs + AI FDE Console)       -->
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage4">
-      <div class="fde-native-workspace">
+      <div style="display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
+        <div id="wb-bar-stage4"></div>
+        <div class="fde-native-workspace" style="flex:1; min-height:0;">
         <!-- Left: 8 Core Modular MCP Catalog & Step Runner -->
         <div class="fde-mcp-pane">
           <div class="pane-head">
@@ -1874,6 +2067,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             <button class="primary-btn" id="send-btn" onclick="sendQuery()">Execute FDE</button>
           </div>
         </div>
+        </div>
       </div>
     </section>
 
@@ -1882,6 +2076,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage5">
       <div class="ov-scroll-wrap">
+        <div id="wb-bar-stage5"></div>
+        <div id="st5-track-banner" class="lite-bypass-banner"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
             <span class="badge approved">STAGE 5 · DATA LINEAGE &amp; CLOSED-LOOP EVALUATION</span>
@@ -1908,7 +2104,6 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <span class="hdr-meta-badge" id="lineage-node-count">0 Nodes</span>
               <span class="hdr-meta-badge teal" id="lineage-edge-count">0 Edges</span>
               <span class="hdr-meta-badge indigo" id="lineage-cat-count">0 Categories</span>
-              <button type="button" class="subnav-action-btn" id="btn-toggle-pii" onclick="toggleLineagePii()">PII 숨김됨</button>
             </div>
             <div style="display:flex; align-items:center; gap:6px;">
               <button type="button" class="subnav-action-btn lineage-icon-btn" onclick="zoomLineageBy(0.85)" title="Zoom Out">&minus;</button>
@@ -1971,6 +2166,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   </main>
 
+  <input type="file" id="wb-file-input" multiple style="display:none" onchange="handleWorkbenchFileUpload(this.files)">
+
   <!-- MODAL 1: Stage Pipeline MCP Step Runner -->
   <div class="modal-overlay" id="stage-mcp-modal" onclick="if(event.target===this) closeStageMcpModal()">
     <div class="modal-card">
@@ -2009,6 +2206,100 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- MODAL 3: Track-Driven New Project Creation & GCP Resource Recommender (GRILL-011) -->
+  <div class="modal-overlay" id="new-project-modal" onclick="if(event.target===this) closeNewProjectModal()">
+    <div class="modal-card" style="width:min(820px, 94vw);">
+      <div class="drawer-header">
+        <div>
+          <div style="font-size:11px; font-weight:800; color:var(--apple-blue);">TRACK-DRIVEN PROJECT CREATOR &amp; GCP RESOURCE RECOMMENDER</div>
+          <div style="font-size:16px; font-weight:800; color:var(--apple-text-primary);">선택한 트랙 기반으로 신규 프로젝트 생성 &amp; Step-by-Step Gemini 워크벤치 시작</div>
+        </div>
+        <button class="subnav-action-btn" onclick="closeNewProjectModal()">✕ 닫기</button>
+      </div>
+      <div class="drawer-body" style="display:flex; flex-direction:column; gap:14px;">
+        <p style="font-size:12.5px; color:#334155; line-height:1.55;">
+          선택한 트랙(Track 1 Lite / Track 2 Standard / Track 3 Full-Stack)과 그래프 엔진에 맞춰 <b>GCP 리소스 이름(BigQuery 데이터셋, GCS 위키 경로, Property Graph 이름)</b>을 자동 추천하고, 생성 즉시 각 Stage 탭 상단 워크벤치에서 <b>데이터 업로드 &rarr; 최신 Gemini 변환 &rarr; 단계별 승인(GCP 반영)</b>을 수행합니다.
+        </p>
+        <div class="np-form-grid">
+          <div class="np-field">
+            <label>프로젝트 ID (소문자·하이픈, 예: retail-vip-demo)</label>
+            <input type="text" id="np-project-id" class="np-input" value="retail-vip-demo" oninput="refreshNewProjectGcpRecommendations()">
+          </div>
+          <div class="np-field">
+            <label>프로젝트 표시 이름 (Project Name)</label>
+            <input type="text" id="np-project-name" class="np-input" value="리테일 VIP 멤버십 & 풀필먼트 온톨로지">
+          </div>
+          <div class="np-field">
+            <label>비즈니스 도메인 설명 (Domain)</label>
+            <input type="text" id="np-domain" class="np-input" value="Retail Omnichannel Membership & SLA">
+          </div>
+          <div class="np-field">
+            <label>온톨로지 트랙 선택 (Track 1 / 2 / 3)</label>
+            <select id="np-track" class="np-input" onchange="onNewProjectTrackChange()">
+              <option value="lite">Track 1 · Lite Path (Stage 1→2→4 · 문서 전용, 그래프 생략)</option>
+              <option value="standard">Track 2 · Standard Path (Stage 1→2→3→4 · 문서 + DW 그래프)</option>
+              <option value="full" selected>Track 3 · Full-Stack Path (Stage 1→5 · 그래프 + 엔드투엔드 리니지)</option>
+            </select>
+          </div>
+          <div class="np-field">
+            <label>물리 그래프 엔진 (Stage 3 Graph Engine)</label>
+            <select id="np-engine" class="np-input" onchange="refreshNewProjectGcpRecommendations()">
+              <option value="bigquery" selected>BigQuery Property Graph (ISO SQL:2023 · 기본)</option>
+              <option value="spanner">Cloud Spanner Graph (ISO GQL · OLTP 저지연)</option>
+              <option value="both">Dual-Engine Graph Fabric (BigQuery + Spanner EXTERNAL_QUERY)</option>
+              <option value="none">No Physical Graph (Track 1 Lite 전용)</option>
+            </select>
+          </div>
+          <div class="np-field">
+            <label>Vertex AI Gemini 변환/추론 모델 (Latest Gemini Model)</label>
+            <select id="np-model" class="np-input">
+              <option value="gemini-3.8-flash" selected>gemini-3.8-flash (Recommended · 고속/고정밀 시맨틱 합성)</option>
+              <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Deep Reasoning Preview)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (Enterprise Pro Stable)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:#f0f7ff; border:1px solid #bfdbfe; border-radius:12px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:12px; font-weight:800; color:#1d4ed8;">[GCP 리소스 이름 자동 추천 (Auto-Recommended GCP Resource Names · 수정 가능)]</span>
+            <span class="badge approved" id="np-gcp-badge">Auto-Named</span>
+          </div>
+          <div class="np-form-grid">
+            <div class="np-field">
+              <label>GCP Project ID</label>
+              <input type="text" id="np-gcp-project" class="np-input" value="seanjung-poc">
+            </div>
+            <div class="np-field">
+              <label>BigQuery Dataset ID (Stage 1 승인 시 자동 생성·적재)</label>
+              <input type="text" id="np-bq-dataset" class="np-input" value="retail_vip_demo_dw">
+            </div>
+            <div class="np-field">
+              <label>GCS Wiki Bucket (Stage 2 승인 시 `projects/&lt;id&gt;/ontology/` 업로드)</label>
+              <input type="text" id="np-gcs-bucket" class="np-input" value="seanjung-poc-starter-ontology">
+            </div>
+            <div class="np-field">
+              <label>Property Graph Name (Stage 3 승인 시 SQL:2023 DDL 배포)</label>
+              <input type="text" id="np-graph-name" class="np-input" value="RETAIL_VIP_DEMO_ONTOLOGY_GRAPH">
+            </div>
+          </div>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:#0f172a; cursor:pointer;">
+          <input type="checkbox" id="np-seed-sample" checked>
+          <span>초기 테스트용 도메인 샘플 문서(`membership_policy_guide.md`) 및 정형 CSV 테이블(`tb_memberships.csv`, `tb_tier_plans.csv`) 함께 시드 (생성 후 다른 파일 추가 업로드 가능)</span>
+        </label>
+
+        <div id="np-status-msg" style="font-size:12px; color:#0369a1; display:none;"></div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button class="subnav-action-btn" onclick="closeNewProjectModal()">취소</button>
+          <button class="wb-btn-approve" id="np-submit-btn" onclick="submitCreateNewProject()">+ 프로젝트 생성 및 Stage 1 워크벤치로 이동</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
   let studioLang = 'ko';
   let activeTrack = 'full';
@@ -2044,6 +2335,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
     applyProjectMeta();
   }
 
+  let workbenchState = null;
+  let pendingUploadKind = 'auto';
+
   function applyProjectMeta() {
     const p = projectList.find(x => x.project_id === activeProject) || {};
     const qs = new URLSearchParams(location.search);
@@ -2053,7 +2347,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
       selectPathPreset(qsPreset);
     } else {
       selectTrack(p.track || 'full');
-      selectGraphEngine(p.graph_engine || 'bigquery');
+      selectGraphEngine(p.track === 'lite' ? 'none' : (p.graph_engine || 'bigquery'));
     }
     if (qsEngine && ['none', 'bigquery', 'spanner', 'both'].includes(qsEngine)) {
       selectGraphEngine(qsEngine);
@@ -2064,8 +2358,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
       }, 200);
     }
-    const chips = document.getElementById('agent-sample-chips');  // sample-specific questions
-    if (chips) chips.style.display = (p.root_dir && p.root_dir !== '.') ? 'none' : '';
+    syncTabsWithTrack();
   }
 
   function switchProject(id) {
@@ -2079,6 +2372,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     applyProjectMeta();
     loadPortalProfile();
     loadCatalog();
+    loadWorkbenchState();
     const active = document.querySelector('#main-tab-ribbon .view-mode-pill.active');
     switchTab(active ? active.getAttribute('data-tab') : 'overview');
   }
@@ -2102,6 +2396,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const panel = document.getElementById('panel-' + tabId);
     if (panel) panel.classList.add('active');
 
+    renderWorkbenchBars();
     if (tabId === 'stage1') ensureAssetsLoaded(() => renderStage1Assets());
     if (tabId === 'stage2') {
       ensureAssetsLoaded(() => showWikiDoc('summary.md', 'wtab-summary'));
@@ -2136,11 +2431,12 @@ HTML_PAGE = r"""<!DOCTYPE html>
     }
     if (globalCatalog.length) renderMcpCatalog();
     if (lineageGraph) {
-      updatePiiButton();
       renderLineageAll();
       if (lineageActiveTrace) selectLineageNode(lineageActiveTrace.selected_node.id);
     }
     renderOverviewPathBuilder();
+    syncTabsWithTrack();
+    renderWorkbenchBars();
   }
 
   // 3. Interactive Path Map & Starter Pack Package Builder State (GOAL-158)
@@ -2153,6 +2449,53 @@ HTML_PAGE = r"""<!DOCTYPE html>
     runtime: 'mcp_8tools',   // 'lite_agent' | 'mcp_8tools'
     eval: 'full_lineage_boundary' // 'golden_only' | 'full_lineage_boundary'
   };
+
+  function syncTabsWithTrack() {
+    const isLite = (activeTrack === 'lite');
+    const isFull = (activeTrack === 'full');
+    const btn3 = document.getElementById('tab-btn-stage3');
+    const btn5 = document.getElementById('tab-btn-stage5');
+    if (btn3) {
+      btn3.innerHTML = isLite
+        ? `Stage 3. Property Graph <span style="font-size:10px; background:#fef3c7; color:#b45309; padding:1px 6px; border-radius:999px; margin-left:4px;">Lite 생략</span>`
+        : `Stage 3. Property Graph`;
+      btn3.style.opacity = isLite ? '0.68' : '1';
+    }
+    if (btn5) {
+      btn5.innerHTML = isFull
+        ? `Stage 5. Lineage &amp; Eval`
+        : `Stage 5. Lineage &amp; Eval <span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:1px 6px; border-radius:999px; margin-left:4px;">Golden CQ</span>`;
+    }
+    const b3 = document.getElementById('st3-lite-bypass-banner');
+    if (b3) {
+      b3.style.display = isLite ? 'flex' : 'none';
+      if (isLite) {
+        b3.innerHTML = `
+          <div>
+            <div style="font-size:12.5px; font-weight:800; color:#92400e;">[Track 1 · Lite Path (Stage 1 &rarr; 2 &rarr; 4) 물리 그래프 생략 안내]</div>
+            <div style="font-size:12px; color:#78350f; margin-top:2px;">현재 프로젝트는 <b>Track 1 (Lite · 문서 전용)</b> 모드로 설정되어 있어 물리 Property Graph(Stage 3)를 생성하지 않고 Stage 2 위키/청크에서 Stage 4 에이전트로 바로 연결됩니다. 정형 CSV 원장과 물리 그래프를 함께 사용하려면 Track 2(Standard) 또는 Track 3(Full-Stack)로 전환하세요.</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="wb-btn-run" onclick="switchTab('stage4')">Stage 4 에이전트로 바로 이동 &rarr;</button>
+            <button class="wb-btn-approve" onclick="selectTrack('standard'); applyTrackToCurrentProject();">Track 2 (Standard · 물리 그래프 활성)로 즉시 전환</button>
+          </div>
+        `;
+      }
+    }
+    const b5 = document.getElementById('st5-track-banner');
+    if (b5) {
+      b5.style.display = (!isFull) ? 'flex' : 'none';
+      if (!isFull) {
+        b5.innerHTML = `
+          <div>
+            <div style="font-size:12.5px; font-weight:800; color:#92400e;">[${activeTrack === 'lite' ? 'Track 1 · Lite' : 'Track 2 · Standard'} — Golden CQ 핵심 검증 모드]</div>
+            <div style="font-size:12px; color:#78350f; margin-top:2px;">현재 트랙에서는 도메인 <b>Golden CQ 정확도 및 해시 앵커 인용 검증(Part B)</b>을 기본 수행하며, 엔드투엔드 리니지 DAG 및 50-Trial 바운더리 회귀 벤치마크 전체 활성화는 Track 3(Full-Stack)에서 지원됩니다.</div>
+          </div>
+          <button class="wb-btn-run" onclick="selectTrack('full'); applyTrackToCurrentProject();">Track 3 (Full-Stack)로 전환</button>
+        `;
+      }
+    }
+  }
 
   function syncTrackAndEngineBadges() {
     const isLite = (pkgBuilderState.engine === 'none' || pkgBuilderState.input === 'doc_only');
@@ -2178,7 +2521,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     if (hdrEng) hdrEng.textContent = engLabels[pkgBuilderState.engine] || engLabels.bigquery;
 
     const agPill = document.getElementById('agent-engine-pill');
-    if (agPill) agPill.textContent = 'Engine: ' + (pkgBuilderState.engine === 'spanner' ? 'Spanner Graph' : (pkgBuilderState.engine === 'both' ? 'Dual Fabric (BQ+Spanner)' : 'BigQuery Graph'));
+    if (agPill) agPill.textContent = 'Engine: ' + (pkgBuilderState.engine === 'spanner' ? 'Spanner Graph' : (pkgBuilderState.engine === 'both' ? 'Dual Fabric (BQ+Spanner)' : (pkgBuilderState.engine === 'none' ? 'Lite Doc Citation' : 'BigQuery Graph')));
 
     document.querySelectorAll('#ov-track-selector .segment-btn').forEach((b, idx) => {
       const k = ['lite', 'standard', 'full'][idx];
@@ -2196,6 +2539,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         spBtn.classList.toggle('active', activeGraphEngine === 'spanner');
       }
     });
+    syncTabsWithTrack();
     if (globalGraph) updateStage3DdlView();
   }
 
@@ -2312,8 +2656,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
         title: isEn ? 'Enterprise Governance Full-Stack' : '엔터프라이즈 거버넌스 풀스택 (Full 패스)',
         route: 'Stage 1 ➔ Stage 2 ➔ Stage 3 ➔ Stage 4 ➔ Stage 5',
         desc: isEn
-          ? 'All 5 Stages · Physical Graph + 4-Tier Lineage DAG + 50-Trial Boundary Regression'
-          : 'Stage 1~5 전 구간 · 물리 그래프 + 4-Tier 엔드투엔드 리니지 DAG + 바운더리 50회 회귀 평가'
+          ? 'All 5 Stages · Physical Graph + End-to-End Lineage DAG + 50-Trial Boundary Regression'
+          : 'Stage 1~5 전 구간 · 물리 그래프 + 엔드투엔드 리니지 DAG + 바운더리 50회 회귀 평가'
       },
       {
         id: 'fabric',
@@ -2354,7 +2698,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         ? (isEn ? 'BYPASSED (Lite Direct)' : '생략됨 (Lite 직행)')
         : (st.engine === 'both' ? 'Dual Fabric (BQ+Spanner)' : (st.engine === 'spanner' ? 'Spanner Graph (100 PU)' : 'BigQuery Graph (Default)'));
       const st5Label = isStage5Full
-        ? (isEn ? '4-Tier Lineage + 50-Trial Eval' : '4-Tier 리니지 + 50회 경계평가')
+        ? (isEn ? 'End-to-End Lineage + 50-Trial Eval' : '엔드투엔드 리니지 + 50회 경계평가')
         : (isEn ? 'Golden CQ Basic Check' : 'Golden CQ 기본 점검');
 
       routeBar.innerHTML = `
@@ -2365,7 +2709,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
               ${!isStage3Active
                 ? (isEn ? 'Track 1 · Lite Bypass Route: Stage 1 (Docs) ➔ Stage 2 (Wiki/Chunks) ──[Skip Stage 3]──▶ Stage 4 (Lite Agent) ➔ Stage 5 (CQ Check)' : 'Track 1 · Lite 우회 경로: Stage 1 (문서) ➔ Stage 2 (위키/청크) ──[Stage 3 물리 그래프 생략]──▶ Stage 4 (Lite 에이전트) ➔ Stage 5 (CQ 점검)')
                 : (isStage5Full
-                    ? (isEn ? `Track 3 · Full-Stack Route: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8 MCPs) ➔ Stage 5 (Full Lineage & Boundary)` : `Track 3 · Full-Stack 정식 경로: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8대 MCP) ➔ Stage 5 (4-Tier 리니지 & 경계평가)`)
+                    ? (isEn ? `Track 3 · Full-Stack Route: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8 MCPs) ➔ Stage 5 (Full Lineage & Boundary)` : `Track 3 · Full-Stack 정식 경로: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8대 MCP) ➔ Stage 5 (엔드투엔드 리니지 & 경계평가)`)
                     : (isEn ? `Track 2 · Standard Route: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8 MCPs) ➔ Stage 5 (Golden CQ)` : `Track 2 · Standard 표준 경로: Stage 1 ➔ Stage 2 ➔ Stage 3 (${st3Label}) ➔ Stage 4 (8대 MCP) ➔ Stage 5 (Golden CQ 검증)`))}
             </span>
           </div>
@@ -2593,8 +2937,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
             key: 'full_lineage_boundary',
             tone: 'tone-purple',
             tag: '[평가:풀스택]',
-            title: isEn ? '4-Tier Lineage DAG + 50-Trial Boundary' : '4-Tier 리니지 DAG + 바운더리 50회 평가',
-            desc: isEn ? 'Full Tier 1~4 data lineage graph + 10 boundary cases × 5 trials closed-loop diagnostics.' : '원천~에이전트 4-Tier 엔드투엔드 리니지 DAG 시각화 및 경계값 10건×5회 반복 실측.',
+            title: isEn ? 'End-to-End Lineage DAG + 50-Trial Boundary' : '엔드투엔드 리니지 DAG + 바운더리 50회 평가',
+            desc: isEn ? 'Source-to-agent data lineage graph + 10 boundary cases × 5 trials closed-loop diagnostics.' : '원천~에이전트 엔드투엔드 리니지 DAG 시각화 및 경계값 10건×5회 반복 실측.',
             meta: 'lineage_spec.json + boundary_benchmark_results.json'
           }
         ]
@@ -2756,10 +3100,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
         active: true,
         color: isStage5Full ? '#db2777' : '#0284c7',
         script: isStage5Full ? 'pipeline/validator.py (Full + Lineage)' : 'pipeline/validator.py (--golden-only)',
-        gcp: isStage5Full ? '4-Tier Lineage DAG + Vertex Eval' : 'Golden CQ Verification',
+        gcp: isStage5Full ? 'End-to-End Lineage DAG + Vertex Eval' : 'Golden CQ Verification',
         artifact: isStage5Full ? 'lineage_spec.json + cq & boundary reports' : 'cq_benchmark_report.json',
         note: isStage5Full
-          ? (isEn ? 'Renders interactive 4-Tier Lineage DAG (live BQ row counts) + 10×5 Boundary regression.' : '실측 행 수 기반 4-Tier 데이터 리니지 DAG 시각화 및 Golden 5건 + Boundary 50회 회귀 평가')
+          ? (isEn ? 'Renders interactive end-to-end lineage DAG (measured BQ / GCS / graph volumes) + 10×5 Boundary regression.' : '실측 볼륨 기반 엔드투엔드 데이터 리니지 DAG 시각화 및 Golden 5건 + Boundary 50회 회귀 평가')
           : (isEn ? 'Runs lightweight Golden CQ accuracy/citation verification (skips 50-trial boundary loop).' : '핵심 Golden CQ 정합성(SQL 대조 또는 청크 인용)만 신속 검증 (바운더리 50회 루프 생략)')
       }
     ];
@@ -2997,6 +3341,17 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <div class="metric-value" style="color:${esc(m.color)};">${esc(m.value)}</div>
           <div class="ov-metric-cap">${esc(m.caption)}</div>
         </div>`).join('');
+
+      const chipsEl = document.getElementById('agent-sample-chips');
+      if (chipsEl && Array.isArray(p.agent_questions) && p.agent_questions.length > 0) {
+        chipsEl.style.display = '';
+        chipsEl.innerHTML = `<span style="font-size:11px; font-weight:700; color:var(--apple-text-secondary);">도메인 맞춤 추천 질의:</span>` +
+          p.agent_questions.map(q => {
+            const lbl = studioLang === 'en' ? (q.label_en || q.label_ko) : (q.label_ko || q.label_en);
+            const qtext = studioLang === 'en' ? (q.query_en || q.query_ko) : (q.query_ko || q.query_en);
+            return `<span class="quick-chip" onclick="applySample(${esc(JSON.stringify(qtext))})">${esc(lbl)}</span>`;
+          }).join('');
+      }
     } catch (e) {
       console.error(e);
     }
@@ -3480,14 +3835,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
     document.getElementById('lineage-latency-badge').textContent = `Lineage Loaded in ${elapsed} ms`;
 
     const md = (lg || {}).metadata || {}, st = (lg || {}).stats || {};
-    const bq = md.bq_status === 'SUCCESS' ? [`${md.live_nodes} / ${md.bq_nodes}`, esc(md.bq_job_id)]
-      : (md.bq_nodes ? ['조회 실패', esc(md.bq_error || md.bq_status)] : ['-', 'bq_table 지정 노드 없음']);
+    const bq = md.bq_nodes ? [`${md.live_nodes} / ${md.bq_nodes}`, md.bq_error ? '조회 실패: ' + esc(md.bq_error) : esc(md.bq_job_id || 'GCS / Graph')]
+      : ['-', '실측 대상 노드 없음'];
     // A project's own stage3 MCP may not return duplicate_keys_total; show N/A instead of "undefined".
     const dup = Number.isFinite(s3.duplicate_keys_total) ? [`${s3.duplicate_keys_total}건`, esc(s3.bq_job_id)]
       : (s3.status === 'SUCCESS' ? ['N/A', 'stage3 MCP가 duplicate_keys_total을 반환하지 않음'] : ['조회 실패', esc(s3.status || s3.error)]);
     document.getElementById('lineage-kpis').innerHTML = [
-      ['리니지 노드 / 엣지 / 카테고리', [`${st.total_nodes ?? 0} / ${st.total_edges ?? 0} / ${st.total_categories ?? 0}`, `${esc(md.fq)} · PII ${st.pii_layer_visible ? '표시' : '숨김'}`], 'var(--apple-blue)'],
-      ['BigQuery 실측 노드 (__TABLES__)', bq, 'var(--apple-indigo)'],
+      ['리니지 노드 / 엣지 / 카테고리', [`${st.total_nodes ?? 0} / ${st.total_edges ?? 0} / ${st.total_categories ?? 0}`, esc(md.fq)], 'var(--apple-blue)'],
+      ['실측 노드 (BQ 행 수 · GCS 객체 수 · 그래프 테이블 수)', bq, 'var(--apple-indigo)'],
       ['노드 테이블 중복 키 (BigQuery 실측)', dup, 'var(--apple-emerald)'],
       ['계보 집계 응답 지연', [elapsed + ' ms', 'graph + eval + stage3 MCP 병렬 조회'], 'var(--apple-teal)']
     ].map(([k, [v, cap], c]) => `<div class="metric-box"><div class="metric-title">${k}</div><div class="metric-value" style="color:${c};">${v}</div><div class="ov-metric-cap">${cap}</div></div>`).join('');
@@ -3553,7 +3908,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   // 9-A. Enterprise Data Lineage DAG (spec: <project>/config/lineage_spec.json, API: /api/lineage/*)
   const LN_W = 290, LN_H = 52;
-  let lineageGraph = null, lineageActiveTrace = null, lineageInitialized = false, lineageIncludePii = false, lineagePreset = 'ALL';
+  let lineageGraph = null, lineageActiveTrace = null, lineageInitialized = false, lineagePreset = 'ALL';
   let lineageScale = 0.85, lineagePanX = 30, lineagePanY = 30, lineagePan = null, lineageDrag = null;
 
   function lineageNode(id) { return ((lineageGraph || {}).nodes || []).find(n => n.id === id); }
@@ -3564,7 +3919,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   async function fetchLineageGraphData() {
     try {
-      const g = await (await fetch(`/api/lineage/graph?include_pii=${lineageIncludePii}`)).json();
+      const g = await (await fetch('/api/lineage/graph')).json();
       if (!g.nodes) throw new Error(g.error || 'invalid response');
       lineageGraph = g;
     } catch (e) {
@@ -3652,7 +4007,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
 
   async function selectLineageNode(nodeId) {
-    const t = await (await fetch(`/api/lineage/trace?node_id=${encodeURIComponent(nodeId)}&include_pii=${lineageIncludePii}`)).json();
+    const t = await (await fetch(`/api/lineage/trace?node_id=${encodeURIComponent(nodeId)}`)).json();
     if (t.error) return;
     lineageActiveTrace = t;
     const hl = new Set(t.highlighted_nodes);
@@ -3678,7 +4033,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     document.getElementById('lineage-drawer-title').textContent = (en ? 'Node: ' : '노드 상세: ') + ((en && node.title_en) || node.title);
     let explanation;
     try {
-      explanation = (await (await fetch(`/api/lineage/explain?node_id=${encodeURIComponent(nodeId)}&include_pii=${lineageIncludePii}&lang=${studioLang}`)).json()).explanation;
+      explanation = (await (await fetch(`/api/lineage/explain?node_id=${encodeURIComponent(nodeId)}&lang=${studioLang}`)).json()).explanation;
     } catch (e) {
       explanation = en ? 'Summary unavailable.' : '요약을 불러오지 못했습니다.';
     }
@@ -3686,7 +4041,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const ups = t.highlighted_edges.filter(e => e.target === nodeId);
     const downs = t.highlighted_edges.filter(e => e.source === nodeId);
     const md = lineageGraph.metadata || {};
-    const volSrc = node.live ? `BigQuery __TABLES__ (${esc(md.bq_job_id || '-')})` : (en ? 'lineage_spec.json value' : 'lineage_spec.json 기재값');
+    const volSrc = node.live_src ? esc(node.live_src) + (node.live ? '' : (en ? ' (lookup failed)' : ' (조회 실패)')) : (en ? 'lineage_spec.json value' : 'lineage_spec.json 기재값');
     const link = (id, label) => `<div class="lineage-link-row" onclick="selectLineageNode('${esc(id)}')"><strong style="color:var(--apple-blue);">${esc(id)}</strong><span style="font-size:10px; color:var(--apple-text-secondary);">${esc(label)}</span></div>`;
     const sec = (label, rows, emptyText) => `<div class="lineage-drawer-section"><div class="lineage-drawer-sec-label">${label}</div>
       <div style="font-size:11px; display:flex; flex-direction:column; gap:5px;">${rows.length ? rows.join('') : `<span style="color:var(--apple-text-secondary);">${emptyText}</span>`}</div></div>`;
@@ -3808,11 +4163,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
   // Same column layout as src/lineage/lineage_engine.py (restores positions after node drags)
   function untangleLineageLayout() {
     if (!lineageGraph) return;
-    lineageGraph.categories.forEach((c, col) => {
-      const ns = lineageGraph.nodes.filter(n => n.cat === c.id);
+    const cols = lineageGraph.categories.map(c => lineageGraph.nodes.filter(n => n.cat === c.id));
+    const height = Math.max(0, ...cols.map(ns => ns.length * (ns.length > 8 ? 72 : 92)));
+    cols.forEach((ns, col) => {
+      const step = ns.length > 8 ? 72 : 92;
       ns.forEach((n, i) => {
         n.x = 80 + col * 380;
-        n.y = 60 + i * (ns.length > 8 ? 72 : 92);
+        n.y = 60 + Math.floor((height - ns.length * step) / 2) + i * step;
         const el = document.getElementById('lineage-card-' + n.id);
         if (el) { el.style.left = n.x + 'px'; el.style.top = n.y + 'px'; }
       });
@@ -3845,19 +4202,6 @@ HTML_PAGE = r"""<!DOCTYPE html>
       card.classList.toggle('highlighted', on);
       card.classList.toggle('dimmed', !on);
     });
-  }
-
-  function updatePiiButton() {
-    const btn = document.getElementById('btn-toggle-pii');
-    btn.classList.toggle('pii-on', lineageIncludePii);
-    btn.textContent = studioLang === 'en' ? (lineageIncludePii ? 'PII Visible' : 'PII Hidden') : (lineageIncludePii ? 'PII 표시중' : 'PII 숨김됨');
-  }
-
-  async function toggleLineagePii() {
-    lineageIncludePii = !lineageIncludePii;
-    updatePiiButton();
-    closeLineageDrawer();
-    await fetchLineageGraphData();
   }
 
   // 10. Stage Pipeline MCP Modal Runner
@@ -3923,13 +4267,374 @@ HTML_PAGE = r"""<!DOCTYPE html>
     document.getElementById('industry-modal').classList.remove('open');
   }
 
+  // 12. Track-Driven Project Creation & Step-by-Step Gemini Workbench (GRILL-011)
+  async function loadWorkbenchState() {
+    try {
+      const res = await fetch('/api/project/workbench');
+      if (res.ok) {
+        workbenchState = await res.json();
+        renderWorkbenchBars();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderWorkbenchBars() {
+    if (!workbenchState) return;
+    const wb = workbenchState;
+    const isEn = (studioLang === 'en');
+    const gcp = wb.gcp || {};
+    const stages = wb.stages || {};
+    const stageKeys = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'];
+    const stageNames = {
+      stage1: isEn ? 'Stage 1. Asset & Upload' : 'Stage 1. 데이터 업로드 & 청킹',
+      stage2: isEn ? 'Stage 2. 3-Layer Wiki' : 'Stage 2. Gemini 3-Layer 위키 합성',
+      stage3: isEn ? 'Stage 3. Property Graph' : 'Stage 3. 물리 Property Graph 합성',
+      stage4: isEn ? 'Stage 4. Agent & Questions' : 'Stage 4. 에이전트 추천 질의 & 런타임',
+      stage5: isEn ? 'Stage 5. Golden CQ & Lineage' : 'Stage 5. Golden CQ 검증 & 리니지'
+    };
+    const runBtnLabels = {
+      stage1: isEn ? '1. Run Extract & Gemini Profile' : '1. 문서 청킹 · Gate 0 · Gemini 스키마 분석 실행',
+      stage2: isEn ? '1. Synthesize 3-Layer Wiki (Gemini)' : '1. 최신 Gemini로 3-Layer 위키 & 규칙 합성 실행',
+      stage3: isEn ? '1. Synthesize Property Graph DDL' : '1. SQL:2023 Property Graph DDL & 토폴로지 합성',
+      stage4: isEn ? '1. Generate Domain Agent Questions' : '1. Gemini 도메인 맞춤 추천 질의 생성',
+      stage5: isEn ? '1. Synthesize Golden CQ & Lineage' : '1. Gemini 도메인 Golden CQ & 엔드투엔드 리니지 합성'
+    };
+    const approveBtnLabels = {
+      stage1: isEn ? '2. Approve & Load to BigQuery → Stage 2' : '2. 승인 및 BigQuery 데이터셋/테이블 실제 적재 → 다음 단계',
+      stage2: isEn ? '2. Approve & Upload to GCS/BQ → Next' : '2. 승인 및 GCS 위키 업로드 · BigQuery 규칙 적재 → 다음 단계',
+      stage3: isEn ? '2. Approve & Deploy Graph DDL → Stage 4' : '2. 승인 및 BigQuery Property Graph 실제 배포 → Stage 4',
+      stage4: isEn ? '2. Approve & Activate Agent → Stage 5' : '2. 승인 및 에이전트 런타임 활성화 → Stage 5',
+      stage5: isEn ? '2. Approve & Run Live CQ Validation' : '2. 승인 및 도메인 Golden CQ 실측 검증 확정'
+    };
+
+    stageKeys.forEach(sk => {
+      const container = document.getElementById('wb-bar-' + sk);
+      if (!container) return;
+      const stInfo = stages[sk] || { status: 'PENDING', summary: '' };
+      const stCode = stInfo.status || 'PENDING';
+      const isBypassed = (stCode === 'BYPASSED');
+
+      const stepperHtml = stageKeys.map(k => {
+        const s = (stages[k] || {}).status || 'PENDING';
+        const icon = s === 'APPROVED' ? '✓' : (s === 'TRANSFORMED' ? '●' : (s === 'BYPASSED' ? '↷' : '○'));
+        return `<span class="wb-step-pill st-${esc(s)} ${k === sk ? 'current' : ''}" onclick="switchTab('${k}')">${icon} ${esc(stageNames[k])}</span>`;
+      }).join('');
+
+      const files = wb.uploaded_files || { docs: [], tables: [] };
+      const uploadStripHtml = (sk === 'stage1') ? `
+        <div class="wb-upload-strip">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; color:#1e293b;">
+            <span class="badge human">${isEn ? 'Project Input Files' : '업로드된 입력 파일'}</span>
+            <span><b>Docs (${(files.docs || []).length}):</b> ${(files.docs || []).map(d => `<code>${esc(d.name)}</code>`).join(', ') || (isEn ? 'None' : '없음')}</span>
+            ${wb.track !== 'lite' ? `<span>· <b>CSV Tables (${(files.tables || []).length}):</b> ${(files.tables || []).map(t => `<code>${esc(t.name)} (${t.rows} rows)</code>`).join(', ') || (isEn ? 'None' : '없음')}</span>` : ''}
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button class="wb-btn-run" onclick="triggerWorkbenchFileUpload('doc')">+ 문서 업로드 (.md/.txt/.pdf)</button>
+            ${wb.track !== 'lite' ? `<button class="wb-btn-run" onclick="triggerWorkbenchFileUpload('table')">+ 정형 CSV 테이블 업로드 (.csv)</button>` : ''}
+            <button class="subnav-action-btn" style="padding:5px 10px; font-size:11.5px;" onclick="seedSampleDomainData()">샘플 도메인 데이터 시드</button>
+          </div>
+        </div>
+      ` : '';
+
+      const actionButtonsHtml = isBypassed ? `
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="badge" style="background:#f1f5f9; color:#475569;">Track 1 (Lite) 생략 단계</span>
+          <button class="wb-btn-run" onclick="switchTab('stage4')">Stage 4 에이전트로 이동 &rarr;</button>
+        </div>
+      ` : `
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <select class="np-input" style="padding:4px 8px; font-size:11.5px;" onchange="changeWorkbenchModel(this.value)">
+            ${(wb.supported_models || ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-2.5-pro']).map(m =>
+              `<option value="${esc(m)}" ${m === wb.gemini_model ? 'selected' : ''}>Vertex AI: ${esc(m)}</option>`
+            ).join('')}
+          </select>
+          <button class="wb-btn-run" id="wb-run-btn-${sk}" onclick="runWorkbenchStep('${sk}')">${esc(runBtnLabels[sk])}</button>
+          <button class="wb-btn-approve" id="wb-app-btn-${sk}" onclick="approveWorkbenchStep('${sk}')">${esc(approveBtnLabels[sk])}</button>
+        </div>
+      `;
+
+      container.innerHTML = `
+        <div class="stage-workbench-bar">
+          <div class="wb-top-row">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="badge human">STEP-BY-STEP GEMINI WORKBENCH</span>
+              <strong style="font-size:12.5px; color:#0f172a;">${esc(wb.project_name || wb.project_id)} (<code>${esc(wb.project_id)}</code>)</strong>
+              <span class="badge indigo">Track: ${esc((wb.track || 'full').toUpperCase())}</span>
+              <span class="badge approved">BQ: <code>${esc(gcp.project_id)}.${esc(gcp.dataset_id)}</code></span>
+              <span class="badge llm">GCS: <code>gs://${esc(gcp.gcs_bucket)}/${esc(gcp.gcs_prefix)}</code></span>
+              ${wb.track !== 'lite' ? `<span class="badge human">Graph: <code>${esc(gcp.graph_name)}</code></span>` : ''}
+            </div>
+            <div class="wb-stepper">${stepperHtml}</div>
+          </div>
+          ${uploadStripHtml}
+          <div class="wb-action-row">
+            <div class="wb-summary-text" id="wb-summary-${sk}">
+              <span class="badge ${stCode === 'APPROVED' ? 'approved' : (stCode === 'TRANSFORMED' ? 'human' : '')}" style="margin-right:6px;">${esc(stCode)}</span>
+              ${esc(stInfo.summary || '단계를 실행하면 Gemini 변환 결과 요약이 여기에 표시됩니다.')}
+            </div>
+            ${actionButtonsHtml}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function openNewProjectModal() {
+    const trkSel = document.getElementById('np-track');
+    const engSel = document.getElementById('np-engine');
+    if (trkSel) trkSel.value = activeTrack || 'full';
+    if (engSel) engSel.value = pkgBuilderState.engine || (activeTrack === 'lite' ? 'none' : 'bigquery');
+    refreshNewProjectGcpRecommendations();
+    const st = document.getElementById('np-status-msg');
+    if (st) st.style.display = 'none';
+    document.getElementById('new-project-modal').classList.add('open');
+  }
+
+  function closeNewProjectModal() {
+    document.getElementById('new-project-modal').classList.remove('open');
+  }
+
+  function onNewProjectTrackChange() {
+    const trk = document.getElementById('np-track').value;
+    const engEl = document.getElementById('np-engine');
+    if (trk === 'lite') {
+      engEl.value = 'none';
+    } else if (engEl.value === 'none') {
+      engEl.value = 'bigquery';
+    }
+    refreshNewProjectGcpRecommendations();
+  }
+
+  async function refreshNewProjectGcpRecommendations() {
+    const pid = (document.getElementById('np-project-id').value || 'my-ontology').trim();
+    const trk = document.getElementById('np-track').value || 'full';
+    const eng = document.getElementById('np-engine').value || 'bigquery';
+    try {
+      const res = await nativeFetch(`/api/projects/recommend_gcp?project_id=${encodeURIComponent(pid)}&track=${encodeURIComponent(trk)}&engine=${encodeURIComponent(eng)}`);
+      if (!res.ok) return;
+      const g = await res.json();
+      document.getElementById('np-gcp-project').value = g.project_id || 'seanjung-poc';
+      document.getElementById('np-bq-dataset').value = g.dataset_id || '';
+      document.getElementById('np-gcs-bucket').value = g.gcs_bucket || '';
+      document.getElementById('np-graph-name').value = g.graph_name || (trk === 'lite' ? '(Lite Track Bypassed)' : '');
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function submitCreateNewProject() {
+    const btn = document.getElementById('np-submit-btn');
+    const st = document.getElementById('np-status-msg');
+    const payload = {
+      project_id: document.getElementById('np-project-id').value.trim(),
+      project_name: document.getElementById('np-project-name').value.trim(),
+      domain: document.getElementById('np-domain').value.trim(),
+      track: document.getElementById('np-track').value,
+      graph_engine: document.getElementById('np-engine').value,
+      gemini_model: document.getElementById('np-model').value,
+      seed_sample: document.getElementById('np-seed-sample').checked,
+      gcp_overrides: {
+        project_id: document.getElementById('np-gcp-project').value.trim(),
+        dataset_id: document.getElementById('np-bq-dataset').value.trim(),
+        gcs_bucket: document.getElementById('np-gcs-bucket').value.trim(),
+        graph_name: document.getElementById('np-graph-name').value.trim()
+      }
+    };
+    btn.disabled = true;
+    if (st) {
+      st.style.display = 'block';
+      st.textContent = '신규 프로젝트 워크스페이스 및 추천 GCP 리소스 구성을 생성 중입니다...';
+    }
+    try {
+      const res = await nativeFetch('/api/projects/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json();
+      if (out.status === 'SUCCESS') {
+        closeNewProjectModal();
+        await loadProjects();
+        switchProject(out.project_id);
+        switchTab('stage1');
+      } else if (st) {
+        st.textContent = '생성 오류: ' + (out.error || 'Unknown error');
+      }
+    } catch (e) {
+      if (st) st.textContent = '네트워크 오류: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function applyTrackToCurrentProject() {
+    try {
+      const res = await fetch('/api/project/reconfigure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          track: activeTrack,
+          graph_engine: pkgBuilderState.engine,
+          gemini_model: (workbenchState && workbenchState.gemini_model) || 'gemini-3.8-flash'
+        })
+      });
+      const out = await res.json();
+      if (out.workbench) {
+        workbenchState = out.workbench;
+        const p = projectList.find(x => x.project_id === activeProject);
+        if (p) {
+          p.track = activeTrack;
+          p.graph_engine = pkgBuilderState.engine;
+        }
+        syncTabsWithTrack();
+        renderWorkbenchBars();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function changeWorkbenchModel(newModel) {
+    if (!workbenchState) return;
+    workbenchState.gemini_model = newModel;
+    await applyTrackToCurrentProject();
+  }
+
+  function triggerWorkbenchFileUpload(kind) {
+    pendingUploadKind = kind || 'auto';
+    const inp = document.getElementById('wb-file-input');
+    if (!inp) return;
+    inp.value = '';
+    inp.accept = (kind === 'table') ? '.csv' : '.md,.txt,.pdf,.html,.csv';
+    inp.click();
+  }
+
+  async function handleWorkbenchFileUpload(fileList) {
+    if (!fileList || !fileList.length) return;
+    const filesPayload = [];
+    for (const f of Array.from(fileList)) {
+      const text = await f.text();
+      filesPayload.push({ name: f.name, kind: pendingUploadKind, content: text });
+    }
+    const res = await fetch('/api/project/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: filesPayload })
+    });
+    const out = await res.json();
+    if (out.workbench) {
+      workbenchState = out.workbench;
+      globalAssets = null;
+      renderWorkbenchBars();
+      ensureAssetsLoaded(() => renderStage1Assets());
+    }
+  }
+
+  async function seedSampleDomainData() {
+    const res = await fetch('/api/project/seed_sample', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const out = await res.json();
+    if (out.workbench) {
+      workbenchState = out.workbench;
+      globalAssets = null;
+      renderWorkbenchBars();
+      ensureAssetsLoaded(() => renderStage1Assets());
+    }
+  }
+
+  async function runWorkbenchStep(stage) {
+    const btn = document.getElementById('wb-run-btn-' + stage);
+    const sumEl = document.getElementById('wb-summary-' + stage);
+    if (btn) btn.disabled = true;
+    if (sumEl) sumEl.innerHTML = `<span class="badge human">RUNNING</span> Vertex AI <code>${esc((workbenchState && workbenchState.gemini_model) || 'gemini-3.8-flash')}</code> 변환 및 시맨틱 합성 실행 중...`;
+    try {
+      const res = await fetch('/api/project/workbench/run_step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage, model_name: (workbenchState && workbenchState.gemini_model) || 'gemini-3.8-flash' })
+      });
+      const out = await res.json();
+      if (out.workbench) {
+        workbenchState = out.workbench;
+        renderWorkbenchBars();
+      }
+      if (out.status === 'ERROR') {
+        const el = document.getElementById('wb-summary-' + stage);
+        if (el) el.innerHTML = `<span class="badge amber" style="margin-right:6px;">ERROR</span>${esc(out.error || '')}`;
+        return;
+      }
+      globalAssets = null; globalGraph = null; lineageGraph = null;
+      if (stage === 'stage1') ensureAssetsLoaded(() => renderStage1Assets());
+      if (stage === 'stage2') {
+        ensureAssetsLoaded(() => showWikiDoc('summary.md', 'wtab-summary'));
+        ensureGraphLoaded(() => setTimeout(renderSemanticGraph, 60));
+      }
+      if (stage === 'stage3') {
+        ensureGraphLoaded(() => { updateStage3DdlView(); setTimeout(renderPropertyGraph, 60); });
+      }
+      if (stage === 'stage4') loadPortalProfile();
+      if (stage === 'stage5') loadLineageAndEvaluation();
+    } catch (e) {
+      if (sumEl) sumEl.textContent = '실행 오류: ' + e.message;
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function approveWorkbenchStep(stage) {
+    const btn = document.getElementById('wb-app-btn-' + stage);
+    const sumEl = document.getElementById('wb-summary-' + stage);
+    if (btn) btn.disabled = true;
+    if (sumEl) sumEl.innerHTML = `<span class="badge approved">APPROVING &amp; DEPLOYING TO GCP</span> 추천된 GCP 리소스(BigQuery / GCS / Property Graph)에 실제 반영 중...`;
+    try {
+      const res = await fetch('/api/project/workbench/approve_step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage })
+      });
+      const out = await res.json();
+      if (out.workbench) {
+        workbenchState = out.workbench;
+        renderWorkbenchBars();
+      }
+      if (out.status === 'ERROR') {
+        const el = document.getElementById('wb-summary-' + stage);
+        if (el) el.innerHTML = `<span class="badge amber" style="margin-right:6px;">ERROR</span>${esc(out.error || '')}`;
+        return;
+      }
+      globalAssets = null; globalGraph = null; lineageGraph = null;
+      if (out.next_stage && out.next_stage !== 'overview') {
+        setTimeout(() => switchTab(out.next_stage), 450);
+      } else if (stage === 'stage5') {
+        loadLineageAndEvaluation();
+      }
+    } catch (e) {
+      if (sumEl) sumEl.textContent = '승인 오류: ' + e.message;
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   // Init (project list first so every /api call carries the resolved project)
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLineageDrawer(); });
   loadProjects().catch(console.error).finally(() => {
-    loadPortalProfile();
-    loadCatalog();
-    const requested = new URLSearchParams(window.location.search).get('tab');
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqProj = urlParams.get('project');
+    if (reqProj && projectList.some(p => p.project_id === reqProj)) {
+      switchProject(reqProj);
+    } else {
+      loadPortalProfile();
+      loadCatalog();
+      loadWorkbenchState();
+    }
+    const requested = urlParams.get('tab');
     if (requested) switchTab(requested);
+    if (urlParams.get('modal') === 'new_project') openNewProjectModal();
   });
 </script>
 </body>
@@ -4004,13 +4709,17 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             return self._json(INDUSTRY_CASES)
         if path == "/api/projects":
             return self._json([{**{k: v for k, v in p.items() if k != "root"}, "track": resolve_track(p)[0]} for p in list_projects()])
+        if path == "/api/projects/recommend_gcp":
+            return self._json(recommend_gcp_resources(arg("project_id", "my-ontology"), arg("track", "full"), arg("engine", "bigquery")))
         try:
             proj = get_project(arg("project") or None)
         except KeyError as e:
             return self._json({"error": str(e)}, 404)
         root = proj["root"]
 
-        if path == "/api/catalog":
+        if path == "/api/project/workbench":
+            return self._json(get_workbench_state(proj))
+        elif path == "/api/catalog":
             self._json(get_engine(proj).server.get_tool_catalog())
         elif path == "/api/assets":
             chunks, wiki = [], {}
@@ -4042,11 +4751,11 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         elif path == "/api/eval/summary":
             self._json(build_eval_summary(root))
         elif path == "/api/lineage/graph":
-            self._json(get_lineage(proj).build_graph(arg("include_pii") == "true"))
+            self._json(get_lineage(proj).build_graph())
         elif path == "/api/lineage/trace":
-            self._json(get_lineage(proj).trace(arg("node_id"), arg("include_pii") == "true"))
+            self._json(get_lineage(proj).trace(arg("node_id")))
         elif path == "/api/lineage/explain":
-            self._json(get_lineage(proj).explain(arg("node_id"), arg("include_pii") == "true", arg("lang", "ko")))
+            self._json(get_lineage(proj).explain(arg("node_id"), arg("lang", "ko")))
         else:
             self.send_response(404)
             self.end_headers()
@@ -4056,11 +4765,28 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length).decode("utf-8")
         data = json.loads(body) if body else {}
+        if parsed.path == "/api/projects/create":
+            return self._json(create_new_project_workspace(data))
         try:
-            eng = get_engine(get_project((parse_qs(parsed.query).get("project") or [None])[0]))
+            proj = get_project((parse_qs(parsed.query).get("project") or [None])[0])
+            eng = get_engine(proj)
         except KeyError as e:
             return self._json({"error": str(e)}, 404)
-        if parsed.path == "/api/query":
+        if parsed.path == "/api/project/reconfigure":
+            return self._json(reconfigure_project_track(proj["project_id"], data))
+        elif parsed.path == "/api/project/upload":
+            return self._json(upload_project_files(proj["project_id"], data))
+        elif parsed.path == "/api/project/seed_sample":
+            wb = get_workbench_state(proj)
+            seed_sample_domain_files(proj["root"], proj["project_id"], wb.get("track", "full"))
+            return self._json({"status": "SUCCESS", "workbench": get_workbench_state(proj)})
+        elif parsed.path == "/api/project/workbench/run_step":
+            return self._json(run_workbench_step(proj["project_id"], data.get("stage", "stage1"), model_name=data.get("model_name")))
+        elif parsed.path == "/api/project/workbench/approve_step":
+            return self._json(approve_workbench_step(proj["project_id"], data.get("stage", "stage1")))
+        elif parsed.path == "/api/query":
+            if os.path.abspath(proj["root"]) != BASE_DIR:
+                return self._json(execute_custom_project_agent_query(proj, data.get("query", ""), engine=data.get("engine", "bigquery")))
             self._json(eng.execute_cycle(data.get("query", ""), engine=data.get("engine", "bigquery")))
         elif parsed.path == "/api/mcp/execute":
             self._json(eng.server.execute_tool(data.get("tool_name", "mcp_stage1_asset_discovery"), data.get("args", {})))

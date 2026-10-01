@@ -10,6 +10,19 @@ FQ = "seanjung-poc.starter_ontology_dw"
 GRAPH = f"{FQ}.STARTER_ONTOLOGY_GRAPH"
 STUDIO_URL = "https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app"
 
+
+def report_values() -> dict:
+    """Latest Golden CQ / boundary report values (data/output/*.json) for the findings text."""
+    import json
+    from pathlib import Path
+    out = Path(__file__).resolve().parent.parent / "data" / "output"
+    cq = json.loads((out / "cq_benchmark_report.json").read_text(encoding="utf-8"))
+    bd = json.loads((out / "boundary_benchmark_results.json").read_text(encoding="utf-8"))
+    return {"cq_passed": cq["passed"], "cq_total": cq["total_cqs"], "cq_rate": cq["accuracy_rate"],
+            "cq_rubric": cq.get("rubric_avg_total"), "cq_at": cq["evaluated_at"][:10],
+            "b_success": bd["avg_success_rate"], "b_consistency": bd["avg_consistency_rate"],
+            "b_intent": bd["avg_intent_stability"], "b_trials": bd["total_trials"], "b_at": bd["evaluated_at"][:10]}
+
 STAGE_NAV = [
     (0, "0. 전체 흐름 개요", "0. End-to-End Overview",
      "stage0_overview_walkthrough_ko.ipynb", "stage0_overview_walkthrough_en.ipynb",
@@ -112,6 +125,7 @@ def build_stage0(lang="ko"):
     ko_prefix = "./" if ko else "../ko/"
     en_prefix = "../en/" if ko else "./"
     banner_file = "stage0_overview_flow_ko.png" if ko else "stage0_overview_flow_en.png"
+    rv = report_values()
     return [
         md(f"""{nav_header(0, lang)}
 
@@ -120,9 +134,9 @@ def build_stage0(lang="ko"):
 # {"0. 전체 흐름 초기 화면 — 8단계 엔지니어링 파이프라인 & 5-Stage 에이전틱 온톨로지 워크스루" if ko else "0. End-to-End Entrypoint — 8-Phase Engineering Pipeline & 5-Stage Agentic Ontology Walkthrough"}
 ## {"준비 → 분석 → 파싱 → 통합 → 구축 → 에이전트 구축 → 답변 → 검증 (BigQuery Property Graph · ISO GQL · Gemini 3.8 Flash)" if ko else "Prepare → Analyze → Parse → Integrate → Build Graph → Build Agent → Answer (GQL) → Verify & Gate"}
 
-{("이 초기 노트북은 **Agentic Ontology Starter Pack v2.0**의 전체 엔지니어링 방법론을 처음부터 끝까지 한눈에 파악하고 실행하는 **마스터 진입 화면**입니다. 단순 데이터 조회에 그치지 않고, **원시 데이터 준비(Phase 1) → 탐색·CQ 설계(Phase 2) → 비정형 문서 파싱·SHA-256 해시 앵커링(Phase 3) → 3-Layer Wiki 및 시맨틱 규칙 통합(Phase 4) → BigQuery/Spanner 물리 프로퍼티 그래프 구축(Phase 5) → 8종 MCP 서버 및 2-Pass 에이전트 구축(Phase 6) → 바인딩 변수 기반 ISO GQL 생성 및 근거 기반 답변(Phase 7) → 4-Tier 리니지 및 50회 경계값 벤치마크 검증(Phase 8)**의 전 과정을 중간 데이터·테이블 구조·그래프 설계 도식과 함께 조화롭게 확인합니다."
+{("이 초기 노트북은 **Agentic Ontology Starter Pack v2.0**의 전체 엔지니어링 방법론을 처음부터 끝까지 한눈에 파악하고 실행하는 **마스터 진입 화면**입니다. 단순 데이터 조회에 그치지 않고, **원시 데이터 준비(Phase 1) → 탐색·CQ 설계(Phase 2) → 비정형 문서 파싱·SHA-256 해시 앵커링(Phase 3) → 3-Layer Wiki 및 시맨틱 규칙 통합(Phase 4) → BigQuery/Spanner 물리 프로퍼티 그래프 구축(Phase 5) → 8종 MCP 서버 및 2-Pass 에이전트 구축(Phase 6) → 바인딩 변수 기반 ISO GQL 생성 및 근거 기반 답변(Phase 7) → 엔드투엔드 리니지 및 50회 경계값 벤치마크 검증(Phase 8)**의 전 과정을 중간 데이터·테이블 구조·그래프 설계 도식과 함께 조화롭게 확인합니다."
   if ko else
-  "This master entrypoint notebook walks through the complete **Agentic Ontology Starter Pack v2.0** methodology end to end. Rather than isolated data exploration, it connects **1. Preparation → 2. Analysis & CQ Design → 3. Markdown Parsing & SHA-256 Anchoring → 4. 3-Layer Wiki & Semantic Rule Integration → 5. Physical Property Graph Construction → 6. 8-Tool MCP & 2-Pass Agent Setup → 7. Parameterized ISO GQL & Grounded Answering → 8. 4-Tier Lineage & 50-Trial Benchmark Verification**, showing intermediate tables, bound GQL variables, data outputs, and graph design schematics at every phase.")}
+  "This master entrypoint notebook walks through the complete **Agentic Ontology Starter Pack v2.0** methodology end to end. Rather than isolated data exploration, it connects **1. Preparation → 2. Analysis & CQ Design → 3. Markdown Parsing & SHA-256 Anchoring → 4. 3-Layer Wiki & Semantic Rule Integration → 5. Physical Property Graph Construction → 6. 8-Tool MCP & 2-Pass Agent Setup → 7. Parameterized ISO GQL & Grounded Answering → 8. End-to-End Lineage & 50-Trial Benchmark Verification**, showing intermediate tables, bound GQL variables, data outputs, and graph design schematics at every phase.")}
 
 ![Stage 0 Overview Architecture Flow](attachment:{banner_file})
 
@@ -134,7 +148,7 @@ def build_stage0(lang="ko"):
 | **3. {"파싱 (Parse)" if ko else "Parse"}**<br>**4. {"통합 (Integrate)" if ko else "Integrate"}** | **Stage 2**<br>(`Step 2.1`–`2.2`) | `pipeline/ingest.py`<br>`mcp_stage2_wiki_and_semantic`<br>`H.propose_triples()` | {"`DOC_CHUNK` 정규식 파싱 & SHA-256 해시 앵커 비교표, 3-Layer Wiki 4종, Gemini 트리플 추출, 시맨틱 그래프 도식" if ko else "`DOC_CHUNK` regex parsing & SHA-256 anchor table, 3-Layer Wiki, Gemini triple extraction, Semantic Graph schematic"} | [`stage2_ko`]({ko_prefix}stage2_wiki_and_semantic_graph_ko.ipynb) | [`stage2_en`]({en_prefix}stage2_wiki_and_semantic_graph_en.ipynb) |
 | **5. {"구축 (Build Graph)" if ko else "Build Graph"}** | **Stage 3**<br>(`Step 3.1`–`3.2`) | `pipeline/graph_builder.py`<br>`mcp_stage3_property_graph`<br>`H.run_gql()` / `H.nl2gql()` | {"6 Node × 4 Edge 메타모델 설계도, BigQuery/Spanner Graph DDL, 전체 토폴로지 & 1~2홉 서브그래프, 바인딩 변수 기반 ISO GQL" if ko else "6 Node × 4 Edge metamodel schematic, BQ/Spanner DDL, full topology & 1..2-hop ego graph, parameterized ISO GQL"} | [`stage3_ko`]({ko_prefix}stage3_property_graph_bigquery_spanner_ko.ipynb) | [`stage3_en`]({en_prefix}stage3_property_graph_bigquery_spanner_en.ipynb) |
 | **6. {"에이전트 구축 (Agent)" if ko else "Build Agent"}**<br>**7. {"답변 (Answer)" if ko else "Answer"}** | **Stage 4**<br>(`Step 4.1`–`4.2`) | `src/agent/mcp_server.py`<br>`src/agent/reasoning_engine.py`<br>`mcp_stage4_agent_orchestration` | {"2-Pass 에이전트 오케스트레이션 설계도, 8종 MCP 카탈로그, 슬롯 파싱, 180일 위약금 곡선, Golden CQ & 경계 답변" if ko else "2-Pass agent orchestration schematic, 8-tool MCP catalog, slot parsing, 180d penalty curve, Golden CQ & boundary answers"} | [`stage4_ko`]({ko_prefix}stage4_agent_and_mcp_execution_ko.ipynb) | [`stage4_en`]({en_prefix}stage4_agent_and_mcp_execution_en.ipynb) |
-| **8. {"검증 (Verify & Gate)" if ko else "Verify & Gate"}** | **Stage 5**<br>(`Step 5.1`–`5.2`) | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | {"4-Tier 데이터 리니지 테이블 & 멀티파타이트 그래프, Golden CQ 5종 실시간 재검증, Boundary 50회 평가 & Gate 1~5 판정" if ko else "4-Tier lineage table & multipartite graph, live CQ re-audit, Boundary 50-trial metrics & Gate 1..5 checklist"} | [`stage5_ko`]({ko_prefix}stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_en`]({en_prefix}stage5_lineage_and_evaluation_en.ipynb) |
+| **8. {"검증 (Verify & Gate)" if ko else "Verify & Gate"}** | **Stage 5**<br>(`Step 5.1`–`5.2`) | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | {"엔드투엔드 데이터 리니지 테이블 & 멀티파타이트 그래프, Golden CQ 5종 실시간 재검증, Boundary 50회 평가 & Gate 1~5 판정" if ko else "end-to-end lineage table & multipartite graph, live CQ re-audit, Boundary 50-trial metrics & Gate 1..5 checklist"} | [`stage5_ko`]({ko_prefix}stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_en`]({en_prefix}stage5_lineage_and_evaluation_en.ipynb) |
 
 ### {"조직 성숙도별 3-Track 선택 흐름 가이드 (`config/starter_config.json`)" if ko else "3-Track Selective Adoption Model (`config/starter_config.json`)"}
 
@@ -142,7 +156,7 @@ def build_stage0(lang="ko"):
 | :--- | :--- | :--- | :--- |
 | **Track 1 · Lite** | `Stage 1 → Stage 2 → Stage 4` | `none` | {"고객 테이블 없이 원본 문서만 있을 때. 원문 청크와 문서 기반 위키로 에이전트가 청크 ID를 인용해 답하고 citation CQ로 채점한다" if ko else "Source documents only, no customer tables. The agent answers from source chunks and the document-based Wiki with chunk ID citations; citation CQs are scored"} |
 | **Track 2 · Standard** | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `bigquery` / `spanner` | {"정형 DW 원장 4종과 비정형 규칙을 Zero-ETL Property Graph로 결합해 다중 홉 ISO GQL 추론을 수행할 때" if ko else "Unifying 4 structured DW ledgers and unstructured rules into a Zero-ETL Property Graph for multi-hop ISO GQL"} |
-| **Track 3 · Full-Stack** | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `bigquery` | {"4-Tier 데이터 리니지, Golden CQ 5건(100%), 경계값 10건×5회(50회) 벤치마크 및 Cloud Run 배포 게이트까지 운영할 때" if ko else "Full lifecycle operation including 4-Tier lineage, 5 Golden CQs, 50-trial boundary benchmark, and Cloud Run release gates"} |"""),
+| **Track 3 · Full-Stack** | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `bigquery` | {"엔드투엔드 데이터 리니지, Golden CQ 5건(100%), 경계값 10건×5회(50회) 벤치마크 및 Cloud Run 배포 게이트까지 운영할 때" if ko else "Full lifecycle operation including end-to-end lineage, 5 Golden CQs, 50-trial boundary benchmark, and Cloud Run release gates"} |"""),
         code(_bootstrap_code(lang, with_agent=True)),
         md(f"### 1. {'[전체 아키텍처 도식] 8단계 엔지니어링 파이프라인 및 10개 테이블 스키마 블루프린트' if ko else '[Architecture Blueprint] 8-Phase Engineering Pipeline & 10-Table Schema Blueprint'}"),
         code("""H.draw_eight_phase_flow()
@@ -206,7 +220,7 @@ H.show_agent(agent.execute_cycle({"'CUST_DEMO_001 고객이 개통 120일 시점
              H.t("Golden CQ-03 · 120일 일할 차액정산 위약금 산출", "Golden CQ-03 · 120-Day Prorated Penalty Calculation"))
 H.show_agent(agent.execute_cycle({"'CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경 시 위약금 면제 여부와 그래프 경로 확인해줘'" if ko else "'If customer CUST_DEMO_003 (Senior Welfare Eligible) switches to a senior plan on day 88, is the penalty exempted and what is the graph path?'"}),
              H.t("Golden CQ-05 · 시니어 복지 면제 & 멀티홉 그래프 경로", "Golden CQ-05 · Senior Welfare Exemption & Multi-Hop Graph Path"))"""),
-        md(f"### 6. {'[Phase 8 · Stage 5: 검증 & 배포 게이트] 4-Tier 리니지 요약 및 Gate 1 ~ Gate 5 통합 통과 현황' if ko else '[Phase 8 · Stage 5: Verify & Release Gate] 4-Tier Lineage Summary & Gate 1–5 Readiness Verdict'}"),
+        md(f"### 6. {'[Phase 8 · Stage 5: 검증 & 배포 게이트] 엔드투엔드 리니지 요약 및 Gate 1 ~ Gate 5 통합 통과 현황' if ko else '[Phase 8 · Stage 5: Verify & Release Gate] End-to-End Lineage Summary & Gate 1–5 Readiness Verdict'}"),
         code("""res_s5 = server.execute_tool("mcp_stage5_lineage_and_eval")
 H.show_tool(res_s5)
 H.show(H.gate_checklist_table())"""),
@@ -225,8 +239,8 @@ H.show(H.gate_checklist_table())"""),
                 else "Verified 10 BigQuery tables (62 total rows across 4 master, 2 knowledge, and 4 edge tables) with 0 de-identification violations (`CUST_DEMO_001~006`).",
                 "비정형 가이드 5개 청크(`DOC_CHUNK_001~005`)의 SHA-256 해시 앵커가 BigQuery `tb_doc_chunks` 및 3-Layer Wiki와 일치하며, `STARTER_ONTOLOGY_GRAPH`에서 중복 키 `0건` 및 멀티홉 경로가 검증되었습니다." if ko
                 else "All 5 policy chunks (`DOC_CHUNK_001~005`) match their stored SHA-256 anchors in `tb_doc_chunks`, with 0 duplicate keys and verified multi-hop paths in `STARTER_ONTOLOGY_GRAPH`.",
-                "Gate 1 ~ Gate 5 통합 점검 결과 Golden CQ 5/5(`100.0%`) 및 경계값 10건×5회(`50 Trials`, 통과율 `98.0%`) 기준을 모두 충족(`PASS`)했습니다." if ko
-                else "All 5 release gates (`Gate 1`–`Gate 5`) passed, with 5/5 (`100.0%`) Golden CQs and `98.0%` success across 50 boundary benchmark trials."
+                f"최근 리포트 기준 Golden CQ {rv['cq_passed']}/{rv['cq_total']}(`{rv['cq_rate']}%`, {rv['cq_at']}), 경계값 {rv['b_trials']}회 평균 성공률 `{rv['b_success']}%`({rv['b_at']})입니다. Gate 1 ~ Gate 5 판정은 위 표의 실측 결과를 따릅니다." if ko
+                else f"Latest reports: Golden CQ {rv['cq_passed']}/{rv['cq_total']} (`{rv['cq_rate']}%`, {rv['cq_at']}) and `{rv['b_success']}%` average success across {rv['b_trials']} boundary trials ({rv['b_at']}). The Gate 1–5 verdict follows the measured table above."
             ],
             next_steps=[
                 "다음 단계인 `Stage 1 (준비·분석)` 노트북으로 이동하여 원시 CSV/가이드 스키마 설계, 정형/비정형 데이터 프로파일링, Golden CQ 5종의 정답 검증 SQL 설계를 상세히 확인하세요." if ko

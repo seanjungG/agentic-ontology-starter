@@ -122,7 +122,7 @@ BANNERS = [
             {"header": "Stage 4–5 · 에이전트 & 검증 (Phase 6–8)", "color": "#188038", "cards": [
                 {"title": "6–7. 8종 MCP & 2-Pass AI FDE", "code": "DomainMcpServer · AiFdeAgentEngine",
                  "bullets": ["슬롯 카탈로그 검증 & SQL 결정론 산식", "GROUNDED / INSUFFICIENT / NOT_FOUND"]},
-                {"title": "8. 4-Tier 리니지 & 배포 게이트", "code": "mcp_stage5_lineage_and_eval",
+                {"title": "8. 엔드투엔드 리니지 & 배포 게이트", "code": "mcp_stage5_lineage_and_eval",
                  "bullets": ["Source → Chunk → Rule → Contract → CQ", "Golden CQ 5/5 · Boundary 50회 게이트"]},
             ]},
         ],
@@ -153,7 +153,7 @@ BANNERS = [
             {"header": "Stage 4–5 · Agent & Verify (P6–P8)", "color": "#188038", "cards": [
                 {"title": "6–7. 8-Tool MCP & 2-Pass Agent", "code": "DomainMcpServer · AiFdeAgentEngine",
                  "bullets": ["Live catalog slot validation & SQL math", "GROUNDED / INSUFFICIENT / NOT_FOUND"]},
-                {"title": "8. 4-Tier Lineage & Release Gate", "code": "mcp_stage5_lineage_and_eval",
+                {"title": "8. End-to-End Lineage & Release Gate", "code": "mcp_stage5_lineage_and_eval",
                  "bullets": ["Source → Chunk → Rule → Contract → CQ", "Golden CQ 5/5 & 50-Trial Boundary Gate"]},
             ]},
         ],
@@ -413,10 +413,10 @@ BANNERS = [
     # Stage 5 KO & EN
     (
         "stage5_lineage_eval_flow_ko.png", "STAGE 5 · VERIFY & RELEASE GATE",
-        "4-Tier End-to-End 데이터 리니지 · Golden CQ 감사 & Boundary 50회 배포 게이트",
+        "End-to-End 데이터 리니지 · Golden CQ 감사 & Boundary 50회 배포 게이트",
         "Phase 8 (검증 및 프로덕션 릴리스 게이트) · Step 5.1 – Step 5.2",
         [
-            {"header": "1. 4-Tier End-to-End 데이터 리니지", "color": "#1A73E8", "cards": [
+            {"header": "1. End-to-End 데이터 리니지", "color": "#1A73E8", "cards": [
                 {"title": "원천 파일 → CQ 답변 전 구간 추적", "code": "Source → DocChunk → Rule → Contract → CQ",
                  "bullets": ["Tier 0 원시 파일(CSV/MD) · Tier 1 해시 청크", "Tier 2 도메인 규칙 · Tier 3 약정 · Tier 4 CQ"]},
                 {"title": "멀티파타이트 리니지 그래프 도식", "code": "H.lineage_graph() · 18 Lineage Rows",
@@ -444,10 +444,10 @@ BANNERS = [
     ),
     (
         "stage5_lineage_eval_flow_en.png", "STAGE 5 · VERIFY & RELEASE GATE",
-        "4-Tier End-to-End Data Lineage, Golden CQ Audit & 50-Trial Release Gate",
+        "End-to-End Data Lineage, Golden CQ Audit & 50-Trial Release Gate",
         "Phase 8 (Verification & Production Release Gate) · Step 5.1 – Step 5.2",
         [
-            {"header": "1. 4-Tier End-to-End Data Lineage", "color": "#1A73E8", "cards": [
+            {"header": "1. End-to-End Data Lineage", "color": "#1A73E8", "cards": [
                 {"title": "Full Provenance Chain Tracking", "code": "Source → DocChunk → Rule → Contract → CQ",
                  "bullets": ["Tier 0 Raw CSV/MD · Tier 1 SHA-256 Chunk", "Tier 2 DomainRule · Tier 3 Contract · Tier 4 CQ"]},
                 {"title": "Multipartite Lineage Graph", "code": "H.lineage_graph() · 18 Lineage Rows",

@@ -20,7 +20,7 @@ This guide defines the 5-Stage engineering workflow — structured across **1. P
 | **3. Parse · 4. Integrate** | **Stage 2** | 3-Layer Wiki & Semantic Graph | [`Stage 2. Wiki & Semantic Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage2) | `mcp_stage2_wiki_and_semantic` | `D2.1`–`D2.6` | [Guide](./02_stage2_wiki_and_semantic_graph_en.md) · [KO](../../notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) · [EN](../../notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) |
 | **5. Build Graph** | **Stage 3** | Property Graph & ISO GQL | [`Stage 3. Property Graph`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage3) | `mcp_stage3_property_graph` | `D3.1`–`D3.4` | [Guide](./03_stage3_property_graph_en.md) · [KO](../../notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) · [EN](../../notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) |
 | **6. Build Agent · 7. Answer** | **Stage 4** | MCP Suite & Agent Orchestration | [`Stage 4. Agent & MCP`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage4) | `mcp_stage4_agent_orchestration` + 3 Runtime MCPs | `D4.1`–`D4.4` | [Guide](./04_stage4_agent_and_mcp_en.md) · [KO](../../notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) · [EN](../../notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
-| **8. Verify & Gate** | **Stage 5** | 4-Tier Lineage, Evaluation & Gate | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`–`D5.5` | [Guide](./05_stage5_lineage_and_eval_en.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
+| **8. Verify & Gate** | **Stage 5** | End-to-End Lineage, Evaluation & Gate | [`Stage 5. Lineage & Eval`](https://agentic-ontology-starter-lwrlf7yogq-du.a.run.app/?tab=stage5) | `mcp_stage5_lineage_and_eval` | `D5.1`–`D5.5` | [Guide](./05_stage5_lineage_and_eval_en.md) · [KO](../../notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) · [EN](../../notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
 
 ## 3. Role of Starter Repository & 3-Track Adoption Model (`project.json` `track`)
 
@@ -32,7 +32,7 @@ The default `track: "auto"` inspects `project.json` `tables`: if customer table 
 | :--- | :---: | :---: | :--- |
 | **Track 1 · Lite** | `Stage 1 -> 2 -> 4 -> 5(citation)` | `none` | Source documents only (`tables: {}`), no customer tables. `extract_docs.py` + `extract_wiki.py` build `doc_chunks.jsonl`, `entities.md`, and `concepts.md`. Stage 3 is skipped, the agent runs `execute_lite_doc_cycle()` with `[DOC_CHUNK_XXX]` citations, and Stage 5 scores `evidence_type: "citation"` CQs |
 | **Track 2 · Standard** | `Stage 1 -> 2 -> 3 -> 4` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Structured DW + unstructured rules unified via `STARTER_ONTOLOGY_GRAPH` and ISO GQL |
-| **Track 3 · Full** | `Stage 1 -> 2 -> 3 -> 4 -> 5` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Full lifecycle including 4-tier lineage, Golden CQ 5 (`evidence_type: "sql"`), boundary benchmark (10x5), and Terraform Cloud Run deployment |
+| **Track 3 · Full** | `Stage 1 -> 2 -> 3 -> 4 -> 5` | `bigquery` (default) \| `spanner` (opt-in) \| `both` (Graph Fabric) | Full lifecycle including end-to-end lineage, Golden CQ 5 (`evidence_type: "sql"`), boundary benchmark (10x5), and Terraform Cloud Run deployment |
 
 ### 3.1 5-Axis Graph Engine Selection Checklist & Customer Input Scenario Matrix
 

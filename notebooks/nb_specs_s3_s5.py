@@ -4,9 +4,9 @@
 Aligned with Phases 5, 6, 7, and 8 of the 8-Phase Engineering Flow:
   - Stage 3: Phase 5. 구축 (Physical Property Graph Construction & ISO GQL)
   - Stage 4: Phase 6. 에이전트 구축 (Agent & 8-Tool MCP Setup) & Phase 7. 답변 (Grounded Answering)
-  - Stage 5: Phase 8. 검증 (4-Tier Lineage, Golden CQ Audit & 50-Trial Release Gate)
+  - Stage 5: Phase 8. 검증 (End-to-End Lineage, Golden CQ Audit & 50-Trial Release Gate)
 """
-from nb_specs_s0_s2 import FQ, GRAPH, _bootstrap_code, code, md, nav_footer, nav_header
+from nb_specs_s0_s2 import FQ, GRAPH, _bootstrap_code, code, md, nav_footer, nav_header, report_values
 
 
 def build_stage3(lang="ko"):
@@ -326,31 +326,40 @@ H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
                 else "All Golden CQs (`CQ-01`–`CQ-03`) returned `GROUNDED` responses citing exact SQL-computed figures (`575,000 KRW`, `100,000 KRW`, `0 KRW`), while `BC-PARAM` and `BC-NOTFOUND` triggered their guardrail states with 0 hallucinated figures."
             ],
             next_steps=[
-                "마지막 단계인 `Stage 5 (리니지·검증)` 노트북으로 이동하여 원천 파일부터 CQ 답변까지의 4-Tier 데이터 리니지 그래프와 Golden CQ 5종 / Boundary 50회 반복 벤치마크 배포 게이트를 검증하세요." if ko
-                else "Proceed to the final `Stage 5 (Verify & Evaluate)` notebook to inspect the 4-Tier end-to-end data lineage graph, Golden CQ re-verification, and the 50-trial boundary benchmark release gate."
+                "마지막 단계인 `Stage 5 (리니지·검증)` 노트북으로 이동하여 원천 파일부터 CQ 답변까지의 엔드투엔드 데이터 리니지 그래프와 Golden CQ 5종 / Boundary 50회 반복 벤치마크 배포 게이트를 검증하세요." if ko
+                else "Proceed to the final `Stage 5 (Verify & Evaluate)` notebook to inspect the end-to-end data lineage graph, Golden CQ re-verification, and the 50-trial boundary benchmark release gate."
             ],
         ),
     ]
 
 
+H_LINEAGE_MD_KO = ("#### 스튜디오 리니지 DAG (`config/lineage_spec.json`) 실측\n"
+                   "스튜디오 `Stage 5` 리니지와 같은 엔진(`src/lineage/lineage_engine.py`)입니다. "
+                   "볼륨은 BigQuery `__TABLES__` 행 수, GCS 객체 수, `INFORMATION_SCHEMA.PROPERTY_GRAPHS` 노드·엣지 테이블 수를 지금 조회한 값이며, 실패하면 `lookup failed`로 남습니다.")
+H_LINEAGE_MD_EN = ("#### Studio lineage DAG (`config/lineage_spec.json`), measured\n"
+                   "Same engine as the studio `Stage 5` lineage (`src/lineage/lineage_engine.py`). "
+                   "Volumes are BigQuery `__TABLES__` row counts, GCS object counts and node/edge table counts from `INFORMATION_SCHEMA.PROPERTY_GRAPHS`, queried now; a failed lookup stays `lookup failed`.")
+
+
 def build_stage5(lang="ko"):
     ko = lang == "ko"
     banner_file = "stage5_lineage_eval_flow_ko.png" if ko else "stage5_lineage_eval_flow_en.png"
+    rv = report_values()
     return [
         md(f"""{nav_header(5, lang)}
 
 ---
 
-# {"Stage 5. [검증 & 배포 게이트] 4-Tier End-to-End 데이터 리니지 · Golden CQ 감사 & Boundary 50회 벤치마크" if ko else "Stage 5. [Verify & Gate] 4-Tier End-to-End Data Lineage, Golden CQ Audit & 50-Trial Boundary Benchmark"}
-## {"Step 5.1 원천 파일→청크→규칙→약정→CQ 4-Tier 리니지 검증 · Step 5.2 Golden CQ 5종 및 Boundary 10건×5회(50 Trials) 배포 게이트" if ko else "Step 5.1 Source File → Chunk → Rule → Contract → CQ Lineage · Step 5.2 5 Golden CQs & 10×5 Boundary Benchmark Release Gate"}
+# {"Stage 5. [검증 & 배포 게이트] End-to-End 데이터 리니지 · Golden CQ 감사 & Boundary 50회 벤치마크" if ko else "Stage 5. [Verify & Gate] End-to-End Data Lineage, Golden CQ Audit & 50-Trial Boundary Benchmark"}
+## {"Step 5.1 원천 파일→청크→규칙→약정→CQ 엔드투엔드 리니지 검증 · Step 5.2 Golden CQ 5종 및 Boundary 10건×5회(50 Trials) 배포 게이트" if ko else "Step 5.1 Source File → Chunk → Rule → Contract → CQ Lineage · Step 5.2 5 Golden CQs & 10×5 Boundary Benchmark Release Gate"}
 
-{("Stage 5는 전체 엔지니어링 흐름의 최종 단계인 **Phase 8(검증 및 배포 게이트)**을 수행합니다. `mcp_stage5_lineage_and_eval`과 `pipeline/validator.py`를 통해 **(1) 원천 CSV/가이드 파일 → SHA-256 청크 → 도메인 규칙 → 고객 약정 → Golden CQ 답변으로 이어지는 4-Tier 데이터 리니지**를 추적하고, **(2) 독립 검증 SQL(`verification_sql`) 대조 기반 Golden CQ 5종 전수 감사**, **(3) 경계 조건 10건 × 5회 반복(총 50 Trials) 안정성·일관성·의도 유지율 평가**, **(4) Gate 1 ~ Gate 5 프로덕션 배포 승인 판정**을 완결합니다."
+{("Stage 5는 전체 엔지니어링 흐름의 최종 단계인 **Phase 8(검증 및 배포 게이트)**을 수행합니다. `mcp_stage5_lineage_and_eval`과 `pipeline/validator.py`를 통해 **(1) 원천 CSV/가이드 파일 → SHA-256 청크 → 도메인 규칙 → 고객 약정 → Golden CQ 답변으로 이어지는 엔드투엔드 데이터 리니지**를 추적하고, **(2) 독립 검증 SQL(`verification_sql`) 대조 기반 Golden CQ 5종 전수 감사**, **(3) 경계 조건 10건 × 5회 반복(총 50 Trials) 안정성·일관성·의도 유지율 평가**, **(4) Gate 1 ~ Gate 5 프로덕션 배포 승인 판정**을 완결합니다."
   if ko else
-  "Stage 5 completes **Phase 8 (Verification & Release Gate)**. Using `mcp_stage5_lineage_and_eval` and `pipeline/validator.py`, we verify **(1) the 4-Tier End-to-End Data Lineage (`Source File → DocChunk → DomainRule → CustomerContract → Golden CQ`)**, **(2) deterministic SQL ground-truth auditing across all 5 Golden CQs**, **(3) 10 Boundary Cases × 5 repeated trials (50 live runs) for success, consistency, and intent stability**, and **(4) the Gate 1–5 Production Release Readiness Checklist**.")}
+  "Stage 5 completes **Phase 8 (Verification & Release Gate)**. Using `mcp_stage5_lineage_and_eval` and `pipeline/validator.py`, we verify **(1) the End-to-End Data Lineage (`Source File → DocChunk → DomainRule → CustomerContract → Golden CQ`)**, **(2) deterministic SQL ground-truth auditing across all 5 Golden CQs**, **(3) 10 Boundary Cases × 5 repeated trials (50 live runs) for success, consistency, and intent stability**, and **(4) the Gate 1–5 Production Release Readiness Checklist**.")}
 
 ![Stage 5 Lineage and Release Gate Architecture Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=True)),
-        md(f"### 1. {'[Phase 8a: 4-Tier 데이터 리니지 검증] `mcp_stage5_lineage_and_eval` 실행 · 리니지 조인(`%%bqsql`) · 멀티파타이트 리니지 설계 도식' if ko else '[Phase 8a: 4-Tier Data Lineage Verification] `mcp_stage5_lineage_and_eval`, Lineage Join (`%%bqsql`) & Multipartite Lineage Graph'}"),
+        md(f"### 1. {'[Phase 8a: 엔드투엔드 데이터 리니지 검증] `mcp_stage5_lineage_and_eval` 실행 · 리니지 조인(`%%bqsql`) · 멀티파타이트 리니지 설계 도식' if ko else '[Phase 8a: End-to-End Data Lineage Verification] `mcp_stage5_lineage_and_eval`, Lineage Join (`%%bqsql`) & Multipartite Lineage Graph'}"),
         code("""res_s5 = server.execute_tool("mcp_stage5_lineage_and_eval", {"steps": ["build_4tier_lineage", "run_golden_cq_suite", "diagnose_boundary_failures"]})
 H.show_tool(res_s5)"""),
         code(f"""%%bqsql df_lineage
@@ -367,11 +376,21 @@ ORDER BY c.contract_id, e.rule_id"""),
 cq_rep = H.read_json("data/output/cq_benchmark_report.json")
 lnodes, ledges = H.lineage_graph(H.pdf(df_lineage).to_dict("records"), cq_rep["test_results"])
 H.draw_graph(lnodes, ledges,
-             H.t("4-Tier End-to-End 데이터 리니지 멀티파타이트 그래프 (Source File → DocChunk → DomainRule → Contract → CQ)",
-                 "4-Tier End-to-End Data Lineage Multipartite Graph (Source File → DocChunk → DomainRule → Contract → CQ)"),
+             H.t("End-to-End 데이터 리니지 멀티파타이트 그래프 (Source File → DocChunk → DomainRule → Contract → CQ)",
+                 "End-to-End Data Lineage Multipartite Graph (Source File → DocChunk → DomainRule → Contract → CQ)"),
              layout="layers", figsize=(12, 6.0),
              legend={"Tier 0 Source File": "#5F6368", "Tier 1 DocChunk": "#9334E6", "Tier 2 DomainRule": "#F9AB00",
                      "Tier 3 Contract": "#1A73E8", "Tier 4 Golden CQ": "#188038"})"""),
+        md(H_LINEAGE_MD_KO if ko else H_LINEAGE_MD_EN),
+        code("""from src.lineage.lineage_engine import LineageEngine
+lg = LineageEngine(str(H.ROOT / "config" / "lineage_spec.json"), {
+    "project_id": server.project_id, "fq": server.fq, "dataset_id": server.fq.split(".", 1)[1],
+    "bucket": server.gcs_bucket, "model": agent.model_name,
+    "spanner_instance": server.spanner_instance_id, "spanner_database": server.spanner_database_id}).build_graph()
+H.md(f"**nodes `{lg['stats']['total_nodes']}` · edges `{lg['stats']['total_edges']}` · categories `{lg['stats']['total_categories']}` · "
+     f"measured `{lg['metadata']['live_nodes']}/{lg['metadata']['bq_nodes']}` · errors `{lg['metadata']['bq_error'] or 0}`**")
+H.show(pd.DataFrame([{"category": n["cat"], "node": n["id"], "volume": n["volume_en"], "measured": n["live"], "source": n["live_src"]}
+                     for n in lg["nodes"] if n["live_src"]]))"""),
         md(f"### 2. {'[Phase 8b: Golden CQ 5종 정량 감사 (`pipeline/validator.py`)] 벤치마크 리포트 분석 및 실시간 에이전트 4대 채점 조건 재검증 (`recheck_cq`)' if ko else '[Phase 8b: 5 Golden CQs Deterministic Audit (`pipeline/validator.py`)] Benchmark Report & Live Agent Re-Verification (`recheck_cq`)'}"),
         code("""df_cq = pd.DataFrame(cq_rep["test_results"])
 H.md(f"**Golden CQ Benchmark `{cq_rep['benchmark_id']}`** · Evaluated `{cq_rep['evaluated_at']}` · Model `{cq_rep['model']}` · Passed **`{cq_rep['passed']}/{cq_rep['total_cqs']} ({cq_rep['accuracy_rate']}%)`**")
@@ -403,17 +422,17 @@ H.show(H.gate_checklist_table())"""),
                 (
                     "`pipeline/validator.py`는 에이전트 답변의 정확성과 환각 부재를 어떤 기준으로 채점하나요?" if ko
                     else "How does `pipeline/validator.py` grade agent accuracy and verify zero hallucination?",
-                    "각 Golden CQ마다 (1) BigQuery에서 독립 실행한 `verification_sql` 결과가 `expected_math`와 일치하는지, (2) 에이전트 답변 본문에 모든 정답 수치가 정확히 포함(`_has` 정규식)되어 있는지, (3) 지정된 `DOC_CHUNK` 해시 앵커를 인용했는지, (4) `answer_status == GROUNDED`인지 4가지 조건을 동시에 검증합니다." if ko
-                    else "For every Golden CQ, it checks 4 conditions simultaneously: (1) independent BigQuery `verification_sql` matches `expected_math`, (2) the agent's answer contains every expected numerical value (`_has` regex), (3) the required `DOC_CHUNK` is cited, and (4) `answer_status == GROUNDED`."
+                    "각 Golden CQ마다 (1) BigQuery에서 독립 실행한 `verification_sql` 결과가 `expected_math`와 일치하는지, (2) 에이전트 답변 본문에 정답 수치가 포함(`_has` 정규식)되는지, (3) 지정된 `DOC_CHUNK`를 인용했는지, (4) `answer_status == GROUNDED`인지 확인하고, (5) 최종 답변을 LLM 루브릭(`_judge`)으로 채점하며, CQ 간 답변 3-gram 중복이 높으면 실패로 처리합니다." if ko
+                    else "For every Golden CQ it checks (1) independent BigQuery `verification_sql` matches `expected_math`, (2) the answer contains the expected values (`_has` regex), (3) the required `DOC_CHUNK` is cited, (4) `answer_status == GROUNDED`, and (5) scores the final answer with an LLM rubric (`_judge`); answers that are near-duplicates across CQs (3-gram overlap) fail."
                 ),
             ],
             findings=[
-                "4-Tier 데이터 리니지 조인(`df_lineage`, 18행)을 통해 원천 파일(`sample_policy_guide.md`, `sample_welfare_exemption_guide.md`, `customer_contracts.csv`, `domain_rules.csv`)부터 `DOC_CHUNK_001~005`, `RULE_*` 4종, 고객 약정 6건, `CQ-01~05`까지의 전 구간 추적성이 확인되었습니다." if ko
-                else "The 4-Tier lineage join (`df_lineage`, 18 rows) traces every Golden CQ answer back through customer contracts, codified domain rules, and SHA-256 `DOC_CHUNK` anchors to the raw CSV and Markdown source files.",
-                "Golden CQ 5종(`CQ-01`~`CQ-05`) 벤치마크는 5건 전수 통과(`100.0%`)했으며, `CQ-02` 실시간 재검증(`recheck_cq`)에서도 4개 채점 항목 모두 `passed=True`를 기록했습니다." if ko
-                else "All 5 Golden CQs (`CQ-01`–`CQ-05`) passed (`100.0%`), and the live `recheck_cq` audit on `CQ-02` passed all 4 verification checks (`passed=True`).",
-                "Boundary 10건 × 5회 반복(`50 Trials`) 평가에서 평균 성공률 `98.0%`, 응답 일관성 `98.0%`, 도구 라우팅 의도 안정성 `96.0%`를 달성하여 Gate 1 ~ Gate 5 전 구간 `PASS`를 확인했습니다." if ko
-                else "Across 10 boundary cases × 5 repeated trials (`50 Trials`), the agent achieved `98.0%` average success rate, `98.0%` consistency rate, and `96.0%` intent stability, passing all 5 production release gates (`Gate 1`–`Gate 5`)."
+                "엔드투엔드 데이터 리니지 조인(`df_lineage`, 18행)을 통해 원천 파일(`sample_policy_guide.md`, `sample_welfare_exemption_guide.md`, `customer_contracts.csv`, `domain_rules.csv`)부터 `DOC_CHUNK_001~005`, `RULE_*` 4종, 고객 약정 6건, `CQ-01~05`까지의 전 구간 추적성이 확인되었습니다." if ko
+                else "The end-to-end lineage join (`df_lineage`, 18 rows) traces every Golden CQ answer back through customer contracts, codified domain rules, and SHA-256 `DOC_CHUNK` anchors to the raw CSV and Markdown source files.",
+                f"Golden CQ 리포트({rv['cq_at']}): {rv['cq_passed']}/{rv['cq_total']} 통과(`{rv['cq_rate']}%`), 루브릭 평균 `{rv['cq_rubric']}`. `CQ-02` 실시간 재검증 결과는 위 표를 따릅니다. 스타터 CQ는 단일 값 질문이라 만점이 나오기 쉽습니다." if ko
+                else f"Golden CQ report ({rv['cq_at']}): {rv['cq_passed']}/{rv['cq_total']} passed (`{rv['cq_rate']}%`), rubric average `{rv['cq_rubric']}`. See the table above for the live `CQ-02` re-check. Starter CQs ask for single values, so full scores are easy to reach.",
+                f"Boundary 리포트({rv['b_at']}, {rv['b_trials']} Trials): 평균 성공률 `{rv['b_success']}%`, 응답 일관성 `{rv['b_consistency']}%`, 의도 안정성 `{rv['b_intent']}%`. Gate 1 ~ Gate 5 판정은 위 판정표를 따릅니다." if ko
+                else f"Boundary report ({rv['b_at']}, {rv['b_trials']} trials): average success `{rv['b_success']}%`, consistency `{rv['b_consistency']}%`, intent stability `{rv['b_intent']}%`. The Gate 1–5 verdict follows the table above."
             ],
             next_steps=[
                 "5-Stage 에이전틱 온톨로지 전 과정 워크스루를 완료했습니다! 상단 또는 하단 링크를 통해 `0. 전체 흐름 초기 화면`이나 각 Stage 노트북(한/영)으로 자유롭게 이동하거나, 자체 도메인 CSV/가이드 데이터를 `data/input/`에 적용해 보세요." if ko

@@ -17,14 +17,14 @@ notebooks/
 │   ├── stage2_wiki_and_semantic_graph_ko.ipynb        #   Stage 2. [파싱·통합] SHA-256 청킹·3-Layer Wiki & 시맨틱 그래프
 │   ├── stage3_property_graph_bigquery_spanner_ko.ipynb#   Stage 3. [그래프 구축] Zero-ETL Property Graph & 변수 바인딩 ISO GQL
 │   ├── stage4_agent_and_mcp_execution_ko.ipynb        #   Stage 4. [에이전트·답변] 8종 MCP 서버·슬롯 검증 & 2-Pass AI FDE
-│   └── stage5_lineage_and_evaluation_ko.ipynb         #   Stage 5. [리니지·검증] 4-Tier 데이터 리니지 & 50회 벤치마크 게이트
+│   └── stage5_lineage_and_evaluation_ko.ipynb         #   Stage 5. [리니지·검증] 엔드투엔드 데이터 리니지 & 50회 벤치마크 게이트
 ├── en/                                                # 🇺🇸 영문 실행형 노트북 6종 (English Notebooks — 100% EN Images & Labels)
 │   ├── stage0_overview_walkthrough_en.ipynb           #   0. End-to-End 8-Phase Engineering Pipeline Master Walkthrough
 │   ├── stage1_asset_and_cq_en.ipynb                   #   Stage 1. [Prepare & Analyze] Asset Scoping, Schema & Golden CQs
 │   ├── stage2_wiki_and_semantic_graph_en.ipynb        #   Stage 2. [Parse & Integrate] SHA-256 Chunking, Wiki & Semantic Graph
 │   ├── stage3_property_graph_bigquery_spanner_en.ipynb#   Stage 3. [Build Graph] Zero-ETL Property Graph & Parameterized ISO GQL
 │   ├── stage4_agent_and_mcp_execution_en.ipynb        #   Stage 4. [Build Agent & Answer] 8-Tool MCP & 2-Pass AI FDE Agent
-│   └── stage5_lineage_and_evaluation_en.ipynb         #   Stage 5. [Verify & Gate] 4-Tier Data Lineage & 50-Trial Release Gate
+│   └── stage5_lineage_and_evaluation_en.ipynb         #   Stage 5. [Verify & Gate] End-to-End Data Lineage & 50-Trial Release Gate
 ├── assets/                                            # 한/영 분리 고해상도 아키텍처 배너 PNG 12종 (stage0~5_*_{ko,en}.png)
 ├── nb_helpers.py                                      # 공통 BigFrames/BigQuery 실행기, GQL 변수/문장 렌더러, 비충돌 그래프 도식화
 ├── nb_specs_s0_s2.py / nb_specs_s3_s5.py              # Stage 0~5 한/영 노트북 셀 스펙 및 상·하단 네비게이션 빌더
@@ -56,7 +56,7 @@ flowchart LR
         P6["6. 에이전트 구축 (Agent)<br/>8종 모듈형 MCP 서버<br/>카탈로그 슬롯 검증 (resolve_params)"] --> P7["7. 답변 (Answer)<br/>2-Pass Gemini 3.8 Flash<br/>GROUNDED | INSUFFICIENT | NOT_FOUND"]
     end
     subgraph S5["Stage 5 · 검증 (Phase 8)"]
-        P8["8. 검증 (Verify & Gate)<br/>4-Tier End-to-End 리니지<br/>Golden CQ 5/5 · Boundary 50회"]
+        P8["8. 검증 (Verify & Gate)<br/>End-to-End 리니지<br/>Golden CQ 5/5 · Boundary 50회"]
     end
     S1 -->|"Gate 1"| S2 -->|"Gate 2"| S3 -->|"Gate 3"| S4 -->|"Gate 4"| S5
 ```
@@ -70,7 +70,7 @@ flowchart LR
 | **Stage 2**<br>*(3. 파싱 · 4. 통합)* | • `sample_policy_guide.md`<br>• `sample_welfare_exemption_guide.md`<br>• `tb_doc_chunks`, `tb_domain_rules` | `pipeline/ingest.py`<br>`mcp_stage2_wiki_and_semantic`<br>`H.propose_triples()` | • `DOC_CHUNK_001~005` 정규식 파싱 및 실시간 SHA-256(`anchor_<12hex>`) 대조<br>• 3-Layer Wiki(`summary`, `entities`, `concepts`, `rules.md`) & GCS 매니페스트<br>• Gemini 후보 트리플 추출 및 검수 | • Stage 2 시맨틱 온톨로지 그래프 설계 도식 (Sky Blue 허브 4열 배치)<br>• BigQuery 실데이터 기반 `Rule → Plan (APPLIES_TO_PLAN)` & `Rule ⇢ DocChunk (GROUNDED_IN)` 브릿지 그래프 | **Gate 2**: 5개 청크 해시 일치, 3-Layer Wiki GCS 동기화, 12개 브릿지 엣지 |
 | **Stage 3**<br>*(5. 그래프 구축)* | • BigQuery 10개 테이블 (6 Node + 4 Edge)<br>• `create_property_graph.sql`<br>• `create_spanner_graph.sql` | `pipeline/graph_builder.py`<br>`mcp_stage3_property_graph`<br>`H.run_gql()` / `H.nl2gql()` | • `INFORMATION_SCHEMA.PROPERTY_GRAPHS` 카탈로그 조회<br>• `GQL-01`~`GQL-05` 다중 홉 쿼리 (**바인딩 변수 명세표 + 실행 GQL 문장 + 결과**)<br>• Gemini `nl2gql` 및 미보유 스키마 차단 | • 6 Node × 4 Edge 프로퍼티 그래프 메타모델 설계도<br>• 노드/엣지 레이블별 인스턴스 분포 차트<br>• 25노드·29엣지 전체 물리 토폴로지 (5계층)<br>• `CUST_DEMO_001` 1~2홉 가변 경로 서브그래프 | **Gate 3**: 그래프 DDL 성공, 노드 중복 키 0건(`31행`), GQL 템플릿 검증 |
 | **Stage 4**<br>*(6. 에이전트 · 7. 답변)* | • 8종 MCP 도구 카탈로그<br>• 실시간 BigQuery 엔티티 카탈로그<br>• `STARTER_ONTOLOGY_GRAPH` | `src/agent/mcp_server.py`<br>`src/agent/reasoning_engine.py`<br>`mcp_stage4_agent_orchestration` | • `resolve_params()` 슬롯 파싱 및 미등록 엔티티(`QuantumFold 99`) 차단<br>• 런타임 MCP 3종 직접 실행 (`mcp_query_graph_and_wiki` GQL 문장·변수 출력)<br>• `CQ-01~03` 및 경계 시나리오 4단계 트레이스 | • 2-Pass AI FDE 에이전트 & MCP 오케스트레이션 블루프린트<br>• `CUST_DEMO_001` 경과일(30~200일)별 위약금 선형 감소 곡선 (180일 면제 경계)<br>• 시나리오별 LLM vs BigQuery 지연시간 비교 차트 | **Gate 4**: 8종 MCP 활성, `GROUNDED` / `INSUFFICIENT` / `NOT_FOUND` 분기 |
-| **Stage 5**<br>*(8. 리니지 · 검증)* | • `cq_benchmark_report.json`<br>• `boundary_benchmark_results.json`<br>• `tb_customer_contract` ~ `tb_doc_chunks` | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | • 4-Tier 리니지 18행 조인(`Source → Chunk → Rule → Contract → CQ`)<br>• `CQ-02` 실시간 4대 채점 조건 재검증<br>• Boundary 10건×5회(`50 Trials`) 실패 분류(`root_cause_code`) 집계 | • 4-Tier End-to-End 데이터 리니지 멀티파타이트 그래프 (Tier 0~Tier 4 5열 배치)<br>• Golden CQ별 응답 소요 시간 차트<br>• Boundary 10건×5회 성공률·일관성·의도 안정성 그룹 막대 차트 | **Gate 5**: Golden CQ 5/5 (`100%`) 및 Boundary 50회 (`98.0%`) 통과 |
+| **Stage 5**<br>*(8. 리니지 · 검증)* | • `cq_benchmark_report.json`<br>• `boundary_benchmark_results.json`<br>• `tb_customer_contract` ~ `tb_doc_chunks` | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | • 엔드투엔드 리니지 18행 조인(`Source → Chunk → Rule → Contract → CQ`)<br>• `CQ-02` 실시간 4대 채점 조건 재검증<br>• Boundary 10건×5회(`50 Trials`) 실패 분류(`root_cause_code`) 집계 | • End-to-End 데이터 리니지 멀티파타이트 그래프 (Tier 0~Tier 4 5열 배치)<br>• Golden CQ별 응답 소요 시간 차트<br>• Boundary 10건×5회 성공률·일관성·의도 안정성 그룹 막대 차트 | **Gate 5**: Golden CQ 5/5 (`100%`) 및 Boundary 50회 (`98.0%`) 통과 |
 
 ### 1.3 실제 GQL 실행 구간의 투명성 표준 (GQL Statement & Bound Variables Display)
 
@@ -91,16 +91,16 @@ flowchart LR
 flowchart TD
     START(["도메인 온톨로지 & 에이전트 구축 착수"]) --> Q1{"정형 마스터 원장 간 다중 홉(Multi-Hop)<br/>그래프 경로 탐색이 필요한가?"}
     Q1 -->|"아니오 (정책 문서 위키 + 단일 테이블 규칙 위주)"| T1["Track 1 · Lite (빠른 기동 트랙)<br/>Stage 1 → Stage 2 → Stage 4<br/>graph_engine = 'none'"]
-    Q1 -->|"예 (약정·단말·요금제·지원금·규칙 결합 추론)"| Q2{"프로덕션 배포 전 4-Tier 리니지 감사 및<br/>50회 반복 경계값 게이트가 필요한가?"}
+    Q1 -->|"예 (약정·단말·요금제·지원금·규칙 결합 추론)"| Q2{"프로덕션 배포 전 엔드투엔드 리니지 감사 및<br/>50회 반복 경계값 게이트가 필요한가?"}
     Q2 -->|"아니오 (PoC 및 그래프 추론 검증 중심)"| T2["Track 2 · Standard (표준 프로퍼티 그래프 트랙)<br/>Stage 1 → Stage 2 → Stage 3 → Stage 4<br/>graph_engine = 'bigquery' | 'spanner'"]
-    Q2 -->|"예 (엔터프라이즈 릴리스 승인 및 회귀 감사)"| T3["Track 3 · Full-Stack (엔터프라이즈 완결 트랙)<br/>Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5<br/>4-Tier Lineage + 50-Trial Release Gate"]
+    Q2 -->|"예 (엔터프라이즈 릴리스 승인 및 회귀 감사)"| T3["Track 3 · Full-Stack (엔터프라이즈 완결 트랙)<br/>Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5<br/>End-to-End Lineage + 50-Trial Release Gate"]
 ```
 
 | 선택 트랙 (Adoption Track) | 실행 Stage 순서 | `starter_config.json` 설정 | 필수 실행 노트북 (`ko/` 또는 `en/`) | 적합한 도입 시나리오 및 기대 효과 |
 | :--- | :--- | :--- | :--- | :--- |
 | **Track 1 · Lite**<br>*(Wiki + Rule SQL Agent)* | `Stage 1 → Stage 2 → Stage 4` | `"track": "lite"`<br>`"graph_engine": "none"` | `stage1` → `stage2` → `stage4` | 물리 프로퍼티 그래프 구축 없이 **비정형 정책 가이드의 SHA-256 청킹(3-Layer LLM-Wiki)**과 **결정론적 SQL 산식(`mcp_calculate_penalty_rule`)**만으로 1~2주 내에 근거 인용 에이전트를 빠르게 기동할 때 적합합니다. |
 | **Track 2 · Standard**<br>*(Zero-ETL Property Graph)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `"track": "standard"`<br>`"graph_engine": "bigquery"` (또는 `"spanner"`) | `stage1` → `stage2` → `stage3` → `stage4` | 정형 DW 마스터 원장 4종과 비정형 도메인 규칙을 **Zero-ETL BigQuery Property Graph(`6 Node × 4 Edge`)**로 결합하여, 다중 홉 ISO GQL 탐색과 `nl2gql`을 수행할 때 권장됩니다. |
-| **Track 3 · Full-Stack**<br>*(Enterprise Release Gate)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `"track": "full_stack"`<br>`"graph_engine": "bigquery"` | `stage0` → `stage1` → `stage2` → `stage3` → `stage4` → `stage5` | 원천 파일부터 답변까지의 **4-Tier 데이터 리니지**, **Golden CQ 5/5(100%) 자동 채점**, **Boundary 10건×5회(50회) 안정성 벤치마크**를 통과해야 하는 엔터프라이즈 운영 환경의 기본 트랙입니다. |
+| **Track 3 · Full-Stack**<br>*(Enterprise Release Gate)* | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `"track": "full_stack"`<br>`"graph_engine": "bigquery"` | `stage0` → `stage1` → `stage2` → `stage3` → `stage4` → `stage5` | 원천 파일부터 답변까지의 **엔드투엔드 데이터 리니지**, **Golden CQ 5/5(100%) 자동 채점**, **Boundary 10건×5회(50회) 안정성 벤치마크**를 통과해야 하는 엔터프라이즈 운영 환경의 기본 트랙입니다. |
 
 ### 2.2 물리 그래프 엔진 선택 흐름 및 Graph Fabric (BigQuery Graph vs. Spanner Graph & `both`)
 
@@ -138,7 +138,7 @@ flowchart TD
 | **2** | [`ko/stage2_wiki_and_semantic_graph_ko.ipynb`](./ko/stage2_wiki_and_semantic_graph_ko.ipynb) | **Stage 2** (`3. 파싱` · `4. 통합`) | `DOC_CHUNK_001~005` SHA-256 해시 앵커 검증, Karpathy 3-Layer Wiki 4종 컴파일 및 GCS 동기화, Gemini 후보 트리플 추출, 시맨틱 온톨로지 그래프 & Rule→Plan 브릿지 그래프 | [`02_stage2_wiki_and_semantic_graph_ko.md`](../methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md) |
 | **3** | [`ko/stage3_property_graph_bigquery_spanner_ko.ipynb`](./ko/stage3_property_graph_bigquery_spanner_ko.ipynb) | **Stage 3** (`5. 물리 그래프 구축`) | 6 Node × 4 Edge 메타모델 도식, BigQuery/Spanner Graph DDL, 25노드·29엣지 5계층 토폴로지, `GQL-01`~`GQL-05` 바인딩 변수 & ISO GQL 문장 실습, `CUST_DEMO_001` 1~2홉 서브그래프, Gemini `nl2gql` | [`03_stage3_property_graph_ko.md`](../methodology/ko/03_stage3_property_graph_ko.md) |
 | **4** | [`ko/stage4_agent_and_mcp_execution_ko.ipynb`](./ko/stage4_agent_and_mcp_execution_ko.ipynb) | **Stage 4** (`6. 에이전트` · `7. 답변`) | 2-Pass 에이전트 오케스트레이션 블루프린트, 8종 MCP 카탈로그, `resolve_params` 슬롯 검증, 런타임 MCP 3종 직접 호출(GQL 문장·변수 포함), 30~200일 위약금 곡선, Golden CQ & 경계 답변 트레이스 | [`04_stage4_agent_and_mcp_ko.md`](../methodology/ko/04_stage4_agent_and_mcp_ko.md) |
-| **5** | [`ko/stage5_lineage_and_evaluation_ko.ipynb`](./ko/stage5_lineage_and_evaluation_ko.ipynb) | **Stage 5** (`8. 리니지` · `검증 게이트`) | `mcp_stage5_lineage_and_eval`, 4-Tier 리니지 18행 조인 및 멀티파타이트 그래프, Golden CQ 5/5 리포트 및 `CQ-02` 실시간 재검증(`recheck_cq`), Boundary 50회 벤치마크 & Gate 1~5 최종 판정 | [`05_stage5_lineage_and_eval_ko.md`](../methodology/ko/05_stage5_lineage_and_eval_ko.md) |
+| **5** | [`ko/stage5_lineage_and_evaluation_ko.ipynb`](./ko/stage5_lineage_and_evaluation_ko.ipynb) | **Stage 5** (`8. 리니지` · `검증 게이트`) | `mcp_stage5_lineage_and_eval`, 엔드투엔드 리니지 18행 조인 및 멀티파타이트 그래프, Golden CQ 5/5 리포트 및 `CQ-02` 실시간 재검증(`recheck_cq`), Boundary 50회 벤치마크 & Gate 1~5 최종 판정 | [`05_stage5_lineage_and_eval_ko.md`](../methodology/ko/05_stage5_lineage_and_eval_ko.md) |
 
 ### 3.2 🇺🇸 영문 노트북 (`notebooks/en/`) — 6종 전체 목록 (100% 영문 배너 및 그래프 라벨 적용)
 
@@ -149,7 +149,7 @@ flowchart TD
 | **2** | [`en/stage2_wiki_and_semantic_graph_en.ipynb`](./en/stage2_wiki_and_semantic_graph_en.ipynb) | **Stage 2** (`3. Parse` · `4. Integrate`) | `DOC_CHUNK_001~005` SHA-256 anchor verification, Karpathy 3-Layer Wiki & GCS sync, Gemini triple extraction, English Semantic Ontology Graph & `APPLIES_TO_PLAN` / `GROUNDED_IN` bridge graph | [`02_stage2_wiki_and_semantic_graph_en.md`](../methodology/en/02_stage2_wiki_and_semantic_graph_en.md) |
 | **3** | [`en/stage3_property_graph_bigquery_spanner_en.ipynb`](./en/stage3_property_graph_bigquery_spanner_en.ipynb) | **Stage 3** (`5. Build Property Graph`) | 6 Node × 4 Edge metamodel schematic, BQ/Spanner Graph DDLs, 25-node 5-column topology, `GQL-01`–`GQL-05` with bound variables tables & ISO GQL statements, `CUST_DEMO_001` ego subgraph, live `nl2gql` | [`03_stage3_property_graph_en.md`](../methodology/en/03_stage3_property_graph_en.md) |
 | **4** | [`en/stage4_agent_and_mcp_execution_en.ipynb`](./en/stage4_agent_and_mcp_execution_en.ipynb) | **Stage 4** (`6. Build Agent` · `7. Answer`) | 2-Pass agent orchestration blueprint, 8-tool MCP catalog, `resolve_params` slot guard, direct runtime MCP calls (with executed GQL & bound slots), 30..200d penalty curve, Golden CQ & boundary traces | [`04_stage4_agent_and_mcp_en.md`](../methodology/en/04_stage4_agent_and_mcp_en.md) |
-| **5** | [`en/stage5_lineage_and_evaluation_en.ipynb`](./en/stage5_lineage_and_evaluation_en.ipynb) | **Stage 5** (`8. Verify & Release Gate`) | `mcp_stage5_lineage_and_eval`, 4-Tier lineage join & multipartite graph, Golden CQ 5/5 audit & live `CQ-02` `recheck_cq`, 50-trial boundary stability metrics & Gate 1–5 release verdict | [`05_stage5_lineage_and_eval_en.md`](../methodology/en/05_stage5_lineage_and_eval_en.md) |
+| **5** | [`en/stage5_lineage_and_evaluation_en.ipynb`](./en/stage5_lineage_and_evaluation_en.ipynb) | **Stage 5** (`8. Verify & Release Gate`) | `mcp_stage5_lineage_and_eval`, end-to-end lineage join & multipartite graph, Golden CQ 5/5 audit & live `CQ-02` `recheck_cq`, 50-trial boundary stability metrics & Gate 1–5 release verdict | [`05_stage5_lineage_and_eval_en.md`](../methodology/en/05_stage5_lineage_and_eval_en.md) |
 
 ### 3.3 연관 프로젝트 문서 · 헬퍼 모듈 · 라이브 스튜디오 링크
 

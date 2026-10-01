@@ -54,7 +54,7 @@ SLIDES_KO = [
                 ["1. 데이터 & 위키 계층", "BigQuery DW (10 Tables) + GCS 3-Layer OKF Wiki", "pipeline/ingest.py · data/llm_wiki/ko/", "10개 테이블 정합성 · SHA-256 앵커"],
                 ["2. 시맨틱 & 그래프 계층", "BigQuery SQL:2023 Property Graph (ISO GQL) + Spanner DDL", "pipeline/graph_builder.py · create_property_graph.sql", "중복 노드 0건 · 다중 홉 GQL 경로"],
                 ["3. 도구 & 추론 계층", "DomainMcpServer (8 Tools) + AiFdeAgentEngine (2-Pass)", "src/agent/mcp_server.py · reasoning_engine.py", "GROUNDED / INSUFFICIENT / MATCH_NOT_FOUND"],
-                ["4. 리니지 & 배포 계층", "4-Tier Lineage + Validator + Terraform Cloud Run", "pipeline/validator.py · terraform/*.tf", "Golden CQ 5/5 · Boundary 50회 실측"]
+                ["4. 리니지 & 배포 계층", "End-to-End Lineage + Validator + Terraform Cloud Run", "pipeline/validator.py · terraform/*.tf", "Golden CQ 5/5 · Boundary 50회 실측"]
             ]
         },
         "takeaway": "핵심 원칙: 비정형 정책 조항(SHA-256 앵커)과 정형 원장(PK/FK)을 단일 그래프와 결정론적 MCP 도구로 묶어 에이전트의 임의 추측을 원천 차단한다.",
@@ -218,7 +218,7 @@ SLIDES_KO = [
                 "accent": "#4F46E5",
                 "bullets": [
                     "활성 Stage: Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5",
-                    "그래프 엔진: bigquery + 4-Tier Lineage + Dual Validator Gate",
+                    "그래프 엔진: bigquery + End-to-End Lineage + Dual Validator Gate",
                     "적합 환경: 감사 추적 리니지, 경계값 10×5 벤치마크, Terraform Cloud Run 프로덕션 배포"
                 ]
             }
@@ -618,7 +618,7 @@ SLIDES_KO = [
             "headers": ["구분", "MCP 도구명 (`src/agent/mcp_server.py`)", "내부 실행 Step", "핵심 반환 데이터 및 상태 코드"],
             "rows": [
                 ["Stage 1~3", "mcp_stage1 / stage2 / stage3", "profile_tables, tag_pii / bind_semantic_bridges / verify_gql_templates", "테이블 행 수, 비식별 위반 건수(0), 해시 조인 청크, GQL 경로 수"],
-                ["Stage 4~5", "mcp_stage4 / stage5", "verify_grounding_anchors / build_4tier_lineage, run_golden_cq_suite", "활성 규칙 4종, 4계층 리니지(18행), Golden CQ 및 Boundary 리포트"],
+                ["Stage 4~5", "mcp_stage4 / stage5", "verify_grounding_anchors / build_4tier_lineage, run_golden_cq_suite", "활성 규칙 4종, 엔드투엔드 리니지(18행), Golden CQ 및 Boundary 리포트"],
                 ["Runtime 1", "mcp_lookup_customer_profile", "lookup_contract → lookup_device_price → lookup_subsidy_policy", "고객 약정, 총지원금, 할부원금, DOC_CHUNK_001 (SUCCESS / MATCH_NOT_FOUND)"],
                 ["Runtime 2", "mcp_calculate_penalty_rule", "check_exemptions → compute_180d_prorated_clawback → compare_24m_tco", "면제 여부, 일할 위약금, 24개월 TCO 비교표 (SUCCESS / INSUFFICIENT_PARAMETERS)"],
                 ["Runtime 3", "mcp_query_graph_and_wiki", "traverse_property_graph → fetch_okf_hash_anchor → verify_dw_schema", "GQL 매칭 경로, 규칙 수식, 원문 청크 텍스트·해시 (SUCCESS / MATCH_NOT_FOUND)"]
@@ -735,7 +735,7 @@ SLIDES_KO = [
                 ["Tier 3 → Tier 4", "STARTER_ONTOLOGY_GRAPH → 8 MCP → Gemini 2-Pass 응답", "rule_id + source_chunk_id + bq_job_id", "Golden CQ(CQ-01~05) 정답 기대값 및 에이전트 응답 검증 리포트 갱신"]
             ]
         },
-        "takeaway": "4-Tier 리니지: 정책 문서의 한 문단이 바뀌었을 때 어느 규칙, 어느 요금제, 어느 고객 약정, 어느 CQ 답변이 영향받는지 쿼리 한 번으로 추적한다.",
+        "takeaway": "엔드투엔드 리니지: 정책 문서의 한 문단이 바뀌었을 때 어느 규칙, 어느 요금제, 어느 고객 약정, 어느 CQ 답변이 영향받는지 쿼리 한 번으로 추적한다.",
         "speaker_notes": (
             "[강사 가이드 — Slide 13: Stage 5 4계층 데이터 리니지]\n"
             "• 엔터프라이즈 거버넌스에서 가장 중요한 질문은 '정책 문서가 바뀌었을 때 어떤 요금제와 어떤 에이전트 답변이 영향을 받는가?'입니다.\n"
@@ -812,7 +812,7 @@ SLIDES_KO = [
                 "bullets": [
                     "0. Overview: 8단계 아키텍처 다이어그램, 트랙 배지, Stage 1~5 원클릭 실행",
                     "Stage 1~3 탭: 자산 인벤토리, 3-Layer 위키 뷰어, 시맨틱/Property Graph 시각화",
-                    "Stage 4~5 탭: 8종 MCP 개별 실행기, 2-Pass 에이전트 콘솔, 4계층 리니지 & 평가표"
+                    "Stage 4~5 탭: 8종 MCP 개별 실행기, 2-Pass 에이전트 콘솔, 엔드투엔드 리니지 & 평가표"
                 ]
             },
             {
@@ -844,7 +844,7 @@ SLIDES_KO = [
                 ["Stage 2", "stage2_wiki_and_semantic_graph_ko.ipynb", "stage2_wiki_and_semantic_graph_en.ipynb", "SHA-256 해시 청킹, 3-Layer 위키(ko/en) 탐색, 시맨틱 브릿지 그래프 시각화"],
                 ["Stage 3", "stage3_property_graph_bigquery_spanner_ko.ipynb", "stage3_property_graph_bigquery_spanner_en.ipynb", "BigQuery Property Graph vs Spanner DDL 비교, 2-Hop/3-Hop ISO GQL 실행"],
                 ["Stage 4", "stage4_agent_and_mcp_execution_ko.ipynb", "stage4_agent_and_mcp_execution_en.ipynb", "8종 MCP 도구 호출, 180일 위약금·24개월 TCO 차트, 2-Pass Gemini 에이전트 실행"],
-                ["Stage 5", "stage5_lineage_and_evaluation_ko.ipynb", "stage5_lineage_and_evaluation_en.ipynb", "4계층 리니지 그래프, Golden CQ 5건 및 Boundary 50회 벤치마크 시각화"]
+                ["Stage 5", "stage5_lineage_and_evaluation_ko.ipynb", "stage5_lineage_and_evaluation_en.ipynb", "엔드투엔드 리니지 그래프, Golden CQ 5건 및 Boundary 50회 벤치마크 시각화"]
             ]
         },
         "takeaway": "한/영 대칭 구조: methodology/{ko,en}/ 문서, data/llm_wiki/{ko,en}/ 위키, notebooks/{ko,en}/ 노트북, slides/{ko,en}/ 슬라이드가 모두 1:1 대칭으로 제공된다.",
