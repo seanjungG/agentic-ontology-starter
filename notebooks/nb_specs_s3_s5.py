@@ -2,8 +2,8 @@
 """Cell builders for Stage 3, Stage 4, and Stage 5 notebooks (KO/EN).
 
 Aligned with Phases 5, 6, 7, and 8 of the 8-Phase Engineering Flow:
-  - Stage 3: Phase 5. 구축 (Physical Property Graph Construction & ISO GQL)
-  - Stage 4: Phase 6. 에이전트 구축 (Agent & 8-Tool MCP Setup) & Phase 7. 답변 (Grounded Answering)
+  - Stage 3: Phase 5. 구축 (Physical Property Graph Connection & ISO GQL)
+  - Stage 4: Phase 6. 에이전트 구축 (Agent & 3-Tool Domain Business MCP Setup) & Phase 7. 답변 (Grounded Answering)
   - Stage 5: Phase 8. 검증 (End-to-End Lineage, Golden CQ Audit & 50-Trial Release Gate)
 """
 from nb_specs_s0_s2 import FQ, GRAPH, _bootstrap_code, code, md, nav_footer, nav_header, report_values
@@ -17,12 +17,12 @@ def build_stage3(lang="ko"):
 
 ---
 
-# {"Stage 3. [구축] Zero-ETL 물리 프로퍼티 그래프 (BigQuery Graph / Spanner Graph) & 바인딩 변수 기반 ISO GQL" if ko else "Stage 3. [Build Graph] Zero-ETL Physical Property Graph (BigQuery / Spanner) & Parameterized ISO GQL"}
+# {"Stage 3. [구축] Ready-to-Use Zero-ETL 물리 프로퍼티 그래프 (BigQuery Graph / Spanner Graph) & 바인딩 변수 기반 ISO GQL" if ko else "Stage 3. [Build Graph] Ready-to-Use Zero-ETL Physical Property Graph (BigQuery / Spanner) & Parameterized ISO GQL"}
 ## {"Step 3.1 6 Node × 4 Edge 그래프 메타모델 설계 및 DDL 프로비저닝 · Step 3.2 인스턴스 토폴로지 시각화 및 ISO GQL / NL2GQL" if ko else "Step 3.1 6 Node × 4 Edge Metamodel Design & DDL Provisioning · Step 3.2 Instance Topology & Parameterized ISO GQL / NL2GQL"}
 
-{("Stage 3은 방법론의 **Phase 5(물리 그래프 구축)**를 구현합니다. Stage 1·2에서 적재한 BigQuery 10개 테이블을 별도 복제 없이(**Zero-ETL**) `pipeline/graph_builder.py`를 통해 **6개 노드 레이블(`CustomerContractNode`, `DeviceNode`, `PlanNode`, `SubsidyNode`, `DomainRuleNode`, `DocChunkNode`)**과 **4개 엣지 레이블(`USES_DEVICE`, `SUBSCRIBES_PLAN`, `HAS_SUBSIDY_POLICY`, `APPLIES_TO_PLAN`)**을 가진 `STARTER_ONTOLOGY_GRAPH`로 선언하고, **바인딩 변수 명세와 실행 ISO GQL 문장**을 투명하게 확인하며 다중 홉 탐색과 Gemini 기반 자연어→GQL 변환(`nl2gql`)을 수행합니다."
+{("Stage 3은 방법론의 **Phase 5(물리 그래프 구축)** 결과로 프로비저닝된 **Ready-to-Use 듀얼 프로퍼티 그래프**에 직결합니다. Stage 1·2의 BigQuery 10개 테이블을 별도 복제 없이(**Zero-ETL**) **6개 노드 레이블(`CustomerContractNode`, `DeviceNode`, `PlanNode`, `SubsidyNode`, `DomainRuleNode`, `DocChunkNode`)**과 **4개 엣지 레이블(`USES_DEVICE`, `SUBSCRIBES_PLAN`, `HAS_SUBSIDY_POLICY`, `APPLIES_TO_PLAN`)**을 가진 `STARTER_ONTOLOGY_GRAPH`로 연결(`stage3_resource_check`)하고, **바인딩 변수 명세와 실행 ISO GQL 문장**을 투명하게 확인하며 다중 홉 탐색과 Gemini 기반 자연어→GQL 변환(`nl2gql`)을 수행합니다."
   if ko else
-  "Stage 3 implements **Phase 5 (Physical Property Graph Construction)**. Without duplicating data (**Zero-ETL**), `pipeline/graph_builder.py` projects the 10 BigQuery tables into `STARTER_ONTOLOGY_GRAPH` with **6 Node Labels** and **4 Edge Labels**, verifies key uniqueness via `mcp_stage3_property_graph`, visualizes both the schema metamodel and layered instance topologies, and executes multi-hop ISO GQL queries—explicitly displaying the **bound variables table**, **executed ISO GQL statement**, and **live BigQuery results** alongside Gemini NL-to-GQL (`nl2gql`).")}
+  "Stage 3 connects directly to the **Ready-to-Use Dual Property Graph** provisioned in **Phase 5 (Physical Property Graph Construction)**. Without duplicating data (**Zero-ETL**), the 10 BigQuery tables are projected into `STARTER_ONTOLOGY_GRAPH` with **6 Node Labels** and **4 Edge Labels**, verified via `stage3_resource_check`, and queried via multi-hop ISO GQL and Gemini NL-to-GQL (`nl2gql`).")}
 
 ![Stage 3 Build Property Graph Architecture Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=False)),
@@ -32,10 +32,10 @@ H.md(f"**Live Property Graph Catalog Job**: `{meta['job_id']}` ({meta['elapsed_m
 H.show(pd.DataFrame(node_labels))
 H.show(pd.DataFrame(edge_labels))
 H.draw_property_graph_metamodel()"""),
-        md(f"### 2. {'[Phase 5b: 듀얼 엔진 DDL 구축 및 무결성 검증] BigQuery Graph / Spanner Graph DDL 비교 및 `mcp_stage3_property_graph` 실행' if ko else '[Phase 5b: Dual-Engine DDL Provisioning & Integrity Check] BigQuery / Spanner Graph DDL & `mcp_stage3_property_graph` Execution'}"),
+        md(f"### 2. {'[Phase 5b: 듀얼 엔진 DDL 구축 및 무결성 검증] BigQuery Graph / Spanner Graph DDL 비교 및 `stage3_resource_check` 실행' if ko else '[Phase 5b: Dual-Engine DDL Provisioning & Integrity Check] BigQuery / Spanner Graph DDL & `stage3_resource_check` Execution'}"),
         code("""H.show_md_file(H.ROOT / "data/output/create_property_graph.sql", max_lines=38)
 H.show_md_file(H.ROOT / "data/output/create_spanner_graph.sql", max_lines=38)
-res_s3 = server.execute_tool("mcp_stage3_property_graph", {"steps": ["promote_dw_nodes", "synthesize_graph_ddl", "verify_gql_templates"]})
+res_s3 = server.execute_tool("stage3_resource_check", {"steps": ["promote_dw_nodes", "synthesize_graph_ddl", "verify_gql_templates"]})
 H.show_tool(res_s3, "node_tables")
 H.show(pd.DataFrame([res_s3["gql_paths"]]))"""),
         md(f"### 3. {'[Phase 5c: 물리 그래프 데이터 확인 및 토폴로지 도식] 노드 · 엣지 레이블 분포(`%%bqsql`) 및 전체 인스턴스 토폴로지 시각화' if ko else '[Phase 5c: Instance Data & Topology Visualization] Node & Edge Label Distribution (`%%bqsql`) and Full Instance Topology'}"),
@@ -199,8 +199,8 @@ H.grouped_bar(df_bench, "engine", ["p50_ms", "p95_ms"],
                 else "Across 3 repeated runs, we benchmarked `p50`/`p95` traversal latency between BigQuery Property Graph (default) and Cloud Spanner Graph (`starter-spanner`, `100 PU`), and verified the `EXTERNAL_QUERY` federated join returning 10 rows across Spanner Graph and BigQuery `tb_doc_chunks`."
             ],
             next_steps=[
-                "다음 단계인 `Stage 4 (에이전트·답변)` 노트북으로 이동하여 이 Property Graph와 BigQuery/Spanner 원장을 호출하는 8종 모듈형 MCP 서버와 2-Pass AI FDE 에이전트 구축 및 답변 생성 과정을 확인하세요." if ko
-                else "Proceed to `Stage 4 (Build Agent & Answer)` to see how the 8-Tool MCP Server (`engine='bigquery' | 'spanner'`) and 2-Pass AI FDE Agent orchestrate SQL and ISO GQL queries to generate grounded answers."
+                "다음 단계인 `Stage 4 (에이전트·답변)` 노트북으로 이동하여 이 Property Graph와 BigQuery/Spanner 원장에 직결된 도메인 비즈니스 도구 3종(`DomainMcpServer`)과 2-Pass AI FDE(`Gate G2-W`) 에이전트 구축 및 답변 생성 과정을 확인하세요." if ko
+                else "Proceed to `Stage 4 (Build Agent & Answer)` to see how the 3 Domain Business Tools (`DomainMcpServer`, `engine='bigquery' | 'spanner'`) and 2-Pass AI FDE (`Gate G2-W`) Agent orchestrate SQL and ISO GQL queries to generate grounded answers."
             ],
         ),
     ]
@@ -214,19 +214,23 @@ def build_stage4(lang="ko"):
 
 ---
 
-# {"Stage 4. [에이전트 구축 & 답변] 8종 모듈형 MCP 서버 구축 · 슬롯 검증 & 2-Pass AI FDE 에이전트 답변 생성" if ko else "Stage 4. [Build Agent & Answer] 8-Tool Modular MCP Server, Slot Validation & 2-Pass AI FDE Agent Execution"}
-## {"Step 4.1 8종 MCP 도구 및 2-Pass 에이전트 아키텍처 구축 · Step 4.2 결정론적 산식 시뮬레이션 및 가드레일 기반 답변 생성" if ko else "Step 4.1 8 MCP Tools & 2-Pass Agent Architecture Setup · Step 4.2 Deterministic Penalty Simulation & Guardrailed Answering"}
+# {"Stage 4. [에이전트 구축 & 답변] 리소스 직결 도메인 비즈니스 도구(3종) · 슬롯 검증 & 2-Pass AI FDE(`Gate G2-W`) 답변 생성" if ko else "Stage 4. [Build Agent & Answer] Resource-Connected 3 Domain Business Tools, Slot Validation & 2-Pass AI FDE (`Gate G2-W`) Execution"}
+## {"Step 4.1 도메인 비즈니스 도구 3종 카탈로그(`get_tool_catalog`) 점검 · Step 4.2 결정론적 산식 시뮬레이션 및 `Gate G2-W` 답변 생성" if ko else "Step 4.1 3 Domain Business Tools Catalog (`get_tool_catalog`) Setup · Step 4.2 Deterministic Math & `Gate G2-W` Answering"}
 
-{("Stage 4는 방법론의 **Phase 6(에이전트 구축)**과 **Phase 7(답변 생성)**을 구현합니다. LLM이 위약금이나 지원금을 암산하거나 존재하지 않는 요금제를 환각하지 않도록, **(1) BigQuery 실시간 카탈로그 기반 슬롯 검증(`resolve_params`)**, **(2) 결정론적 SQL 및 바인딩 변수 기반 ISO GQL을 양대 엔진(`engine=\"bigquery\"` 기본값 및 `engine=\"spanner\"`)에서 실행하는 8종 모듈형 MCP 도구(`DomainMcpServer`)**, **(3) 4단계 라이프사이클로 동작하는 2-Pass Gemini(`gemini-3.8-flash`) 추론 엔진(`AiFdeAgentEngine`)**을 구축하고 정상 질의(`GROUNDED`)와 경계 질의(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)에 대한 답변을 생성합니다."
+{(
+  "Stage 4는 방법론의 **Phase 6(에이전트 구축)**과 **Phase 7(답변 생성)**을 구현합니다. 스타터팩 v2.2.0에서는 무거운 내부 온톨로지 빌더 도구를 제외하고 **Ready-to-Use GCP 리소스에 직결된 도메인 비즈니스 도구 3종(`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`)**만 깔끔하게 노출합니다. LLM이 위약금이나 지원금을 암산하거나 존재하지 않는 요금제를 환각하지 않도록, **(1) BigQuery 실시간 카탈로그 기반 슬롯 검증(`resolve_params`)**, **(2) 결정론적 SQL 및 바인딩 변수 기반 ISO GQL을 양대 엔진(`engine='bigquery'` 기본값 및 `engine='spanner'`)에서 실행하는 도메인 비즈니스 도구(`DomainMcpServer`)**, **(3) `Gate G2-W` 런타임 감사를 수행하는 2-Pass Gemini(`gemini-3.8-flash`) 추론 엔진(`AiFdeAgentEngine`)**을 구축하고 정상 질의(`GROUNDED`)와 경계 질의(`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`)에 대한 답변을 생성합니다."
   if ko else
-  "Stage 4 implements **Phase 6 (Agent & MCP Setup)** and **Phase 7 (Grounded Answering)**. To prevent LLM math errors or entity hallucinations, we combine **(1) Live BigQuery Catalog Slot Validation (`resolve_params`)**, **(2) the 8-Tool Modular MCP Server (`DomainMcpServer`) executing deterministic SQL and parameterized ISO GQL across both `engine=\"bigquery\"` (default) and `engine=\"spanner\"`**, and **(3) the 4-Step, 2-Pass Gemini (`gemini-3.8-flash`) Reasoning Engine (`AiFdeAgentEngine`)**, verifying both `GROUNDED` answers and boundary guardrails (`INSUFFICIENT_PARAMETERS`, `MATCH_NOT_FOUND`).")}
+  "Stage 4 implements **Phase 6 (Agent & Tools Setup)** and **Phase 7 (Grounded Answering)**. In Starter Pack v2.2.0, heavy internal ontology builder tools are abstracted away, exposing only the **3 Ready-to-Use Resource-Connected Domain Business Tools (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`)**. To prevent LLM math errors or entity hallucinations, we combine **(1) Live BigQuery Catalog Slot Resolution (`resolve_params`)**, **(2) `DomainMcpServer` executing deterministic SQL and parameterized ISO GQL across both `engine='bigquery'` (default) and `engine='spanner'`**, and **(3) the `Gate G2-W` audited 2-Pass Gemini (`gemini-3.8-flash`) Reasoning Engine (`AiFdeAgentEngine`)**."
+)}
 
 ![Stage 4 Agent and MCP Orchestration Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=True)),
-        md(f"### 1. {'[Phase 6a: 에이전트 및 MCP 서버 아키텍처 구축] 2-Pass 오케스트레이션 설계도 · 8종 MCP 도구 카탈로그 · `mcp_stage4_agent_orchestration`' if ko else '[Phase 6a: Agent & MCP Architecture Setup] 2-Pass Orchestration Blueprint, 8-Tool MCP Catalog & `mcp_stage4_agent_orchestration`'}"),
+        md(f"### 1. {'[Phase 6a: 리소스 직결 도메인 비즈니스 도구 3종 및 에이전트 구축] 코드 노출 경계 · 도메인 도구 3종 카탈로그 · `stage4_resource_check`' if ko else '[Phase 6a: Resource-Connected 3 Domain Business Tools & Agent Setup] Code Exposure Boundary, 3 Domain Tools Catalog & `stage4_resource_check`'}"),
         code("""H.draw_agent_architecture()
-H.show(pd.DataFrame(server.get_tool_catalog()), ["name", "stage", "category", "steps", "spec_origin", "description" if H.LANG == "ko" else "description_en"])
-res_s4 = server.execute_tool("mcp_stage4_agent_orchestration", {"steps": ["decompose_subgoals", "dispatch_domain_mcps", "verify_grounding_anchors"]})
+manifest = server.get_resource_manifest()
+H.show(pd.DataFrame(manifest["code_exposure_boundary"]["exposed_starter_layer"])[["file", "category", "role_ko" if H.LANG == "ko" else "role_en"]])
+H.show(pd.DataFrame(server.get_tool_catalog()), ["name", "stage", "category", "steps", "spec_source", "description" if H.LANG == "ko" else "description_en"])
+res_s4 = server.execute_tool("stage4_resource_check", {"steps": ["step_4_1", "step_4_2"]})
 H.show_tool(res_s4, "active_rules")"""),
         md(f"### 2. {'[Phase 6b: 카탈로그 기반 슬롯 파싱 검증 (`resolve_params`)] 자연어 질문에서 안전하게 파라미터를 추출하고 미등록 엔티티를 차단하는 과정' if ko else '[Phase 6b: Catalog-Validated Slot Resolution (`resolve_params`)] Extracting Parameters & Stripping Unregistered Entities'}"),
         code("""sample_queries = [
@@ -269,7 +273,11 @@ H.line(df_curve, "elapsed_days", "penalty_krw",
         code("""H.md(H.t("#### MCP 호출별 BigQuery 리소스 (`bq_jobs`: job_id · rows · elapsed_ms)", "#### BigQuery resources per MCP call (`bq_jobs`: job_id, rows, elapsed_ms)"))
 H.show(pd.DataFrame([{"tool": r["tool"], "job_id": j["job_id"], "engine": j["engine"], "status": j["status"], "rows": j["rows"], "elapsed_ms": j["elapsed_ms"]}
                      for r in (r_prof, r_pen, r_gql) for j in r.get("bq_jobs", [])]))"""),
-        md(f"### 4. {'[Phase 6d: 양대 그래프 엔진 MCP 런타임 비교 (`engine=\"bigquery\"` vs `engine=\"spanner\"`)] Cloud Spanner Graph 직접 실행 및 결과 정합성·지연시간 대조' if ko else '[Phase 6d: Dual-Engine Runtime MCP Execution (`engine=\"bigquery\"` vs. `engine=\"spanner\"`)] Cloud Spanner Graph Execution Parity & Latency Comparison'}"),
+        md(
+            "### 4. [Phase 6d: 양대 그래프 엔진 도메인 도구 런타임 비교 (`engine=\"bigquery\"` vs `engine=\"spanner\"`)] Cloud Spanner Graph 직접 실행 및 결과 정합성·지연시간 대조"
+            if ko else
+            "### 4. [Phase 6d: Dual-Engine Domain Tool Runtime Execution (`engine=\"bigquery\"` vs. `engine=\"spanner\"`)] Cloud Spanner Graph Execution Parity & Latency Comparison"
+        ),
         code("""df_mcp_eng = H.compare_mcp_engines(server)
 H.show(df_mcp_eng)
 H.grouped_bar(df_mcp_eng, "mcp_tool", ["bigquery_ms", "spanner_ms"],
@@ -319,8 +327,8 @@ H.grouped_bar(df_runs, "id", ["llm_ms", "bq_ms"],
                 (
                     "AI FDE 에이전트는 위약금 계산 오류나 미등록 단말기/고객 환각을 어떻게 방지하며, 양대 그래프 엔진(`bigquery` / `spanner`)을 어떻게 전환하나요?" if ko
                     else "How does the AI FDE Agent prevent penalty calculation errors and hallucinated entities, and how does it switch between `bigquery` and `spanner` engines?",
-                    "`resolve_params()`가 실시간 카탈로그(`get_live_catalog()`)와 대조하여 미등록 단말·요금제·고객 ID를 즉시 필터링하고, 모든 금액 계산과 그래프 탐색은 8종 MCP 도구에서 `engine='bigquery'`(기본값) 또는 `engine='spanner'`를 지정해 결정론적 SQL/GQL로만 수행하며, 필수 정보 누락 시 `INSUFFICIENT_PARAMETERS`, 조건 불일치 시 `MATCH_NOT_FOUND` 상태를 반환합니다." if ko
-                    else "`resolve_params()` validates extracted slots against the live catalog (`get_live_catalog()`), delegates all SQL/GQL execution to the 8 MCP tools across `engine='bigquery'` (default) or `engine='spanner'`, and enforces explicit `INSUFFICIENT_PARAMETERS` and `MATCH_NOT_FOUND` guardrail states."
+                    "`resolve_params()`가 실시간 카탈로그(`get_live_catalog()`)와 대조하여 미등록 단말·요금제·고객 ID를 즉시 필터링하고, 모든 금액 계산과 그래프 탐색은 도메인 비즈니스 도구 3종(`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`)에서 `engine='bigquery'`(기본값) 또는 `engine='spanner'`를 지정해 결정론적 SQL/GQL로만 수행하며, 필수 정보 누락 시 `INSUFFICIENT_PARAMETERS`, 조건 불일치 시 `MATCH_NOT_FOUND` 상태를 반환합니다." if ko
+                    else "`resolve_params()` validates extracted slots against the live catalog (`get_live_catalog()`), delegates all SQL/GQL execution to the 3 Domain Business Tools (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`) across `engine='bigquery'` (default) or `engine='spanner'`, and enforces explicit `INSUFFICIENT_PARAMETERS` and `MATCH_NOT_FOUND` guardrail states."
                 ),
             ],
             findings=[
@@ -424,14 +432,14 @@ def build_stage5(lang="ko"):
 # {"Stage 5. [검증 & 배포 게이트] End-to-End 데이터 리니지 · Golden CQ 감사 & Boundary 50회 벤치마크" if ko else "Stage 5. [Verify & Gate] End-to-End Data Lineage, Golden CQ Audit & 50-Trial Boundary Benchmark"}
 ## {"Step 5.1 원천 파일→청크→규칙→약정→CQ 엔드투엔드 리니지 검증 · Step 5.2 Golden CQ 5종 및 Boundary 10건×5회(50 Trials) 배포 게이트" if ko else "Step 5.1 Source File → Chunk → Rule → Contract → CQ Lineage · Step 5.2 5 Golden CQs & 10×5 Boundary Benchmark Release Gate"}
 
-{("Stage 5는 전체 엔지니어링 흐름의 최종 단계인 **Phase 8(검증 및 배포 게이트)**을 수행합니다. `mcp_stage5_lineage_and_eval`과 `pipeline/validator.py`를 통해 **(1) 원천 CSV/가이드 파일 → SHA-256 청크 → 도메인 규칙 → 고객 약정 → Golden CQ 답변으로 이어지는 엔드투엔드 데이터 리니지**를 추적하고, **(2) 독립 검증 SQL(`verification_sql`) 대조 기반 Golden CQ 5종 전수 감사**, **(3) 경계 조건 10건 × 5회 반복(총 50 Trials) 안정성·일관성·의도 유지율 평가**, **(4) Gate 1 ~ Gate 5 프로덕션 배포 승인 판정**을 완결합니다."
+{("Stage 5는 전체 엔지니어링 흐름의 최종 단계인 **Phase 8(검증 및 배포 게이트)**을 수행합니다. `stage5_resource_check`과 `src/lineage/lineage_engine.py` · `H.recheck_cq()`를 통해 **(1) 원천 CSV/가이드 파일 → SHA-256 청크 → 도메인 규칙(`W1~W3`) → 고객 약정 → Golden CQ 답변으로 이어지는 엔드투엔드 데이터 리니지**를 추적하고, **(2) 독립 검증 SQL(`verification_sql`) 대조 기반 Golden CQ 5종 전수 감사**, **(3) 경계 조건 10건 × 5회 반복(총 50 Trials) 안정성·일관성·의도 유지율 평가**, **(4) Gate 1 ~ Gate 5 프로덕션 배포 승인 판정**을 완결합니다."
   if ko else
-  "Stage 5 completes **Phase 8 (Verification & Release Gate)**. Using `mcp_stage5_lineage_and_eval` and `pipeline/validator.py`, we verify **(1) the End-to-End Data Lineage (`Source File → DocChunk → DomainRule → CustomerContract → Golden CQ`)**, **(2) deterministic SQL ground-truth auditing across all 5 Golden CQs**, **(3) 10 Boundary Cases × 5 repeated trials (50 live runs) for success, consistency, and intent stability**, and **(4) the Gate 1–5 Production Release Readiness Checklist**.")}
+  "Stage 5 completes **Phase 8 (Verification & Release Gate)**. Using `stage5_resource_check`, `src/lineage/lineage_engine.py`, and `H.recheck_cq()`, we verify **(1) the End-to-End Data Lineage (`Source File → DocChunk → DomainRule (W1~W3) → CustomerContract → Golden CQ`)**, **(2) deterministic SQL ground-truth auditing across all 5 Golden CQs**, **(3) 10 Boundary Cases × 5 repeated trials (50 live runs) for success, consistency, and intent stability**, and **(4) the Gate 1–5 Production Release Readiness Checklist**.")}
 
 ![Stage 5 Lineage and Release Gate Architecture Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=True)),
-        md(f"### 1. {'[Phase 8a: 엔드투엔드 데이터 리니지 검증] `mcp_stage5_lineage_and_eval` 실행 · 리니지 조인(`%%bqsql`) · 멀티파타이트 리니지 설계 도식' if ko else '[Phase 8a: End-to-End Data Lineage Verification] `mcp_stage5_lineage_and_eval`, Lineage Join (`%%bqsql`) & Multipartite Lineage Graph'}"),
-        code("""res_s5 = server.execute_tool("mcp_stage5_lineage_and_eval", {"steps": ["build_4tier_lineage", "run_golden_cq_suite", "diagnose_boundary_failures"]})
+        md(f"### 1. {'[Phase 8a: 엔드투엔드 데이터 리니지 검증] `stage5_resource_check` 실행 · 리니지 조인(`%%bqsql`) · 멀티파타이트 리니지 설계 도식' if ko else '[Phase 8a: End-to-End Data Lineage Verification] `stage5_resource_check`, Lineage Join (`%%bqsql`) & Multipartite Lineage Graph'}"),
+        code("""res_s5 = server.execute_tool("stage5_resource_check", {"steps": ["build_4tier_lineage", "run_golden_cq_suite", "diagnose_boundary_failures"]})
 H.show_tool(res_s5)"""),
         code(f"""%%bqsql df_lineage
 SELECT c.contract_id, c.customer_id, d.device_name, p.plan_name, s.policy_id,
@@ -462,7 +470,7 @@ H.md(f"**nodes `{lg['stats']['total_nodes']}` · edges `{lg['stats']['total_edge
      f"measured `{lg['metadata']['live_nodes']}/{lg['metadata']['bq_nodes']}` · errors `{lg['metadata']['bq_error'] or 0}`**")
 H.show(pd.DataFrame([{"category": n["cat"], "node": n["id"], "volume": n["volume_en"], "measured": n["live"], "source": n["live_src"]}
                      for n in lg["nodes"] if n["live_src"]]))"""),
-        md(f"### 2. {'[Phase 8b: Golden CQ 5종 정량 감사 (`pipeline/validator.py`)] 벤치마크 리포트 분석 및 실시간 에이전트 4대 채점 조건 재검증 (`recheck_cq`)' if ko else '[Phase 8b: 5 Golden CQs Deterministic Audit (`pipeline/validator.py`)] Benchmark Report & Live Agent Re-Verification (`recheck_cq`)'}"),
+        md(f"### 2. {'[Phase 8b: Golden CQ 5종 정량 감사 (`H.recheck_cq`)] 벤치마크 리포트 분석 및 실시간 에이전트 4대 채점 조건 재검증' if ko else '[Phase 8b: 5 Golden CQs Deterministic Audit (`H.recheck_cq`)] Benchmark Report & Live Agent Re-Verification'}"),
         md(S5_EVAL_MD_KO if ko else S5_EVAL_MD_EN),
         code("""df_cq = pd.DataFrame(cq_rep["test_results"])
 H.md(H.t("#### A. 전체 결과", "#### A. Overall results"))
@@ -508,10 +516,10 @@ H.show(H.gate_checklist_table())"""),
             5, lang,
             qa_items=[
                 (
-                    "`pipeline/validator.py`는 에이전트 답변의 정확성과 환각 부재를 어떤 기준으로 채점하나요?" if ko
-                    else "How does `pipeline/validator.py` grade agent accuracy and verify zero hallucination?",
-                    "각 Golden CQ마다 (1) BigQuery에서 독립 실행한 `verification_sql` 결과가 `expected_math`와 일치하는지, (2) 에이전트 답변 본문에 정답 수치가 포함(`_has` 정규식)되는지, (3) 지정된 `DOC_CHUNK`를 인용했는지, (4) `answer_status == GROUNDED`인지 확인하고, (5) 최종 답변을 LLM 루브릭(`_judge`)으로 채점하며, CQ 간 답변 3-gram 중복이 높으면 실패로 처리합니다." if ko
-                    else "For every Golden CQ it checks (1) independent BigQuery `verification_sql` matches `expected_math`, (2) the answer contains the expected values (`_has` regex), (3) the required `DOC_CHUNK` is cited, (4) `answer_status == GROUNDED`, and (5) scores the final answer with an LLM rubric (`_judge`); answers that are near-duplicates across CQs (3-gram overlap) fail."
+                    "Golden CQ 감사(`H.recheck_cq`)는 에이전트 답변의 정확성과 환각 부재를 어떤 기준으로 채점하나요?" if ko
+                    else "How does the Golden CQ audit (`H.recheck_cq`) grade agent accuracy and verify zero hallucination?",
+                    "각 Golden CQ마다 (1) BigQuery에서 독립 실행한 `verification_sql` 결과가 `expected_math`와 일치하는지, (2) 에이전트 답변 본문에 정답 수치가 포함(`_has` 정규식)되는지, (3) 지정된 `DOC_CHUNK`를 인용했는지, (4) `answer_status == GROUNDED`인지 확인하고, (5) 최종 답변을 LLM 루브릭으로 채점합니다." if ko
+                    else "For every Golden CQ it checks (1) independent BigQuery `verification_sql` matches `expected_math`, (2) the answer contains the expected values (`_has` regex), (3) the required `DOC_CHUNK` is cited, (4) `answer_status == GROUNDED`, and (5) scores the final answer with an LLM rubric."
                 ),
             ],
             findings=[

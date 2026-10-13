@@ -180,7 +180,26 @@ class DataFidelityTest(unittest.TestCase):
         wb_std = get_workbench_state({"project_id": "tmp", "root": self.root, "track": "standard", "graph_engine": "bigquery"})
         self.assertEqual(wb_std["stages"]["stage3"]["status"], "PENDING")
 
+    def test_t11_resource_connector_and_3_domain_tools(self):
+        from src.resource_connector import OntologyResourceConnector, CODE_EXPOSURE_BOUNDARY, STAGE_UNIFIED_MAP
+        from src.agent.mcp_server import DomainMcpServer
+        rc = OntologyResourceConnector(root_dir=BASE_DIR)
+        summary = rc.get_resource_summary(verify_gcp=False)
+        self.assertTrue(summary["architecture_mode"].startswith("RESOURCE_CONNECTED_STARTER"))
+        self.assertEqual(len(STAGE_UNIFIED_MAP), 6)
+        self.assertEqual(len(CODE_EXPOSURE_BOUNDARY["exposed_starter_layer"]), 4)
+        self.assertEqual(len(CODE_EXPOSURE_BOUNDARY["abstracted_platform_layer"]), 4)
+        srv = DomainMcpServer(root_dir=BASE_DIR)
+        catalog = srv.get_tool_catalog()
+        self.assertEqual(len(catalog), 3)
+        tool_names = [t["name"] for t in catalog]
+        self.assertEqual(
+            tool_names,
+            ["mcp_lookup_customer_profile", "mcp_calculate_penalty_rule", "mcp_query_graph_and_wiki"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

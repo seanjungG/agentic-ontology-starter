@@ -18,6 +18,12 @@ import time
 from typing import Any, Dict, List, Optional
 
 from src.agent.i18n_en import is_english_mode, localize_en_obj
+from src.resource_connector import (
+    CODE_EXPOSURE_BOUNDARY,
+    REFERENCE_STUDIOS,
+    STAGE_UNIFIED_MAP,
+    OntologyResourceConnector,
+)
 from src.gcp_client import (
     DEFAULT_DATASET_ID,
     DEFAULT_GCS_BUCKET,
@@ -73,6 +79,14 @@ class DomainMcpServer:
         self.spanner_uri = f"projects/{self.project_id}/instances/{self.spanner_instance_id}/databases/{self.spanner_database_id}"
         self._catalog: Optional[Dict[str, Any]] = None
         self._catalog_at = 0.0
+        self.connector = OntologyResourceConnector(
+            project_id=self.project_id,
+            dataset_id=dataset_id,
+            gcs_bucket=self.gcs_bucket,
+            spanner_instance_id=self.spanner_instance_id,
+            spanner_database_id=self.spanner_database_id,
+            root_dir=self.root_dir,
+        )
 
     # ------------------------------------------------------------------ helpers
     def _to_spanner_sql(self, sql: str) -> str:
@@ -200,52 +214,44 @@ class DomainMcpServer:
         return p
 
     # ------------------------------------------------------------------ catalog
+    def get_resource_manifest(self) -> Dict[str, Any]:
+        """Returns the Ready-to-Use GCP Resource Manifest and Code Exposure Boundary."""
+        return self.connector.get_resource_manifest()
+
     def get_tool_catalog(self) -> List[Dict[str, Any]]:
+        """
+        Starter Pack v2.2 Code Exposure Boundary:
+        Internal Stage 1~5 MCP build/compiler tools are abstracted away.
+        Only the 3 Ready-to-Use Resource & Domain Business Tools are exposed here.
+        """
         def t(name, stage, cat, steps, ko, en, origin, src):
-            return {"name": name, "stage": stage, "category": cat, "steps": steps, "description": ko,
-                    "description_en": en, "spec_origin": origin, "spec_source": src,
-                    "supported_engines": ["bigquery", "spanner"]}
+            return {
+                "name": name,
+                "stage": stage,
+                "category": cat,
+                "steps": steps,
+                "description": ko,
+                "description_en": en,
+                "spec_origin": origin,
+                "spec_source": src,
+                "supported_engines": ["bigquery", "spanner"],
+            }
         return [
-            t("mcp_stage1_asset_discovery", "STAGE 1", "stage_pipeline",
-              ["profile_tables", "scan_guides", "prune_noise", "tag_pii_governance"],
-              "Stage 1 BigQuery / Cloud Spanner 테이블 실측 프로파일링 및 고객 식별자 비식별화 규칙 검사",
-              "Stage 1 live BigQuery / Cloud Spanner table profiling and customer ID de-identification check",
-              "GCP_NATIVE", f"BigQuery `{self.fq}` / Spanner `{self.spanner_database_id}`"),
-            t("mcp_stage2_wiki_and_semantic", "STAGE 2", "stage_pipeline",
-              ["compile_3layer_wiki", "extract_hash_anchors", "bind_semantic_bridges"],
-              "Stage 2 GCS 위키 객체 목록 및 BigQuery / Spanner 문서 청크·규칙 앵커 조회",
-              "Stage 2 GCS wiki object listing and BigQuery / Spanner chunk/rule anchor lookup",
-              "CUSTOM_EXTENSION", f"GCS `gs://{self.gcs_bucket}` + `tb_doc_chunks`, `tb_domain_rules`"),
-            t("mcp_stage3_property_graph", "STAGE 3", "stage_pipeline",
-              ["promote_dw_nodes", "synthesize_graph_ddl", "verify_gql_templates"],
-              "Stage 3 노드 테이블 중복 키 검사 및 Property Graph (BigQuery / Spanner) GQL 경로 수 실측",
-              "Stage 3 node-table duplicate-key check and Property Graph (BigQuery / Spanner) GQL path count",
-              "GCP_NATIVE", f"BigQuery `{self.graph}` / Spanner `{self.spanner_graph}`"),
-            t("mcp_stage4_agent_orchestration", "STAGE 4", "stage_pipeline",
-              ["decompose_subgoals", "dispatch_domain_mcps", "verify_grounding_anchors"],
-              "Stage 4 에이전트가 사용하는 도메인 규칙과 근거 청크를 활성 엔진(BigQuery / Spanner)에서 조회",
-              "Stage 4 domain rules and grounding chunks used by the agent (BigQuery / Spanner)",
-              "CUSTOM_EXTENSION", "src/agent/reasoning_engine.py + Vertex AI gemini-3.8-flash"),
-            t("mcp_stage5_lineage_and_eval", "STAGE 5", "stage_pipeline",
-              ["build_4tier_lineage", "run_golden_cq_suite", "diagnose_boundary_failures"],
-              "Stage 5 고객 약정→단말·요금제·지원금→규칙→청크 리니지 조인 및 최근 검증 리포트 요약",
-              "Stage 5 contract→device/plan/subsidy→rule→chunk lineage join and latest validation summary",
-              "CUSTOM_EXTENSION", f"BigQuery `{self.fq}` / Spanner `{self.spanner_database_id}` + validator report"),
-            t("mcp_lookup_customer_profile", "RUNTIME", "runtime_domain",
+            t("mcp_lookup_customer_profile", "RESOURCE CONNECTOR · LEDGER", "runtime_domain",
               ["lookup_contract", "lookup_device_price", "lookup_subsidy_policy"],
-              "고객 약정·단말 출고가·요금제별 공시지원금/추가지원금/실구매가 조회 (BigQuery / Spanner 지원)",
-              "Customer contract, device price and subsidy lookup on BigQuery or Cloud Spanner",
-              "CUSTOM_EXTENSION", f"`tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_customer_contract`"),
-            t("mcp_calculate_penalty_rule", "RUNTIME", "runtime_domain",
+              "[리소스 직결 도메인 도구 #1 · 원장 조회] 준비된 BigQuery/Spanner 원장(`starter_ontology_dw`)에서 고객 약정·단말 출고가·공시지원금/추가지원금/실구매가 즉시 조회",
+              "[Resource-Connected Domain Tool #1 · Ledger Lookup] Direct lookup of customer contract, device price, and subsidy policy on ready-to-use BigQuery/Spanner ledgers",
+              "READY_RESOURCE_CONNECTOR", f"`{self.fq}.tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_customer_contract`"),
+            t("mcp_calculate_penalty_rule", "RESOURCE CONNECTOR · RULE MATH", "runtime_domain",
               ["check_exemptions", "compute_180d_prorated_clawback", "compare_24m_tco"],
-              "180일 차액정산 위약금·특례 면제·24개월 TCO를 BigQuery 또는 Cloud Spanner SQL로 계산",
-              "180-day prorated penalty, exemption and 24-month TCO computed in BigQuery or Cloud Spanner SQL",
-              "CUSTOM_EXTENSION", f"`tb_subsidy_policy`, `tb_plan_master`, `tb_domain_rules`"),
-            t("mcp_query_graph_and_wiki", "RUNTIME", "runtime_domain",
+              "[리소스 직결 도메인 도구 #2 · 위약금/TCO 결정론 산식] 준비된 비즈니스 룰(`BR-*` / `W1~W3` 워크플로우 분기) 기반으로 180일 일할 위약금·시니어 특례 면제·24개월 TCO를 SQL로 무환각 계산",
+              "[Resource-Connected Domain Tool #2 · Deterministic Rule Math] Computes 180-day prorated penalty, welfare exemption, and 24-month TCO deterministically in BigQuery/Spanner SQL",
+              "READY_RESOURCE_CONNECTOR", f"`{self.fq}.tb_subsidy_policy`, `tb_plan_master`, `tb_domain_rules` (W1~W3 Bound)"),
+            t("mcp_query_graph_and_wiki", "RESOURCE CONNECTOR · GRAPH & WIKI", "runtime_domain",
               ["traverse_property_graph", "fetch_okf_hash_anchor", "verify_dw_schema"],
-              "Property Graph GRAPH_TABLE 멀티홉 탐색(BigQuery / Spanner) 및 규칙 근거 청크 원문 조회",
-              "Property Graph GRAPH_TABLE multi-hop traversal (BigQuery / Spanner) and grounding chunk retrieval",
-              "GCP_NATIVE", f"`GRAPH_TABLE({self.graph} | {self.spanner_graph})` + `tb_doc_chunks`"),
+              "[리소스 직결 도메인 도구 #3 · 그래프 & 3-Layer 위키 탐색] 준비된 Property Graph(`STARTER_ONTOLOGY_GRAPH`) 멀티홉 `GRAPH_TABLE` 탐색 및 OKF 3-Layer 위키/해시 앵커 조인",
+              "[Resource-Connected Domain Tool #3 · Graph & 3-Layer Wiki] Multi-hop `GRAPH_TABLE` traversal on `STARTER_ONTOLOGY_GRAPH` joined with 3-Layer OKF Wiki grounding",
+              "READY_RESOURCE_CONNECTOR", f"`GRAPH_TABLE({self.graph} | {self.spanner_graph})` + `gs://{self.gcs_bucket}/ontology/`"),
         ]
 
     # ------------------------------------------------------------------ dispatch
@@ -255,6 +261,9 @@ class DomainMcpServer:
         args["engine"] = eng
         en = is_english_mode(args.get("lang"), args.get("query"))
         aliases = {
+            "lookup_customer_profile": "mcp_lookup_customer_profile",
+            "calculate_penalty_rule": "mcp_calculate_penalty_rule",
+            "query_graph_and_wiki": "mcp_query_graph_and_wiki",
             "mcp_get_device_factory_price": "mcp_lookup_customer_profile",
             "mcp_get_device_subsidy_by_plan": "mcp_lookup_customer_profile",
             "mcp_calculate_plan_change_penalty": "mcp_calculate_penalty_rule",
@@ -262,11 +271,16 @@ class DomainMcpServer:
             "mcp_explore_property_graph": "mcp_query_graph_and_wiki",
             "mcp_get_policy_anchor_grounding": "mcp_query_graph_and_wiki",
             "mcp_inspect_dw_table_schema": "mcp_query_graph_and_wiki",
+            "stage1_resource_check": "mcp_stage1_asset_discovery",
+            "stage2_resource_check": "mcp_stage2_wiki_and_semantic",
+            "stage3_resource_check": "mcp_stage3_property_graph",
+            "stage4_resource_check": "mcp_stage4_agent_orchestration",
+            "stage5_resource_check": "mcp_stage5_lineage_and_eval",
         }
         name = aliases.get(tool_name, tool_name)
         handler = getattr(self, "_" + name, None)
         if not handler:
-            return {"status": "ERROR", "tool": tool_name, "message": f"Unknown MCP tool: {tool_name}"}
+            return {"status": "ERROR", "tool": tool_name, "message": f"Unknown domain/resource tool: {tool_name}"}
         jobs: List[Dict[str, Any]] = []
         t0 = time.perf_counter()
         try:

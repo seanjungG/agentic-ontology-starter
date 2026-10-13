@@ -131,24 +131,24 @@ def build_stage0(lang="ko"):
 
 ---
 
-# {"0. 전체 흐름 초기 화면 — 8단계 엔지니어링 파이프라인 & 5-Stage 에이전틱 온톨로지 워크스루" if ko else "0. End-to-End Entrypoint — 8-Phase Engineering Pipeline & 5-Stage Agentic Ontology Walkthrough"}
-## {"준비 → 분석 → 파싱 → 통합 → 구축 → 에이전트 구축 → 답변 → 검증 (BigQuery Property Graph · ISO GQL · Gemini 3.8 Flash)" if ko else "Prepare → Analyze → Parse → Integrate → Build Graph → Build Agent → Answer (GQL) → Verify & Gate"}
+# {"0. 전체 흐름 초기 화면 — 리소스 직결형(Resource-Connected) 스타터 아키텍처 & 5-Stage 에이전틱 온톨로지 마스터 워크스루" if ko else "0. End-to-End Entrypoint — Resource-Connected Starter Architecture & 5-Stage Agentic Ontology Walkthrough"}
+## {"Ready-to-Use GCP 리소스 커넥터(`OntologyResourceConnector`) + 도메인 비즈니스 도구 3종(`DomainMcpServer`) · BigQuery Property Graph · ISO GQL · Gemini 3.8 Flash" if ko else "Ready-to-Use GCP Resource Connector (`OntologyResourceConnector`) + 3 Domain Business Tools (`DomainMcpServer`) · BigQuery Property Graph · ISO GQL"}
 
-{("이 초기 노트북은 **Agentic Ontology Starter Pack v2.0**의 전체 엔지니어링 방법론을 처음부터 끝까지 한눈에 파악하고 실행하는 **마스터 진입 화면**입니다. 단순 데이터 조회에 그치지 않고, **원시 데이터 준비(Phase 1) → 탐색·CQ 설계(Phase 2) → 비정형 문서 파싱·SHA-256 해시 앵커링(Phase 3) → 3-Layer Wiki 및 시맨틱 규칙 통합(Phase 4) → BigQuery/Spanner 물리 프로퍼티 그래프 구축(Phase 5) → 8종 MCP 서버 및 2-Pass 에이전트 구축(Phase 6) → 바인딩 변수 기반 ISO GQL 생성 및 근거 기반 답변(Phase 7) → 엔드투엔드 리니지 및 50회 경계값 벤치마크 검증(Phase 8)**의 전 과정을 중간 데이터·테이블 구조·그래프 설계 도식과 함께 조화롭게 확인합니다."
+{("이 초기 노트북은 **Agentic Ontology Starter Pack v2.2.0**의 **Resource-Connected Starter 아키텍처**와 전체 엔지니어링 방법론을 처음부터 끝까지 한눈에 파악하고 실행하는 **마스터 진입 화면**입니다. 무거운 내부 온톨로지 빌더 파이프라인은 플랫폼 계층으로 추상화하고, 스타터는 이미 준비된 **Ready-to-Use GCP 온톨로지 리소스**(BigQuery `starter_ontology_dw` 10개 테이블, `STARTER_ONTOLOGY_GRAPH`, GCS 3-Layer OKF 위키 및 `W1~W3` 워크플로, Cloud Spanner Graph)에 직결하여 **커스터마이징 가능한 핵심 코드 4종**(`src/resource_connector.py`, `src/gcp_client.py`, `src/agent/mcp_server.py`, `src/agent/reasoning_engine.py`)과 **도메인 비즈니스 도구 3종**에 집중합니다."
   if ko else
-  "This master entrypoint notebook walks through the complete **Agentic Ontology Starter Pack v2.0** methodology end to end. Rather than isolated data exploration, it connects **1. Preparation → 2. Analysis & CQ Design → 3. Markdown Parsing & SHA-256 Anchoring → 4. 3-Layer Wiki & Semantic Rule Integration → 5. Physical Property Graph Construction → 6. 8-Tool MCP & 2-Pass Agent Setup → 7. Parameterized ISO GQL & Grounded Answering → 8. End-to-End Lineage & 50-Trial Benchmark Verification**, showing intermediate tables, bound GQL variables, data outputs, and graph design schematics at every phase.")}
+  "This master entrypoint notebook walks through the complete **Agentic Ontology Starter Pack v2.2.0** **Resource-Connected Starter Architecture** and methodology end to end. Heavy internal ontology builder pipelines are abstracted into the platform layer, while the Starter connects directly to **Ready-to-Use GCP Ontology Resources** (BigQuery `starter_ontology_dw` 10 tables, `STARTER_ONTOLOGY_GRAPH`, GCS 3-Layer OKF Wiki & `W1~W3` workflows, Cloud Spanner Graph) and exposes **4 Customizable Core Files** (`src/resource_connector.py`, `src/gcp_client.py`, `src/agent/mcp_server.py`, `src/agent/reasoning_engine.py`) and **3 Domain Business Tools**.")}
 
 ![Stage 0 Overview Architecture Flow](attachment:{banner_file})
 
 ### {"전체 8단계 엔지니어링 흐름 및 한/영 노트북 네비게이션 맵 (`notebooks/ko/` · `notebooks/en/`)" if ko else "8-Phase Engineering Flow & Bilingual Notebook Navigation Map (`notebooks/ko/` · `notebooks/en/`)"}
 
-| {"엔지니어링 단계 (8-Phase)" if ko else "Engineering Phase"} | {"정본 Stage (Step)" if ko else "Canonical Stage"} | {"핵심 구현 모듈 및 MCP 도구" if ko else "Core Modules & MCP Tools"} | {"중간 확인 데이터 · 테이블 · 그래프 도식" if ko else "Intermediate Data, Tables & Graph Schematics"} | {"한글 노트북 (`ko/`)" if ko else "Korean Notebook (`ko/`)"} | {"영문 노트북 (`en/`)" if ko else "English Notebook (`en/`)"} |
+| {"엔지니어링 단계 (8-Phase)" if ko else "Engineering Phase"} | {"정본 Stage (Step)" if ko else "Canonical Stage"} | {"핵심 노출 모듈 및 리소스 도구" if ko else "Exposed Modules & Resource Tools"} | {"중간 확인 데이터 · 테이블 · 그래프 도식" if ko else "Intermediate Data, Tables & Graph Schematics"} | {"한글 노트북 (`ko/`)" if ko else "Korean Notebook (`ko/`)"} | {"영문 노트북 (`en/`)" if ko else "English Notebook (`en/`)"} |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. {"준비 (Prepare)" if ko else "Prepare"}**<br>**2. {"분석 (Analyze)" if ko else "Analyze"}** | **Stage 1**<br>(`Step 1.1`–`1.2`) | `terraform/bigquery.tf`<br>`mcp_stage1_asset_discovery`<br>`H.check_cq_sql()` | {"원시 CSV/MD 인벤토리, 10개 테이블 스키마 설계도, 비식별 약정 원장, 지원금 히트맵, Golden CQ 5종 SQL 검증" if ko else "Raw CSV/MD inventory, 10-table ER blueprint, de-identified contracts, subsidy heatmap, 5 Golden CQs SQL check"} | [`stage1_ko`]({ko_prefix}stage1_asset_and_cq_ko.ipynb) | [`stage1_en`]({en_prefix}stage1_asset_and_cq_en.ipynb) |
-| **3. {"파싱 (Parse)" if ko else "Parse"}**<br>**4. {"통합 (Integrate)" if ko else "Integrate"}** | **Stage 2**<br>(`Step 2.1`–`2.2`) | `pipeline/ingest.py`<br>`mcp_stage2_wiki_and_semantic`<br>`H.propose_triples()` | {"`DOC_CHUNK` 정규식 파싱 & SHA-256 해시 앵커 비교표, 3-Layer Wiki 4종, Gemini 트리플 추출, 시맨틱 그래프 도식" if ko else "`DOC_CHUNK` regex parsing & SHA-256 anchor table, 3-Layer Wiki, Gemini triple extraction, Semantic Graph schematic"} | [`stage2_ko`]({ko_prefix}stage2_wiki_and_semantic_graph_ko.ipynb) | [`stage2_en`]({en_prefix}stage2_wiki_and_semantic_graph_en.ipynb) |
-| **5. {"구축 (Build Graph)" if ko else "Build Graph"}** | **Stage 3**<br>(`Step 3.1`–`3.2`) | `pipeline/graph_builder.py`<br>`mcp_stage3_property_graph`<br>`H.run_gql()` / `H.nl2gql()` | {"6 Node × 4 Edge 메타모델 설계도, BigQuery/Spanner Graph DDL, 전체 토폴로지 & 1~2홉 서브그래프, 바인딩 변수 기반 ISO GQL" if ko else "6 Node × 4 Edge metamodel schematic, BQ/Spanner DDL, full topology & 1..2-hop ego graph, parameterized ISO GQL"} | [`stage3_ko`]({ko_prefix}stage3_property_graph_bigquery_spanner_ko.ipynb) | [`stage3_en`]({en_prefix}stage3_property_graph_bigquery_spanner_en.ipynb) |
-| **6. {"에이전트 구축 (Agent)" if ko else "Build Agent"}**<br>**7. {"답변 (Answer)" if ko else "Answer"}** | **Stage 4**<br>(`Step 4.1`–`4.2`) | `src/agent/mcp_server.py`<br>`src/agent/reasoning_engine.py`<br>`mcp_stage4_agent_orchestration` | {"2-Pass 에이전트 오케스트레이션 설계도, 8종 MCP 카탈로그, 슬롯 파싱, 180일 위약금 곡선, Golden CQ & 경계 답변" if ko else "2-Pass agent orchestration schematic, 8-tool MCP catalog, slot parsing, 180d penalty curve, Golden CQ & boundary answers"} | [`stage4_ko`]({ko_prefix}stage4_agent_and_mcp_execution_ko.ipynb) | [`stage4_en`]({en_prefix}stage4_agent_and_mcp_execution_en.ipynb) |
-| **8. {"검증 (Verify & Gate)" if ko else "Verify & Gate"}** | **Stage 5**<br>(`Step 5.1`–`5.2`) | `pipeline/validator.py`<br>`mcp_stage5_lineage_and_eval`<br>`H.recheck_cq()` | {"엔드투엔드 데이터 리니지 테이블 & 멀티파타이트 그래프, Golden CQ 5종 실시간 재검증, Boundary 50회 평가 & Gate 1~5 판정" if ko else "end-to-end lineage table & multipartite graph, live CQ re-audit, Boundary 50-trial metrics & Gate 1..5 checklist"} | [`stage5_ko`]({ko_prefix}stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_en`]({en_prefix}stage5_lineage_and_evaluation_en.ipynb) |
+| **1. {"준비 (Prepare)" if ko else "Prepare"}**<br>**2. {"분석 (Analyze)" if ko else "Analyze"}** | **Stage 1**<br>(`Step 1.1`–`1.2`) | `src/resource_connector.py`<br>`stage1_resource_check`<br>`H.check_cq_sql()` | {"원시 CSV/MD 인벤토리, 10개 테이블 스키마 설계도, 비식별 약정 원장, 지원금 히트맵, Golden CQ 5종 SQL 검증" if ko else "Raw CSV/MD inventory, 10-table ER blueprint, de-identified contracts, subsidy heatmap, 5 Golden CQs SQL check"} | [`stage1_ko`]({ko_prefix}stage1_asset_and_cq_ko.ipynb) | [`stage1_en`]({en_prefix}stage1_asset_and_cq_en.ipynb) |
+| **3. {"파싱 (Parse)" if ko else "Parse"}**<br>**4. {"통합 (Integrate)" if ko else "Integrate"}** | **Stage 2**<br>(`Step 2.1`–`2.2`) | `src/resource_connector.py`<br>`stage2_resource_check`<br>`H.propose_triples()` | {"`DOC_CHUNK` 해시 앵커 비교표, 3-Layer OKF Wiki 4종, 비즈니스 룰 4종(`RULE_*`) & 워크플로 3종(`W1~W3`), 시맨틱 그래프 도식" if ko else "`DOC_CHUNK` SHA-256 anchor table, 3-Layer OKF Wiki, 4 Business Rules & 3 Workflows (`W1~W3`), Semantic Graph schematic"} | [`stage2_ko`]({ko_prefix}stage2_wiki_and_semantic_graph_ko.ipynb) | [`stage2_en`]({en_prefix}stage2_wiki_and_semantic_graph_en.ipynb) |
+| **5. {"구축 (Build Graph)" if ko else "Build Graph"}** | **Stage 3**<br>(`Step 3.1`–`3.2`) | `src/gcp_client.py`<br>`stage3_resource_check`<br>`H.run_gql()` / `H.nl2gql()` | {"6 Node × 4 Edge 메타모델 설계도, BigQuery/Spanner Graph DDL, 전체 토폴로지 & 1~2홉 서브그래프, 바인딩 변수 기반 ISO GQL" if ko else "6 Node × 4 Edge metamodel schematic, BQ/Spanner DDL, full topology & 1..2-hop ego graph, parameterized ISO GQL"} | [`stage3_ko`]({ko_prefix}stage3_property_graph_bigquery_spanner_ko.ipynb) | [`stage3_en`]({en_prefix}stage3_property_graph_bigquery_spanner_en.ipynb) |
+| **6. {"에이전트 구축 (Agent)" if ko else "Build Agent"}**<br>**7. {"답변 (Answer)" if ko else "Answer"}** | **Stage 4**<br>(`Step 4.1`–`4.2`) | `src/agent/mcp_server.py`<br>`src/agent/reasoning_engine.py` | {"코드 노출 경계(4개 핵심 파일), 도메인 비즈니스 도구 3종 카탈로그, AI FDE(`Gate G2-W`) 오케스트레이션, 180일 위약금 곡선" if ko else "Code exposure boundary (4 core files), 3 Domain Business Tools catalog, AI FDE (`Gate G2-W`) orchestration, 180d penalty curve"} | [`stage4_ko`]({ko_prefix}stage4_agent_and_mcp_execution_ko.ipynb) | [`stage4_en`]({en_prefix}stage4_agent_and_mcp_execution_en.ipynb) |
+| **8. {"검증 (Verify & Gate)" if ko else "Verify & Gate"}** | **Stage 5**<br>(`Step 5.1`–`5.2`) | `src/lineage_service.py`<br>`stage5_resource_check`<br>`H.recheck_cq()` | {"6-Layer 엔터프라이즈 데이터 리니지 DAG, Golden CQ 5종 실시간 재검증, Boundary 50회 평가 & Gate 1~5 판정" if ko else "6-Layer enterprise lineage DAG, live CQ re-audit, Boundary 50-trial metrics & Gate 1..5 checklist"} | [`stage5_ko`]({ko_prefix}stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_en`]({en_prefix}stage5_lineage_and_evaluation_en.ipynb) |
 
 ### {"조직 성숙도별 3-Track 선택 흐름 가이드 (`config/starter_config.json`)" if ko else "3-Track Selective Adoption Model (`config/starter_config.json`)"}
 
@@ -158,12 +158,17 @@ def build_stage0(lang="ko"):
 | **Track 2 · Standard** | `Stage 1 → Stage 2 → Stage 3 → Stage 4` | `bigquery` / `spanner` | {"정형 DW 원장 4종과 비정형 규칙을 Zero-ETL Property Graph로 결합해 다중 홉 ISO GQL 추론을 수행할 때" if ko else "Unifying 4 structured DW ledgers and unstructured rules into a Zero-ETL Property Graph for multi-hop ISO GQL"} |
 | **Track 3 · Full-Stack** | `Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5` | `bigquery` | {"엔드투엔드 데이터 리니지, Golden CQ 5건(100%), 경계값 10건×5회(50회) 벤치마크 및 Cloud Run 배포 게이트까지 운영할 때" if ko else "Full lifecycle operation including end-to-end lineage, 5 Golden CQs, 50-trial boundary benchmark, and Cloud Run release gates"} |"""),
         code(_bootstrap_code(lang, with_agent=True)),
+        md(f"### 0. {'[리소스 직결 아키텍처 & 코드 노출 경계 점검] 기준점 스튜디오 허브 · 노출 핵심 코드 4종 · Stage 0~5 통합 매핑 (`OntologyResourceConnector`)' if ko else '[Resource-Connected Architecture & Code Exposure Boundary] Reference Studio Hub, 4 Exposed Core Files & Stage 0~5 Unified Map (`OntologyResourceConnector`)'}"),
+        code("""from src.resource_connector import REFERENCE_STUDIOS, CODE_EXPOSURE_BOUNDARY, STAGE_UNIFIED_MAP
+H.show(pd.DataFrame(list(REFERENCE_STUDIOS.values()))[["id", "name_ko" if H.LANG == "ko" else "name_en", "tabs", "domain", "url"]])
+H.show(pd.DataFrame(CODE_EXPOSURE_BOUNDARY["exposed_starter_layer"])[["file", "category", "role_ko" if H.LANG == "ko" else "role_en"]])
+H.show(pd.DataFrame(STAGE_UNIFIED_MAP)[["stage", "starter_tab", "process_flow", "ready_resource", "notebook_ko" if H.LANG == "ko" else "notebook_en"]])"""),
         md(f"### 1. {'[전체 아키텍처 도식] 8단계 엔지니어링 파이프라인 및 10개 테이블 스키마 블루프린트' if ko else '[Architecture Blueprint] 8-Phase Engineering Pipeline & 10-Table Schema Blueprint'}"),
         code("""H.draw_eight_phase_flow()
 H.draw_table_er_blueprint()"""),
-        md(f"### 2. {'[Phase 1~2 · Stage 1: 준비 & 분석] 원시 입력 자산 인벤토리 확인 및 BigQuery 10개 테이블 프로파일링 (`mcp_stage1_asset_discovery` + `%%bqsql`)' if ko else '[Phase 1–2 · Stage 1: Prepare & Analyze] Raw Input Inventory & BigQuery 10-Table Profiling (`mcp_stage1_asset_discovery` + `%%bqsql`)'}"),
+        md(f"### 2. {'[Phase 1~2 · Stage 1: 준비 & 분석] 원시 입력 자산 인벤토리 확인 및 BigQuery 10개 테이블 프로파일링 (`stage1_resource_check` + `%%bqsql`)' if ko else '[Phase 1–2 · Stage 1: Prepare & Analyze] Raw Input Inventory & BigQuery 10-Table Profiling (`stage1_resource_check` + `%%bqsql`)'}"),
         code("""H.show(H.raw_inputs_inventory())
-res_s1 = server.execute_tool("mcp_stage1_asset_discovery")
+res_s1 = server.execute_tool("stage1_resource_check")
 H.show_tool(res_s1)"""),
         code(f"""%%bqsql df_tables
 SELECT table_id, row_count, size_bytes,
@@ -178,11 +183,11 @@ H.bar(df_tables, "table_id", "row_count", H.t("starter_ontology_dw 10개 테이�
         code("""H.show(H.parse_guides_live_demo())
 df_wiki, manifest = H.wiki_compilation_summary()
 H.show(df_wiki)
-res_s2 = server.execute_tool("mcp_stage2_wiki_and_semantic")
+res_s2 = server.execute_tool("stage2_resource_check")
 H.show_tool(res_s2, "anchored_chunks")
 H.draw_semantic_design_graph()"""),
         md(f"### 4. {'[Phase 5 · Stage 3: 물리 그래프 구축] `STARTER_ONTOLOGY_GRAPH` 메타모델 · 실행 GQL 문장 & 바인딩 변수 · 전체 인스턴스 토폴로지 (`%%bqsql` + `H.run_gql`)' if ko else '[Phase 5 · Stage 3: Build Property Graph] `STARTER_ONTOLOGY_GRAPH` Metamodel, Executed GQL & Bound Variables, and Full Topology (`%%bqsql` + `H.run_gql`)'}"),
-        code("""res_s3 = server.execute_tool("mcp_stage3_property_graph")
+        code("""res_s3 = server.execute_tool("stage3_resource_check")
 H.show_tool(res_s3, "node_tables")
 H.draw_property_graph_metamodel()"""),
         code(f"""%%bqsql df_paths
@@ -221,7 +226,7 @@ H.show_agent(agent.execute_cycle({"'CUST_DEMO_001 고객이 개통 120일 시점
 H.show_agent(agent.execute_cycle({"'CUST_DEMO_003(시니어 복지 대상) 고객이 개통 88일차에 시니어 요금제로 변경 시 위약금 면제 여부와 그래프 경로 확인해줘'" if ko else "'If customer CUST_DEMO_003 (Senior Welfare Eligible) switches to a senior plan on day 88, is the penalty exempted and what is the graph path?'"}),
              H.t("Golden CQ-05 · 시니어 복지 면제 & 멀티홉 그래프 경로", "Golden CQ-05 · Senior Welfare Exemption & Multi-Hop Graph Path"))"""),
         md(f"### 6. {'[Phase 8 · Stage 5: 검증 & 배포 게이트] 엔드투엔드 리니지 요약 및 Gate 1 ~ Gate 5 통합 통과 현황' if ko else '[Phase 8 · Stage 5: Verify & Release Gate] End-to-End Lineage Summary & Gate 1–5 Readiness Verdict'}"),
-        code("""res_s5 = server.execute_tool("mcp_stage5_lineage_and_eval")
+        code("""res_s5 = server.execute_tool("stage5_resource_check")
 H.show_tool(res_s5)
 H.show(H.gate_checklist_table())"""),
         nav_footer(
@@ -230,8 +235,8 @@ H.show(H.gate_checklist_table())"""),
                 (
                     "정형 DW 테이블과 비정형 정책 문서는 어떤 단계를 거쳐 에이전트 답변으로 연결되나요?" if ko
                     else "How do structured DW tables and unstructured policy documents connect to produce grounded agent answers?",
-                    "8단계 엔지니어링 흐름(1. 준비 → 2. 분석 → 3. 파싱 → 4. 통합 → 5. 구축 → 6. 에이전트 구축 → 7. 답변 → 8. 검증)을 통해 원시 CSV 6종과 마크다운 가이드 2종이 BigQuery 10개 테이블(`starter_ontology_dw`), 3-Layer LLM-Wiki, `STARTER_ONTOLOGY_GRAPH`(25 노드 · 29 엣지)로 통합되고, 8종 MCP 도구와 2-Pass Gemini(`gemini-3.8-flash`) 에이전트가 이를 조회해 답변합니다." if ko
-                    else "Through the 8-phase engineering pipeline (Prepare → Analyze → Parse → Integrate → Build Graph → Build Agent → Answer → Verify), 6 CSVs and 2 Markdown guides are unified into 10 BigQuery tables (`starter_ontology_dw`), a 3-Layer LLM-Wiki, and `STARTER_ONTOLOGY_GRAPH` (25 nodes, 29 edges), queried by 8 MCP tools and the 2-Pass Gemini (`gemini-3.8-flash`) agent."
+                    "8단계 엔지니어링 흐름(1. 준비 → 2. 분석 → 3. 파싱 → 4. 통합 → 5. 구축 → 6. 에이전트 구축 → 7. 답변 → 8. 검증)을 통해 원시 CSV 6종과 마크다운 가이드 2종이 BigQuery 10개 테이블(`starter_ontology_dw`), 3-Layer LLM-Wiki(`W1~W3`), `STARTER_ONTOLOGY_GRAPH`(25 노드 · 29 엣지) Ready-to-Use 리소스로 통합되고, 리소스 커넥터(`OntologyResourceConnector`)와 도메인 비즈니스 도구 3종(`DomainMcpServer`) 및 2-Pass Gemini(`gemini-3.8-flash`, `Gate G2-W`) 에이전트가 이를 조회해 답변합니다." if ko
+                    else "Through the 8-phase engineering pipeline (Prepare → Analyze → Parse → Integrate → Build Graph → Build Agent → Answer → Verify), 6 CSVs and 2 Markdown guides are unified into Ready-to-Use GCP resources—10 BigQuery tables (`starter_ontology_dw`), a 3-Layer LLM-Wiki (`W1~W3`), and `STARTER_ONTOLOGY_GRAPH` (25 nodes, 29 edges)—connected via `OntologyResourceConnector` and queried by the 3 Domain Business Tools (`DomainMcpServer`) and 2-Pass Gemini (`gemini-3.8-flash`, `Gate G2-W`) agent."
                 ),
             ],
             findings=[
@@ -258,12 +263,12 @@ def build_stage1(lang="ko"):
 
 ---
 
-# {"Stage 1. [준비 & 분석] 원천 자산 준비 · 테이블 스키마 설계 · 데이터 탐색 및 Golden CQ 정의" if ko else "Stage 1. [Prepare & Analyze] Raw Asset Preparation, Schema Design, Data Profiling & Golden CQ Definition"}
+# {"Stage 1. [준비 & 분석] Ready-to-Use 원천 자산 연결 · 테이블 스키마 설계 · 데이터 탐색 및 Golden CQ 정의" if ko else "Stage 1. [Prepare & Analyze] Ready-to-Use Asset Connection, Schema Design, Data Profiling & Golden CQ Definition"}
 ## {"Step 1.1 정형/비정형 자산 스코핑 및 스키마 블루프린트 · Step 1.2 데이터 탐색 및 Golden CQ 5종 / Boundary 10건 설계" if ko else "Step 1.1 Structured/Unstructured Asset Scoping & Schema Blueprint · Step 1.2 Data Profiling & 5 Golden CQs / 10 Boundary Cases"}
 
-{("Stage 1은 온톨로지 구축의 **Phase 1(준비)**과 **Phase 2(분석)**를 수행합니다. 에이전트가 답해야 할 핵심 역량 질문(**Golden CQ 5종**)과 경계 조건(**Boundary 10건**)을 먼저 확정하고, 이에 필요한 정형 CSV 6종과 비정형 가이드 2종을 스코핑하여 Terraform으로 프로비저닝된 BigQuery 10개 테이블(`starter_ontology_dw`)에 적재·검증합니다. 샘플 CSV는 합성 데이터(`provenance=SYNTHETIC_DEMO`)입니다. 고객 데이터에 적용할 때는 범위를 파일 단위로 정하고, 원본 문서는 `pipeline/extract_docs.py`로 원문 그대로 변환하며, 고객이 준 테이블만 씁니다."
+{("Stage 1은 온톨로지 구축의 **Phase 1(준비)**과 **Phase 2(분석)**를 수행합니다. 에이전트가 답해야 할 핵심 역량 질문(**Golden CQ 5종**)과 경계 조건(**Boundary 10건**)을 먼저 확정하고, 이에 필요한 정형 CSV 6종과 비정형 가이드 2종이 적재된 Ready-to-Use BigQuery 10개 테이블(`starter_ontology_dw`)을 리소스 커넥터(`src/resource_connector.py` · `stage1_resource_check`)로 즉시 연결·검증합니다. 샘플 CSV는 비식별 합성 데모 데이터(`provenance=SYNTHETIC_DEMO`)입니다."
   if ko else
-  "Stage 1 executes **Phase 1 (Preparation)** and **Phase 2 (Analysis)** of the methodology. We first define the target **5 Golden Competency Questions (CQs)** and **10 Boundary Cases**, scope the required 6 structured CSVs and 2 unstructured policy guides, and validate the 10 Terraform-provisioned BigQuery tables (`starter_ontology_dw`). The sample CSV files are synthetic data (`provenance=SYNTHETIC_DEMO`). For customer data, scope is chosen per file, source documents are converted verbatim by `pipeline/extract_docs.py`, and only tables the customer provided are used.")}
+  "Stage 1 executes **Phase 1 (Preparation)** and **Phase 2 (Analysis)** of the methodology. We first define the target **5 Golden Competency Questions (CQs)** and **10 Boundary Cases**, and connect directly to the 10 Ready-to-Use BigQuery tables (`starter_ontology_dw`) via `src/resource_connector.py` (`stage1_resource_check`). The sample CSV files are de-identified synthetic demo data (`provenance=SYNTHETIC_DEMO`).")}
 
 ![Stage 1 Prepare and Analyze Architecture Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=False)),
@@ -278,8 +283,8 @@ FROM `{FQ}.INFORMATION_SCHEMA.COLUMNS`
 GROUP BY table_name
 ORDER BY table_name"""),
         code("""H.show(df_schema)"""),
-        md(f"### 2. {'[Phase 2a: 분석 (Analysis)] Stage 1 파이프라인 MCP(`mcp_stage1_asset_discovery`) 실행 — 테이블 프로파일링 및 비식별화 거버넌스 검증' if ko else '[Phase 2a: Analysis] Stage 1 Pipeline MCP (`mcp_stage1_asset_discovery`) — Table Profiling & PII De-identification Check'}"),
-        code("""res_s1 = server.execute_tool("mcp_stage1_asset_discovery", {"steps": ["profile_tables", "scan_guides", "prune_noise", "tag_pii_governance"]})
+        md(f"### 2. {'[Phase 2a: 분석 (Analysis)] Stage 1 리소스 검증(`stage1_resource_check`) 실행 — 테이블 프로파일링 및 비식별화 거버넌스 검증' if ko else '[Phase 2a: Analysis] Stage 1 Resource Verification (`stage1_resource_check`) — Table Profiling & PII De-identification Check'}"),
+        code("""res_s1 = server.execute_tool("stage1_resource_check", {"steps": ["profile_tables", "scan_guides", "prune_noise", "tag_pii_governance"]})
 H.show_tool(res_s1, "table_inventory")
 H.show(pd.DataFrame([res_s1["pii_check"]]))"""),
         code(f"""%%bqsql df_tables
@@ -325,13 +330,13 @@ H.heatmap(d_sub.pivot(index="device_name", columns="plan_name", values="net_pric
 SELECT t.term, c.chunk_id, ARRAY_LENGTH(REGEXP_EXTRACT_ALL(c.content, t.pat)) AS hits
 FROM `{FQ}.tb_doc_chunks` c,
 UNNEST([
-  STRUCT({'\"공시지원금 (Subsidy)\" AS term, r\'(?i)subsidy|공시지원금\' AS pat' if ko else '\"Public Subsidy\" AS term, r\'(?i)subsidy|subsidies\' AS pat'}),
-  STRUCT({'\"유통망 상한 (15% Cap)\", r\'(?i)15%|additional|유통망\'' if ko else '\"15% Retail Cap\", r\'(?i)15%|additional|total subsidy\''}),
-  STRUCT({'\"180일 의무유지 (180d)\", r\'(?i)180-day|180 days|180일\'' if ko else '\"180-Day Rule\", r\'(?i)180-day|180 days|180\''}),
-  STRUCT({'\"일할 차액정산 (Prorated)\", r\'(?i)formula|prorated|일할|차액정산\'' if ko else '\"Prorated Clawback\", r\'(?i)formula|prorated|difference\''}),
-  STRUCT({'\"위약금 (Penalty)\", r\'(?i)penalty|위약금\'' if ko else '\"Penalty Settlement\", r\'(?i)penalty|penalties\''}),
-  STRUCT({'\"선택약정 25% (Selective)\", r\'(?i)selective|25%|선택약정\'' if ko else '\"25% Selective Discount\", r\'(?i)selective|25%\''}),
-  STRUCT({'\"복지 면제 (Welfare)\", r\'(?i)welfare|exempt|복지|면제\'' if ko else '\"Welfare Exemption\", r\'(?i)welfare|exempt\''})
+  STRUCT("{'공시지원금 (Subsidy)' if ko else 'Public Subsidy'}" AS term, r'(?i){"subsidy|공시지원금" if ko else "subsidy|subsidies"}' AS pat),
+  STRUCT("{'유통망 상한 (15% Cap)' if ko else '15% Retail Cap'}", r'(?i){"15%|additional|유통망" if ko else "15%|additional|total subsidy"}'),
+  STRUCT("{'180일 의무유지 (180d)' if ko else '180-Day Rule'}", r'(?i){"180-day|180 days|180일" if ko else "180-day|180 days|180"}'),
+  STRUCT("{'일할 차액정산 (Prorated)' if ko else 'Prorated Clawback'}", r'(?i){"formula|prorated|일할|차액정산" if ko else "formula|prorated|difference"}'),
+  STRUCT("{'위약금 (Penalty)' if ko else 'Penalty Settlement'}", r'(?i){"penalty|위약금" if ko else "penalty|penalties"}'),
+  STRUCT("{'선택약정 25% (Selective)' if ko else '25% Selective Discount'}", r'(?i){"selective|25%|선택약정" if ko else "selective|25%"}'),
+  STRUCT("{'복지 면제 (Welfare)' if ko else 'Welfare Exemption'}", r'(?i){"welfare|exempt|복지|면제" if ko else "welfare|exempt"}')
 ]) AS t
 ORDER BY t.term, c.chunk_id"""),
         code("""glossary = H.read_json("data/input/05_glossary/business_glossary.json")
@@ -371,36 +376,28 @@ H.show(bcs, ["case_id", "root_cause_code", "missing_context", "query", "expected
     ]
 
 
-S2_SELF_MD_KO = """### 5. [온톨로지 자기완결성 점검] 엔티티·개념 문서가 원문 근거를 스스로 담고 있는가
+S2_SELF_MD_KO = """### 5. [온톨로지 자기완결성 점검] 엔티티·개념·규칙 위키가 원문 근거를 스스로 담고 있는가
 
-**권장 방법**
+**권장 방법 (Reference Standard: LG U+ & LG H&H 12-Tab Studio)**
 - 온톨로지 레이어의 엔티티·개념 문서마다 원문에서 요약한 핵심 사실을 원문 값, 문단 앵커, 짧은 인용과 함께 담는다. 원문에 없는 값은 쓰지 않는다.
-- 그래프 설계와 그래프 데이터 적재는 온톨로지 폴더만으로 동작한다(frontmatter 기반 로더, 하드코딩 INSERT 없음).
-- 검색은 온톨로지 문서를 먼저 보고, 부족하면 파싱 청크로 보완한다.
-- 자산 레지스트리는 고객이 제공한 입력 문서만 관리한다(자동 수집한 규칙·용어 항목은 넣지 않는다).
-- 승격 전 재추출 게이트 스크립트가 앵커·값·커버리지를 검사한다. `latest` 승격은 별도 단계이며 사람 검토 기록을 남긴다.
+- 그래프 설계와 그래프 데이터 적재는 온톨로지 폴더만으로 동작한다(frontmatter `graph.properties` 단일 저작, 하드코딩 INSERT 없음).
+- 검색은 온톨로지 위키와 비즈니스 룰/워크플로(`W1~W3`)를 먼저 보고, 원문 `DOC_CHUNK` 해시 앵커로 교차 검증한다.
 
-**스타터의 현재 구조 (권장 방법과 다름)**
-- 위키는 집계 파일 4종(`summary.md`, `entities.md`, `concepts.md`, `rules.md`)과 `ontology.jsonld`이며, 엔티티별 개별 문서가 아니다. GCS 위치는 `gs://seanjung-poc-starter-ontology/ontology/`이다.
-- `entities.md`는 CSV 테이블 행(`data/input/03_tables/*.csv`)에서 생성되고, `concepts.md`는 그래프 모델의 엣지 4종을 설명한다. 둘 다 문단 앵커가 없다. `rules.md`의 규칙은 `DOC_CHUNK` 앵커를 가진다.
-- 물리 그래프는 온톨로지 폴더가 아니라 BigQuery 테이블 위에 선언된다(`pipeline/graph_builder.py`, Stage 3).
-- 재추출 게이트와 `latest` 승격 단계는 없다. 가장 가까운 장치는 Lite 트랙의 `pipeline/extract_wiki.py`로, 인용문이 원문 청크에 그대로 있는 항목만 남긴다.
+**스타터의 Ready-to-Use 리소스 구조**
+- 스타터는 무거운 컴파일러를 직접 노출하지 않고, GCS(`gs://seanjung-poc-starter-ontology/ontology/`) 및 `data/llm_wiki/`에 준비된 3-Layer 집계 위키 4종(`summary.md`, `entities.md`, `concepts.md`, `rules.md`), `ontology.jsonld`, 그리고 비즈니스 규칙(`business_rules.json`)·워크플로(`business_workflows.json`, `W1~W3`)에 즉시 연결(`src/resource_connector.py`)한다.
+- `rules.md`와 `business_rules.json`의 모든 규칙은 원문 `DOC_CHUNK_001~005` SHA-256 해시 앵커를 보유한다.
 
 아래 셀은 로컬 위키 파일과 `ontology.jsonld`에서 항목 수와 청크 앵커(`DOC_CHUNK_*` 또는 `anchor_<12hex>`)를 가진 항목 수를 센다."""
-S2_SELF_MD_EN = """### 5. [Ontology Self-Sufficiency Check] Do entity and concept documents carry their own source evidence?
+S2_SELF_MD_EN = """### 5. [Ontology Self-Sufficiency Check] Do entity, concept, and rule wiki resources carry their own source evidence?
 
-**Recommended method**
+**Recommended method (Reference Standard: LG U+ & LG H&H 12-Tab Studio)**
 - Each entity/concept document in the ontology layer carries the key facts summarized from the source, with source values, paragraph anchors and short quotes. Values not present in the source are not allowed.
-- Graph design and graph data load work from the ontology folder alone (frontmatter-driven loader, no hard-coded INSERTs).
-- Search reads ontology documents first and falls back to parsed chunks.
-- The asset registry tracks only customer-provided input documents (no auto-harvested rule or glossary items).
-- Before promotion, a re-extraction gate script checks anchors, values and coverage. Promotion to `latest` is a separate step with a recorded human review.
+- Graph design and graph data load work from the ontology folder alone (frontmatter `graph.properties` single-source authoring, no hard-coded INSERTs).
+- Search reads ontology wiki and business rules/workflows (`W1~W3`) first, cross-verifying against `DOC_CHUNK` SHA-256 anchors.
 
-**The starter's current structure (differs from the method)**
-- The wiki is 4 aggregate files (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) plus `ontology.jsonld`, not one document per entity. GCS location: `gs://seanjung-poc-starter-ontology/ontology/`.
-- `entities.md` is generated from CSV table rows (`data/input/03_tables/*.csv`) and `concepts.md` describes the 4 edge types of the graph model; neither carries paragraph anchors. Rules in `rules.md` carry `DOC_CHUNK` anchors.
-- The physical graph is declared over BigQuery tables (`pipeline/graph_builder.py`, Stage 3), not loaded from the ontology folder.
-- There is no re-extraction gate and no `latest` promotion step. The closest mechanism is the Lite track's `pipeline/extract_wiki.py`, which keeps only items whose quote appears verbatim in the source chunk.
+**The starter's Ready-to-Use resource structure**
+- Instead of exposing heavy internal compilers, the Starter connects directly (`src/resource_connector.py`) to the Ready-to-Use 3-Layer Wiki files (`summary.md`, `entities.md`, `concepts.md`, `rules.md`), `ontology.jsonld`, and business rules/workflows (`business_rules.json`, `business_workflows.json` `W1~W3`) on GCS (`gs://seanjung-poc-starter-ontology/ontology/`).
+- Every rule in `rules.md` and `business_rules.json` carries a deterministic `DOC_CHUNK_001~005` SHA-256 anchor.
 
 The cell below counts, in the local wiki files and `ontology.jsonld`, the items and the items carrying a chunk anchor (`DOC_CHUNK_*` or `anchor_<12hex>`)."""
 
@@ -413,31 +410,31 @@ def build_stage2(lang="ko"):
 
 ---
 
-# {"Stage 2. [파싱 & 통합] 비정형 정책 가이드 파싱 · 3-Layer LLM-Wiki 컴파일 & 시맨틱 온톨로지 그래프" if ko else "Stage 2. [Parse & Integrate] Policy Guide Parsing, 3-Layer LLM-Wiki Compilation & Semantic Ontology Graph"}
-## {"Step 2.1 SHA-256 해시 앵커 청킹 및 OKF v0.2 3-Layer Wiki 생성 · Step 2.2 도메인 규칙 및 시맨틱 그래프 통합 (`Entity=Node`, `Concept=Edge`)" if ko else "Step 2.1 SHA-256 Hash-Anchored Chunking & OKF v0.2 3-Layer Wiki · Step 2.2 Domain Rule Binding & Semantic Graph (`Entity=Node`, `Concept=Edge`)"}
+# {"Stage 2. [파싱 & 통합] Ready-to-Use 3-Layer OKF 위키 · 비즈니스 규칙/워크플로(`W1~W3`) & 시맨틱 그래프 연결" if ko else "Stage 2. [Parse & Integrate] Ready-to-Use 3-Layer OKF Wiki, Business Rules/Workflows (`W1~W3`) & Semantic Graph"}
+## {"Step 2.1 SHA-256 해시 앵커 청크 및 OKF v0.2 3-Layer Wiki 연결 · Step 2.2 도메인 규칙 및 시맨틱 그래프 통합 (`Entity=Node`, `Concept=Edge`)" if ko else "Step 2.1 SHA-256 Hash-Anchored Chunks & OKF v0.2 3-Layer Wiki · Step 2.2 Domain Rule Binding & Semantic Graph (`Entity=Node`, `Concept=Edge`)"}
 
-{("Stage 2는 방법론의 **Phase 3(파싱)**과 **Phase 4(통합)**를 구현합니다. `pipeline/ingest.py`의 `run_ingest()`가 원시 정책 가이드(`01_guides/*.md`)를 문단 단위(`DOC_CHUNK_001~005`)로 파싱하여 원문 변조 여부를 즉시 검증할 수 있는 **결정론적 SHA-256 해시 앵커(`anchor_<12hex>`)**를 부여하고, 이를 **Andrej Karpathy 3-Layer LLM-Wiki(`summary.md`, `entities.md`, `concepts.md`, `rules.md`)** 및 **시맨틱 온톨로지 그래프(`ontology.jsonld`, `tb_domain_rules`, `edge_rule_applies_to_plan`)**로 통합합니다."
+{("Stage 2는 방법론의 **Phase 3(파싱)**과 **Phase 4(통합)** 결과로 프로비저닝된 **Ready-to-Use 지식 리소스**에 연결합니다. 원시 정책 가이드(`01_guides/*.md`)가 문단 단위(`DOC_CHUNK_001~005`) **결정론적 SHA-256 해시 앵커(`anchor_<12hex>`)**로 파싱되어 있고, **Andrej Karpathy 3-Layer LLM-Wiki(`summary.md`, `entities.md`, `concepts.md`, `rules.md`)**, **비즈니스 규칙 4종(`business_rules.json`) · 워크플로 3종(`business_workflows.json`, `W1~W3`)**, 그리고 **시맨틱 온톨로지 그래프(`ontology.jsonld`, `tb_domain_rules`, `edge_rule_applies_to_plan`)**가 GCS(`gs://seanjung-poc-starter-ontology/ontology/`)와 BigQuery에 준비되어 있어 `stage2_resource_check`로 즉시 검증합니다."
   if ko else
-  "Stage 2 implements **Phase 3 (Parsing)** and **Phase 4 (Integration)**. `pipeline/ingest.py` (`run_ingest()`) parses raw policy guides (`01_guides/*.md`) into `DOC_CHUNK_001~005` with deterministic **SHA-256 hash anchors (`anchor_<12hex>`)**, compiles the **Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`)**, and binds structured tariff plans to codified business rules (`tb_domain_rules`, `edge_rule_applies_to_plan`) inside the **Semantic Ontology Graph (`Entity=Node`, `Concept=Edge`)**.")}
+  "Stage 2 connects to the **Ready-to-Use Knowledge Resources** provisioned from **Phase 3 (Parsing)** and **Phase 4 (Integration)**: `DOC_CHUNK_001~005` with deterministic **SHA-256 hash anchors (`anchor_<12hex>`)**, the **Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`)**, **4 Business Rules (`business_rules.json`) & 3 Decision Workflows (`business_workflows.json`, `W1~W3`)**, and the **Semantic Ontology Graph (`ontology.jsonld`, `tb_domain_rules`, `edge_rule_applies_to_plan`)** synced across GCS (`gs://seanjung-poc-starter-ontology/ontology/`) and BigQuery.")}
 
 ![Stage 2 Parse and Integrate Architecture Flow](attachment:{banner_file})"""),
         code(_bootstrap_code(lang, with_agent=False)),
-        md(f"### 1. {'[Phase 3a: 파싱 (Parsing)] 원시 정책 마크다운(`01_guides/*.md`) 정규식 청크 분할 및 SHA-256 해시 앵커 무결성 대조 (`pipeline/ingest.py`)' if ko else '[Phase 3a: Parsing] Raw Policy Markdown (`01_guides/*.md`) Chunking & SHA-256 Anchor Integrity Check (`pipeline/ingest.py`)'}"),
+        md(f"### 1. {'[Phase 3a: 파싱 (Parsing)] 원시 정책 마크다운(`01_guides/*.md`) 정규식 청크 분할 및 SHA-256 해시 앵커 무결성 대조 (`H.parse_guides_live_demo`)' if ko else '[Phase 3a: Parsing] Raw Policy Markdown (`01_guides/*.md`) Chunking & SHA-256 Anchor Integrity Check (`H.parse_guides_live_demo`)'}"),
         code("""df_parsed = H.parse_guides_live_demo()
 H.show(df_parsed)"""),
-        code(f"""%%bqsql df_bq_chunks
-SELECT chunk_id, source_file, section_title, trust_tier, content_sha256,
-       CHAR_LENGTH(content) AS char_len, {"SUBSTR(content, 1, 85)" if ko else r"REGEXP_REPLACE(SUBSTR(content, 1, 85), r'\s*\([^)]*[^\x00-\x7F][^)]*\)', '')"} AS content_preview
-FROM `{FQ}.tb_doc_chunks`
-ORDER BY chunk_id"""),
+        code((
+            f"%%bqsql df_bq_chunks\nSELECT chunk_id, source_file, section_title, trust_tier, content_sha256,\n       CHAR_LENGTH(content) AS char_len, SUBSTR(content, 1, 85) AS content_preview\nFROM `{FQ}.tb_doc_chunks`\nORDER BY chunk_id"
+            if ko else
+            f"%%bqsql df_bq_chunks\nSELECT chunk_id, source_file, section_title, trust_tier, content_sha256,\n       CHAR_LENGTH(content) AS char_len, REGEXP_REPLACE(SUBSTR(content, 1, 85), r'\\s*\\([^)]*[^\\x00-\\x7F][^)]*\\)', '') AS content_preview\nFROM `{FQ}.tb_doc_chunks`\nORDER BY chunk_id"
+        )),
         code("""H.show(df_bq_chunks)"""),
-        md(f"### 2. {'[Phase 3b: 위키 컴파일 & GCS 동기화] Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) 및 `mcp_stage2_wiki_and_semantic` 실행' if ko else '[Phase 3b: Wiki Compilation & GCS Sync] Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) & `mcp_stage2_wiki_and_semantic`'}"),
+        md(f"### 2. {'[Phase 3b: 위키 컴파일 & GCS 동기화] Andrej Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) 및 `stage2_resource_check` 리소스 검증' if ko else '[Phase 3b: Wiki Compilation & GCS Sync] Karpathy 3-Layer LLM-Wiki (`summary.md`, `entities.md`, `concepts.md`, `rules.md`) & `stage2_resource_check`'}"),
         code(f"""df_wiki, manifest = H.wiki_compilation_summary()
 H.md(f"**GCS Manifest Status**: `{{manifest['status']}}` · Bucket `{{manifest['gcs_uri']}}` · Uploaded Objects `{{len(manifest['uploaded_gcs_objects'])}}` · Loaded BQ Tables `{{manifest['validation']['bigquery_tables_loaded']}}`")
 H.show(df_wiki)
 for fname in ("summary.md", "entities.md", "concepts.md", "rules.md"):
     H.show_md_file(H.ROOT / "data/llm_wiki/{'ko' if ko else 'en'}" / fname, max_lines=22)
-res_s2 = server.execute_tool("mcp_stage2_wiki_and_semantic", {{"steps": ["compile_3layer_wiki", "extract_hash_anchors", "bind_semantic_bridges"]}})
+res_s2 = server.execute_tool("stage2_resource_check", {{"steps": ["compile_3layer_wiki", "extract_hash_anchors", "bind_semantic_bridges"]}})
 H.show_tool(res_s2, "anchored_chunks")"""),
         md(f"### 3. {'[Phase 4a: 시맨틱 통합 (Integration)] Vertex AI Gemini(`gemini-3.8-flash`) 기반 후보 트리플 추출 및 도메인 규칙 ↔ 요금제 시맨틱 브릿지 테이블 확인 (`%%bqsql`)' if ko else '[Phase 4a: Semantic Integration] Live Gemini (`gemini-3.8-flash`) Candidate Triple Extraction & Rule-to-Plan Semantic Bridge Tables (`%%bqsql`)'}"),
         code("""triples = H.propose_triples(["DOC_CHUNK_001", "DOC_CHUNK_003", "DOC_CHUNK_004"])
@@ -497,8 +494,8 @@ H.show(pd.DataFrame(anchor_rows))"""),
                 (
                     "비정형 정책 가이드 문단과 정형 요금제 마스터 테이블은 어떻게 시맨틱하게 통합되나요?" if ko
                     else "How are unstructured policy paragraphs semantically integrated with structured tariff plan tables?",
-                    "`pipeline/ingest.py`가 정책 가이드를 `DOC_CHUNK_001~005`로 분할해 SHA-256 해시 앵커(`anchor_<12hex>`)를 부여하고, 문서 내 비즈니스 규칙을 `tb_domain_rules`(4건)로 코드화한 뒤 `edge_rule_applies_to_plan`(12건)을 통해 각 요금제(`plan_id`)와 근거 청크(`source_chunk_id`)를 양방향으로 바인딩합니다." if ko
-                    else "`pipeline/ingest.py` splits policy guides into `DOC_CHUNK_001~005` with deterministic `anchor_<12hex>` SHA-256 hashes, codifies domain rules in `tb_domain_rules` (4 rules), and binds them to structured `plan_id` rows via `edge_rule_applies_to_plan` (12 edges)."
+                    "정책 가이드를 `DOC_CHUNK_001~005`로 분할해 SHA-256 해시 앵커(`anchor_<12hex>`)를 부여하고, 문서 내 비즈니스 규칙을 `tb_domain_rules`(4건) 및 `business_rules.json`으로 코드화한 뒤 `edge_rule_applies_to_plan`(12건)을 통해 각 요금제(`plan_id`)와 근거 청크(`source_chunk_id`)를 양방향으로 바인딩합니다." if ko
+                    else "Policy guides are segmented into `DOC_CHUNK_001~005` with deterministic `anchor_<12hex>` SHA-256 hashes, domain rules are codified in `tb_domain_rules` (4 rules) and `business_rules.json`, and bound to structured `plan_id` rows via `edge_rule_applies_to_plan` (12 edges)."
                 ),
             ],
             findings=[

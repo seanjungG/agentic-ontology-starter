@@ -1,0 +1,45 @@
+{
+  "version": "2.2.0",
+  "gate_g2w_status": "PASS",
+  "workflows": [
+    {
+      "workflow_id": "WF-01-SUBSIDY-ELIGIBILITY",
+      "tier": "W1",
+      "name": "공시지원금 및 실구매가 단일 판정 워크플로우 (W1 · Single Decision)",
+      "pattern_matrix": "P1 × P2 × W1",
+      "rules_bound": ["RULE_SUBSIDY_CAP"],
+      "tools_bound": ["mcp_lookup_customer_profile", "mcp_query_graph_and_wiki"],
+      "steps": [
+        "1. 단말(DeviceNode) 출고가 및 요금제(PlanNode) 월정액 원장 조회",
+        "2. HAS_SUBSIDY_POLICY 간선으로 공시지원금 + 유통망 추가지원금(15%) 합산",
+        "3. 실구매 원금(factory_price - total_subsidy) 산출 및 DOC_CHUNK_001/002 인용"
+      ]
+    },
+    {
+      "workflow_id": "WF-02-PENALTY-AND-EXEMPTION",
+      "tier": "W2",
+      "name": "180일 요금제 하향 차액위약금 및 복지 면제 다단계 분기 워크플로우 (W2 · Multi-Branch)",
+      "pattern_matrix": "P1 × P2 × W2",
+      "rules_bound": ["RULE_SIX_PLAN_180D", "RULE_WELFARE_EXEMPT"],
+      "tools_bound": ["mcp_lookup_customer_profile", "mcp_calculate_penalty_rule"],
+      "steps": [
+        "1. 고객 계약(CustomerContractNode) 유지일수(elapsed_days) 및 복지 특례(welfare_status) 조회",
+        "2. [분기 A] SENIOR_EXEMPT / MILITARY_PAUSE_ELIGIBLE 해당 시 RULE_WELFARE_EXEMPT 적용 (위약금 0원 면제)",
+        "3. [분기 B] 일반 약정 & elapsed_days < 180 & 변경 요금제 < 45,000원 시 일할 차액위약금 산출 (DOC_CHUNK_003)"
+      ]
+    },
+    {
+      "workflow_id": "WF-03-TCO-CROSS-AUDIT",
+      "tier": "W3",
+      "name": "24개월 공시지원금 vs 선택약정(25%) 교차 비교 및 Gate G2-W 감사 워크플로우 (W3 · Cross-Verification)",
+      "pattern_matrix": "P1 × P2 × P3 × W3 (Gate G2-W)",
+      "rules_bound": ["RULE_SUBSIDY_CAP", "RULE_TCO_24M"],
+      "tools_bound": ["mcp_calculate_penalty_rule", "mcp_query_graph_and_wiki"],
+      "steps": [
+        "1. BigQuery Property Graph 멀티홉 탐색으로 단말×요금제×규칙 경로(Device ➔ Plan ➔ Rule) 확인",
+        "2. 24개월 공시지원금 총혜택 vs 25% 선택약정 총할인액(monthly_fee * 0.25 * 24) 정밀 비교",
+        "3. Gate G2-W 감사: 도구 산출 수치와 에이전트 답변 수치·조항 ID(DOC_CHUNK_005) 1:1 정합성 검증"
+      ]
+    }
+  ]
+}

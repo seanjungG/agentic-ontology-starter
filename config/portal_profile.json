@@ -1,259 +1,333 @@
 {
-  "schema_version": "2.0",
-  "_readme": "이 파일은 스튜디오의 0. Overview 및 Stage 5. Lineage & Eval 화면 메타데이터를 정의합니다. Light Enterprise 디자인 토큰(#3b82f6, #0d9488, #6366f1, #7c3aed, #db2777)과 동기화되어 있습니다.",
-  "brand": {
-    "product_name": "Agentic Ontology Studio",
-    "edition": "Starter Pack v2.0",
-    "domain_label": "Telecom Subsidy & Contract (De-identified Sample)",
-    "topbar_badges": [
-      { "text": "OKF v0.2 Standard", "tone": "default" },
-      { "text": "3-Track Configurable", "tone": "teal" },
-      { "text": "BigQuery & Spanner Graph", "tone": "indigo" }
+  "version": "2.2",
+  "title": "Enterprise Agentic Ontology Starter",
+  "subtitle": "Starter Pack v2.2 · Resource-Connected (GCP BigQuery Graph · GCS 3-Layer Wiki · 3 Domain Tools)",
+  "reference_studios": [
+    {
+      "id": "starter",
+      "badge": "LIVE STARTER PORTAL (6-TAB)",
+      "title": "Enterprise Agentic Ontology Starter",
+      "url": "https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/",
+      "desc": "즉시 사용 가능한 GCP 리소스(BigQuery Graph · GCS 3-Layer Wiki · Spanner)와 3개 도메인 비즈니스 도구에 직결된 경량 스타터 포털",
+      "accent": "#2563eb"
+    },
+    {
+      "id": "lguplus",
+      "badge": "REFERENCE STANDARD (12-TAB · TELECOM)",
+      "title": "LG U+ Agentic Ontology Studio (Full Platform)",
+      "url": "https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/",
+      "desc": "6-Layer 온톨로지 표준 · P1/P2/P3 × W1/W2/W3 × Gate G2-W · 엔터프라이즈 거버넌스 전체 기준점 데모",
+      "accent": "#7c3aed"
+    },
+    {
+      "id": "hnh",
+      "badge": "REFERENCE STANDARD (12-TAB · COSMETICS)",
+      "title": "LG H&H Compliance Ontology Studio",
+      "url": "https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/",
+      "desc": "KR/US/EU 글로벌 화장품 표시·광고 규제 및 배합 한도 다중 법역 그래프 레퍼런스 데모",
+      "accent": "#059669"
+    }
+  ],
+  "standard_flow": {
+    "title": "6-Layer Ontology Standard Flow (기준점 아키텍처)",
+    "subtitle": "복잡한 온톨로지 컴파일러·MCP 서버 구축 과정은 플랫폼으로 추상화하고, 스타터 팩은 검증 완료된 Ready-to-Use GCP 리소스와 도메인 도구에 즉시 연결합니다.",
+    "layers": [
+      {"layer": "Layer 1", "name": "원천 데이터 & 약관 (Physical & Docs)", "resource": "BigQuery DW 4종 원장 + PDF/MD 약관", "code": "Stage 1 · Step 1.1~1.2"},
+      {"layer": "Layer 2", "name": "3-Layer OKF 위키 (LLM-Wiki)", "resource": "gs://seanjung-poc-starter-ontology/ontology/ (summary·entities·concepts·rules)", "code": "Stage 2 · Step 2.1"},
+      {"layer": "Layer 3", "name": "시맨틱/물리 그래프 (BigQuery Graph)", "resource": "STARTER_ONTOLOGY_GRAPH (P1 1:1 ➔ P2 1:N ➔ P3 N:M)", "code": "Stage 3 · Step 3.1~3.2"},
+      {"layer": "Layer 4", "name": "비즈니스 룰 & 워크플로우", "resource": "business_rules.json · business_workflows.json (W1 ➔ W2 ➔ W3 · Gate G2-W)", "code": "Stage 2 · Step 2.2"},
+      {"layer": "Layer 5", "name": "도메인 비즈니스 도구 (3종)", "resource": "고객 원장 조회 · 위약금/지원금 계산 · GQL+Wiki 하이브리드 검색", "code": "Stage 4 · Step 4.1"},
+      {"layer": "Layer 6", "name": "AI FDE 에이전트 & Golden CQ", "resource": "Gemini ReAct Loop + Gate G2-W 감사 + 15 Golden CQs (100% PASS)", "code": "Stage 4~5 · Step 4.2~5.3"}
     ]
   },
-  "overview": {
-    "eyebrow": "SECTION 2 · 5-STAGE METHODOLOGY & MODULAR MCP PIPELINE",
-    "title": "5-Stage 온톨로지 엔지니어링 방법론과 모듈형 Stage MCP 실행 보드",
-    "lead": "위쪽 전체 패스 맵에서 선택한 경로(Lite 1→2→4 · Standard 1→2→3→4 · Full-Stack 1→5)에 따라 아래 5개 Stage 중 현재 활성화된 단계와 생략(Bypass)되는 단계가 자동 표시됩니다. 각 Stage 상단의 <code>▶ Stage N MCP</code> 버튼을 클릭하면 세부 Step을 단독 실행할 수 있습니다.",
-    "path_configurator": {
-      "eyebrow_ko": "INTERACTIVE PATH MAP & STARTER PACK PACKAGE BUILDER",
-      "eyebrow_en": "INTERACTIVE PATH MAP & STARTER PACK PACKAGE BUILDER",
-      "title_ko": "전체 경로(Lite · Standard · Full-Stack) 다이어그램 & 스타터팩 패키지 조립 보드",
-      "title_en": "Full-Picture Path Map (Lite · Standard · Full-Stack) & Starter Pack Package Builder",
-      "lead_ko": "아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>선택한 조합으로 조립·구현되는 스타터팩 패키지 구성도(파이프라인 아키텍처, 포함 코드 모듈, 활성 MCP·노트북, project.json·Terraform, 실행 CLI)</b>가 즉시 재구성됩니다.",
-      "lead_en": "Select a <b>Path Preset (Lite / Standard / Full-Stack / Dual Fabric)</b> or <b>click any building block inside the Stage 1 ➔ Stage 5 diagram</b> below. The active route lights up in real time and dynamically assembles the <b>Starter Pack Package Blueprint (pipeline flow, Python modules, MCP tools, notebooks, project.json/Terraform, and CLI commands)</b>."
+  "code_exposure_boundary": {
+    "abstracted_title": "🔒 플랫폼 추상화 영역 (Starter 코드에서 제외 · Ready-to-Use 리소스로 제공)",
+    "abstracted_items": [
+      "내부 MCP 빌더 프로토콜 서버 및 Stage 1~5 파이프라인 컴파일러 구현체",
+      "PDF 레이아웃 파서, TBox/ABox 자동 추론기, SQL:2023 Property Graph DDL 자동 합성 엔진",
+      "복잡한 멀티테넌트 거버넌스 스튜디오 관리 코드 (12-Tab Full Platform 전용)"
+    ],
+    "exposed_title": "🔓 스타터 노출 & 커스터마이징 영역 (개발자가 직접 수정·연결하는 4대 핵심 파일)",
+    "exposed_items": [
+      "src/resource_connector.py — Ready-to-Use GCP 리소스(BigQuery Graph, GCS Wiki, Spanner) 직결 커넥터",
+      "src/agent/mcp_server.py — 도메인 비즈니스 도구 3종 (고객 조회, 위약금 산출, GQL+Wiki 통합 질의)",
+      "src/agent/reasoning_engine.py — AI FDE 에이전트 추론 루프 + 결정론적 Gate G2-W 감사",
+      "notebooks/{ko,en}/00~05_*.ipynb — 설명·프로세스·리소스·데모가 1:1 연결된 12개 실습 노트북"
+    ]
+  },
+  "stage_unified_map": [
+    {
+      "stage": "Stage 0",
+      "process": "Overview & Ready-to-Use Resource Connection (P1~P3 · W1~W3 · Gate G2-W)",
+      "demo_tab": "0. Overview",
+      "gcp_resource": "seanjung-poc.starter_ontology_dw & gs://seanjung-poc-starter-ontology/ontology/",
+      "exposed_code": "src/resource_connector.py · config/starter_config.json",
+      "doc_ko": "methodology/ko/00_overview.md",
+      "nb_ko": "notebooks/ko/00_overview_and_quickstart.ipynb",
+      "nb_en": "notebooks/en/00_overview_and_quickstart.ipynb"
     },
+    {
+      "stage": "Stage 1",
+      "process": "Step 1.1~1.2 · 원천 약관 코퍼스 & DW 원장 리소스 바인딩 (Gate 0)",
+      "demo_tab": "Stage 1. Discovery",
+      "gcp_resource": "tb_doc_chunks (11 chunks) + 4 DW Ledgers (tb_customer_contract 등)",
+      "exposed_code": "src/resource_connector.py (stage1_resource_check)",
+      "doc_ko": "methodology/ko/01_stage1_discovery.md",
+      "nb_ko": "notebooks/ko/01_stage1_discovery_and_ingestion.ipynb",
+      "nb_en": "notebooks/en/01_stage1_discovery_and_ingestion.ipynb"
+    },
+    {
+      "stage": "Stage 2",
+      "process": "Step 2.1~2.2 · 3-Layer OKF 위키 & 비즈니스 워크플로우 (W1~W3 · Gate G2-W)",
+      "demo_tab": "Stage 2. OKF Wiki",
+      "gcp_resource": "GCS ontology/{summary,entities,concepts,rules}.md & business_workflows.json",
+      "exposed_code": "src/resource_connector.py · data/output/ontology/",
+      "doc_ko": "methodology/ko/02_stage2_okf_wiki.md",
+      "nb_ko": "notebooks/ko/02_stage2_okf_wiki_compiler.ipynb",
+      "nb_en": "notebooks/en/02_stage2_okf_wiki_compiler.ipynb"
+    },
+    {
+      "stage": "Stage 3",
+      "process": "Step 3.1~3.2 · 시맨틱/물리 그래프 토폴로지 (P1 1:1 ➔ P2 1:N ➔ P3 N:M)",
+      "demo_tab": "Stage 3. Property Graph",
+      "gcp_resource": "BigQuery STARTER_ONTOLOGY_GRAPH (4 Nodes · 4 Edges) & Spanner Graph",
+      "exposed_code": "src/gcp_client.py · data/output/create_property_graph.sql",
+      "doc_ko": "methodology/ko/03_stage3_property_graph.md",
+      "nb_ko": "notebooks/ko/03_stage3_property_graph_ddl.ipynb",
+      "nb_en": "notebooks/en/03_stage3_property_graph_ddl.ipynb"
+    },
+    {
+      "stage": "Stage 4",
+      "process": "Step 4.1~4.2 · 3대 도메인 비즈니스 도구 & AI FDE 에이전트 (Gate G2-W 감사)",
+      "demo_tab": "Stage 4. Agent & Tools",
+      "gcp_resource": "Vertex AI Gemini + BigQuery GQL + GCS Wiki Grounding",
+      "exposed_code": "src/agent/mcp_server.py · src/agent/reasoning_engine.py",
+      "doc_ko": "methodology/ko/04_stage4_agent_and_mcp.md",
+      "nb_ko": "notebooks/ko/04_stage4_fde_agent_and_mcp.ipynb",
+      "nb_en": "notebooks/en/04_stage4_fde_agent_and_mcp.ipynb"
+    },
+    {
+      "stage": "Stage 5",
+      "process": "Step 5.1~5.3 · Golden CQ 15문항 검증 (CQ-001~010 + WF-CQ-011~015)",
+      "demo_tab": "Stage 5. Evaluation",
+      "gcp_resource": "data/output/cq_eval_report.json & workflow_cqs.json (100% PASS)",
+      "exposed_code": "pipeline/validator.py · tests/test_data_fidelity.py",
+      "doc_ko": "methodology/ko/05_stage5_evaluation.md",
+      "nb_ko": "notebooks/ko/05_stage5_golden_cq_eval.ipynb",
+      "nb_en": "notebooks/en/05_stage5_golden_cq_eval.ipynb"
+    }
+  ],
+  "overview": {
+    "hero_badge": "ENTERPRISE AGENTIC ONTOLOGY · RESOURCE-CONNECTED STARTER v2.2",
+    "hero_title": "5-Stage · 11-Step Resource-Connected Ontology Starter",
+    "hero_desc": "복잡한 내부 MCP 빌더와 컴파일러 구현은 추상화하고, Google Cloud에 준비된 온톨로지 리소스(BigQuery SQL:2023 Property Graph · GCS 3-Layer OKF Wiki · 비즈니스 워크플로우 W1~W3)와 3종 도메인 비즈니스 도구에 즉시 연결하여 AI FDE 에이전트를 구동합니다.",
     "stages": [
       {
-        "stage_id": "stage1",
-        "chip": "STAGE 1",
-        "name": "자산 탐색 · 스코핑 & 비식별화",
-        "mcp_tool": "mcp_stage1_asset_discovery",
-        "methodology_doc": "methodology/ko/01_stage1_asset_and_cq_ko.md",
-        "notebook": "notebooks/ko/stage1_asset_and_cq_ko.ipynb",
-        "accent": "#3b82f6",
+        "stage_no": 1,
+        "code": "STAGE 1",
+        "title": "원천 데이터 & 약관 리소스 연결",
+        "en_title": "Source Docs & DW Ledger Binding",
+        "color": "#2563eb",
+        "bg": "#eff6ff",
+        "tab_id": "stage1",
+        "summary": "정밀 검증(Gate 0 PASS)된 약관 코퍼스 청크(tb_doc_chunks)와 BigQuery DW 4종 원장 테이블에 즉시 연결합니다.",
         "steps": [
           {
-            "step_key": "profile_tables",
-            "badge": "STEP 1.1 · Stage 1. Asset",
-            "title": "정형 DW 원장 & 비정형 가이드 인벤토리",
-            "bullets": [
-              "고객 약정·단말·요금제·지원금 4대 마스터 테이블 스키마 프로파일링",
-              "비정형 정책 가이드 문서(약관·특례) 수집 및 범위 확정",
-              "노이즈/임시 집계 테이블 제외 기준 수립 (35 ➔ 4 슬림화)"
-            ],
-            "deliverables": "D1.1 스코핑 헌장 · D1.2 자산 인벤토리 · D1.3 비식별화 매니페스트"
+            "step_code": "1.1",
+            "title": "약관 코퍼스 & 청크 리소스 연결 (Gate 0 Verified)",
+            "desc": "원문 보존 100%(Gate 0)가 검증된 11개 약관 청크(`tb_doc_chunks`)와 원문 해시 매니페스트를 연결합니다.",
+            "artifact": "tb_doc_chunks · gate0_report.json"
           },
           {
-            "step_key": "tag_pii_governance",
-            "badge": "STEP 1.2 · Governance & 5-Axis Engine Selection",
-            "title": "비식별화 · Golden CQ · 5축 그래프 엔진 선택 체크리스트",
-            "bullets": [
-              "실제 고객 식별자 제거 및 합성 ID(<code>CUST_DEMO_*</code>) 치환, 전 행 <code>provenance</code>/<code>source_ref</code> 검증",
-              "5축 기준(<code>source_system</code> · <code>latency_slo</code> · <code>concurrency</code> · <code>write_freshness</code> · <code>data_scale</code>) 점검",
-              "기본값 <code>bigquery</code>(Zero-ETL) 및 선택형 <code>spanner</code> / <code>both</code>(Graph Fabric) 결정"
-            ],
-            "deliverables": "D1.4 Golden CQ 명세 · input_manifest.json (5축 체크리스트 포함)"
+            "step_code": "1.2",
+            "title": "BigQuery DW 4종 원장 & 엔티티 앵커 바인딩",
+            "desc": "고객계약·단말·요금제·공시지원금 4종 BigQuery 테이블과 4개 도메인 규칙(`tb_domain_rules`)을 바인딩합니다.",
+            "artifact": "seanjung-poc.starter_ontology_dw (10 tables)"
           }
         ]
       },
       {
-        "stage_id": "stage2",
-        "chip": "STAGE 2",
-        "name": "3-Layer Wiki & 시맨틱 그래프",
-        "mcp_tool": "mcp_stage2_wiki_and_semantic",
-        "methodology_doc": "methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md",
-        "notebook": "notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb",
-        "accent": "#0d9488",
+        "stage_no": 2,
+        "code": "STAGE 2",
+        "title": "3-Layer OKF 위키 & 워크플로우",
+        "en_title": "3-Layer OKF Wiki & Workflows",
+        "color": "#7c3aed",
+        "bg": "#f5f3ff",
+        "tab_id": "stage2",
+        "summary": "GCS에 게시된 3-Layer OKF 마크다운 위키와 결정론적 비즈니스 워크플로우(W1~W3 · Gate G2-W)를 로드합니다.",
         "steps": [
           {
-            "step_key": "compile_3layer_wiki",
-            "badge": "STEP 2.1 · Stage 2. Wiki",
-            "title": "3-Layer LLM-Wiki & SHA-256 해시 앵커 컴파일",
-            "bullets": [
-              "원문 가이드 ➔ <code>DOC_CHUNK_001~005</code> 문단 청킹 및 SHA-256 해시 부여",
-              "Layer 1(<code>summary.md</code>) · Layer 2(<code>entities.md</code>) · Layer 3(<code>concepts/rules.md</code>) 생성",
-              "Track 1(Lite: Stage 1→2→4)은 물리 그래프 없이 Stage 4 에이전트로 직행"
-            ],
-            "deliverables": "D2.1 3-Layer LLM-Wiki · D2.2 doc_chunks.jsonl"
+            "step_code": "2.1",
+            "title": "GCS 3-Layer OKF 마크다운 위키 연결",
+            "desc": "`summary.md`(핵심 요약), `entities.md`(4대 엔티티), `concepts.md`(개념 관계), `rules.md`(조항 인용 규칙)를 로드합니다.",
+            "artifact": "gs://seanjung-poc-starter-ontology/ontology/*.md"
           },
           {
-            "step_key": "bind_semantic_bridges",
-            "badge": "STEP 2.2 · Semantic Graph",
-            "title": "시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)",
-            "bullets": [
-              "핵심 엔티티를 노드(Node)로, 시맨틱 개념/관계를 엣지(Edge)로 직관적 매핑",
-              "마스터 허브는 Sky Blue(<code>#0284c7</code>) 톤 적용, 보라색 허브 배제",
-              "한글 비즈니스 라벨 표준화 및 문서 코드 노출 제거"
-            ],
-            "deliverables": "D2.3 ontology.jsonld · D2.4 시맨틱 브릿지 매트릭스"
+            "step_code": "2.2",
+            "title": "시맨틱 그래프 & 비즈니스 룰·워크플로우 (W1~W3 · Gate G2-W)",
+            "desc": "단순 판정(W1) ➔ 다단계 분기·계산(W2) ➔ 교차 검증·감사(W3) 워크플로우 DAG와 Gate G2-W 결정론적 감사 규칙을 연결합니다.",
+            "artifact": "business_rules.json · business_workflows.json"
           }
         ]
       },
       {
-        "stage_id": "stage3",
-        "chip": "STAGE 3",
-        "name": "듀얼 Property Graph & Graph Fabric",
-        "mcp_tool": "mcp_stage3_property_graph",
-        "methodology_doc": "methodology/ko/03_stage3_property_graph_ko.md",
-        "notebook": "notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb",
-        "accent": "#6366f1",
+        "stage_no": 3,
+        "code": "STAGE 3",
+        "title": "물리/시맨틱 그래프 (BigQuery Graph)",
+        "en_title": "Physical & Semantic Property Graph",
+        "color": "#059669",
+        "bg": "#ecfdf5",
+        "tab_id": "stage3",
+        "summary": "P1(1:1) ➔ P2(1:N) ➔ P3(N:M) 패턴으로 설계된 BigQuery SQL:2023 Property Graph와 Spanner Graph에 직결합니다.",
         "steps": [
           {
-            "step_key": "promote_dw_nodes",
-            "badge": "STEP 3.1 · Stage 3. Graph",
-            "title": "Zero-ETL 정형 원장 승격 & 양대 엔진 동시 적재",
-            "bullets": [
-              "정형 DW 테이블 6종 + 엣지/청크 테이블 4종(총 10개 테이블) 동일 스키마 유지",
-              "비정형 텍스트 내 중복 엔티티 0건 유지 (Anti-Redundancy)",
-              "관계형 FK 엣지와 비정형 규칙 엣지(<code>APPLIES_RULE</code>, <code>GROUNDED_IN</code>) 결합"
-            ],
-            "deliverables": "D3.1 graph_topology.json (양대 엔진 p50/p95 벤치마크 포함)"
+            "step_code": "3.1",
+            "title": "BigQuery SQL:2023 Property Graph (P1/P2/P3)",
+            "desc": "4종 정점(`CustomerContract`, `PlanMaster`, `DeviceMaster`, `SubsidyPolicy`)과 4종 간선을 가진 `STARTER_ONTOLOGY_GRAPH`를 조회합니다.",
+            "artifact": "seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH"
           },
           {
-            "step_key": "synthesize_graph_ddl",
-            "badge": "STEP 3.2 · Dual Engine & Fabric",
-            "title": "BigQuery(기본) · Spanner(선택) · EXTERNAL_QUERY 연동",
-            "bullets": [
-              "<b>BigQuery Property Graph (기본)</b>: Zero-ETL 논리 뷰 기반 대규모 DW 분석 (SQL:2023)",
-              "<b>Cloud Spanner Graph (선택)</b>: 100 PU 최소 구성 초저지연 온라인 멀티홉 탐색 (ISO GQL)",
-              "<b>Graph Fabric (both 모드)</b>: <code>EXTERNAL_QUERY(spanner_fabric_conn)</code> 연합 조인"
-            ],
-            "deliverables": "D3.2 create_property_graph.sql · D3.3 create_spanner_graph.sql"
+            "step_code": "3.2",
+            "title": "GQL 다중 홉 탐색 & Spanner 온라인 그래프 연동",
+            "desc": "BigQuery `GRAPH_TABLE(... MATCH ...)` 쿼리와 초저지연 온라인 탐색용 Cloud Spanner Graph를 실행합니다.",
+            "artifact": "create_property_graph.sql · Spanner Graph"
           }
         ]
       },
       {
-        "stage_id": "stage4",
-        "chip": "STAGE 4",
-        "name": "에이전트 & 모듈형 MCP 오케스트레이션",
-        "mcp_tool": "mcp_stage4_agent_orchestration",
-        "methodology_doc": "methodology/ko/04_stage4_agent_and_mcp_ko.md",
-        "notebook": "notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb",
-        "accent": "#7c3aed",
+        "stage_no": 4,
+        "code": "STAGE 4",
+        "title": "도메인 도구 (3종) & AI FDE 에이전트",
+        "en_title": "3 Domain Tools & AI FDE Agent",
+        "color": "#d97706",
+        "bg": "#fffbeb",
+        "tab_id": "stage4",
+        "summary": "커스터마이징 가능한 3개 도메인 비즈니스 도구와 Gate G2-W 감사가 내장된 AI FDE 에이전트를 실행합니다.",
         "steps": [
           {
-            "step_key": "dispatch_domain_mcps",
-            "badge": "STEP 4.1 · Stage 4. Agent & MCP",
-            "title": "8대 모듈형 MCP 스위트 (Stage 5종 + Runtime 3종)",
-            "bullets": [
-              "파이프라인 자동화용 <b>Stage 1~5 MCP</b> (Step 배열 선택 실행 지원)",
-              "실시간 추론용 <b>Runtime MCP 3종</b> (고객원장·위약금산식·그래프/위키 탐색)",
-              "LLM 암산 배제: 일할 위약금 및 24개월 TCO를 결정론적 함수로 산출"
-            ],
-            "deliverables": "D4.1 8-MCP 카탈로그 (`src/agent/mcp_server.py`)"
+            "step_code": "4.1",
+            "title": "Ready-to-Use 도메인 비즈니스 도구 3종",
+            "desc": "`mcp_lookup_customer_profile`(원장 조회), `mcp_calculate_penalty_rule`(위약금 산출), `mcp_query_graph_and_wiki`(GQL+위키 검색)를 제공합니다.",
+            "artifact": "src/agent/mcp_server.py (3 Domain Tools)"
           },
           {
-            "step_key": "verify_grounding_anchors",
-            "badge": "STEP 4.2 · Reasoning Console",
-            "title": "다중 목표 분해 & SHA-256 근거 앵커 합성",
-            "bullets": [
-              "복합 질의를 하위 목표로 분해하여 순차 체이닝(<code>SEQUENTIAL_CHAIN</code>)",
-              "정형 원장 수치와 비정형 <code>DOC_CHUNK_*</code> 해시 앵커를 단일 리포트로 합성"
-            ],
-            "deliverables": "D4.2 AI FDE 추론 엔진 (`src/agent/reasoning_engine.py`)"
+            "step_code": "4.2",
+            "title": "AI FDE 에이전트 & Gate G2-W 결정론적 감사",
+            "desc": "도메인 도구가 반환한 원장 수치·조항 ID와 에이전트 답변 간의 정합성을 Gate G2-W로 실시간 감사하여 환각을 차단합니다.",
+            "artifact": "src/agent/reasoning_engine.py"
           }
         ]
       },
       {
-        "stage_id": "stage5",
-        "chip": "STAGE 5",
-        "name": "엔드투엔드 리니지 & 바운더리 평가",
-        "mcp_tool": "mcp_stage5_lineage_and_eval",
-        "methodology_doc": "methodology/ko/05_stage5_lineage_and_eval_ko.md",
-        "notebook": "notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb",
-        "accent": "#db2777",
+        "stage_no": 5,
+        "code": "STAGE 5",
+        "title": "리니지 추적 & Golden CQ 검증",
+        "en_title": "Lineage & Golden CQ Evaluation",
+        "color": "#e11d48",
+        "bg": "#fff1f2",
+        "tab_id": "stage5",
+        "summary": "원천 데이터 ➔ 위키 ➔ 그래프 ➔ 워크플로우 ➔ 에이전트 엔드투엔드 리니지와 15개 Golden CQ를 검증합니다.",
         "steps": [
           {
-            "step_key": "build_4tier_lineage",
-            "badge": "STEP 5.1 · Stage 5. Lineage",
-            "title": "엔드투엔드 데이터 리니지 시각화",
-            "bullets": [
-              "Tier 1(Raw DW/Docs) ➔ Tier 2(OKF Wiki) ➔ Tier 3(Property Graph) ➔ Tier 4(Agent & CQ)",
-              "모든 에이전트 답변의 원천 테이블 및 문서 단락 역추적 보장"
-            ],
-            "deliverables": "D5.1 엔드투엔드 리니지 맵"
+            "step_code": "5.1",
+            "title": "6-Layer 엔드투엔드 리니지 검증",
+            "desc": "고객 질문부터 참조 약관 조항(`[Rule-ID]`), 워크플로우(`WF-*`), GQL 경로까지의 추적성을 검증합니다.",
+            "artifact": "End-to-End Lineage Graph"
           },
           {
-            "step_key": "diagnose_boundary_failures",
-            "badge": "STEP 5.2 · Stage 5. Evaluation",
-            "title": "Golden CQ 5종 & 바운더리 질의 10건 회귀 평가",
-            "bullets": [
-              "Golden CQ 5종 정량 채점 및 바운더리 케이스 10건(결여 맥락·특례·별칭) 평가",
-              "실패 원인 4대 분류(<code>NO_SLOT_FILLING</code> 등) 및 반복 실행 실측(성공률·일관성·의도 안정성)"
-            ],
-            "deliverables": "D5.2 cq_benchmark_report.json · D5.3 boundary_benchmark_results.json"
+            "step_code": "5.2",
+            "title": "Golden CQ 15문항 자동 평가 (CQ-001~010 + WF-CQ-011~015)",
+            "desc": "기본 역량 10문항과 P1~P3 × W1~W3 매트릭스 5문항을 실시간 채점하여 100% PASS 여부를 확인합니다.",
+            "artifact": "cq_eval_report.json · workflow_cqs.json"
+          },
+          {
+            "step_code": "5.3",
+            "title": "노트북(KO/EN 12종) & 프로덕션 배포 연계",
+            "desc": "6단계 프로세스와 1:1 매핑된 12개 한/영 주피터 노트북 및 Cloud Run 원클릭 배포로 즉시 확장합니다.",
+            "artifact": "notebooks/{ko,en}/*.ipynb · deploy_cloudrun.sh"
           }
         ]
       }
     ],
-    "feature_gap": {
-      "eyebrow": "SECTION 3 · GOOGLE CLOUD NATIVE FOUNDATION VS. STARTER PACK EXTENSIONS",
-      "title": "Google Cloud 네이티브 기반 기술과 스타터팩 모듈형 확장 아키텍처",
-      "rows": [
-        {
-          "layer": "Stage 1 & Stage 2 · Asset & 3-Layer Wiki",
-          "layer_color": "blue",
-          "native": "Cloud Storage (GCS), BigQuery & Dataplex Catalog",
-          "gap": "단순 벡터 RAG 청킹 시 표·산식 문맥이 단절되고 개통일 기준 버전 충돌 발생",
-          "solution": "OKF v0.2 YAML Frontmatter + 문단별 SHA-256 해시 앵커 + <b>Karpathy 3-Layer LLM-Wiki</b>"
-        },
-        {
-          "layer": "Stage 3 · Dual Property Graph Adapter",
-          "layer_color": "indigo",
-          "native": "BigQuery Property Graph (SQL:2023) & Cloud Spanner Graph (GQL)",
-          "gap": "고객사마다 OLAP(BigQuery) 또는 OLTP(Spanner) 그래프 엔진 환경이 상이함",
-          "solution": "Zero-ETL 노드 직접 승격 + <b>BigQuery / Spanner 듀얼 DDL 자동 합성 어댑터</b>"
-        },
-        {
-          "layer": "Stage 4 · Agent & 8 Modular MCPs",
-          "layer_color": "purple",
-          "native": "Vertex AI Gemini & Model Context Protocol (MCP)",
-          "gap": "범용 SQL/검색 도구만으로는 일할 위약금 산식과 복지 특례 분기를 일관되게 보장하기 어려움",
-          "solution": "<b>5대 Stage 파이프라인 MCP</b>(Step 선택 실행) + <b>3대 런타임 도메인 MCP</b> 체이닝"
-        },
-        {
-          "layer": "Stage 5 · End-to-End Lineage & Boundary Eval",
-          "layer_color": "pink",
-          "native": "Dataplex Data Lineage & Vertex AI Evaluation",
-          "gap": "비정형 약관 문단에서 그래프 엣지·에이전트 응답에 이르는 교차 계보 및 결여 맥락 진단 부재",
-          "solution": "<b>엔드투엔드 리니지</b> + Golden CQ 5종 및 바운더리 질의 10건 FDE 보강 루프"
-        }
-      ]
-    },
-    "metrics": {
-      "eyebrow": "SECTION 4 · MEASURED STARTER BENCHMARK & REFERENCE TELEMETRY",
-      "note": "아래 지표는 본 스타터팩에 동봉된 비식별화 샘플 데이터셋(4개 마스터 테이블, 2개 정책 가이드, 5개 Golden CQ, 10개 바운더리 케이스)의 실측 결과입니다.",
-      "items": [
-        { "label": "Golden CQ Pass Rate", "source": "golden", "value": "미측정", "caption": "검증 SQL + Gemini 에이전트 답변 대조 (pipeline/validator.py)", "color": "#059669" },
-        { "label": "Boundary Success Rate", "source": "boundary", "value": "미측정", "caption": "바운더리 10건 × 반복 실행 실측 (pipeline/validator.py)", "color": "#0071e3" },
-        { "label": "Graph Engines Supported", "value": "BigQuery & Spanner", "caption": "SQL:2023 & ISO GQL 듀얼 DDL 어댑터", "color": "#6366f1" },
-        { "label": "Modular MCP Suite", "value": "8 Core MCPs", "caption": "Stage 1~5 파이프라인 + Runtime 3종", "color": "#0d9488" }
-      ]
-    }
+    "feature_gap": [
+      {
+        "category": "아키텍처 컨셉 (Architecture Focus)",
+        "full_version": "엔터프라이즈 온톨로지 컴파일러 + 빌더 + 멀티도메인 거버넌스 플랫폼",
+        "starter_pack": "Ready-to-Use GCP 리소스 직결형 스타터 (컴파일러/내부 MCP 추상화)",
+        "badge": "Resource-Connected"
+      },
+      {
+        "category": "포털 UI 구성 (Portal Navigation)",
+        "full_version": "12-Tab Full Enterprise Governance Studio (LGU+ / LG H&H)",
+        "starter_pack": "6-Tab Stage-Guided Portal (Overview + Stage 1~5 직결 뷰)",
+        "badge": "6-Tab Guided"
+      },
+      {
+        "category": "노출 코드 범위 (Code Exposure Scope)",
+        "full_version": "전체 파이프라인 빌더 + 내부 MCP 서버 + 어드민 컨트롤 플레인",
+        "starter_pack": "리소스 커넥터 + 도메인 비즈니스 도구 3종 + AI FDE 추론 루프 + 12개 노트북",
+        "badge": "Clean & Focused"
+      },
+      {
+        "category": "연결 GCP 리소스 (Connected GCP Resources)",
+        "full_version": "멀티 프로젝트 BigQuery DW + Property Graph + GCS Wiki + Spanner",
+        "starter_pack": "seanjung-poc.starter_ontology_dw (10 Tables + Graph) & GCS Wiki 즉시 연결",
+        "badge": "Ready-to-Use"
+      },
+      {
+        "category": "도메인 도구 & 가드레일 (Tools & Guardrails)",
+        "full_version": "도메인별 확장 도구 카탈로그 + Gate G1/G2/G2-W/G3",
+        "starter_pack": "핵심 도메인 비즈니스 도구 3종 + Gate 0 & Gate G2-W 결정론적 감사",
+        "badge": "3 Tools + G2-W"
+      }
+    ],
+    "metrics": [
+      {"label": "연결된 GCP 리소스", "value": "BQ 10 Tables + Graph + GCS Wiki", "sub": "seanjung-poc 즉시 사용 가능"},
+      {"label": "표준 그래프 & 워크플로우", "value": "P1~P3 × W1~W3", "sub": "4 Nodes · 4 Edges · 3 Workflows"},
+      {"label": "도메인 비즈니스 도구", "value": "3 Ready Tools", "sub": "고객조회 · 위약금산출 · GQL+Wiki"},
+      {"label": "Golden CQ 정확도", "value": "100.0% (15/15)", "sub": "CQ 10 + WF-CQ 5 + Gate G2-W"}
+    ]
   },
-  "evaluation": {
-    "intro": "본 화면은 저장소에 존재하는 평가 산출물 파일(<code>cq_benchmark_report.json</code>, <code>boundary_benchmark_results.json</code>, <code>eval_rubric.json</code>)을 실시간으로 읽어 집계합니다.",
-    "sources": [
-      { "id": "cq_report", "label": "Golden CQ 벤치마크 리포트 (5 CQs)", "path": "data/output/cq_benchmark_report.json", "produced_by": "run_pipeline.py (mcp_stage5_lineage_and_eval)" },
-      { "id": "boundary", "label": "바운더리 질의 회귀 리포트 (10 Cases × 5 Trials)", "path": "data/output/boundary_benchmark_results.json", "produced_by": "Stage 5 Boundary Evaluation Harness" },
-      { "id": "rubric", "label": "5차원 평가 루브릭 명세", "path": "config/eval_rubric.json", "produced_by": "Starter Pack Governance Config" }
-    ],
-    "design": {
-      "title": "2-트랙 검증 설계 (Golden CQ 정확도 + Boundary 질의 강건성)",
-      "description": "정답이 확정된 Golden CQ(5문항)로 수치·근거 앵커 정확성을 검증하고, 필수 파라미터나 예외 맥락이 결여된 Boundary Question(10문항 × 5회 반복)으로 온톨로지 보강 전후의 추론 안정성을 측정합니다.",
-      "suites": [
-        { "name": "Golden CQ Suite (CQ-01 ~ CQ-05)", "purpose": "출고가, 지원금, 180일 일할 위약금, 24개월 TCO, 시니어 복지 면제 정량 검증", "shape": "5개 핵심 질문 × 1회 결정론적 검증", "metric": "검증 SQL 일치 · 답변 수치 포함 · 근거 청크 인용" },
-        { "name": "Boundary Regression (BQ-01 ~ BQ-10)", "purpose": "슬롯 결여, 특례 면제, 단말 별칭, 경계값(180일) 질의에 대한 분기·안내 능력 측정", "shape": "10개 경계 질문 × 5회 반복 (50 Trials)", "metric": "성공률 · 일관성 · 의도 안정성 (validator 실측)" },
-        { "name": "Dual Graph DDL Verification", "purpose": "BigQuery Property Graph 및 Cloud Spanner Graph 스키마 무복제 투영 검증", "shape": "4 DW Node + 2 Unstructured Node + 6 Edge", "metric": "노드 테이블 중복 키 건수 (mcp_stage3 실측)" }
-      ]
+  "stage_ribbons": {
+    "stage1": {
+      "code": "STAGE 1 · STEP 1.1 ~ 1.2",
+      "title": "원천 데이터 & 약관 리소스 연결 (Source Docs & DW Ledger Binding)",
+      "color": "#2563eb",
+      "steps": ["Step 1.1 약관 청크 리소스 (tb_doc_chunks · Gate 0 PASS)", "Step 1.2 BigQuery DW 4종 원장 & 도메인 규칙 연결"],
+      "input": "gs://seanjung-poc-starter-ontology/ & data/input/",
+      "output": "seanjung-poc.starter_ontology_dw (tb_doc_chunks + 4 DW Tables)"
     },
-    "root_cause_taxonomy": [
-      { "code": "NO_SLOT_FILLING", "name": "결여 파라미터 슬롯 필링 부재", "signal": "고객 ID나 변경 요금제가 없는데도 단정적으로 오답을 생성", "fix": "필수 슬롯 미충족 시 45,000원 기준선 분기 안내 및 슬롯 확인 프롬프트 강제" },
-      { "code": "MISSING_EXCEPTION_EDGE", "name": "특례·예외 규칙 분기 엣지 누락", "signal": "180일 일반 위약금 산식만 적용하고 시니어 복지 면제(0원)를 누락", "fix": "RULE_WELFARE_EXEMPT 시맨틱 예외 엣지 및 DOC_CHUNK_004 근거 연결" },
-      { "code": "MISSING_ENTITY", "name": "도메인 규칙/세그먼트 엔티티 부재", "signal": "군입대 정지 유예나 법인(B2B) 회선 조건 질문 시 일반 약관만 반복", "fix": "RULE_MILITARY_HOLD 규칙 노드 및 customer_segment 속성 분기 추가" },
-      { "code": "NO_ALIAS_DICT", "name": "단말·엔진 별칭 매핑 사전 미비", "signal": "'아이폰 최신형 프로' 등 별칭 질의 시 모델 코드를 찾지 못함", "fix": "단말 별칭 사전(Alias Dictionary) 및 듀얼 그래프 어댑터 메타데이터 주입" }
-    ],
-    "rounds": []
+    "stage2": {
+      "code": "STAGE 2 · STEP 2.1 ~ 2.2",
+      "title": "3-Layer OKF 위키 & 비즈니스 워크플로우 (W1~W3 · Gate G2-W)",
+      "color": "#7c3aed",
+      "steps": ["Step 2.1 GCS 3-Layer OKF 마크다운 위키 연결", "Step 2.2 비즈니스 룰 & 워크플로우 (W1 ➔ W2 ➔ W3 · Gate G2-W)"],
+      "input": "gs://seanjung-poc-starter-ontology/ontology/",
+      "output": "summary/entities/concepts/rules.md & business_workflows.json"
+    },
+    "stage3": {
+      "code": "STAGE 3 · STEP 3.1 ~ 3.2",
+      "title": "시맨틱/물리 그래프 토폴로지 (BigQuery Property Graph · P1/P2/P3)",
+      "color": "#059669",
+      "steps": ["Step 3.1 BigQuery STARTER_ONTOLOGY_GRAPH (P1 1:1 · P2 1:N · P3 N:M)", "Step 3.2 GQL 다중 홉 탐색 & Spanner 온라인 그래프 연동"],
+      "input": "BigQuery DW 4종 원장 + 4종 Edge 테이블",
+      "output": "seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH"
+    },
+    "stage4": {
+      "code": "STAGE 4 · STEP 4.1 ~ 4.2",
+      "title": "3대 도메인 비즈니스 도구 & AI FDE 에이전트 (Gate G2-W 감사)",
+      "color": "#d97706",
+      "steps": ["Step 4.1 도메인 비즈니스 도구 3종 (고객조회 · 위약금산출 · GQL+Wiki)", "Step 4.2 AI FDE 에이전트 ReAct 추론 & Gate G2-W 결정론적 감사"],
+      "input": "Ready-to-Use BigQuery Graph + GCS Wiki + Business Workflows",
+      "output": "조항 근거 인용(`[Rule-ID]`) 및 무환각 산출 답변"
+    },
+    "stage5": {
+      "code": "STAGE 5 · STEP 5.1 ~ 5.3",
+      "title": "6-Layer 리니지 추적 & Golden CQ 15문항 검증",
+      "color": "#e11d48",
+      "steps": ["Step 5.1 6-Layer 엔드투엔드 리니지 검증", "Step 5.2 Golden CQ 15문항(CQ 10 + WF-CQ 5) 자동 채점", "Step 5.3 12개 한/영 노트북 & 프로덕션 배포 연계"],
+      "input": "Golden CQ 15문항 & 에이전트 실행 트레이스",
+      "output": "cq_eval_report.json (100.0% PASS) & Gate G2-W Audit"
+    }
   }
 }
