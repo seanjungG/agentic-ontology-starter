@@ -4,13 +4,14 @@
 
 ## 목적
 
-에이전트가 질문을 파라미터와 하위 목표로 나누고, 선택된 물리 엔진(`engine="bigquery"` 기본 또는 `engine="spanner"`)을 조회하는 8종 MCP 도구를 호출한 뒤, 도구 결과에 있는 값만으로 답하게 한다.
-답변에는 규칙 ID, 근거 청크 ID, 실행 백엔드 식별자(BigQuery Job ID 또는 Spanner Database ID)가 들어간다.
+에이전트가 질문을 파라미터와 하위 목표로 나누고, **런타임 1순위 단일 진실 원천인 BigQuery Property Graph(`engine="bigquery"` 기본 또는 `engine="spanner"`)**를 조회하는 8종 MCP 도구를 호출한 뒤, 도구 결과에 있는 값만으로 답하게 한다.
+- **런타임 BQG 1순위 및 원천 `anchor`/`parsed` 직접 참조 금지**: 정형·그래프가 구축된 `standard`/`full` 트랙 및 엔터프라이즈 스튜디오 런타임에서 에이전트·워크플로우·MCP는 **항상 BigQuery Property Graph(BQG)를 1순위로 조회**하며, `PolicyResolver` 역시 **Layer 1: BQG (`GRAPH_TABLE`) → Layer 2: 온톨로지 위키 허브(`ENT-*`, `CON-*`) 및 비즈니스 룰(`BR-*` `parameters[]`)** 순으로 정책 상수를 해석한다. 원천 문서(`raw`), 파싱 마크다운(`parsed`), 문단 해시 앵커(`anchor_<12hex>`, `sec-xx-pyy`)는 Stage 1~2 빌드 타임 전용이며 런타임에 직접 조회하거나 링크하지 않는다.
+- 답변에는 시맨틱·비즈니스 룰 ID(`ENT-*`, `CON-*`, `BR-*` / `RULE_*`)와 실행 백엔드 식별자(BigQuery Job ID 또는 Spanner Database ID)가 들어간다.
 
 ## 입력
 
 - 사용자 질문 (자연어) 및 그래프 엔진 선택(`"bigquery"` 기본 \| `"spanner"`)
-- BigQuery(`starter_ontology_dw`) 또는 Cloud Spanner(`starter-spanner/starter_ontology_db`) 테이블 10개와 `STARTER_ONTOLOGY_GRAPH` (Stage 1~3)
+- BigQuery(`starter_ontology_dw`) 또는 Cloud Spanner(`starter-spanner/starter_ontology_db`) 테이블 10개와 `STARTER_ONTOLOGY_GRAPH` (Stage 1~3, **런타임 1순위 SSOT**)
 - Vertex AI Gemini 모델 (환경 변수 `VERTEX_GEMINI_MODEL`, 기본값 `gemini-3.8-flash`)
 
 MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 있다. 모두 `src/agent/mcp_server.py`의 `DomainMcpServer`에 있으며 `engine="bigquery" | "spanner"`를 모두 지원한다.
@@ -82,17 +83,17 @@ MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 
 - 복합 질문(조건·엔티티가 여럿)은 계획 수립 단계에서 여러 도구 호출로 나누고, 답변은 도구 결과만으로 쓴다. 필요한 값이 데이터에 없으면 산정하지 않고 없다고 답한다.
 - 평가셋 밖 질문(카탈로그의 다른 단말·요금제·일수 조합)으로 도구 범위를 함께 점검한다. 같은 문항으로 반복 조정한 점수는 과적합 가능성을 함께 기록한다.
 
-## 권장 방법: Wiki Agent와 BQG Agent 비교
+## 권장 방법: Wiki Agent(Stage 2 게이트)와 BQG Agent(런타임 1순위) 비교
 
-두 에이전트의 차이는 근거를 가져오는 곳이다. 같은 질문으로 둘을 실행해 근거 위치, 단계별 소요 시간, 토큰을 비교한다.
+두 에이전트의 차이는 역할과 근거를 가져오는 곳이다. **Wiki Agent는 물리 그래프 구축 전 Stage 2 위키 품질을 검증하는 게이트**이고, **BQG Agent(및 Workflow Agent · AI FDE)는 Stage 3 이후 운영 런타임의 1순위 주체**다.
 
-| 단계 | Wiki Agent | BQG Agent |
+| 단계 | Wiki Agent (Stage 2 종료 게이트) | BQG Agent (런타임 1순위 주체) |
 | :---: | :--- | :--- |
 | 1 | GCS 위키 목차(index) 읽기 | 슬롯 추출 (Flash) |
-| 2 | Flash가 목차를 보고 열 엔티티·개념 문서 선택 | Property Graph GQL 조회 |
-| 3 | 선택 문서와 관계 1단계 문서를 GCS에서 읽기 | 조회 값으로 코드 계산 |
-| 4 | Flash 답변 (문서 ID + 앵커 인용) | Flash 답변 |
-| BigQuery·그래프 | 사용하지 않음 | 사용 |
+| 2 | Flash가 목차를 보고 열 엔티티·개념 문서 선택 | **BigQuery Property Graph (BQG) 1순위 GQL 조회** |
+| 3 | 선택 문서와 관계 1단계 문서를 GCS에서 읽기 | BQG/DW 조회 값과 `PolicyResolver`(Layer 1 BQG)로 코드 계산 |
+| 4 | Flash 답변 (위키 문서 ID `ENT-*`/`CON-*` 인용 · 원천 `anchor` 직접 링크 금지) | Flash 답변 (시맨틱·그래프 ID `ENT-*`/`CON-*`/`BR-*` + `bq_job_ids` 인용) |
+| BigQuery·그래프 | 사용하지 않음 (Stage 2 게이트 전용) | **1순위로 사용 (Primary SSOT)** |
 
 - 두 에이전트 모두 응답에 단계별 소요 시간과 토큰 사용량(Vertex `usageMetadata`의 입력·출력·thinking)을 기록한다.
 - 문서를 통째로 넣는 방식은 청크 검색보다 입력 토큰이 늘어난다(참고 사례: 약 3배). 읽는 문서 수와 문서당 글자 상한을 함께 기록한다.
@@ -117,28 +118,38 @@ MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 
 - 도구 결과에는 `bq_jobs`(job ID·엔진·상태·소요 ms·반환 행·SQL), `bq_job_ids`, `bq_elapsed_ms`, `executed_sql`, `tool_elapsed_ms`가 들어간다. 처리 바이트, 캐시 적중, 조회 테이블 목록은 기록하지 않는다.
 - 프리셋은 Stage 4 콘솔의 CQ 샘플 버튼(`CQ-02`~`CQ-05`)이며 시나리오 분류는 없다.
 
+## 리소스 직결 아키텍처 (Ready-to-Use 리소스 커넥터 + 도메인 비즈니스 도구 3종)
+
+스타터팩 v2.2부터 내부 온톨로지 빌더 MCP 파이프라인은 플랫폼 계층으로 추상화되어 제외되고, **Ready-to-Use GCP 리소스에 직결된 커넥터(`src/resource_connector.py`)**와 **커스터마이징 대상 도메인 비즈니스 도구 3종(`src/agent/mcp_server.py`)**만 깔끔하게 노출된다:
+
+| 구분 | 모듈 / 파일 | 역할 및 책임 | 노출 도구 / 메서드 |
+| :--- | :--- | :--- | :--- |
+| **Ready-to-Use Resource Connector** | `src/resource_connector.py` (`OntologyResourceConnector`) | **준비된 GCP 온톨로지 리소스 직결 및 점검**: BigQuery(`starter_ontology_dw` 10개 테이블), `STARTER_ONTOLOGY_GRAPH`, GCS 3-Layer OKF 위키 및 `W1~W3` 워크플로, Cloud Spanner Graph 연결 상태를 점검 | `verify_ready_resources()`, `stage1_resource_check` ~ `stage5_resource_check` |
+| **Domain Business Tools (3종)** | `src/agent/mcp_server.py` (`DomainMcpServer`) | **도메인·프로젝트별 결정론적 업무 실행 도구**: 각 프로젝트의 정형 원장·규칙·계산식을 실행하며 워크플로(`W1~W3`) 및 비즈니스 규칙(`RULE_*`)에 1:1 바인딩 | `mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki` |
+
 ## 산출물
 
 | ID | 산출물 | 스타터에서 |
 | :--- | :--- | :--- |
-| `D4.1` | 온톨로지 MCP 서버 스펙 및 구현체 | `src/agent/mcp_server.py` (`DomainMcpServer`, 8종) |
-| `D4.2` | AI FDE 시맨틱 라우팅 및 다중 목표 분해 엔진 | `src/agent/reasoning_engine.py` (`AiFdeAgentEngine`) |
-| `D4.3` | 크로스도메인 컨텍스트 전달 및 핸드오프 프로토콜 | 별도 문서 없음. `execute_cycle()`이 검증된 파라미터 하나를 모든 도구에 같은 형식으로 넘긴다 |
-| `D4.4` | MCP 경계값 검증 스위트 및 고도화 리포트 | 도구 단위 경계값 스위트는 없다. 에이전트 단위 경계값 질의 10개는 [Stage 5](./05_stage5_lineage_and_eval_ko.md)에서 다룬다 |
+| `D4.1` | 도메인 비즈니스 도구 서버 및 리소스 커넥터 | `src/agent/mcp_server.py` (`DomainMcpServer`) + `src/resource_connector.py` (`OntologyResourceConnector`) |
+| `D4.2` | AI FDE 시맨틱 라우팅 및 하위 목표 분해 엔진 (`Gate G2-W`) | `src/agent/reasoning_engine.py` (`AgenticReasoningEngine`) |
+| `D4.3` | 크로스도메인 컨텍스트 전달 및 핸드오프 프로토콜 | `execute_cycle()`이 검증된 파라미터를 도메인 도구 3종에 일관된 형식으로 전달 |
+| `D4.4` | 에이전트 경계값 검증 스위트 | 에이전트 단위 경계값 질의 10개는 [Stage 5](./05_stage5_lineage_and_eval_ko.md)에서 다룬다 |
+| `D4.5` | 비즈니스 규칙(`RULE_*`) · 워크플로(`W1~W3`) · 도메인 도구 바인딩 | `data/llm_wiki/business_rules.json` 및 `data/llm_wiki/business_workflows.json` |
 
-## 게이트 (Gate 4)
+## 게이트 (Gate G2-W & Gate 4)
 
-- [ ] `get_tool_catalog()`에 8종이 있다 (스튜디오 `전체 (8)`).
-- [ ] Golden CQ 질문의 응답 상태가 `GROUNDED`이고, 답변에 근거 청크 ID와 BigQuery Job ID(`full` 트랙) 또는 유효한 `[DOC_CHUNK_XXX]` 인용(`lite` 트랙)이 있다.
+- [ ] `get_tool_catalog()`에 커스터마이징 가능한 도메인 비즈니스 도구 3종(`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`)이 깔끔하게 노출된다.
+- [ ] Golden CQ 질문의 응답 상태가 `GROUNDED`이고, 답변에 근거 청크 ID(`DOC_CHUNK_*`)와 BigQuery Job ID가 포함된다.
 - [ ] 정보가 부족한 질문은 `INSUFFICIENT_PARAMETERS`로 끝나고 수치를 지어내지 않는다.
 - [ ] 조건에 맞는 데이터가 없으면 답변 첫 문장에서 `MATCH_NOT_FOUND`(0건)를 밝힌다.
 
 ## 스튜디오에서 보기
 
-[Stage 4. Agent & MCP 탭 열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4)
+[Stage 4. Agent & Tools 탭 열기](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4)
 
-- 왼쪽: MCP 카탈로그 8종 (`Stage MCP (5)`, `Runtime MCP (3)` 필터). 도구마다 `▶ Step 실행` 버튼이 있다.
-- 오른쪽: 에이전트 콘솔. CQ 샘플 버튼(`CQ-02`~`CQ-05`)이나 직접 쓴 질문을 `Execute FDE`로 실행하면 하위 목표, 도구 호출, 결과가 순서대로 나온다.
+- 왼쪽: 도메인 비즈니스 도구 3종 카탈로그 및 리소스 점검 버튼.
+- 오른쪽: AI FDE 추론 콘솔 (`Gate G2-W Audited`). CQ 샘플 버튼(`CQ-02`~`CQ-05`)이나 직접 쓴 질문을 `Execute FDE`로 실행하면 하위 목표, 도구 호출, 결과가 순서대로 나온다.
 - 로컬 스튜디오에서는 `POST /api/query` (`{"query": "..."}`)와 `POST /api/mcp/execute` (`{"tool_name": "...", "args": {...}}`)로도 호출할 수 있다.
 
 ## 노트북
@@ -148,6 +159,6 @@ MCP 8종 전체 목록은 [METHODOLOGY_KO.md](./METHODOLOGY_KO.md)의 4.2절에 
 ## 내 데이터에 적용하기
 
 1. **문서 전용 프로젝트 (`lite` 트랙)**: 별도 코드 수정 없이 `_lite_cycle()`이 `tb_doc_chunks` 전체 청크를 읽어 `[DOC_CHUNK_XXX]` 인용 기반으로 동작한다.
-2. **커스텀 도메인 테이블 (Scenario C)**: 샘플 6종 CSV와 다른 도메인 테이블 스키마를 쓸 경우, `project.json`에 `"mcp_module"`과 `"engine_module"`을 지정하여 도메인 전용 MCP 핸들러와 에이전트 엔진을 주입한다.
+2. **플랫폼 코어 MCP 원격 빌드 + 커스텀 비즈니스 MCP 바인딩**: `src/agent/platform_core_mcp.py`의 `build_domain_spec_from_project()`로 프로젝트의 `domain_mcp_tools`를 선언하고 `PlatformCoreMcpClient.call_tool("mcp_builder_run_full_pipeline", ...)`를 호출해 Stage 1~6 온톨로지 및 스튜디오 번들을 생성한다.
 3. **도구 SQL 및 정규식 수정**: 기본 템플릿을 수정할 경우 런타임 MCP 3종의 SQL, `get_live_catalog()`, `extract_params_from_text()`(고객 ID 정규식 `CUST_[A-Z]+_\d{3}`), 프롬프트(`DECOMPOSE_SYS`, `SYNTH_SYS`)를 도메인에 맞게 변경한다.
-4. **모델**: `VERTEX_GEMINI_MODEL`로 지정한다.
+4. **모델**: 에이전트 서빙 모델은 `VERTEX_GEMINI_MODEL`(기본 `gemini-3.8-flash`), 플랫폼 코어 MCP 빌드 모델은 `Gemini 4 Argon`(`gemini-4-argon`, 쿼터 소진 시 `QUOTA_EXHAUSTED_ERROR` 명시 반환)으로 분리한다.

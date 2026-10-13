@@ -1,150 +1,85 @@
 {
-  "schema_version": "2.0",
-  "project_id": "seanjung-poc",
-  "region": "asia-northeast3",
-  "track": "full",
-  "graph_engine": "bigquery",
-  "gates": {
-    "gate0": {
-      "_readme": "Per document, chunks vs. the original file (pipeline/validator.py run_gate0). Ratios use the original text before header/footer removal.",
-      "min_char_ratio": 0.95,
-      "min_ngram_coverage": 0.95,
-      "ngram_len": 12,
-      "min_page_coverage": 1.0,
-      "max_missing_articles": 0
-    }
+  "project_name": "Agentic Ontology Starter (Resource-Connected Edition)",
+  "version": "2.2.0",
+  "architecture_mode": "RESOURCE_CONNECTED_STARTER",
+  "domain": "Telecom Subscription & Penalty Governance (Sample Reference)",
+  "default_serving_model": "gemini-3.8-flash",
+  "lite": {
+    "max_context_chars": 300000
   },
   "chunking": {
     "max_chars": 1500
   },
-  "lite": {
-    "_readme": "track=lite: every tb_doc_chunks row goes into the Gemini context (no search, no embeddings). Above the limit the answer stops.",
-    "max_context_chars": 300000
-  },
   "wiki_extraction": {
-    "_readme": "pipeline/extract_wiki.py: each entity / concept keeps a verbatim quote of at most this length from its source chunk.",
-    "max_quote_chars": 300
+    "max_quote_chars": 300,
+    "min_entities": 3,
+    "min_concepts": 2
   },
-  "supported_tracks": {
-    "lite": {
-      "label": "Track 1 · Lite (Unstructured Wiki Only)",
-      "description": "비정형 가이드·약관 문서 중심 환경 — Stage 1(자산·CQ) → Stage 2(3-Layer 위키·시맨틱 그래프) → Stage 4(에이전트·MCP) 빠른 구동 (물리 Property Graph 생략)",
-      "active_stages": [
-        1,
-        2,
-        4
-      ],
-      "requires_graph_db": false
-    },
-    "standard": {
-      "label": "Track 2 · Standard (Structured DW + Rules)",
-      "description": "정형 DW + 비정형 위키 + Property Graph 결합 환경 — Stage 1 → Stage 2 → Stage 3(BigQuery Property Graph) → Stage 4(에이전트·MCP)",
-      "active_stages": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "requires_graph_db": true
-    },
-    "full": {
-      "label": "Track 3 · Full-Stack (Hybrid Wiki + Property Graph)",
-      "description": "Stage 1~5 전주기 통합 — 3-Layer 위키 + BigQuery Property Graph + MCP 8종·에이전트 + 4계층 리니지·경계값 벤치마크(10×5)",
-      "active_stages": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "requires_graph_db": true
+  "gates": {
+    "gate0": {
+      "ngram_len": 12,
+      "min_char_ratio": 0.95,
+      "min_ngram_coverage": 0.95,
+      "min_page_coverage": 1.0,
+      "max_missing_articles": 0
     }
   },
-  "supported_graph_engines": {
-    "bigquery": {
-      "label": "BigQuery Property Graph (ISO SQL:2023)",
-      "ddl_file": "data/output/create_property_graph.sql",
-      "query_syntax": "GRAPH_TABLE(`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH` MATCH ...)",
-      "recommended_for": "대규모 DW 원장 분석, Zero-ETL 뷰 투영, 배치·대화형 하이브리드 추론"
+  "reference_studios": {
+    "starter_live_studio": {
+      "title": "Starter Portal (6-Tab · Resource-Connected)",
+      "url": "https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/",
+      "scope": "Stage 0~5 Resource-Connected Starter UI & 3 Domain Business Tools"
     },
-    "spanner": {
-      "label": "Cloud Spanner Graph (ISO GQL)",
-      "ddl_file": "data/output/create_spanner_graph.sql",
-      "query_syntax": "GRAPH EnterpriseSubsidyGraph MATCH (d:DeviceNode)<-[:COVERS_DEVICE]-(s:SubsidyNode)...",
-      "recommended_for": "DDL 생성 지원 (`data/output/create_spanner_graph.sql`, 런타임 쿼리는 BigQuery Graph 사용)"
+    "lguplus_reference_studio": {
+      "title": "LGU+ Reference Studio (12-Tab · Full Platform)",
+      "url": "https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/",
+      "scope": "6-Layer Ontology Standard · P1/P2/P3 × W1/W2/W3 × Gate G2-W · Full Enterprise Governance"
     },
-    "none": {
-      "label": "No Physical Graph (Track 1 Wiki Link Traversal)",
-      "ddl_file": null,
-      "query_syntax": "OKF v0.2 Markdown Anchor & Semantic Bridge Lookup",
-      "recommended_for": "물리 DB 구축 전 빠른 비정형 규정 검증 및 프로토타이핑"
+    "hnh_reference_studio": {
+      "title": "LG H&H Reference Studio (12-Tab · Multi-Regulation)",
+      "url": "https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/",
+      "scope": "KR/US/EU Cosmetics Ad & Restricted Ingredient Multi-Jurisdiction Graph"
     }
   },
-  "storage": {
-    "doc_source": "data/input/01_guides/",
-    "table_source": "data/input/03_tables/",
-    "wiki_uri": "data/llm_wiki/",
-    "bq_dataset": "seanjung-poc.starter_ontology_dw",
-    "spanner_instance": "projects/my-project/instances/onto-inst/databases/onto-db"
-  },
-  "mcp_suite": {
-    "stage_pipeline_mcps": [
-      {
-        "name": "mcp_stage1_asset_discovery",
-        "stage": "STAGE 1",
-        "tab": "stage1",
-        "steps": [
-          "profile_tables",
-          "scan_guides",
-          "prune_noise",
-          "tag_pii_governance"
-        ]
-      },
-      {
-        "name": "mcp_stage2_wiki_and_semantic",
-        "stage": "STAGE 2",
-        "tab": "stage2",
-        "steps": [
-          "compile_3layer_wiki",
-          "extract_hash_anchors",
-          "bind_semantic_bridges"
-        ]
-      },
-      {
-        "name": "mcp_stage3_property_graph",
-        "stage": "STAGE 3",
-        "tab": "stage3",
-        "steps": [
-          "promote_dw_nodes",
-          "synthesize_graph_ddl",
-          "verify_gql_templates"
-        ]
-      },
-      {
-        "name": "mcp_stage4_agent_orchestration",
-        "stage": "STAGE 4",
-        "tab": "stage4",
-        "steps": [
-          "decompose_subgoals",
-          "dispatch_domain_mcps",
-          "verify_grounding_anchors"
-        ]
-      },
-      {
-        "name": "mcp_stage5_lineage_and_eval",
-        "stage": "STAGE 5",
-        "tab": "stage5",
-        "steps": [
-          "build_4tier_lineage",
-          "run_golden_cq_suite",
-          "diagnose_boundary_failures"
-        ]
-      }
+  "code_exposure_boundary": {
+    "abstracted_in_platform": [
+      "Stage 1~5 Internal Ontology Compiler & Builder Engines (OCR, AST/TBox Schema Induction, Automated DDL Generator)",
+      "Low-level MCP Protocol Transport Plumbing & Platform Builder Server Internals"
     ],
-    "runtime_execution_mcps": [
-      "mcp_lookup_customer_profile",
-      "mcp_calculate_penalty_rule",
-      "mcp_query_graph_and_wiki"
+    "exposed_in_starter": [
+      "src/resource_connector.py — OntologyResourceConnector (Direct binding to Ready-to-Use BigQuery Property Graph, GCS 3-Layer Wiki, Spanner Graph)",
+      "src/agent/mcp_server.py — 3 Customizable Domain Business Tools (Customer Profile Lookup, Penalty Calculator, Graph GQL + Wiki Hybrid Query)",
+      "src/agent/reasoning_engine.py — AI FDE ReAct Agent Loop with Deterministic Gate G2-W Audit",
+      "src/web/studio_server.py & notebooks/{ko,en}/*.ipynb — 6-Tab Starter Portal & 12 Self-Contained Notebooks"
     ]
+  },
+  "ready_to_use_resources": {
+    "gcp_project_id": "seanjung-poc",
+    "region": "asia-northeast3",
+    "bq_dataset_id": "starter_ontology_dw",
+    "bq_property_graph": "STARTER_ONTOLOGY_GRAPH",
+    "gcs_wiki_uri": "gs://seanjung-poc-starter-ontology/ontology/",
+    "spanner_graph": "starter-spanner/starter_ontology_db/STARTER_ONTOLOGY_GRAPH",
+    "business_workflows_path": "data/output/ontology/business_workflows.json",
+    "workflow_cqs_path": "data/output/ontology/workflow_cqs.json"
+  },
+  "domain_business_tools": [
+    "mcp_lookup_customer_profile",
+    "mcp_calculate_penalty_rule",
+    "mcp_query_graph_and_wiki"
+  ],
+  "ontology_layers": {
+    "layer_1_physical": "data/input/03_tables/ & BigQuery DW Ledgers (tb_customer_contract, tb_device_master, tb_plan_master, tb_subsidy_policy)",
+    "layer_2_wiki": "data/output/ontology/{summary.md, entities.md, concepts.md, rules.md} & gs://seanjung-poc-starter-ontology/ontology/",
+    "layer_3_semantic_graph": "data/output/create_property_graph.sql & seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH (P1/P2/P3)",
+    "layer_4_workflows": "data/output/ontology/{business_rules.json, business_workflows.json, workflow_cqs.json} (W1/W2/W3 · Gate G2-W)",
+    "layer_5_domain_tools": "src/agent/mcp_server.py (3 Domain Business Tools)",
+    "layer_6_agent_and_eval": "src/agent/reasoning_engine.py & data/output/cq_eval_report.json (Golden CQ 15/15)"
+  },
+  "guardrails": {
+    "require_source_citation": true,
+    "allow_ungrounded_calculation": false,
+    "strict_domain_rule_matching": true,
+    "gate_g2w_deterministic_audit": true
   }
 }

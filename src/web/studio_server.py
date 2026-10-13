@@ -4,15 +4,14 @@
 
 # -*- coding: utf-8 -*-
 """
-Agentic Ontology Studio Server (Starter Pack v2.0)
+Agentic Ontology Studio Server (Starter Pack v2.2 · Resource-Connected)
 - Light Enterprise Design System (`05_DESIGN.md` & `methodology/ko/METHODOLOGY_KO.md`):
   * Light Enterprise Theme (`--apple-bg-primary: #ffffff`, `--apple-bg-secondary: #f5f5f7`)
-  * 44px Global Navigation Bar with Official Google 'G' Vector SVG + KOR/ENG Pill Switch
-  * 52px Local Sub-navigation Bar (`.ac-localnav` + `.compact-pill-bar`) with 6 Compressed Stage Tabs:
-      0. Overview | Stage 1. Asset | Stage 2. Wiki & Semantic Graph | Stage 3. Property Graph | Stage 4. Agent & MCP | Stage 5. Lineage & Eval
-  * Interactive vis-network Graphs (`Entity=Node`, `Concept=Edge`, Teal hub in Stage 3 only, 1.15px Edges, Korean Business Labels)
-  * 3-Track Data Maturity (`lite: 1→2→4`, `standard: 1→2→3→4`, `full: 1→5`) & Dual Graph Engine Adapter (`BigQuery Property Graph` <-> `Cloud Spanner Graph`)
-  * 8 Core Modular MCPs (5 Stage Pipeline MCPs with selectable `steps` + 3 Runtime Execution MCPs)
+  * 44px Global Navigation Bar with Official Google 'G' Vector SVG + Live Reference Studio Links + KOR/ENG Pill Switch
+  * 52px Local Sub-navigation Bar (`.ac-localnav` + `.compact-pill-bar`) with 6 Stage-Guided Tabs:
+      0. Overview | Stage 1. Asset | Stage 2. Wiki & Semantic Graph | Stage 3. Property Graph & Workflow | Stage 4. Agent & Domain Tools | Stage 5. Lineage & Eval
+  * Direct Connection to Ready-to-Use GCP Resources (`BigQuery Property Graph`, `GCS 3-Layer OKF Wiki`, `Business Workflows W1~W3 · Gate G2-W`, `Cloud Spanner Graph`)
+  * 3 Customizable Domain Business Tools (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`) with internal MCP compiler plumbing abstracted away
 """
 import os, sys, json, csv, glob, hashlib, http.server, socketserver
 from urllib.parse import urlparse, parse_qs
@@ -182,7 +181,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agentic Ontology Studio — Starter Pack v2.0</title>
+<title>Agentic Ontology Studio — Starter Pack v2.2 · Resource-Connected</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <style>
@@ -1142,6 +1141,21 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .badge.llm { background: rgba(13, 148, 136, 0.12); color: #0d9488; }
   .badge.indigo { background: #eef2ff; color: #4338ca; }
   .badge.amber { background: #fef3c7; color: #b45309; }
+  .badge-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+  }
+  .badge-llm-gen {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+  }
 
   /* 6. Stage 2 & Stage 3 Split Panes (Wiki + vis-network Canvas + DDL Viewer) */
   .split-pane-grid {
@@ -1637,7 +1651,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- 1. GLOBAL TOPBAR (44px, Official Google 'G' SVG + Brand + KOR/ENG Switch) -->
+  <!-- 1. GLOBAL TOPBAR (44px, Official Google 'G' SVG + Brand + Live Reference Studios + KOR/ENG Switch) -->
   <nav class="globalnav">
     <div class="globalnav-content">
       <div class="globalnav-left">
@@ -1655,11 +1669,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <select id="hdr-project-select" class="hdr-project-select" onchange="switchProject(this.value)"></select>
         </div>
         <button class="subnav-action-btn" style="padding:3px 10px; font-size:11px; border-color:var(--apple-blue); color:var(--apple-blue); font-weight:700;" onclick="openNewProjectModal()" data-ko="+ 선택 트랙으로 신규 프로젝트" data-en="+ New Project with Track">+ 선택 트랙으로 신규 프로젝트</button>
-        <span class="hdr-meta-badge">Starter Pack v2.0</span>
+        <span class="hdr-meta-badge">Starter Pack v2.2 · Resource-Connected</span>
         <span class="hdr-meta-badge teal" id="hdr-track-badge">Track 3 · Full-Stack</span>
         <span class="hdr-meta-badge indigo" id="hdr-engine-badge">BigQuery Property Graph</span>
       </div>
       <div class="hdr-right-controls">
+        <a class="subnav-action-btn" style="text-decoration:none; border-color:#7c3aed; color:#6d28d9; font-weight:700;" href="https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/" target="_blank" rel="noopener" data-ko="🔗 LGU+ 기준점 스튜디오 (12-Tab)" data-en="🔗 LGU+ Reference Studio (12-Tab)">🔗 LGU+ 기준점 스튜디오 (12-Tab)</a>
+        <a class="subnav-action-btn" style="text-decoration:none; border-color:#059669; color:#047857; font-weight:700;" href="https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/" target="_blank" rel="noopener" data-ko="🔗 LG H&amp;H 기준점 데모" data-en="🔗 LG H&amp;H Reference Demo">🔗 LG H&amp;H 기준점 데모</a>
         <button class="subnav-action-btn" onclick="openIndustryModal()" data-ko="업종별 추천 유즈케이스 (8대 기업)" data-en="Industry Use Cases (8 Enterprises)">업종별 추천 유즈케이스 (8대 기업)</button>
         <div class="hdr-pill-switch hdr-lang-switch" title="한글 / 영문 표시 전환">
           <button id="lang-btn-ko" class="active" onclick="setStudioLanguage('ko')">KOR</button>
@@ -1669,20 +1685,20 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </div>
   </nav>
 
-  <!-- 2. LOCAL SUBBAR (52px, .ac-localnav + .compact-pill-bar with 6 Compressed Stage Tabs) -->
+  <!-- 2. LOCAL SUBBAR (52px, .ac-localnav + .compact-pill-bar with 6 Stage-Guided Tabs) -->
   <div class="ac-localnav">
     <div class="ac-localnav-content">
       <div class="compact-pill-bar" id="main-tab-ribbon">
         <button class="view-mode-pill active" data-tab="overview" onclick="switchTab('overview')">0. Overview</button>
         <button class="view-mode-pill" data-tab="stage1" onclick="switchTab('stage1')" id="tab-btn-stage1">Stage 1. Asset</button>
         <button class="view-mode-pill" data-tab="stage2" onclick="switchTab('stage2')" id="tab-btn-stage2">Stage 2. Wiki &amp; Semantic Graph</button>
-        <button class="view-mode-pill" data-tab="stage3" onclick="switchTab('stage3')" id="tab-btn-stage3">Stage 3. Property Graph</button>
-        <button class="view-mode-pill" data-tab="stage4" onclick="switchTab('stage4')" id="tab-btn-stage4">Stage 4. Agent &amp; MCP</button>
+        <button class="view-mode-pill" data-tab="stage3" onclick="switchTab('stage3')" id="tab-btn-stage3">Stage 3. Property Graph &amp; Workflow</button>
+        <button class="view-mode-pill" data-tab="stage4" onclick="switchTab('stage4')" id="tab-btn-stage4">Stage 4. Agent &amp; Domain Tools</button>
         <button class="view-mode-pill" data-tab="stage5" onclick="switchTab('stage5')" id="tab-btn-stage5">Stage 5. Lineage &amp; Eval</button>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
         <button class="subnav-action-btn" style="border-color:#0d9488; color:#0f766e; font-weight:700;" onclick="openNewProjectModal()" data-ko="+ 선택 트랙으로 프로젝트 생성 &amp; 워크벤치 시작" data-en="+ Create Project with Selected Track">+ 선택 트랙으로 프로젝트 생성 &amp; 워크벤치 시작</button>
-        <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage1_asset_discovery')">▶ Run Stage MCP</button>
+        <button class="subnav-action-btn" onclick="openStageMcpModal('stage1_resource_check')" data-ko="▶ 연결 리소스 &amp; 도메인 도구 점검" data-en="▶ Inspect Connected Resources &amp; Tools">▶ 연결 리소스 &amp; 도메인 도구 점검</button>
       </div>
     </div>
   </div>
@@ -1696,20 +1712,157 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <section class="tab-panel active" id="panel-overview">
       <div class="ov-scroll-wrap">
 
+        <!-- PART 0: Reference Standard Alignment & Resource-Connected Architecture Hub (GOAL-199) -->
+        <div class="ov-card" id="ov-reference-hub-card" style="border-top:4px solid #7c3aed; background:linear-gradient(180deg, #faf5ff 0%, #ffffff 38%);">
+          <div class="ov-card-head">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="ov-eyebrow purple" data-ko="REFERENCE STANDARD ALIGNMENT · 6-LAYER ONTOLOGY &amp; RESOURCE-CONNECTED STARTER v2.2" data-en="REFERENCE STANDARD ALIGNMENT · 6-LAYER ONTOLOGY &amp; RESOURCE-CONNECTED STARTER v2.2">REFERENCE STANDARD ALIGNMENT · 6-LAYER ONTOLOGY &amp; RESOURCE-CONNECTED STARTER v2.2</span>
+              <span class="badge approved" data-ko="복잡한 MCP 빌더 내부 구현 제외 · 즉시 사용 가능한 GCP 리소스 직결" data-en="MCP Builder Internals Abstracted · Connected to Ready-to-Use GCP Resources">복잡한 MCP 빌더 내부 구현 제외 · 즉시 사용 가능한 GCP 리소스 직결</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px; border-color:#7c3aed; color:#6d28d9; font-weight:700;" href="https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/" target="_blank" rel="noopener" data-ko="★ 기준 스튜디오: LG U+ Full Studio (12-Tab)" data-en="★ Reference Standard: LG U+ Full Studio (12-Tab)">★ 기준 스튜디오: LG U+ Full Studio (12-Tab)</a>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px; border-color:#059669; color:#047857; font-weight:700;" href="https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/" target="_blank" rel="noopener" data-ko="★ 교차 도메인: LG H&amp;H Studio (12-Tab)" data-en="★ Cross-Domain: LG H&amp;H Studio (12-Tab)">★ 교차 도메인: LG H&amp;H Studio (12-Tab)</a>
+              <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter" target="_blank" rel="noopener">GitHub Repository ↗</a>
+            </div>
+          </div>
+          <h2 class="ov-h2" data-ko="기준점(Reference Standard) 기반 스타터 아키텍처 — 설명 · 데모 · 프로세스 · 노출 코드 · 노트북 통합 허브" data-en="Reference-Aligned Starter Architecture — Unified Explanation, Live Demo, Process, Code Boundary &amp; Notebooks">기준점(Reference Standard) 기반 스타터 아키텍처 — 설명 · 데모 · 프로세스 · 노출 코드 · 노트북 통합 허브</h2>
+          <p class="ov-lead" style="margin-bottom:12px;" data-ko="본 스타터 팩은 <b>LG U+ 엔터프라이즈 온톨로지 스튜디오 기준점(6-Layer · P1/P2/P3 × W1/W2/W3 × Gate G2-W)</b>의 핵심 흐름을 그대로 따르면서, 무거운 내부 온톨로지 컴파일러 및 MCP 서버 프로토콜 구현은 추상화하고 <b>이미 준비된 Google Cloud 온톨로지 리소스(BigQuery Property Graph · GCS 3-Layer OKF Wiki · 비즈니스 워크플로우)에 즉시 연결</b>하여 도메인 비즈니스 도구(3종)와 에이전트만 집중 개발할 수 있도록 설계되었습니다." data-en="Aligned with the <b>LG U+ Enterprise Ontology Studio Reference Standard (6-Layer · P1/P2/P3 × W1/W2/W3 × Gate G2-W)</b>, this Starter Pack abstracts away heavy internal MCP compiler plumbing and connects directly to <b>Ready-to-Use Google Cloud Ontology Resources (BigQuery Property Graph · GCS 3-Layer OKF Wiki · Business Workflows)</b> so developers only customize the 3 Domain Business Tools and AI FDE Agent.">
+            본 스타터 팩은 <b>LG U+ 엔터프라이즈 온톨로지 스튜디오 기준점(6-Layer · P1/P2/P3 × W1/W2/W3 × Gate G2-W)</b>의 핵심 흐름을 그대로 따르면서, 무거운 내부 온톨로지 컴파일러 및 MCP 서버 프로토콜 구현은 추상화하고 <b>이미 준비된 Google Cloud 온톨로지 리소스(BigQuery Property Graph · GCS 3-Layer OKF Wiki · 비즈니스 워크플로우)에 즉시 연결</b>하여 도메인 비즈니스 도구(3종)와 에이전트만 집중 개발할 수 있도록 설계되었습니다.
+          </p>
+
+          <!-- 0-A. 3 Live Studios & 6-Layer Standard Flow -->
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:12px;" id="ov-ref-studios-grid">
+            <div style="background:#ffffff; border:1.5px solid #93c5fd; border-left:4px solid #2563eb; border-radius:10px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span class="badge human">STARTER LIVE PORTAL (6-TAB)</span>
+                <code style="font-size:10.5px; color:#2563eb;">v2.2 Resource-Connected</code>
+              </div>
+              <div style="font-size:13px; font-weight:800; color:#0f172a;">Enterprise Agentic Ontology Starter</div>
+              <div style="font-size:11.5px; color:#475569; margin:4px 0 8px;">즉시 사용 가능한 GCP 리소스(<code>seanjung-poc.starter_ontology_dw</code> · <code>STARTER_ONTOLOGY_GRAPH</code> · GCS Wiki)와 도메인 비즈니스 도구 3종에 직결된 스타터 포털</div>
+              <a href="https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; color:#2563eb; text-decoration:none;">https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/ ↗</a>
+            </div>
+            <div style="background:#ffffff; border:1.5px solid #ddd6fe; border-left:4px solid #7c3aed; border-radius:10px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span class="badge badge-llm-gen">REFERENCE STANDARD (12-TAB · TELECOM)</span>
+                <code style="font-size:10.5px; color:#7c3aed;">Full Governance</code>
+              </div>
+              <div style="font-size:13px; font-weight:800; color:#0f172a;">LG U+ Agentic Ontology Studio (기준점)</div>
+              <div style="font-size:11.5px; color:#475569; margin:4px 0 8px;">6-Layer 온톨로지 표준 · <code>P1/P2/P3 × W1/W2/W3 × Gate G2-W</code> · Wiki/BQG/Workflow Agent 및 14개 도메인 도구 전체 구현 레퍼런스</div>
+              <a href="https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; color:#7c3aed; text-decoration:none;">https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/ ↗</a>
+            </div>
+            <div style="background:#ffffff; border:1.5px solid #a7f3d0; border-left:4px solid #059669; border-radius:10px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span class="badge approved">CROSS-DOMAIN STANDARD (12-TAB · H&amp;H)</span>
+                <code style="font-size:10.5px; color:#059669;">Multi-Regulation</code>
+              </div>
+              <div style="font-size:13px; font-weight:800; color:#0f172a;">LG H&amp;H Compliance Ontology Studio</div>
+              <div style="font-size:11.5px; color:#475569; margin:4px 0 8px;">동일 5-Stage × 11-Step 아키텍처로 구축된 KR/US/EU 화장품 표시·광고 규제 및 배합 한도 다중 법역 그래프 레퍼런스</div>
+              <a href="https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/" target="_blank" rel="noopener" style="font-size:11px; font-weight:700; color:#059669; text-decoration:none;">https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/ ↗</a>
+            </div>
+          </div>
+
+          <!-- 0-B. Code Exposure Boundary (What is Abstracted vs. What Starter Exposes) -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px;">
+              <div style="font-size:12px; font-weight:800; color:#475569; margin-bottom:6px;" data-ko="🔒 플랫폼 추상화 영역 (Starter 코드에서 제외 · Ready-to-Use 리소스로 제공)" data-en="🔒 Abstracted by Platform (Excluded from Starter Code · Provided as Ready-to-Use Resources)">🔒 플랫폼 추상화 영역 (Starter 코드에서 제외 · Ready-to-Use 리소스로 제공)</div>
+              <ul style="font-size:11.5px; color:#334155; line-height:1.6; padding-left:16px; margin:0;">
+                <li><b>내부 MCP 빌더 서버 &amp; 컴파일러 파이프라인 추상화</b>: 복잡한 Stage 1~5 MCP 서버 프로토콜·OCR·TBox/ABox 자동 추론 코드는 스타터 사용자에게 노출하지 않음</li>
+                <li><b>즉시 사용 가능한 GCP 리소스(Ready-to-Use Resources) 제공</b>:
+                  <code>seanjung-poc.starter_ontology_dw</code> (10 Tables) · <code>STARTER_ONTOLOGY_GRAPH</code> (P1~P3) · <code>gs://seanjung-poc-starter-ontology/ontology/</code> (3-Layer Wiki &amp; W1~W3 Workflows)</li>
+              </ul>
+            </div>
+            <div style="background:#eff6ff; border:1.5px solid #93c5fd; border-radius:10px; padding:12px 14px;">
+              <div style="font-size:12px; font-weight:800; color:#1d4ed8; margin-bottom:6px;" data-ko="🔓 스타터 노출 &amp; 커스터마이징 코드 경계 (개발자가 집중하는 4대 핵심 영역)" data-en="🔓 Exposed Starter Code Boundary (4 Core Files You Customize)">🔓 스타터 노출 &amp; 커스터마이징 코드 경계 (개발자가 집중하는 4대 핵심 영역)</div>
+              <ul style="font-size:11.5px; color:#1e293b; line-height:1.6; padding-left:16px; margin:0;">
+                <li><code>src/resource_connector.py</code> — 준비된 BigQuery Graph · GCS 3-Layer Wiki · Spanner 리소스에 즉시 연결하는 씬(Thin) 커넥터</li>
+                <li><code>src/agent/mcp_server.py</code> — 프로젝트별 <b>도메인 비즈니스 도구 3종</b> (<code>mcp_lookup_customer_profile</code>, <code>mcp_calculate_penalty_rule</code>, <code>mcp_query_graph_and_wiki</code>)</li>
+                <li><code>src/agent/reasoning_engine.py</code> — AI FDE 하위 목표 분해 · 도구 체이닝 · <b>Gate G2-W 결정론적 감사</b></li>
+                <li><code>notebooks/{ko,en}/*.ipynb</code> — 설명·프로세스·GCP 리소스·데모가 1:1로 연결된 12종 실습 노트북</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 0-C. Unified Stage 0~5 Map (Process <-> Demo Tab <-> GCP Resource <-> Exposed Code <-> Notebook) -->
+          <div style="overflow-x:auto; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff;">
+            <table class="ov-gap-table" style="font-size:11.5px; margin:0;">
+              <thead>
+                <tr>
+                  <th style="width:9%;">단계 (Stage)</th>
+                  <th style="width:23%;">표준 프로세스 (P1~P3 · W1~W3 · Gate G2-W)</th>
+                  <th style="width:15%;">포털 데모 탭 (클릭 이동)</th>
+                  <th style="width:23%;">연결된 Ready-to-Use GCP 리소스</th>
+                  <th style="width:15%;">노출 코드 경계</th>
+                  <th style="width:15%;">방법론 &amp; 실습 노트북 (KO/EN)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="lead-cell"><b>Stage 0</b></td>
+                  <td>아키텍처 오버뷰 &amp; Ready-to-Use GCP 리소스 연결 점검</td>
+                  <td><button class="subnav-action-btn" style="padding:2px 8px; font-size:10.5px;" onclick="switchTab('overview')">0. Overview</button></td>
+                  <td><code>seanjung-poc.starter_ontology_dw</code> &amp; <code>gs://seanjung-poc-starter-ontology/</code></td>
+                  <td><code>src/resource_connector.py</code></td>
+                  <td><a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/METHODOLOGY_KO.md" target="_blank" rel="noopener">방법론</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage0_overview_walkthrough_ko.ipynb" target="_blank" rel="noopener">NB(KO)</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/en/stage0_overview_walkthrough_en.ipynb" target="_blank" rel="noopener">NB(EN)</a></td>
+                </tr>
+                <tr>
+                  <td class="lead-cell"><b>Stage 1</b></td>
+                  <td><b>P1</b>(약관 Gate 0 &ge;95%) + <b>P2</b>(정형 DW 원장 4종 비식별화 바인딩)</td>
+                  <td><button class="subnav-action-btn" style="padding:2px 8px; font-size:10.5px;" onclick="switchTab('stage1')">Stage 1. Asset ↗</button></td>
+                  <td><code>tb_customer_contract</code>, <code>tb_device_master</code>, <code>tb_plan_master</code>, <code>tb_subsidy_policy</code>, <code>tb_doc_chunks</code></td>
+                  <td><code>config/project.json</code> · <code>data/input/</code></td>
+                  <td><a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/01_stage1_asset_and_cq_ko.md" target="_blank" rel="noopener">방법론</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage1_asset_and_cq_ko.ipynb" target="_blank" rel="noopener">NB(KO)</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/en/stage1_asset_and_cq_en.ipynb" target="_blank" rel="noopener">NB(EN)</a></td>
+                </tr>
+                <tr>
+                  <td class="lead-cell"><b>Stage 2</b></td>
+                  <td><b>3-Layer OKF Wiki</b>(Summary·Entities·Concepts) &amp; 시맨틱 그래프·비즈니스 룰</td>
+                  <td><button class="subnav-action-btn" style="padding:2px 8px; font-size:10.5px;" onclick="switchTab('stage2')">Stage 2. Wiki ↗</button></td>
+                  <td><code>gs://seanjung-poc-starter-ontology/ontology/*.md</code> &amp; <code>tb_domain_rules</code> (4 Rules)</td>
+                  <td><code>data/llm_wiki/*.md</code> · <code>business_rules.json</code></td>
+                  <td><a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md" target="_blank" rel="noopener">방법론</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb" target="_blank" rel="noopener">NB(KO)</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb" target="_blank" rel="noopener">NB(EN)</a></td>
+                </tr>
+                <tr>
+                  <td class="lead-cell"><b>Stage 3</b></td>
+                  <td><b>P1/P2/P3</b> 물리 Property Graph &amp; <b>W1/W2/W3</b> 비즈니스 워크플로우 (<b>Gate G2-W</b>)</td>
+                  <td><button class="subnav-action-btn" style="padding:2px 8px; font-size:10.5px;" onclick="switchTab('stage3')">Stage 3. Graph &amp; WF ↗</button></td>
+                  <td><code>STARTER_ONTOLOGY_GRAPH</code> (BigQuery SQL:2023 &amp; Spanner GQL) · <code>business_workflows.json</code></td>
+                  <td><code>src/gcp_client.py</code> · <code>create_property_graph.sql</code></td>
+                  <td><a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/03_stage3_property_graph_ko.md" target="_blank" rel="noopener">방법론</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb" target="_blank" rel="noopener">NB(KO)</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb" target="_blank" rel="noopener">NB(EN)</a></td>
+                </tr>
+                <tr>
+                  <td class="lead-cell"><b>Stage 4</b></td>
+                  <td><b>Contract 4 (D4.5)</b> 도메인 비즈니스 도구 3종 바인딩 &amp; AI FDE 에이전트 추론</td>
+                  <td><button class="subnav-action-btn" style="padding:2px 8px; font-size:10.5px;" onclick="switchTab('stage4')">Stage 4. Agent &amp; Tools ↗</button></td>
+                  <td>Vertex AI <code>gemini-3.8-flash</code> + 도메인 도구 3종 (고객조회·위약금산출·GQL+Wiki)</td>
+                  <td><code>src/agent/mcp_server.py</code> · <code>reasoning_engine.py</code></td>
+                  <td><a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/04_stage4_agent_and_mcp_ko.md" target="_blank" rel="noopener">방법론</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb" target="_blank" rel="noopener">NB(KO)</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/en/stage4_agent_and_mcp_execution_en.ipynb" target="_blank" rel="noopener">NB(EN)</a></td>
+                </tr>
+                <tr>
+                  <td class="lead-cell"><b>Stage 5</b></td>
+                  <td><b>6-Layer 엔드투엔드 데이터 리니지</b> &amp; Golden/Workflow/Boundary CQ 검증</td>
+                  <td><button class="subnav-action-btn" style="padding:2px 8px; font-size:10.5px;" onclick="switchTab('stage5')">Stage 5. Lineage &amp; Eval ↗</button></td>
+                  <td><code>config/lineage_spec.json</code> · <code>cq_benchmark_report.json</code> · <code>workflow_cqs.json</code></td>
+                  <td><code>src/lineage/lineage_engine.py</code> · <code>validator.py</code></td>
+                  <td><a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/05_stage5_lineage_and_eval_ko.md" target="_blank" rel="noopener">방법론</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb" target="_blank" rel="noopener">NB(KO)</a> · <a href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/en/stage5_lineage_and_evaluation_en.ipynb" target="_blank" rel="noopener">NB(EN)</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- PART 1: Interactive Full-Picture Path Map & Building Block Selector -->
         <div class="ov-card ov-hero-card" id="ov-fullmap-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow" id="ov-builder-eyebrow" data-ko="INTERACTIVE PATH MAP &amp; STARTER PACK PACKAGE BUILDER" data-en="INTERACTIVE PATH MAP &amp; STARTER PACK PACKAGE BUILDER">INTERACTIVE PATH MAP &amp; STARTER PACK PACKAGE BUILDER</span>
+            <span class="ov-eyebrow" id="ov-builder-eyebrow" data-ko="INTERACTIVE PATH MAP &amp; RESOURCE-CONNECTED STARTER BUILDER" data-en="INTERACTIVE PATH MAP &amp; RESOURCE-CONNECTED STARTER BUILDER">INTERACTIVE PATH MAP &amp; RESOURCE-CONNECTED STARTER BUILDER</span>
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              <span class="badge approved" data-ko="전체 경로 그림 + 항목 클릭형 패키지 조립" data-en="Visual Path Map + Click-to-Assemble Package">전체 경로 그림 + 항목 클릭형 패키지 조립</span>
+              <span class="badge approved" data-ko="리소스 직결 경로 다이어그램 + 항목 클릭형 패키지 조립" data-en="Resource-Connected Path Map + Click-to-Assemble Package">리소스 직결 경로 다이어그램 + 항목 클릭형 패키지 조립</span>
               <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="/docs/architecture/gcp_system_architecture.html" target="_blank" rel="noopener" data-ko="GCP 시스템 아키텍처 (HTML)" data-en="GCP System Architecture (HTML)">GCP 시스템 아키텍처 (HTML)</a>
               <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/METHODOLOGY_KO.md" target="_blank" rel="noopener" data-ko="방법론 (METHODOLOGY_KO.md)" data-en="Methodology (METHODOLOGY_EN.md)">방법론 (METHODOLOGY_KO.md)</a>
               <a class="subnav-action-btn" style="text-decoration:none; padding:3px 10px; font-size:11px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage0_overview_walkthrough_ko.ipynb" target="_blank" rel="noopener" data-ko="노트북 (Stage 0)" data-en="Notebook (Stage 0)">노트북 (Stage 0)</a>
             </div>
           </div>
-          <h2 class="ov-h2" id="ov-builder-title" data-ko="전체 경로(Lite · Standard · Full-Stack) 다이어그램 &amp; 스타터팩 패키지 조립 보드" data-en="Full-Picture Path Map (Lite · Standard · Full-Stack) &amp; Starter Pack Package Builder">전체 경로(Lite · Standard · Full-Stack) 다이어그램 &amp; 스타터팩 패키지 조립 보드</h2>
-          <p class="ov-lead" id="ov-builder-lead" style="margin-bottom:10px;" data-ko="아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>선택한 조합으로 조립·구현되는 스타터팩 패키지 구성도(파이프라인 아키텍처, 포함 코드 모듈, 활성 MCP·노트북, project.json·Terraform, 실행 CLI)</b>가 즉시 재구성됩니다." data-en="Select a <b>Path Preset (Lite / Standard / Full-Stack / Dual Fabric)</b> or <b>click any building block inside the Stage 1 ➔ Stage 5 diagram</b> below. The active route lights up in real time and dynamically assembles the <b>Starter Pack Package Blueprint (pipeline flow, Python modules, MCP tools, notebooks, project.json/Terraform, and CLI commands)</b>.">
-            아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>선택한 조합으로 조립·구현되는 스타터팩 패키지 구성도(파이프라인 아키텍처, 포함 코드 모듈, 활성 MCP·노트북, project.json·Terraform, 실행 CLI)</b>가 즉시 재구성됩니다.
+          <h2 class="ov-h2" id="ov-builder-title" data-ko="전체 경로(Lite · Standard · Full-Stack) 다이어그램 &amp; 리소스 직결 스타터 패키지 조립 보드" data-en="Full-Picture Path Map (Lite · Standard · Full-Stack) &amp; Resource-Connected Starter Builder">전체 경로(Lite · Standard · Full-Stack) 다이어그램 &amp; 리소스 직결 스타터 패키지 조립 보드</h2>
+          <p class="ov-lead" id="ov-builder-lead" style="margin-bottom:10px;" data-ko="아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 리소스·구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>연결되는 Ready-to-Use GCP 리소스, 노출 코드 모듈, 도메인 비즈니스 도구 3종, 실습 노트북(KO/EN), CLI 명령어</b>가 즉시 재구성됩니다." data-en="Select a <b>Path Preset (Lite / Standard / Full-Stack / Dual Fabric)</b> or <b>click any resource building block inside the Stage 1 ➔ Stage 5 diagram</b> below. The active route lights up in real time and dynamically assembles the <b>Resource-Connected Starter Blueprint (GCP resources, exposed modules, 3 domain business tools, notebooks, and CLI commands)</b>.">
+            아래 <b>전체 경로 그림(Stage 1 ➔ Stage 5)</b>에서 <b>패스 프리셋(Lite / Standard / Full-Stack / Dual Fabric)</b>을 누르거나 <b>각 단계의 리소스·구성 항목 카드를 직접 클릭</b>해 보세요. 선택한 경로가 실시간으로 연결되며, 바로 아래에 <b>연결되는 Ready-to-Use GCP 리소스, 노출 코드 모듈, 도메인 비즈니스 도구 3종, 실습 노트북(KO/EN), CLI 명령어</b>가 즉시 재구성됩니다.
           </p>
 
           <!-- 1-A. 4 Quick Path Preset Cards + Synchronized Segmented Strip -->
@@ -1746,7 +1899,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div class="ov-card" id="ov-assembled-package-card" style="border-left:4px solid #0d9488;">
           <div class="ov-card-head">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span class="ov-eyebrow teal" data-ko="ASSEMBLED STARTER PACK BLUEPRINT · 선택 조합 패키지 구현 구성도" data-en="ASSEMBLED STARTER PACK BLUEPRINT · PACKAGE IMPLEMENTATION VIEW">ASSEMBLED STARTER PACK BLUEPRINT · 선택 조합 패키지 구현 구성도</span>
+              <span class="ov-eyebrow teal" data-ko="ASSEMBLED STARTER PACK BLUEPRINT · 리소스 직결 스타터 구현 구성도" data-en="ASSEMBLED STARTER PACK BLUEPRINT · RESOURCE-CONNECTED IMPLEMENTATION VIEW">ASSEMBLED STARTER PACK BLUEPRINT · 리소스 직결 스타터 구현 구성도</span>
               <span class="badge human" id="ov-pkg-active-badge">Track 3 · Full-Stack + BigQuery Property Graph</span>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -1755,23 +1908,23 @@ HTML_PAGE = r"""<!DOCTYPE html>
               <button class="wb-btn-approve" onclick="openNewProjectModal()" data-ko="+ 선택 트랙으로 신규 프로젝트 생성 (파일 업로드 &amp; Gemini 스텝별 승인)" data-en="+ Create New Project with Selected Track (Upload &amp; Step-by-Step Gemini)">+ 선택 트랙으로 신규 프로젝트 생성 (파일 업로드 &amp; Gemini 스텝별 승인)</button>
             </div>
           </div>
-          <h2 class="ov-h2" id="ov-pkg-title">선택한 구성 항목으로 조립된 스타터팩 패키지 아키텍처 &amp; 구현 명세</h2>
+          <h2 class="ov-h2" id="ov-pkg-title">선택한 구성 항목으로 조립된 스타터팩 리소스 연결 &amp; 구현 명세</h2>
           <p class="ov-lead" id="ov-pkg-subtitle" style="margin-bottom:12px;"></p>
 
           <!-- 2-A. Visual 5-Stage Package Implementation Pipeline Diagram -->
           <div class="ov-pkg-pipe-grid" id="ov-pkg-pipe-grid"></div>
 
-          <!-- 2-B. 4-Column Package Manifest (Code Modules / MCP & Notebooks / project.json & Terraform / CLI) -->
+          <!-- 2-B. 4-Column Package Manifest (Code Modules / Tools & Notebooks / project.json & Terraform / CLI) -->
           <div class="ov-pkg-manifest-grid" id="ov-pkg-manifest-grid"></div>
         </div>
 
-        <!-- PART 3: 5-Stage Detailed Step & MCP Execution Board (Synced with Selected Path) -->
+        <!-- PART 3: 5-Stage Detailed Step & Resource Connection Board -->
         <div class="ov-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow" id="ov-s1-eyebrow">SECTION 2 · 5-STAGE METHODOLOGY &amp; MODULAR MCP PIPELINE</span>
+            <span class="ov-eyebrow" id="ov-s1-eyebrow">SECTION 2 · 5-STAGE × 11-STEP RESOURCE-CONNECTED ONTOLOGY FLOW</span>
             <span class="badge human" id="ov-s1-path-hint">선택한 패스에 포함된 활성 Stage와 생략(Bypass) Stage가 구분 표시됩니다</span>
           </div>
-          <h2 class="ov-h2" id="ov-s1-title">5-Stage 온톨로지 엔지니어링 방법론과 모듈형 Stage MCP 실행 보드</h2>
+          <h2 class="ov-h2" id="ov-s1-title">5-Stage · 11-Step 온톨로지 엔지니어링 표준 프로세스 &amp; 리소스 연결 보드</h2>
           <p class="ov-lead" id="ov-s1-lead"></p>
           <div class="ov-flow-board" id="ov-flow-board"></div>
         </div>
@@ -1779,19 +1932,19 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <!-- PART 4: Feature Gap Matrix & Measured Starter Benchmark -->
         <div class="ov-card">
           <div class="ov-card-head">
-            <span class="ov-eyebrow indigo" id="ov-s2-eyebrow">SECTION 3 · GOOGLE CLOUD NATIVE FOUNDATION VS. STARTER PACK EXTENSIONS</span>
+            <span class="ov-eyebrow indigo" id="ov-s2-eyebrow">SECTION 3 · FULL PLATFORM (12-TAB) VS. RESOURCE-CONNECTED STARTER (6-TAB)</span>
             <span class="ov-eyebrow purple" id="ov-s4-eyebrow">MEASURED STARTER BENCHMARK</span>
           </div>
-          <h2 class="ov-h2" id="ov-s2-title">Google Cloud 네이티브 기반 기술과 스타터팩 모듈형 확장 아키텍처</h2>
+          <h2 class="ov-h2" id="ov-s2-title">엔터프라이즈 풀 플랫폼 기준점(12-Tab)과 리소스 직결형 스타터 팩(6-Tab) 역할 분담</h2>
           <p class="ov-lead" id="ov-s4-note" style="margin-bottom:10px;"></p>
           <div class="ov-metric-grid" id="ov-metric-grid" style="margin-bottom:14px;"></div>
           <table class="ov-gap-table">
             <thead>
               <tr>
-                <th style="width:22%;">스튜디오 단계 (Stage)</th>
-                <th style="width:24%;">Google Cloud Native 기반</th>
-                <th style="width:26%;">단독 사용 시 한계 (Gap)</th>
-                <th style="width:28%;">스타터팩 모듈형 해법 (Solution)</th>
+                <th style="width:22%;">비교 영역 (Category)</th>
+                <th style="width:36%;">기준 스튜디오 (LG U+ / H&amp;H 12-Tab Full Platform)</th>
+                <th style="width:28%;">스타터 팩 (6-Tab Resource-Connected Starter)</th>
+                <th style="width:14%;">핵심 전략</th>
               </tr>
             </thead>
             <tbody id="ov-gap-body"></tbody>
@@ -1809,14 +1962,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div id="wb-bar-stage1"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge human">STAGE 1 · ASSET DISCOVERY &amp; GOVERNANCE</span>
-            <span id="st1-ribbon-title" style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">비식별화 정형 마스터 원장(4종) &amp; 비정형 정책 가이드(2종) 통합 인벤토리</span>
+            <span class="badge human">STAGE 1 · ASSET DISCOVERY &amp; RESOURCE BINDING (P1 &amp; P2)</span>
+            <span id="st1-ribbon-title" style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">비식별화 정형 마스터 원장(4종) &amp; 비정형 정책 가이드(2종) Ready-to-Use 리소스 인벤토리</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span class="badge approved">PII De-identified (CUST_DEMO_*)</span>
+            <span class="badge approved">PII De-identified (CUST_DEMO_*) · Gate 0 PASS</span>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/01_stage1_asset_and_cq_ko.md" target="_blank" rel="noopener">방법론 (Stage 1)</a>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage1_asset_and_cq_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 1)</a>
-            <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage1_asset_discovery')">▶ Stage 1 MCP 실행</button>
+            <button class="subnav-action-btn" onclick="openStageMcpModal('stage1_resource_check')">▶ Stage 1 연결 리소스 점검</button>
           </div>
         </div>
 
@@ -1891,14 +2044,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div id="wb-bar-stage2"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge llm">STAGE 2 · 3-LAYER LLM-WIKI &amp; SEMANTIC GRAPH</span>
-            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="Karpathy 3-Layer Wiki 컴파일러 & 시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)" data-en="Karpathy 3-Layer Wiki Compiler & Semantic Ontology Graph (Entity=Node, Concept=Edge)">Karpathy 3-Layer Wiki 컴파일러 &amp; 시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)</span>
+            <span class="badge llm">STAGE 2 · 3-LAYER OKF WIKI &amp; SEMANTIC GRAPH</span>
+            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="GCS 3-Layer OKF 마크다운 위키 & 시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)" data-en="GCS 3-Layer OKF Markdown Wiki & Semantic Ontology Graph (Entity=Node, Concept=Edge)">GCS 3-Layer OKF 마크다운 위키 &amp; 시맨틱 온톨로지 그래프 (Entity=Node, Concept=Edge)</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span class="badge human">Track 1 (Lite: 1→2→4) Bridge</span>
+            <span class="badge human">gs://seanjung-poc-starter-ontology/ontology/</span>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md" target="_blank" rel="noopener">방법론 (Stage 2)</a>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 2)</a>
-            <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage2_wiki_and_semantic')">▶ Stage 2 MCP 실행</button>
+            <button class="subnav-action-btn" onclick="openStageMcpModal('stage2_resource_check')">▶ Stage 2 연결 리소스 점검</button>
           </div>
         </div>
 
@@ -1937,7 +2090,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </section>
 
     <!-- =================================================================== -->
-    <!-- TAB 3: STAGE 3. PROPERTY GRAPH (BigQuery Graph <-> Spanner Graph)   -->
+    <!-- TAB 3: STAGE 3. PROPERTY GRAPH & WORKFLOW (BQ <-> Spanner + W1~W3)  -->
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage3">
       <div style="display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
@@ -1945,8 +2098,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div id="st3-lite-bypass-banner" class="lite-bypass-banner"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge indigo">STAGE 3 · DUAL PROPERTY GRAPH ENGINEERING</span>
-            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="Zero-ETL 물리 그래프 토폴로지 & BigQuery / Spanner 듀얼 DDL 합성기" data-en="Zero-ETL Physical Graph Topology & BigQuery / Spanner Dual DDL Synthesizer">Zero-ETL 물리 그래프 토폴로지 &amp; BigQuery / Spanner 듀얼 DDL 합성기</span>
+            <span class="badge indigo">STAGE 3 · PROPERTY GRAPH (P1~P3) &amp; BUSINESS WORKFLOWS (W1~W3 · GATE G2-W)</span>
+            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);" data-ko="Ready-to-Use 물리 그래프 토폴로지(BigQuery / Spanner) & 의사결정 워크플로우(W1~W3)" data-en="Ready-to-Use Physical Graph Topology (BigQuery / Spanner) & Decision Workflows (W1~W3)">Ready-to-Use 물리 그래프 토폴로지(BigQuery / Spanner) &amp; 의사결정 워크플로우(W1~W3)</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <div class="apple-segmented-control">
@@ -1955,7 +2108,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
             </div>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/03_stage3_property_graph_ko.md" target="_blank" rel="noopener">방법론 (Stage 3)</a>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 3)</a>
-            <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage3_property_graph')">▶ Stage 3 MCP 실행</button>
+            <button class="subnav-action-btn" onclick="openStageMcpModal('stage3_resource_check')">▶ Stage 3 연결 리소스 점검</button>
           </div>
         </div>
 
@@ -2004,23 +2157,23 @@ HTML_PAGE = r"""<!DOCTYPE html>
     </section>
 
     <!-- =================================================================== -->
-    <!-- TAB 4: STAGE 4. AGENT & MCP (8 Modular MCPs + AI FDE Console)       -->
+    <!-- TAB 4: STAGE 4. AGENT & DOMAIN TOOLS (3 Ready Tools + AI FDE)       -->
     <!-- =================================================================== -->
     <section class="tab-panel" id="panel-stage4">
       <div style="display:flex; flex-direction:column; gap:12px; flex:1; min-height:0;">
         <div id="wb-bar-stage4"></div>
         <div class="fde-native-workspace" style="flex:1; min-height:0;">
-        <!-- Left: 8 Core Modular MCP Catalog & Step Runner -->
+        <!-- Left: 3 Ready-to-Use Domain Business Tools & Resource Inspector -->
         <div class="fde-mcp-pane">
           <div class="pane-head">
-            <span class="pane-title">8 Core Modular MCP Suite</span>
-            <span class="badge indigo">Stage 5 + Runtime 3</span>
+            <span class="pane-title" data-ko="도메인 비즈니스 도구 (3종)" data-en="Domain Business Tools (3)">도메인 비즈니스 도구 (3종)</span>
+            <span class="badge approved">Resource-Connected</span>
           </div>
           <div style="padding:8px 12px; border-bottom:1px solid var(--apple-border-subtle); background:#f8fafc;">
             <div class="apple-segmented-control" style="width:100%; justify-content:space-between;">
-              <button class="segment-btn active" id="mcp-flt-all" onclick="filterMcpCatalog('all')">전체 (8)</button>
-              <button class="segment-btn" id="mcp-flt-stage" onclick="filterMcpCatalog('stage_pipeline')">Stage MCP (5)</button>
-              <button class="segment-btn" id="mcp-flt-runtime" onclick="filterMcpCatalog('runtime_domain')">Runtime MCP (3)</button>
+              <button class="segment-btn active" id="mcp-flt-all" onclick="filterMcpCatalog('all')">도메인 도구 (3)</button>
+              <button class="segment-btn" id="mcp-flt-runtime" onclick="filterMcpCatalog('runtime_domain')">Runtime Business (3)</button>
+              <button class="segment-btn" id="mcp-flt-stage" onclick="openStageMcpModal('stage1_resource_check')">리소스 점검 ↗</button>
             </div>
           </div>
           <div class="pane-body" id="stage4-mcp-list"></div>
@@ -2030,8 +2183,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div class="fde-console-pane">
           <div class="pane-head">
             <div>
-              <span class="badge human" id="agent-mode-badge">STAGE 4 · AI FDE ORCHESTRATOR</span>
-              <span style="font-size:13.5px; font-weight:800; color:var(--apple-text-primary); margin-left:6px;" id="agent-mode-title">동적 하위 목표 분해 &amp; 결정론적 MCP 체이닝 콘솔</span>
+              <span class="badge human" id="agent-mode-badge">STAGE 4 · AI FDE ORCHESTRATOR (GATE G2-W AUDITED)</span>
+              <span style="font-size:13.5px; font-weight:800; color:var(--apple-text-primary); margin-left:6px;" id="agent-mode-title">동적 하위 목표 분해 &amp; 리소스 직결 도메인 도구(3종) 체이닝 콘솔</span>
             </div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <div class="apple-segmented-control">
@@ -2055,11 +2208,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <div class="console-timeline" id="timeline">
             <div class="trace-card-light">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-weight:800; color:var(--apple-blue);">[AI FDE Reasoning Engine Ready]</span>
-                <span class="badge approved">8 Modular MCPs Connected</span>
+                <span style="font-weight:800; color:var(--apple-blue);">[AI FDE Reasoning Engine Ready · Resource-Connected]</span>
+                <span class="badge approved">3 Domain Business Tools Connected</span>
               </div>
               <p style="font-size:12.5px; color:var(--apple-text-secondary); line-height:1.6;">
-                상단의 <b>Golden CQ 샘플 질의 칩</b>을 클릭하거나 아래 입력창에 질문을 입력하면, 에이전트가 질의를 하위 목표로 분해(Step 1)하고 <b>런타임 도메인 MCP 3종</b>(<code>mcp_lookup_customer_profile</code>, <code>mcp_calculate_penalty_rule</code>, <code>mcp_query_graph_and_wiki</code>)을 순차 호출(Step 2)하여 원문 해시 앵커(<code>DOC_CHUNK_001~005</code>)가 결합된 결정론적 응답을 생성합니다.
+                상단의 <b>Golden CQ 샘플 질의 칩</b>을 클릭하거나 아래 입력창에 질문을 입력하면, 에이전트가 질의를 하위 목표로 분해(Step 1)하고 <b>Ready-to-Use GCP 리소스에 직결된 도메인 비즈니스 도구 3종</b>(<code>mcp_lookup_customer_profile</code>, <code>mcp_calculate_penalty_rule</code>, <code>mcp_query_graph_and_wiki</code>)을 순차 호출(Step 2)하여 원문 해시 앵커(<code>DOC_CHUNK_001~005</code>)와 <b>Gate G2-W 감사</b>가 결합된 결정론적 응답을 생성합니다.
               </p>
             </div>
           </div>
@@ -2082,14 +2235,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <div id="st5-track-banner" class="lite-bypass-banner"></div>
         <div class="asset-summary-ribbon">
           <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge approved">STAGE 5 · DATA LINEAGE &amp; CLOSED-LOOP EVALUATION</span>
-            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">엔드투엔드 데이터 리니지 DAG &amp; Golden CQ / 바운더리 질의 통합 검증 리포트</span>
+            <span class="badge approved">STAGE 5 · 6-LAYER DATA LINEAGE &amp; CLOSED-LOOP EVALUATION</span>
+            <span style="font-size:13.5px; font-weight:700; color:var(--apple-text-primary);">6-Layer 엔드투엔드 데이터 리니지 DAG &amp; Golden/Workflow/Boundary CQ 통합 검증 리포트</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="badge human" id="lineage-latency-badge">Lineage Verified</span>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/methodology/ko/05_stage5_lineage_and_eval_ko.md" target="_blank" rel="noopener">방법론 (Stage 5)</a>
             <a class="subnav-action-btn" style="text-decoration:none;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb" target="_blank" rel="noopener">노트북 (Stage 5)</a>
-            <button class="subnav-action-btn" onclick="openStageMcpModal('mcp_stage5_lineage_and_eval')">▶ Stage 5 MCP 실행</button>
+            <button class="subnav-action-btn" onclick="openStageMcpModal('stage5_resource_check')">▶ Stage 5 연결 리소스 점검</button>
           </div>
         </div>
 
@@ -2841,9 +2994,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
           {
             key: 'okf_3layer',
             tone: 'tone-teal',
-            tag: '[위키:OKF]',
-            title: isEn ? 'Karpathy 3-Layer Wiki + Semantic Graph' : '3-Layer LLM-Wiki + 시맨틱 그래프',
-            desc: isEn ? 'Compiles L1 Summary, L2 Entities (Node), L3 Concepts/Rules (Edge) & ontology.jsonld.' : 'L1(Summary)·L2(Entities=Node)·L3(Concepts/Rules=Edge) 컴파일 및 시맨틱 그래프 구축.',
+            tag: '[위키:OKF+룰]',
+            title: isEn ? 'Karpathy 3-Layer Wiki + Semantic Graph & Rules' : '3-Layer LLM-Wiki + 시맨틱 그래프 & 비즈니스 룰',
+            desc: isEn ? 'Compiles L1 Summary, L2 Entities (Node), L3 Concepts/Rules (Edge), ontology.jsonld & LLM-Generated rules.' : 'L1(Summary)·L2(Entities=Node)·L3(Concepts/Rules=Edge) 컴파일 및 시맨틱 그래프·비즈니스 룰(LLM-Generated) 구축.',
             meta: 'data/llm_wiki/*.md + ontology.jsonld'
           }
         ]
@@ -2896,8 +3049,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
         tab: 'stage4',
         accent: '#7c3aed',
         bypassed: false,
-        title: isEn ? '4. Agent & MCP Runtime' : '4. 에이전트 & MCP 추론 런타임',
-        sub: isEn ? 'Select agent execution architecture' : '에이전트 추론 및 도구 체이닝 방식',
+        title: isEn ? '4. Agent, Workflow & MCP Runtime' : '4. 에이전트 · 워크플로우 & MCP 런타임',
+        sub: isEn ? 'Select agent & decision workflow architecture' : '에이전트 추론 · 의사결정 워크플로우 & 도구 체이닝',
         cat: 'runtime',
         options: [
           {
@@ -2911,9 +3064,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
           {
             key: 'mcp_8tools',
             tone: 'tone-purple',
-            tag: '[런타임:MCP]',
-            title: isEn ? '8 Modular MCPs + Deterministic Math' : '8대 모듈형 MCP + 결정론적 산식 엔진',
-            desc: isEn ? '5 Stage pipeline MCPs + 3 Runtime domain MCPs (Contract lookup, Penalty/TCO math, Graph GQL).' : '파이프라인 5종 MCP + 런타임 3종 MCP(고객원장·위약금/TCO 결정론 산식·그래프 GQL 탐색).',
+            tag: '[런타임:MCP+WF]',
+            title: isEn ? '8 Modular MCPs + Decision Workflow Math' : '8대 모듈형 MCP + 의사결정 워크플로우(8. Workflow 대응)',
+            desc: isEn ? '5 Stage pipeline MCPs + 3 Runtime domain MCPs (Contract lookup, Penalty/TCO math, Graph GQL).' : '파이프라인 5종 MCP + 런타임 3종 MCP(고객원장·위약금/TCO 결정론 산식·그래프 GQL 탐색 및 워크플로우 분기).',
             meta: 'mcp_server.py + reasoning_engine.py'
           }
         ]
@@ -2939,8 +3092,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
             key: 'full_lineage_boundary',
             tone: 'tone-purple',
             tag: '[평가:풀스택]',
-            title: isEn ? 'End-to-End Lineage DAG + 50-Trial Boundary' : '엔드투엔드 리니지 DAG + 바운더리 50회 평가',
-            desc: isEn ? 'Source-to-agent data lineage graph + 10 boundary cases × 5 trials closed-loop diagnostics.' : '원천~에이전트 엔드투엔드 리니지 DAG 시각화 및 경계값 10건×5회 반복 실측.',
+            title: isEn ? 'End-to-End Lineage + Workflow/Boundary Eval' : '엔드투엔드 리니지 DAG + Workflow/바운더리 평가',
+            desc: isEn ? 'Source-to-agent data lineage graph + Workflow CQ & 10 boundary cases × 5 trials closed-loop diagnostics.' : '원천~에이전트 엔드투엔드 리니지 DAG 시각화 및 Golden/Workflow CQ + 경계값 10건×5회 반복 실측.',
             meta: 'lineage_spec.json + boundary_benchmark_results.json'
           }
         ]
@@ -3015,8 +3168,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
         : `위 다이어그램에서 선택한 항목들에 맞춰 스타터팩의 <b>5단계 파이프라인 모듈, 활성 MCP 도구, 실습 노트북, <code>project.json</code> 설정, GCP Terraform 리소스 및 실행 명령어</b>가 아래와 같이 자동 구성됩니다.`;
     }
 
-    const activeModulesCount = 4 + (isStage3Active ? 1 : 0) + (isStage5Full ? 1 : 0);
-    const activeMcpCount = isStage3Active ? (isStage5Full ? 8 : 7) : 3;
+    const activeModulesCount = 4;
+    const activeDomainToolsCount = 3;
     const activeNbCount = 3 + (isStage3Active ? 1 : 0) + (isStage5Full ? 2 : 1);
     const latencyProfile = st.engine === 'none'
       ? (isEn ? 'Lite Context · $0 Extra Infra' : '문서 컨텍스트 추론 · 추가 인프라 $0')
@@ -3027,8 +3180,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const kpiPillsEl = document.getElementById('ov-pkg-kpi-pills');
     if (kpiPillsEl) {
       kpiPillsEl.innerHTML = `
-        <span class="badge approved">${isEn ? `Modules: ${activeModulesCount}/6 Active` : `활성 코드 모듈: ${activeModulesCount}/6종`}</span>
-        <span class="badge indigo">${isEn ? `MCP Tools: ${activeMcpCount}/8 Active` : `활성 MCP 도구: ${activeMcpCount}/8종`}</span>
+        <span class="badge approved">${isEn ? `Exposed Code: ${activeModulesCount} Core Files` : `노출 핵심 코드: ${activeModulesCount}개 파일`}</span>
+        <span class="badge indigo">${isEn ? `Domain Tools: ${activeDomainToolsCount} Ready Tools` : `도메인 비즈니스 도구: ${activeDomainToolsCount}종`}</span>
         <span class="badge llm">${isEn ? `Notebooks: ${activeNbCount}/6 Included` : `실습 노트북: ${activeNbCount}/6종`}</span>
         <span class="badge human">${esc(latencyProfile)}</span>
       `;
@@ -3038,74 +3191,74 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const pipeStages = [
       {
         num: 'STAGE 1',
-        name: isEn ? 'Asset & Gate 0 Extraction' : '자산 수집 & Gate 0 검증',
+        name: isEn ? 'Asset & Resource Binding (P1·P2)' : '자산 확인 & 리소스 연결 (P1·P2)',
         active: true,
-        color: '#3b82f6',
-        script: st.input === 'doc_only' ? 'pipeline/extract_docs.py' : 'pipeline/extract_docs.py + ingest.py',
-        gcp: st.input === 'doc_only' ? 'Cloud Storage (Raw Docs)' : 'GCS + BigQuery Raw Tables',
-        artifact: st.input === 'doc_only' ? 'gate0_report.json + input_manifest.json' : '4 DW Tables + gate0_report.json',
+        color: '#2563eb',
+        script: 'src/resource_connector.py + src/gcp_client.py',
+        gcp: st.input === 'doc_only' ? 'Cloud Storage + BigQuery tb_doc_chunks' : 'BigQuery starter_ontology_dw (10 Tables) + GCS',
+        artifact: '4 DW Master Ledgers + 5 SHA-256 Policy Chunks',
         note: st.input === 'doc_only'
-          ? (isEn ? 'Extracts full text (>=95% ratio) with page/provenance anchors; skips CSV table load.' : '원문 보존율 95% 이상 추출 및 페이지 앵커 고정 (정형 CSV 적재 생략)')
-          : (isEn ? 'Loads 4 de-identified DW CSVs + 2 policy guides with provenance check & 5-axis checklist.' : '비식별화 정형 원장 4종 + 정책 문서 2종 적재 및 5축 그래프 체크리스트 산출')
+          ? (isEn ? 'Connects directly to SHA-256 anchored policy chunks in BigQuery & GCS (skips CSV table joins).' : 'BigQuery 및 GCS에 준비된 SHA-256 해시 앵커 정책 청크에 즉시 연결 (정형 원장 조인 생략)')
+          : (isEn ? 'Connects directly to 4 de-identified BigQuery DW ledgers (CUST_DEMO_*) + 2 policy guides.' : '비식별화 정형 마스터 원장 4종(CUST_DEMO_*) 및 정책 가이드 청크 리소스에 즉시 연결')
       },
       {
         num: 'STAGE 2',
-        name: isEn ? 'Wiki & Semantic Compiler' : '위키 & 시맨틱 그래프 컴파일',
+        name: isEn ? '3-Layer OKF Wiki & Workflows' : '3-Layer OKF 위키 & 워크플로 연결',
         active: true,
         color: '#0d9488',
-        script: 'pipeline/ingest.py (compile_wiki)',
-        gcp: 'BigQuery tb_doc_chunks + GCS Wiki',
-        artifact: st.wiki === 'chunks' ? 'doc_chunks.jsonl (SHA-256)' : 'summary/entities/concepts/rules.md + ontology.jsonld',
+        script: 'src/resource_connector.py (stage2_resource_check)',
+        gcp: 'gs://seanjung-poc-starter-ontology/ontology/ + tb_domain_rules',
+        artifact: st.wiki === 'chunks' ? 'doc_chunks.jsonl (SHA-256)' : 'summary/entities/concepts/rules.md + business_workflows.json',
         note: st.wiki === 'chunks'
-          ? (isEn ? 'Generates SHA-256 anchored paragraph chunks for direct grounding.' : '문단별 SHA-256 해시 앵커 청크(doc_chunks.jsonl) 생성 및 BigQuery 적재')
-          : (isEn ? 'Compiles Karpathy 3-Layer Wiki + Entity(Node)/Concept(Edge) JSON-LD ontology.' : 'Karpathy 3-Layer 위키 마크다운 4종 및 Entity=Node/Concept=Edge 시맨틱 그래프 생성')
+          ? (isEn ? 'Uses SHA-256 anchored paragraph chunks directly for Lite context grounding.' : '문단별 SHA-256 해시 앵커 청크(tb_doc_chunks)를 에이전트 컨텍스트로 직결')
+          : (isEn ? 'Loads compiled 3-Layer OKF Wiki (4 docs), 4 business rules (RULE_*), and W1/W2/W3 workflows.' : '컴파일 완료된 3-Layer OKF 위키 4종, 비즈니스 규칙 4종(RULE_*), W1~W3 워크플로 즉시 로드')
       },
       {
         num: 'STAGE 3',
-        name: isEn ? 'Physical Property Graph' : '물리 Property Graph 구축',
+        name: isEn ? 'Physical Property Graph Connection' : '물리 Property Graph 엔진 연결',
         active: isStage3Active,
         color: '#4f46e5',
-        script: isStage3Active ? 'pipeline/graph_builder.py' : 'BYPASSED (생략됨)',
+        script: isStage3Active ? 'src/gcp_client.py (run_gql_MultiHop)' : 'BYPASSED (생략됨)',
         gcp: st.engine === 'none'
           ? (isEn ? 'None (Skipped in Lite Path)' : '미사용 (Lite 경로에서 생략)')
           : (st.engine === 'both'
               ? 'BigQuery Graph + Spanner Graph (100 PU) + EXTERNAL_QUERY'
-              : (st.engine === 'spanner' ? 'Cloud Spanner Graph (100 PU, ISO GQL)' : 'BigQuery Property Graph (ISO SQL:2023)')),
+              : (st.engine === 'spanner' ? 'Cloud Spanner Graph (starter-spanner)' : 'BigQuery Property Graph (STARTER_ONTOLOGY_GRAPH)')),
         artifact: st.engine === 'none'
           ? 'None (Stage 2 ➔ Stage 4 직행)'
           : (st.engine === 'both'
               ? 'create_property_graph.sql + create_spanner_graph.sql'
               : (st.engine === 'spanner' ? 'create_spanner_graph.sql + graph_topology.json' : 'create_property_graph.sql + graph_topology.json')),
         note: st.engine === 'none'
-          ? (isEn ? 'Physical graph DDL and node/edge tables are bypassed; Stage 2 connects straight to Stage 4.' : '물리 그래프 DDL 생성을 생략하고 Stage 2 위키/청크가 Stage 4 에이전트로 직결됨')
+          ? (isEn ? 'Physical graph traversal is bypassed; Stage 2 wiki/chunks connect straight to Stage 4.' : '물리 그래프 탐색을 생략하고 Stage 2 위키/청크가 Stage 4 에이전트로 직결됨')
           : (st.engine === 'both'
-              ? (isEn ? 'Builds both BigQuery & Spanner graphs + runs EXTERNAL_QUERY federated join benchmark.' : 'BigQuery 무복제 뷰와 Spanner 물리 그래프를 동시 구축하고 EXTERNAL_QUERY로 연합 조인')
+              ? (isEn ? 'Queries both BigQuery SQL:2023 GRAPH_TABLE & Spanner ISO GQL + EXTERNAL_QUERY federated join.' : 'BigQuery 무복제 그래프 뷰와 Spanner 온라인 그래프를 동시 연결 및 EXTERNAL_QUERY 연합 조인')
               : (st.engine === 'spanner'
-                  ? (isEn ? 'Upserts nodes/edges to Cloud Spanner (100 PU) for sub-150ms ISO GQL multi-hop traversal.' : 'Cloud Spanner(100 PU)에 노드·엣지를 적재하여 120ms대 온라인 멀티홉 GQL 탐색 수행')
-                  : (isEn ? 'Projects 4 DW tables + 2 doc tables as a Zero-ETL BigQuery Property Graph.' : '정형 원장 4종과 문서 규칙 노드를 Zero-ETL 무복제 BigQuery Property Graph로 승격')))
+                  ? (isEn ? 'Connects to Cloud Spanner Graph (100 PU) for sub-150ms ISO GQL multi-hop traversal.' : 'Cloud Spanner Graph(100 PU)에 직결하여 120ms대 온라인 멀티홉 GQL 탐색 수행')
+                  : (isEn ? 'Queries Zero-ETL BigQuery SQL:2023 Property Graph (6 Node tables / 6 Edge tables).' : 'Zero-ETL 무복제 BigQuery SQL:2023 Property Graph(노드 6종/엣지 6종) 멀티홉 탐색')))
       },
       {
         num: 'STAGE 4',
-        name: isEn ? 'Agent & MCP Orchestration' : '에이전트 & MCP 런타임',
+        name: isEn ? '3 Domain Tools & AI FDE Runtime' : '도메인 도구(3종) & AI FDE 런타임',
         active: true,
         color: '#7c3aed',
-        script: st.runtime === 'lite_agent' ? 'src/agent/reasoning_engine.py (Lite)' : 'src/agent/mcp_server.py + reasoning_engine.py',
+        script: 'src/agent/mcp_server.py + src/agent/reasoning_engine.py',
         gcp: `Vertex AI Gemini + ${st.engine === 'spanner' ? 'Spanner GQL' : (st.engine === 'both' ? 'BQ + Spanner Fabric' : 'BigQuery SQL/GQL')}`,
-        artifact: st.runtime === 'lite_agent' ? '_lite_cycle ([DOC_CHUNK_*])' : '8 Modular MCP Tools + Deterministic Math',
+        artifact: st.runtime === 'lite_agent' ? '_lite_cycle ([DOC_CHUNK_*])' : '3 Domain Business Tools + Gate G2-W Audit',
         note: st.runtime === 'lite_agent'
-          ? (isEn ? 'Answers questions directly from anchored document chunks without SQL/GQL table joins.' : 'SQL/그래프 조인 없이 원문 청크 컨텍스트(최대 300k자) 기반으로 [DOC_CHUNK_*] 인용 답변 생성')
-          : (isEn ? 'Chains 5 Stage MCPs + 3 Runtime MCPs (Contract, Penalty/TCO formula, Graph/Wiki traversal).' : 'Stage 1~5 파이프라인 MCP와 런타임 도메인 MCP 3종(원장·위약금산식·그래프탐색) 체이닝')
+          ? (isEn ? 'Answers questions directly from anchored document chunks without SQL/GQL table joins.' : 'SQL/그래프 조인 없이 원문 청크 컨텍스트 기반으로 [DOC_CHUNK_*] 인용 답변 생성')
+          : (isEn ? 'Chains 3 customizable Domain Business Tools (Customer Profile, Penalty/TCO Math, Graph/Wiki).' : '커스터마이징 가능한 도메인 비즈니스 도구 3종(원장조회·위약금/TCO산식·그래프/위키탐색) 체이닝')
       },
       {
         num: 'STAGE 5',
-        name: isEn ? 'Lineage & Closed-Loop Eval' : '리니지 & 바운더리 평가',
+        name: isEn ? '6-Layer Lineage & Closed-Loop Eval' : '6-Layer 리니지 & 통합 평가',
         active: true,
         color: isStage5Full ? '#db2777' : '#0284c7',
-        script: isStage5Full ? 'pipeline/validator.py (Full + Lineage)' : 'pipeline/validator.py (--golden-only)',
-        gcp: isStage5Full ? 'End-to-End Lineage DAG + Vertex Eval' : 'Golden CQ Verification',
-        artifact: isStage5Full ? 'lineage_spec.json + cq & boundary reports' : 'cq_benchmark_report.json',
+        script: 'src/lineage_service.py + pipeline/validator.py',
+        gcp: isStage5Full ? '6-Layer Lineage DAG + BQ Eval Tables' : 'Golden CQ Verification (tb_golden_cq_results)',
+        artifact: isStage5Full ? 'lineage_spec.json + Golden 5 / WF-CQ 5 / Boundary 50' : 'cq_benchmark_report.json (5/5 PASS)',
         note: isStage5Full
-          ? (isEn ? 'Renders interactive end-to-end lineage DAG (measured BQ / GCS / graph volumes) + 10×5 Boundary regression.' : '실측 볼륨 기반 엔드투엔드 데이터 리니지 DAG 시각화 및 Golden 5건 + Boundary 50회 회귀 평가')
+          ? (isEn ? 'Verifies 6-Layer Enterprise Data Lineage DAG (19 nodes / 24 edges) + Golden 5 / WF-CQ 5 / Boundary 50.' : '6-Layer 엔터프라이즈 리니지 DAG(19노드/24엣지) 및 Golden 5건·WF-CQ 5건·Boundary 50회 통합 검증')
           : (isEn ? 'Runs lightweight Golden CQ accuracy/citation verification (skips 50-trial boundary loop).' : '핵심 Golden CQ 정합성(SQL 대조 또는 청크 인용)만 신속 검증 (바운더리 50회 루프 생략)')
       }
     ];
@@ -3117,7 +3270,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
             <span style="font-size:10.5px; font-weight:800; font-family:var(--font-mono); color:${ps.active ? ps.color : '#64748b'};">${ps.num}</span>
             <span class="badge ${ps.active ? 'approved' : ''}" style="${ps.active ? '' : 'background:#e2e8f0; color:#475569;'}">
-              ${ps.active ? (isEn ? 'INCLUDED' : '패키지 포함') : (isEn ? 'BYPASSED' : '패스 생략')}
+              ${ps.active ? (isEn ? 'CONNECTED' : '리소스 직결') : (isEn ? 'BYPASSED' : '패스 생략')}
             </span>
           </div>
           <div style="font-size:12.5px; font-weight:800; color:#0f172a;">${esc(ps.name)}</div>
@@ -3133,54 +3286,49 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
     // 4-B. Render 4-Column Package Implementation Manifest (#ov-pkg-manifest-grid)
     const codeModules = [
-      { file: 'pipeline/extract_docs.py', active: true, role: isEn ? 'Gate 0 raw doc parser & 5-axis checklist' : '원문 변환 · Gate 0 검증 · 5축 체크리스트' },
-      { file: 'pipeline/ingest.py', active: true, role: st.input === 'doc_only' ? (isEn ? 'Chunks & 3-Layer Wiki compiler (doc-only)' : '청크 & 3-Layer 위키 컴파일 (CSV 생략)') : (isEn ? 'DW CSV + Chunks load to BQ/Spanner' : '정형 원장 + 청크 BigQuery/Spanner 적재') },
-      { file: 'pipeline/graph_builder.py', active: isStage3Active, role: isStage3Active ? (isEn ? `Synthesizes ${st.engine.toUpperCase()} DDL & benchmark` : `${st.engine.toUpperCase()} 그래프 DDL 합성 및 벤치마크`) : (isEn ? 'Skipped in Lite path (no physical graph)' : 'Lite 패스에서 실행 생략 (물리 그래프 미사용)') },
-      { file: 'src/gcp_client.py', active: true, role: st.engine === 'both' ? (isEn ? 'BQ + Spanner + EXTERNAL_QUERY fabric client' : 'BQ + Spanner + EXTERNAL_QUERY 연합 클라이언트') : (st.engine === 'spanner' ? (isEn ? 'Cloud Spanner GQL + BQ SQL dialect rewrite' : 'Spanner GQL 실행 및 SQL 방언 자동 변환') : (isEn ? 'BigQuery SQL/GRAPH_TABLE & Gemini client' : 'BigQuery SQL/GRAPH_TABLE 및 Gemini 연동')) },
-      { file: 'src/agent/mcp_server.py', active: true, role: st.runtime === 'lite_agent' ? (isEn ? 'Stage 1·2·5 MCPs + Lite doc citation' : 'Stage 1·2·5 MCP 및 Lite 문서 인용') : (isEn ? `All 8 MCP tools (engine=${st.engine === 'both' ? 'bigquery|spanner' : st.engine})` : `8대 모듈형 MCP 전수 구동 (engine=${st.engine})`) },
-      { file: 'pipeline/validator.py', active: true, role: isStage5Full ? (isEn ? 'Golden CQ 5 + Boundary 50-Trial harness' : 'Golden CQ 5종 + 바운더리 50회 회귀 평가') : (isEn ? 'Golden CQ quick accuracy/citation check' : 'Golden CQ 핵심 정합성/인용 검증') }
+      { file: 'src/resource_connector.py', active: true, role: isEn ? 'Direct connector to Ready-to-Use BQ, Graph, GCS Wiki & Spanner' : 'Ready-to-Use BigQuery·Graph·GCS 위키·Spanner 직결 커넥터' },
+      { file: 'src/gcp_client.py', active: true, role: st.engine === 'both' ? (isEn ? 'BQ + Spanner + EXTERNAL_QUERY fabric client' : 'BQ + Spanner + EXTERNAL_QUERY 연합 클라이언트') : (st.engine === 'spanner' ? (isEn ? 'Cloud Spanner GQL + BQ SQL dialect rewrite' : 'Spanner GQL 실행 및 SQL 방언 자동 변환') : (isEn ? 'BigQuery SQL/GRAPH_TABLE & Vertex AI Gemini client' : 'BigQuery SQL/GRAPH_TABLE 및 Vertex AI Gemini 클라이언트')) },
+      { file: 'src/agent/mcp_server.py', active: true, role: isEn ? '3 customizable Domain Business Tools (Customer, Penalty/TCO, Graph/Wiki)' : '커스터마이징 대상 도메인 비즈니스 도구 3종 (원장·산식·그래프)' },
+      { file: 'src/agent/reasoning_engine.py', active: true, role: isEn ? 'AI FDE sub-goal decomposition, tool chaining & Gate G2-W citation' : 'AI FDE 하위 목표 분해 · 도메인 도구 체이닝 · Gate G2-W 인용' }
     ];
 
     const mcpAndNotebooks = [
-      { name: 'mcp_stage1_asset_discovery', nb: 'stage1_asset_and_cq', active: true, tool: 'mcp_stage1_asset_discovery' },
-      { name: 'mcp_stage2_wiki_and_semantic', nb: 'stage2_wiki_and_semantic_graph', active: true, tool: 'mcp_stage2_wiki_and_semantic' },
-      { name: 'mcp_stage3_property_graph', nb: 'stage3_property_graph_bigquery_spanner', active: isStage3Active, tool: 'mcp_stage3_property_graph' },
-      { name: 'mcp_stage4_agent_orchestration + Runtime 3종', nb: 'stage4_agent_and_mcp_execution', active: true, tool: 'mcp_stage4_agent_orchestration' },
-      { name: 'mcp_stage5_lineage_and_eval', nb: 'stage5_lineage_and_evaluation', active: isStage5Full, tool: 'mcp_stage5_lineage_and_eval' }
+      { name: 'Stage 0 · Architecture & Resource-Connected Overview', nb: 'stage0_overview_walkthrough', active: true, tool: 'stage1_resource_check' },
+      { name: 'Stage 1 · Asset & Resource Check (P1·P2)', nb: 'stage1_asset_and_cq', active: true, tool: 'stage1_resource_check' },
+      { name: 'Stage 2 · 3-Layer OKF Wiki & Workflows (W1~W3)', nb: 'stage2_wiki_and_semantic_graph', active: true, tool: 'stage2_resource_check' },
+      { name: 'Stage 3 · BigQuery & Spanner Property Graph', nb: 'stage3_property_graph_bigquery_spanner', active: isStage3Active, tool: 'stage3_resource_check' },
+      { name: 'Stage 4 · 3 Domain Business Tools & AI FDE Runtime', nb: 'stage4_agent_and_mcp_execution', active: true, tool: 'stage4_resource_check' },
+      { name: 'Stage 5 · 6-Layer Lineage & Evaluation (Golden/Boundary)', nb: 'stage5_lineage_and_evaluation', active: isStage5Full, tool: 'stage5_resource_check' }
     ];
 
     const projectJsonPreview = JSON.stringify({
-      project_id: activeProject || 'my_ontology',
+      project_id: activeProject || 'starter_default',
+      architecture_mode: 'RESOURCE_CONNECTED_STARTER',
       track: activeTrack,
       graph_engine: st.engine === 'none' ? 'bigquery' : st.engine,
-      input_mode: st.input,
-      wiki_mode: st.wiki,
-      eval_mode: st.eval,
-      spanner_instance_id: (st.engine === 'spanner' || st.engine === 'both') ? 'starter-spanner' : '',
-      spanner_bq_connection_id: (st.engine === 'both') ? 'spanner_fabric_conn' : ''
+      bq_dataset: 'seanjung-poc.starter_ontology_dw',
+      bq_property_graph: 'STARTER_ONTOLOGY_GRAPH',
+      gcs_wiki_uri: 'gs://seanjung-poc-starter-ontology/ontology/',
+      spanner_graph: (st.engine === 'spanner' || st.engine === 'both') ? 'starter-spanner/starter_ontology_db/STARTER_ONTOLOGY_GRAPH' : 'optional'
     }, null, 2);
 
     const tfResources = [
-      { res: 'google_storage_bucket (Wiki & Docs)', active: true },
-      { res: 'google_bigquery_dataset + tb_doc_chunks', active: true },
-      { res: 'BigQuery Property Graph (SQL:2023 View)', active: st.engine === 'bigquery' || st.engine === 'both' },
-      { res: 'google_spanner_instance (100 PU) + DB', active: st.engine === 'spanner' || st.engine === 'both' },
-      { res: 'google_bigquery_connection (spanner_fabric_conn)', active: st.engine === 'both' }
+      { res: 'gs://seanjung-poc-starter-ontology/ontology/ (3-Layer Wiki)', active: true },
+      { res: 'seanjung-poc.starter_ontology_dw (10 Tables)', active: true },
+      { res: 'STARTER_ONTOLOGY_GRAPH (BigQuery SQL:2023 View)', active: st.engine === 'bigquery' || st.engine === 'both' },
+      { res: 'starter-spanner / starter_ontology_db (100 PU)', active: st.engine === 'spanner' || st.engine === 'both' },
+      { res: 'spanner_fabric_conn (EXTERNAL_QUERY Federated)', active: st.engine === 'both' }
     ];
 
-    const spannerTfFlag = (st.engine === 'spanner' || st.engine === 'both') ? ' --enable-spanner' : '';
     const cliCommands = [
-      `# 1. ${isEn ? 'Scaffold project with selected Track & Graph Engine' : '선택한 트랙 및 그래프 엔진으로 프로젝트 생성'}`,
-      `python3 new_project.py --id my_case --name "My Ontology" \\`,
-      `  --track ${activeTrack} --graph-engine ${st.engine === 'none' ? 'bigquery' : st.engine}`,
+      `# 1. ${isEn ? 'Verify all Ready-to-Use GCP resources (BQ, Graph, GCS Wiki, Spanner)' : '연결된 GCP 온톨로지 리소스(BigQuery·Graph·GCS·Spanner) 일괄 점검'}`,
+      `python3 run_pipeline.py --track ${activeTrack}`,
       ``,
-      `# 2. ${isEn ? 'Provision GCP infrastructure via Terraform' : '선택 구성에 필요한 GCP 인프라 Terraform 배포'}`,
-      `python3 terraform/apply_terraform.py --project my_case${spannerTfFlag}`,
+      `# 2. ${isEn ? 'Launch Resource-Connected Starter Studio UI on port 8080' : '리소스 직결형 스타터 포털 UI 실행 (포트 8080)'}`,
+      `python3 -m src.web.studio_server 8080`,
       ``,
-      `# 3. ${isEn ? 'Run selected pipeline path & launch Studio UI' : '선택 패스 파이프라인 실행 및 로컬 스튜디오 구동'}`,
-      `python3 pipeline/extract_docs.py --project my_case`,
-      `python3 run_pipeline.py --project my_case --track ${activeTrack}`,
-      `python3 -m src.web.studio_server 8080`
+      `# 3. ${isEn ? 'Or scaffold a new domain project with your own CSV/Docs' : '신규 도메인 프로젝트 스캐폴딩 (자체 CSV/정책문서 연결)'}`,
+      `python3 new_project.py --id my_case --name "My Ontology" --track ${activeTrack} --graph-engine ${st.engine === 'none' ? 'bigquery' : st.engine}`
     ].join('\n');
 
     const manifestGridEl = document.getElementById('ov-pkg-manifest-grid');
@@ -3188,32 +3336,30 @@ HTML_PAGE = r"""<!DOCTYPE html>
       const langFolder = isEn ? 'en' : 'ko';
       const langSuffix = isEn ? '_en.ipynb' : '_ko.ipynb';
       manifestGridEl.innerHTML = `
-        <!-- Box 1: Code Modules -->
+        <!-- Box 1: Exposed Core Code Modules (4 Files) -->
         <div class="ov-pkg-box">
           <div class="ov-pkg-box-head">
-            <span class="ov-pkg-box-title">${isEn ? '1. Included Pipeline & Runtime Modules' : '1. [구현:코드] 파이프라인 & 런타임 모듈'}</span>
-            <span class="badge approved">${activeModulesCount}/6</span>
+            <span class="ov-pkg-box-title">${isEn ? '1. Exposed Starter Code (4 Core Files)' : '1. [구현:노출 코드] 커스터마이징 핵심 파일 4종'}</span>
+            <span class="badge approved">4 Core Files</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
             ${codeModules.map(m => `
-              <div class="ov-pkg-item-row ${m.active ? '' : 'skipped'}">
+              <div class="ov-pkg-item-row">
                 <div>
-                  <code style="font-weight:800; color:${m.active ? 'var(--apple-blue)' : '#94a3b8'};">${esc(m.file)}</code>
-                  <div style="font-size:11px; color:${m.active ? '#475569' : '#94a3b8'}; margin-top:2px;">${esc(m.role)}</div>
+                  <code style="font-weight:800; color:var(--apple-blue);">${esc(m.file)}</code>
+                  <div style="font-size:11px; color:#475569; margin-top:2px;">${esc(m.role)}</div>
                 </div>
-                <span class="badge ${m.active ? 'approved' : ''}" style="flex-shrink:0; ${m.active ? '' : 'background:#e2e8f0; color:#64748b;'}">
-                  ${m.active ? (isEn ? 'ACTIVE' : '포함') : (isEn ? 'SKIP' : '생략')}
-                </span>
+                <span class="badge approved" style="flex-shrink:0;">${isEn ? 'EXPOSED' : '코드 노출'}</span>
               </div>
             `).join('')}
           </div>
         </div>
 
-        <!-- Box 2: MCP Tools & Notebooks -->
+        <!-- Box 2: Stage Resource Checkers & 6 Notebooks -->
         <div class="ov-pkg-box">
           <div class="ov-pkg-box-head">
-            <span class="ov-pkg-box-title">${isEn ? '2. Active MCP Tools & Stage Notebooks' : '2. [구현:MCP & 노트북] 활성 도구 및 노트북'}</span>
-            <span class="badge indigo">${activeMcpCount} MCPs</span>
+            <span class="ov-pkg-box-title">${isEn ? '2. Stage 0~5 Notebooks & Resource Checks' : '2. [노트북 & 리소스] Stage 0~5 노트북 및 점검'}</span>
+            <span class="badge indigo">6 Notebooks</span>
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
             ${mcpAndNotebooks.map(item => `
@@ -3224,24 +3370,24 @@ HTML_PAGE = r"""<!DOCTYPE html>
                     notebooks/${langFolder}/${item.nb}${langSuffix} ↗
                   </a>
                 </div>
-                <button class="ov-stage-mcp-btn" style="flex-shrink:0;" onclick="openStageMcpModal('${item.tool}')">▶ MCP</button>
+                <button class="ov-stage-mcp-btn" style="flex-shrink:0;" onclick="openStageMcpModal('${item.tool}')">▶ 점검</button>
               </div>
             `).join('')}
           </div>
         </div>
 
-        <!-- Box 3: project.json & Terraform Resources -->
+        <!-- Box 3: Connected GCP Resources & Config -->
         <div class="ov-pkg-box">
           <div class="ov-pkg-box-head">
-            <span class="ov-pkg-box-title">${isEn ? '3. Synthesized project.json & Terraform IaC' : '3. [구현:설정 & IaC] project.json & GCP 리소스'}</span>
-            <span class="badge llm">Terraform</span>
+            <span class="ov-pkg-box-title">${isEn ? '3. Connected Ready-to-Use GCP Resources' : '3. [연결 리소스] 즉시 사용 가능한 GCP 온톨로지 자원'}</span>
+            <span class="badge llm">Ready-to-Use</span>
           </div>
           <pre class="code-pre-light" style="font-size:10.5px; padding:8px 10px; max-height:135px; margin:0;">${esc(projectJsonPreview)}</pre>
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:2px;">
             ${tfResources.map(tf => `
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:11px; padding:4px 7px; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px;">
                 <code style="color:${tf.active ? '#0f172a' : '#94a3b8'}; min-width:0; word-break:break-all;">${esc(tf.res)}</code>
-                <span style="font-size:10px; font-weight:800; white-space:nowrap; flex-shrink:0; color:${tf.active ? '#059669' : '#94a3b8'};">${tf.active ? (isEn ? '● PROVISIONED' : '● 배포됨') : (isEn ? '○ NOT NEEDED' : '○ 불필요')}</span>
+                <span style="font-size:10px; font-weight:800; white-space:nowrap; flex-shrink:0; color:${tf.active ? '#059669' : '#94a3b8'};">${tf.active ? (isEn ? '● CONNECTED' : '● 연결됨') : (isEn ? '○ OPTIONAL' : '○ 선택')}</span>
               </div>
             `).join('')}
           </div>
@@ -3250,7 +3396,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <!-- Box 4: Ready-to-Run CLI Commands -->
         <div class="ov-pkg-box">
           <div class="ov-pkg-box-head">
-            <span class="ov-pkg-box-title">${isEn ? '4. Ready-to-Run Package Bootstrap CLI' : '4. [구현:CLI] 선택 패키지 3-Step 실행 명령어'}</span>
+            <span class="ov-pkg-box-title">${isEn ? '4. Ready-to-Run Starter CLI' : '4. [구현:CLI] 스타터 3-Step 실행 명령어'}</span>
             <button class="subnav-action-btn" id="ov-pkg-cli-copy-btn" style="padding:2px 8px; font-size:10.5px;" onclick="copyPackageCli()">${isEn ? 'Copy CLI' : 'CLI 복사'}</button>
           </div>
           <pre class="code-pre-light" id="ov-pkg-cli-code" style="font-size:10.5px; padding:10px; flex:1; margin:0; white-space:pre-wrap;">${esc(cliCommands)}</pre>
@@ -3271,30 +3417,55 @@ HTML_PAGE = r"""<!DOCTYPE html>
     const isStage3Active = (pkgBuilderState.engine !== 'none');
     const isStage5Full = (pkgBuilderState.eval === 'full_lineage_boundary');
 
-    board.innerHTML = (ov.stages || []).map(st => {
-      const isBypassed = (st.stage_id === 'stage3' && !isStage3Active) || (st.stage_id === 'stage5' && !isStage5Full);
+    const STAGE_META_LINKS = {
+      1: { meth: 'methodology/ko/01_stage1_asset_and_cq_ko.md', nb: 'notebooks/ko/stage1_asset_and_cq_ko.ipynb', check: 'stage1_resource_check' },
+      2: { meth: 'methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md', nb: 'notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb', check: 'stage2_resource_check' },
+      3: { meth: 'methodology/ko/03_stage3_property_graph_ko.md', nb: 'notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb', check: 'stage3_resource_check' },
+      4: { meth: 'methodology/ko/04_stage4_agent_and_mcp_ko.md', nb: 'notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb', check: 'stage4_resource_check' },
+      5: { meth: 'methodology/ko/05_stage5_lineage_and_eval_ko.md', nb: 'notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb', check: 'stage5_resource_check' }
+    };
+
+    board.innerHTML = (ov.stages || []).map((st, idx) => {
+      const stageNo = st.stage_no || (idx + 1);
+      const tabId = st.tab_id || st.stage_id || ('stage' + stageNo);
+      const accent = st.color || st.accent || '#2563eb';
+      const chip = st.code || st.chip || ('STAGE ' + stageNo);
+      const stageName = isEn ? (st.en_title || st.title || st.name || '') : (st.title || st.name || '');
+      const links = STAGE_META_LINKS[stageNo] || STAGE_META_LINKS[1];
+      const methDoc = st.methodology_doc || links.meth;
+      const nbDoc = st.notebook || links.nb;
+      const checkTool = st.mcp_tool || links.check;
+
+      const isBypassed = (tabId === 'stage3' && !isStage3Active) || (tabId === 'stage5' && !isStage5Full);
       const statePill = isBypassed
         ? `<span class="badge" style="background:#e2e8f0; color:#475569; font-size:10px;">${isEn ? 'Bypassed in Selected Path' : '현재 선택 패스에서 생략'}</span>`
-        : `<span class="badge approved" style="font-size:10px;">${isEn ? 'Active in Selected Path' : '현재 선택 패스 활성'}</span>`;
+        : `<span class="badge approved" style="font-size:10px;">${isEn ? 'Connected Resource Active' : '연결 리소스 활성'}</span>`;
 
-      const steps = (st.steps || []).map((sp, i) => `
+      const steps = (st.steps || []).map((sp, i) => {
+        const badgeText = sp.step_code || sp.badge || ('Step ' + stageNo + '.' + (i + 1));
+        const descHtml = sp.desc ? esc(sp.desc) : ((sp.bullets || []).map(b => '&bull; ' + esc(b)).join('<br>'));
+        const outText = sp.artifact || sp.deliverables || '';
+        return `
         ${i > 0 ? '<div class="ov-conn-v">&darr;</div>' : ''}
-        <div class="ov-step-box" style="border-left-color:${esc(st.accent)};" onclick="switchTab('${esc(st.stage_id || 'stage1')}')">
-          <div class="ov-step-badge" style="color:${esc(st.accent)};">${esc(sp.badge)}</div>
-          <div class="ov-step-title">${esc(sp.title)}</div>
-          <div class="ov-step-desc">${(sp.bullets || []).map(b => '&bull; ' + b).join('<br>')}</div>
-          ${sp.deliverables ? `<div class="ov-step-out"><b>산출물</b> ${sp.deliverables}</div>` : ''}
-        </div>`).join('');
-      return `<div class="ov-stage-col ${isBypassed ? 'bypassed-col' : ''}" style="border-top-color:${esc(st.accent)};">
+        <div class="ov-step-box" style="border-left-color:${esc(accent)};" onclick="switchTab('${esc(tabId)}')">
+          <div class="ov-step-badge" style="color:${esc(accent)};">${esc(badgeText)}</div>
+          <div class="ov-step-title">${esc(sp.title || '')}</div>
+          <div class="ov-step-desc">${descHtml}</div>
+          ${outText ? `<div class="ov-step-out"><b>리소스/산출물</b> <code>${esc(outText)}</code></div>` : ''}
+        </div>`;
+      }).join('');
+
+      return `<div class="ov-stage-col ${isBypassed ? 'bypassed-col' : ''}" style="border-top-color:${esc(accent)};">
           <div class="ov-stage-head-row">
-            <span class="ov-stage-chip">${esc(st.chip)}</span>
-            <button class="ov-stage-mcp-btn" onclick="openStageMcpModal('${esc(st.mcp_tool || 'mcp_stage1_asset_discovery')}')">▶ ${esc(st.chip)} MCP</button>
+            <span class="ov-stage-chip">${esc(chip)}</span>
+            <button class="ov-stage-mcp-btn" onclick="openStageMcpModal('${esc(checkTool)}')">▶ ${esc(chip)} 점검</button>
           </div>
           <div>${statePill}</div>
-          <div class="ov-stage-name">${esc(st.name)}</div>
-          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:2px;">
-            ${st.methodology_doc ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.methodology_doc)}" target="_blank" rel="noopener">방법론</a>` : ""}
-            ${st.notebook ? `<a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(st.notebook)}" target="_blank" rel="noopener">노트북</a>` : ""}
+          <div class="ov-stage-name">${esc(stageName)}</div>
+          ${st.summary ? `<div style="font-size:11px; color:#475569; line-height:1.45; margin-bottom:4px;">${esc(st.summary)}</div>` : ''}
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px;">
+            <a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(methDoc)}" target="_blank" rel="noopener">방법론 ↗</a>
+            <a class="subnav-action-btn" style="text-decoration:none; padding:2px 8px; font-size:10.5px;" href="https://github.com/seanjungG/agentic-ontology-starter/blob/main/${esc(nbDoc)}" target="_blank" rel="noopener">노트북 ↗</a>
           </div>
           ${steps}
         </div>`;
@@ -3317,31 +3488,35 @@ HTML_PAGE = r"""<!DOCTYPE html>
         if (ti) { ti.setAttribute('data-ko', pc.title_ko || ''); ti.setAttribute('data-en', pc.title_en || ''); ti.innerHTML = studioLang === 'en' ? pc.title_en : pc.title_ko; }
         if (ld) { ld.setAttribute('data-ko', pc.lead_ko || ''); ld.setAttribute('data-en', pc.lead_en || ''); ld.innerHTML = studioLang === 'en' ? pc.lead_en : pc.lead_ko; }
       }
-      document.getElementById('ov-s1-eyebrow').textContent = esc(ov.eyebrow);
-      document.getElementById('ov-s1-title').textContent = esc(ov.title);
-      document.getElementById('ov-s1-lead').innerHTML = esc(ov.lead);
+      if (ov.eyebrow) document.getElementById('ov-s1-eyebrow').textContent = ov.eyebrow;
+      if (ov.title) document.getElementById('ov-s1-title').textContent = ov.title;
+      if (ov.lead) document.getElementById('ov-s1-lead').innerHTML = esc(ov.lead);
 
       renderOverviewPathBuilder();
 
-      const gap = ov.feature_gap || {};
-      document.getElementById('ov-s2-eyebrow').textContent = esc(gap.eyebrow);
-      document.getElementById('ov-s2-title').textContent = esc(gap.title);
-      document.getElementById('ov-gap-body').innerHTML = (gap.rows || []).map(r => `
+      const gapRows = Array.isArray(ov.feature_gap) ? ov.feature_gap : ((ov.feature_gap && ov.feature_gap.rows) || []);
+      if (ov.feature_gap && !Array.isArray(ov.feature_gap)) {
+        if (ov.feature_gap.eyebrow) document.getElementById('ov-s2-eyebrow').textContent = ov.feature_gap.eyebrow;
+        if (ov.feature_gap.title) document.getElementById('ov-s2-title').textContent = ov.feature_gap.title;
+      }
+      document.getElementById('ov-gap-body').innerHTML = gapRows.map(r => `
         <tr>
-          <td class="lead-cell">${esc(r.layer)}</td>
-          <td>${esc(r.native)}</td>
-          <td class="muted">${esc(r.gap)}</td>
-          <td>${esc(r.solution)}</td>
+          <td class="lead-cell">${esc(r.category || r.layer || '')}</td>
+          <td>${esc(r.full_version || r.native || '')}</td>
+          <td>${esc(r.starter_pack || r.gap || '')}</td>
+          <td><span class="badge approved">${esc(r.badge || r.solution || '')}</span></td>
         </tr>`).join('');
 
-      const mt = ov.metrics || {};
-      document.getElementById('ov-s4-eyebrow').textContent = esc(mt.eyebrow);
-      document.getElementById('ov-s4-note').innerHTML = esc(mt.note);
-      document.getElementById('ov-metric-grid').innerHTML = (mt.items || []).map(m => `
+      const metricItems = Array.isArray(ov.metrics) ? ov.metrics : ((ov.metrics && ov.metrics.items) || []);
+      if (ov.metrics && !Array.isArray(ov.metrics)) {
+        if (ov.metrics.eyebrow) document.getElementById('ov-s4-eyebrow').textContent = ov.metrics.eyebrow;
+        if (ov.metrics.note) document.getElementById('ov-s4-note').innerHTML = esc(ov.metrics.note);
+      }
+      document.getElementById('ov-metric-grid').innerHTML = metricItems.map(m => `
         <div class="metric-box">
-          <div class="metric-title">${esc(m.label)}</div>
-          <div class="metric-value" style="color:${esc(m.color)};">${esc(m.value)}</div>
-          <div class="ov-metric-cap">${esc(m.caption)}</div>
+          <div class="metric-title">${esc(m.label || '')}</div>
+          <div class="metric-value" style="color:${esc(m.color || '#1d4ed8')};">${esc(m.value || '')}</div>
+          <div class="ov-metric-cap">${esc(m.sub || m.caption || '')}</div>
         </div>`).join('');
 
       const chipsEl = document.getElementById('agent-sample-chips');
@@ -4216,13 +4391,46 @@ HTML_PAGE = r"""<!DOCTYPE html>
     });
   }
 
-  // 10. Stage Pipeline MCP Modal Runner
+  // 10. Stage Resource Check & Domain Tool Runner Modal
+  const STAGE_RESOURCE_CHECK_DEFS = {
+    stage1_resource_check: {
+      name: 'stage1_resource_check',
+      stage: 'STAGE 1 · RESOURCE CONNECTOR',
+      description: 'Stage 1 Ready-to-Use GCP 리소스 점검 — 비식별화 BigQuery 마스터 원장 4종(dw_customer_contract, dw_device_master, dw_plan_master, dw_subsidy_policy_master), 해시 앵커 청크(tb_doc_chunks), Golden CQ 5종 실측 상태를 조회합니다.',
+      steps: ['step_1_1', 'step_1_2', 'step_1_3']
+    },
+    stage2_resource_check: {
+      name: 'stage2_resource_check',
+      stage: 'STAGE 2 · RESOURCE CONNECTOR',
+      description: 'Stage 2 Ready-to-Use GCP 리소스 점검 — GCS 3-Layer OKF 위키(summary/entities/concepts/rules.md), 비즈니스 규칙 4종(RULE_*), 비즈니스 워크플로 3종(W1/W2/W3) 및 Gate G2-W 정의를 점검합니다.',
+      steps: ['step_2_1', 'step_2_2', 'step_2_3']
+    },
+    stage3_resource_check: {
+      name: 'stage3_resource_check',
+      stage: 'STAGE 3 · RESOURCE CONNECTOR',
+      description: 'Stage 3 Ready-to-Use GCP 리소스 점검 — BigQuery SQL:2023 Property Graph(STARTER_ONTOLOGY_GRAPH) 및 Cloud Spanner Graph(starter-spanner) 5-Hop 멀티홉 탐색 상태를 점검합니다.',
+      steps: ['step_3_1', 'step_3_2']
+    },
+    stage4_resource_check: {
+      name: 'stage4_resource_check',
+      stage: 'STAGE 4 · RESOURCE CONNECTOR',
+      description: 'Stage 4 Ready-to-Use 도메인 비즈니스 도구 3종(mcp_lookup_customer_profile, mcp_calculate_penalty_rule, mcp_query_graph_and_wiki)과 AI FDE Gate G2-W 런타임 연결을 점검합니다.',
+      steps: ['step_4_1', 'step_4_2']
+    },
+    stage5_resource_check: {
+      name: 'stage5_resource_check',
+      stage: 'STAGE 5 · RESOURCE CONNECTOR',
+      description: 'Stage 5 6-Layer 데이터 리니지 DAG(19 Nodes / 24 Edges) 및 Golden CQ 5건 · Workflow CQ 5건 · Boundary 50회 통합 검증 리포트를 점검합니다.',
+      steps: ['step_5_1', 'step_5_2']
+    }
+  };
+
   async function openStageMcpModal(toolName) {
     if (!globalCatalog.length) await loadCatalog();
-    const tool = globalCatalog.find(t => t.name === toolName) || globalCatalog[0];
+    const tool = STAGE_RESOURCE_CHECK_DEFS[toolName] || globalCatalog.find(t => t.name === toolName) || STAGE_RESOURCE_CHECK_DEFS.stage1_resource_check || globalCatalog[0];
     if (!tool) return;
     currentModalTool = tool;
-    document.getElementById('modal-mcp-stage').textContent = `${tool.stage || 'MODULAR'} · PIPELINE & STEP RUNNER`;
+    document.getElementById('modal-mcp-stage').textContent = `${tool.stage || 'DOMAIN TOOL'} · RESOURCE & STEP RUNNER`;
     document.getElementById('modal-mcp-title').textContent = tool.name;
     document.getElementById('modal-mcp-desc').textContent = tool.description;
     document.getElementById('modal-mcp-steps').innerHTML = (tool.steps || []).map(s => `
@@ -4230,7 +4438,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <input type="checkbox" class="modal-step-cb" value="${esc(s)}" checked> ${esc(s)}
       </label>
     `).join('');
-    document.getElementById('modal-mcp-output').textContent = '-- [▶ 선택한 Step 실행] 버튼을 클릭하면 해당 Stage/Runtime MCP가 즉시 실행됩니다.';
+    document.getElementById('modal-mcp-output').textContent = '-- [▶ 선택한 Step 실행] 버튼을 클릭하면 연결된 Ready-to-Use GCP 리소스 점검 또는 도메인 도구가 즉시 실행됩니다.';
     document.getElementById('stage-mcp-modal').classList.add('open');
   }
 
@@ -4731,6 +4939,11 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/project/workbench":
             return self._json(get_workbench_state(proj))
+        elif path == "/api/resources":
+            manifest = get_engine(proj).server.get_resource_manifest()
+            if arg("verify") == "1":
+                manifest = {**manifest, "verification": get_engine(proj).server.connector.verify_ready_resources()}
+            return self._json(manifest)
         elif path == "/api/catalog":
             self._json(get_engine(proj).server.get_tool_catalog())
         elif path == "/api/assets":

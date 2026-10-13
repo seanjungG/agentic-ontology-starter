@@ -1,0 +1,45 @@
+{
+  "version": "2.2.0",
+  "workflow_cqs": [
+    {
+      "cq_id": "WF-CQ-01",
+      "workflow_id": "WF-01-SUBSIDY-ELIGIBILITY",
+      "matrix": "P1 × P2 × W1",
+      "query": "Galaxy S26 Ultra 256GB 모델의 출고가와 5G Premier Essential 개통 시 실구매가를 WF-01 기준으로 산출해줘.",
+      "expected_value": "출고가 1,698,400 KRW / 총지원금 517,500 KRW / 실구매가 1,180,900 KRW",
+      "grounded_chunk": "DOC_CHUNK_001"
+    },
+    {
+      "cq_id": "WF-CQ-02",
+      "workflow_id": "WF-02-PENALTY-AND-EXEMPTION",
+      "matrix": "P1 × P2 × W2",
+      "query": "CUST_DEMO_001 고객이 120일 시점에 5G Light(37,000원)로 하향 시 WF-02 분기 결과와 일할 차액위약금은?",
+      "expected_value": "일반 약정 분기(RULE_SIX_PLAN_180D) · 위약금 100,000 KRW",
+      "grounded_chunk": "DOC_CHUNK_003"
+    },
+    {
+      "cq_id": "WF-CQ-03",
+      "workflow_id": "WF-02-PENALTY-AND-EXEMPTION",
+      "matrix": "P1 × P2 × W2",
+      "query": "CUST_DEMO_003(시니어 특례) 고객이 88일차에 시니어 요금제로 전환 시 WF-02 면제 분기 결과는?",
+      "expected_value": "복지 면제 분기(RULE_WELFARE_EXEMPT) · 위약금 0 KRW",
+      "grounded_chunk": "DOC_CHUNK_004"
+    },
+    {
+      "cq_id": "WF-CQ-04",
+      "workflow_id": "WF-03-TCO-CROSS-AUDIT",
+      "matrix": "P1 × P2 × P3 × W3",
+      "query": "Galaxy S26 Ultra 256GB + 5G Premier Essential(85,000원) 24개월 유지 시 WF-03 TCO 비교 결과는?",
+      "expected_value": "공시지원금 유리 (517,500원 vs 510,000원 · 7,500원 절감)",
+      "grounded_chunk": "DOC_CHUNK_005"
+    },
+    {
+      "cq_id": "WF-CQ-05",
+      "workflow_id": "WF-03-TCO-CROSS-AUDIT",
+      "matrix": "P1 × P3 × W3 (Gate G2-W)",
+      "query": "CUST_DEMO_002 고객의 단말·요금제·적용 규칙 멀티홉 그래프 경로와 180일 경과 후 위약금 유무를 검증해줘.",
+      "expected_value": "유지일수 180일 이상 경과 · 위약금 0 KRW",
+      "grounded_chunk": "DOC_CHUNK_003"
+    }
+  ]
+}

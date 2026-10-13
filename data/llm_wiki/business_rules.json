@@ -1,0 +1,46 @@
+{
+  "version": "2.2.0",
+  "domain": "Telecom Subscription & Penalty Governance",
+  "rules": [
+    {
+      "rule_id": "RULE_SUBSIDY_CAP",
+      "rule_name": "공시지원금 및 유통망 추가지원금(15%) 합산 규칙",
+      "rule_category": "SUBSIDY_CAP",
+      "pattern_source": "P1 (Normative Policy Doc) × P2 (tb_subsidy_policy)",
+      "condition_expr": "contract_type == 'PUBLIC_SUBSIDY'",
+      "formula_expr": "total_subsidy = base_subsidy_krw + additional_subsidy_cap_krw; net_principal = factory_price_krw - total_subsidy",
+      "source_chunk_id": "DOC_CHUNK_001",
+      "bound_tool": "mcp_lookup_customer_profile"
+    },
+    {
+      "rule_id": "RULE_SIX_PLAN_180D",
+      "rule_name": "180일 기준선(45,000원) 의무유지 및 일할 차액위약금 규칙",
+      "rule_category": "PENALTY_180D",
+      "pattern_source": "P1 (Normative Policy Doc) × P2 (tb_customer_contract, tb_subsidy_policy)",
+      "condition_expr": "elapsed_days < 180 AND target_plan_monthly_fee < 45000",
+      "formula_expr": "penalty = ROUND((initial_base_subsidy - lower_tier_base_subsidy) * (180 - elapsed_days) / 180)",
+      "source_chunk_id": "DOC_CHUNK_003",
+      "bound_tool": "mcp_calculate_penalty_rule"
+    },
+    {
+      "rule_id": "RULE_WELFARE_EXEMPT",
+      "rule_name": "시니어·복지 요금제 전환 및 군입대 장기정지 위약금 면제 특례",
+      "rule_category": "WELFARE_EXEMPT",
+      "pattern_source": "P1 (Welfare Exemption Guide) × P2 (tb_customer_contract.welfare_status)",
+      "condition_expr": "welfare_status IN ('SENIOR_EXEMPT', 'MILITARY_PAUSE_ELIGIBLE')",
+      "formula_expr": "penalty = 0 (SENIOR_EXEMPT) OR pause_commitment_counter (MILITARY_PAUSE_ELIGIBLE)",
+      "source_chunk_id": "DOC_CHUNK_004",
+      "bound_tool": "mcp_calculate_penalty_rule"
+    },
+    {
+      "rule_id": "RULE_TCO_24M",
+      "rule_name": "24개월 공시지원금 vs 25% 선택약정 총비용(TCO) 비교 규칙",
+      "rule_category": "TCO_24M",
+      "pattern_source": "P1 (Normative Policy Doc) × P3 (Multi-Hop Graph Comparison)",
+      "condition_expr": "commitment_months == 24",
+      "formula_expr": "subsidy_24m_tco = (factory_price_krw - total_subsidy) + (monthly_fee_krw * 24); selective_24m_tco = factory_price_krw + (monthly_fee_krw * 0.75 * 24)",
+      "source_chunk_id": "DOC_CHUNK_005",
+      "bound_tool": "mcp_calculate_penalty_rule"
+    }
+  ]
+}

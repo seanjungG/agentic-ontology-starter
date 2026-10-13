@@ -4,13 +4,14 @@
 
 ## Purpose
 
-The agent splits a question into parameters and sub-goals, calls the 8 MCP tools against the selected graph engine (`engine="bigquery"` default or `engine="spanner"`), and answers only with values found in the tool results.
-Each answer carries the rule ID, the evidence chunk ID, and the backend execution identifier (BigQuery job ID or Spanner database ID).
+The agent splits a question into parameters and sub-goals, calls the 8 MCP tools against **the runtime 1st-priority Single Source of Truth — BigQuery Property Graph (`engine="bigquery"` default or `engine="spanner"`)**, and answers only with values found in the tool results.
+- **Runtime BQG 1st-Priority SSOT & Prohibition on Runtime Direct `anchor`/`parsed` Access**: In `standard`/`full` tracks and the Enterprise Studio, agents, workflows, and MCP tools **always query BigQuery Property Graph (BQG) as the 1st-priority SSOT**, and `PolicyResolver` resolves policy constants in the order **Layer 1: BQG (`GRAPH_TABLE`) → Layer 2: Ontology Wiki Hub (`ENT-*`, `CON-*`) & Business Rules (`BR-*` `parameters[]`)**. Raw documents (`raw`), parsed markdown (`parsed`), and paragraph hash anchors (`anchor_<12hex>`, `sec-xx-pyy`) are strictly Build-Time (Stage 1~2) artifacts and MUST NEVER be directly queried or linked at runtime.
+- Each answer carries the semantic/rule ID (`ENT-*`, `CON-*`, `BR-*` / `RULE_*`) and the backend execution identifier (BigQuery job ID or Spanner database ID).
 
 ## Inputs
 
 - The user question (natural language) and graph engine selection (`"bigquery"` default \| `"spanner"`)
-- The 10 tables and `STARTER_ONTOLOGY_GRAPH` in BigQuery (`starter_ontology_dw`) or Cloud Spanner (`starter-spanner/starter_ontology_db`) (Stages 1 to 3)
+- The 10 tables and `STARTER_ONTOLOGY_GRAPH` in BigQuery (`starter_ontology_dw`) or Cloud Spanner (`starter-spanner/starter_ontology_db`) (Stages 1 to 3, **Runtime 1st-Priority SSOT**)
 - A Vertex AI Gemini model (environment variable `VERTEX_GEMINI_MODEL`, default `gemini-3.8-flash`)
 
 The full list of the 8 MCPs is in section 4 of [METHODOLOGY_EN.md](./METHODOLOGY_EN.md). All of them are in `DomainMcpServer` in `src/agent/mcp_server.py` and support `engine="bigquery" | "spanner"`.
@@ -82,17 +83,17 @@ For document-only projects (`track: "lite"`) without structured customer tables,
 - A composite question (several conditions or entities) is split into several tool calls during planning, and the answer is written from tool results only. If a required value is not in the data, the agent says so instead of estimating it.
 - Check tool coverage with questions outside the evaluation set (other device, plan and day combinations from the catalog). Record possible overfitting when a score was tuned on the same questions.
 
-## Recommended method: Wiki Agent vs BQG Agent
+## Recommended method: Wiki Agent (Stage 2 Gate) vs BQG Agent (Runtime 1st Priority)
 
-The two agents differ in where they get their evidence. Run both on the same question and compare the evidence location, the time per step and the tokens.
+The two agents differ in their lifecycle role and where they get their evidence. **Wiki Agent is the Stage 2 quality gate** before building a physical graph, whereas **BQG Agent (along with Workflow Agent and AI FDE) is the 1st-priority runtime serving agent** from Stage 3 onward.
 
-| Step | Wiki Agent | BQG Agent |
+| Step | Wiki Agent (Stage 2 Exit Gate) | BQG Agent (Runtime 1st-Priority Agent) |
 | :---: | :--- | :--- |
 | 1 | Read the GCS wiki index | Slot extraction (Flash) |
-| 2 | Flash reads the index and selects the entity and concept documents to open | GQL query over the Property Graph |
-| 3 | Read the selected documents and their 1-hop related documents from GCS | Calculation in code from the queried values |
-| 4 | Flash writes the answer (document ID + anchor citation) | Flash writes the answer |
-| BigQuery and graph | Not used | Used |
+| 2 | Flash reads the index and selects the entity and concept documents to open | **1st-Priority GQL query over BigQuery Property Graph (BQG)** |
+| 3 | Read the selected documents and their 1-hop related documents from GCS | Deterministic calculation in code from BQG/DW values & `PolicyResolver` (Layer 1 BQG) |
+| 4 | Flash writes the answer (Wiki document ID `ENT-*`/`CON-*` citation · no direct `anchor` links) | Flash writes the answer (Semantic/Graph IDs `ENT-*`/`CON-*`/`BR-*` + `bq_job_ids`) |
+| BigQuery and graph | Not used (Stage 2 Gate only) | **1st-Priority Primary SSOT** |
 
 - Both agents record time per step and token usage (input, output and thinking from Vertex `usageMetadata`) in the response.
 - Passing whole documents uses more input tokens than chunk search (reference case: about 3 times). Record the number of documents read and the character limit per document.
@@ -117,28 +118,38 @@ Current starter implementation:
 - Tool results contain `bq_jobs` (job ID, engine, status, elapsed ms, rows returned, SQL), `bq_job_ids`, `bq_elapsed_ms`, `executed_sql`, `tool_elapsed_ms`. Bytes processed, cache hit and the list of tables used are not recorded.
 - Presets are the sample CQ buttons (`CQ-02` to `CQ-05`) in the Stage 4 console, without scenario groups.
 
+## Resource-Connected Architecture (Ready-to-Use Resource Connector + 3 Domain Business Tools)
+
+Starting in Starter Pack v2.2, internal ontology builder MCP pipelines are abstracted into the platform layer, while the Starter exposes only the **Ready-to-Use GCP Resource Connector (`src/resource_connector.py`)** and **3 Customizable Domain Business Tools (`src/agent/mcp_server.py`)**:
+
+| Layer | Module / File | Role & Responsibility | Exposed Tools / Methods |
+| :--- | :--- | :--- | :--- |
+| **Ready-to-Use Resource Connector** | `src/resource_connector.py` (`OntologyResourceConnector`) | **Direct connection & readiness checks for GCP resources**: Verifies BigQuery (`starter_ontology_dw` 10 tables), `STARTER_ONTOLOGY_GRAPH`, GCS 3-Layer OKF Wiki & `W1~W3` workflows, and Cloud Spanner Graph | `verify_ready_resources()`, `stage1_resource_check` ~ `stage5_resource_check` |
+| **Domain Business Tools (3 Tools)** | `src/agent/mcp_server.py` (`DomainMcpServer`) | **Project/Domain-Specific Deterministic Execution Tools**: Executes domain ledgers, rules, and SQL formulas bound 1:1 to workflows (`W1~W3`) and business rules (`RULE_*`) | `mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki` |
+
 ## Deliverables
 
 | ID | Deliverable | In the starter |
 | :--- | :--- | :--- |
-| `D4.1` | Ontology MCP server spec and implementation | `src/agent/mcp_server.py` (`DomainMcpServer`, 8 tools) |
-| `D4.2` | AI FDE semantic routing and multi-goal decomposition engine | `src/agent/reasoning_engine.py` (`AiFdeAgentEngine`) |
-| `D4.3` | Cross-domain context passing and hand-off protocol | No separate document. `execute_cycle()` passes one validated parameter set to every tool in the same format |
-| `D4.4` | MCP boundary test suite and improvement report | No tool-level boundary suite. The 10 agent-level boundary questions are covered in [Stage 5](./05_stage5_lineage_and_eval_en.md) |
+| `D4.1` | Domain Business Tools Server & Resource Connector | `src/agent/mcp_server.py` (`DomainMcpServer`) + `src/resource_connector.py` (`OntologyResourceConnector`) |
+| `D4.2` | AI FDE semantic routing and sub-goal decomposition engine (`Gate G2-W`) | `src/agent/reasoning_engine.py` (`AgenticReasoningEngine`) |
+| `D4.3` | Cross-domain context passing and hand-off protocol | `execute_cycle()` passes validated parameters across the 3 Domain Business Tools |
+| `D4.4` | Agent boundary test suite | The 10 agent-level boundary questions are covered in [Stage 5](./05_stage5_lineage_and_eval_en.md) |
+| `D4.5` | Business Rules (`RULE_*`), Workflows (`W1~W3`) & Domain Tool Bindings | `data/llm_wiki/business_rules.json` and `data/llm_wiki/business_workflows.json` |
 
-## Gate (Gate 4)
+## Gate (Gate G2-W & Gate 4)
 
-- [ ] `get_tool_catalog()` returns 8 tools (the studio catalog shows 8).
-- [ ] Golden CQ questions end with answer status `GROUNDED`, and the answer contains the evidence chunk ID and a BigQuery job ID (`full` track) or verified `[DOC_CHUNK_XXX]` citations (`lite` track).
+- [ ] `get_tool_catalog()` cleanly exposes the 3 customizable Domain Business Tools (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`).
+- [ ] Golden CQ questions end with answer status `GROUNDED`, and the answer contains the evidence chunk ID (`DOC_CHUNK_*`) and a BigQuery job ID.
 - [ ] Questions with missing information end with `INSUFFICIENT_PARAMETERS` and no invented numbers.
 - [ ] When no data matches, the first sentence of the answer states `MATCH_NOT_FOUND` (0 rows).
 
 ## View in the studio
 
-[Open the Stage 4. Agent & MCP tab](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4)
+[Open the Stage 4. Agent & Tools tab](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4)
 
-- Left: the catalog of 8 MCPs (filters `Stage MCP (5)` and `Runtime MCP (3)`). Each tool has a Step run button that opens a runner (`Execute Stage MCP`).
-- Right: the agent console. Run a sample CQ button (`CQ-02` to `CQ-05`) or your own question with `Execute FDE` to see the sub-goals, tool calls and results in order.
+- Left: the catalog of 3 Domain Business Tools and Resource Check runner.
+- Right: the AI FDE console (`Gate G2-W Audited`). Run a sample CQ button (`CQ-02` to `CQ-05`) or your own question with `Execute FDE` to see the sub-goals, tool calls, and results in order.
 - In a local studio you can also call `POST /api/query` (`{"query": "..."}`) and `POST /api/mcp/execute` (`{"tool_name": "...", "args": {...}}`).
 
 ## Notebook
@@ -148,6 +159,6 @@ Current starter implementation:
 ## Apply to your data
 
 1. **Document-only projects (`lite` track)**: `_lite_cycle()` reads every `tb_doc_chunks` chunk without SQL edits and enforces `[DOC_CHUNK_XXX]` citations.
-2. **Custom domain tables (Scenario C)**: when your table schema differs from the 6-table telecom sample, set `"mcp_module"` and `"engine_module"` in `project.json` to inject domain-specific MCP handlers and agent prompts.
+2. **Remote Platform Core MCP Build + Custom Business MCP Binding**: Declare your project's `domain_mcp_tools` via `build_domain_spec_from_project()` in `src/agent/platform_core_mcp.py` and invoke `PlatformCoreMcpClient.call_tool("mcp_builder_run_full_pipeline", ...)` to compile Stage 1~6 ontology and Studio bundles.
 3. **Tool SQL and regex**: if modifying the default template, edit the SQL of the 3 runtime MCPs, `get_live_catalog()`, `extract_params_from_text()` (customer ID regex `CUST_[A-Z]+_\d{3}`), and prompts (`DECOMPOSE_SYS`, `SYNTH_SYS`).
-4. **Model**: set it with `VERTEX_GEMINI_MODEL`.
+4. **Model**: separate the runtime Agent serving model (`VERTEX_GEMINI_MODEL`, default `gemini-3.8-flash`) from the Platform Core MCP compiler model (`Gemini 4 Argon` / `gemini-4-argon`, which explicitly raises `QUOTA_EXHAUSTED_ERROR` on quota exhaustion).

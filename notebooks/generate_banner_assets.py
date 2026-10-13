@@ -104,7 +104,7 @@ BANNERS = [
             {"header": "Stage 1 · 준비 & 분석 (Phase 1–2)", "color": "#1A73E8", "cards": [
                 {"title": "1. 원천 자산 스코핑 & 스키마 설계", "code": "6 CSVs · 2 Policy MDs · 10 BQ Tables",
                  "bullets": ["Golden CQ 5종 · Boundary 10건 정의", "Terraform 기반 BigQuery DW 프로비저닝"]},
-                {"title": "2. 데이터 탐색 & 비식별 거버넌스", "code": "mcp_stage1_asset_discovery",
+                {"title": "2. 데이터 탐색 & 비식별 거버넌스", "code": "stage1_resource_check",
                  "bullets": ["CUST_DEMO_001~006 비식별 검증", "정답 검증 SQL(verification_sql) 대조"]},
             ]},
             {"header": "Stage 2 · 파싱 & 통합 (Phase 3–4)", "color": "#0284c7", "cards": [
@@ -122,7 +122,7 @@ BANNERS = [
             {"header": "Stage 4–5 · 에이전트 & 검증 (Phase 6–8)", "color": "#188038", "cards": [
                 {"title": "6–7. 8종 MCP & 2-Pass AI FDE", "code": "DomainMcpServer · AiFdeAgentEngine",
                  "bullets": ["슬롯 카탈로그 검증 & SQL 결정론 산식", "GROUNDED / INSUFFICIENT / NOT_FOUND"]},
-                {"title": "8. 엔드투엔드 리니지 & 배포 게이트", "code": "mcp_stage5_lineage_and_eval",
+                {"title": "8. 엔드투엔드 리니지 & 배포 게이트", "code": "stage5_resource_check",
                  "bullets": ["Source → Chunk → Rule → Contract → CQ", "Golden CQ 5/5 · Boundary 50회 게이트"]},
             ]},
         ],
@@ -135,7 +135,7 @@ BANNERS = [
             {"header": "Stage 1 · Prepare & Analyze (P1–P2)", "color": "#1A73E8", "cards": [
                 {"title": "1. Asset Scoping & Schema Design", "code": "6 CSVs · 2 Policy MDs · 10 BQ Tables",
                  "bullets": ["Define 5 Golden CQs & 10 Boundary Cases", "Terraform-managed BigQuery DW tables"]},
-                {"title": "2. Data Profiling & Governance", "code": "mcp_stage1_asset_discovery",
+                {"title": "2. Data Profiling & Governance", "code": "stage1_resource_check",
                  "bullets": ["Verify CUST_DEMO_001~006 de-identification", "Audit ground-truth verification_sql"]},
             ]},
             {"header": "Stage 2 · Parse & Integrate (P3–P4)", "color": "#0284c7", "cards": [
@@ -153,7 +153,7 @@ BANNERS = [
             {"header": "Stage 4–5 · Agent & Verify (P6–P8)", "color": "#188038", "cards": [
                 {"title": "6–7. 8-Tool MCP & 2-Pass Agent", "code": "DomainMcpServer · AiFdeAgentEngine",
                  "bullets": ["Live catalog slot validation & SQL math", "GROUNDED / INSUFFICIENT / NOT_FOUND"]},
-                {"title": "8. End-to-End Lineage & Release Gate", "code": "mcp_stage5_lineage_and_eval",
+                {"title": "8. End-to-End Lineage & Release Gate", "code": "stage5_resource_check",
                  "bullets": ["Source → Chunk → Rule → Contract → CQ", "Golden CQ 5/5 & 50-Trial Boundary Gate"]},
             ]},
         ],
@@ -179,7 +179,7 @@ BANNERS = [
             {"header": "3. BigQuery 10개 테이블 스키마 검증", "color": "#0d9488", "cards": [
                 {"title": "스키마 블루프린트 & 카탈로그", "code": "INFORMATION_SCHEMA.COLUMNS",
                  "bullets": ["4 마스터(22행) · 2 지식(9행) · 4 엣지(31행)", "PK/FK 참조 무결성 및 컬럼 타입 점검"]},
-                {"title": "Stage 1 파이프라인 MCP 실행", "code": "mcp_stage1_asset_discovery",
+                {"title": "Stage 1 리소스 검증 실행", "code": "stage1_resource_check",
                  "bullets": ["profile_tables · scan_guides 실행", "prune_noise · tag_pii_governance 검증"]},
             ]},
             {"header": "4. 데이터 프로파일링 & Gate 1 통과", "color": "#188038", "cards": [
@@ -210,7 +210,7 @@ BANNERS = [
             {"header": "3. BigQuery 10-Table Schema Check", "color": "#0d9488", "cards": [
                 {"title": "Schema Blueprint & Metadata", "code": "INFORMATION_SCHEMA.COLUMNS",
                  "bullets": ["4 master (22r), 2 knowledge (9r), 4 edge (31r)", "Verify PK/FK columns and data types"]},
-                {"title": "Stage 1 Pipeline MCP Execution", "code": "mcp_stage1_asset_discovery",
+                {"title": "Stage 1 Resource Verification Execution", "code": "stage1_resource_check",
                  "bullets": ["Run profile_tables & scan_guides", "Verify prune_noise & tag_pii_governance"]},
             ]},
             {"header": "4. Profiling & Gate 1 Readiness", "color": "#188038", "cards": [
@@ -237,7 +237,7 @@ BANNERS = [
                 {"title": "계층형 마크다운 지식 위키 컴파일", "code": "summary / entities / concepts / rules.md",
                  "bullets": ["L1 도메인 요약 · L2 핵심 엔티티 사전", "L3 관계 개념(Concept) 및 결정론 규칙 명세"]},
                 {"title": "GCS 버킷 & 매니페스트 동기화", "code": "gs://seanjung-poc-starter-ontology/",
-                 "bullets": ["8개 위키·온톨로지 객체 GCS 동기화", "mcp_stage2_wiki_and_semantic 검증"]},
+                 "bullets": ["8개 위키·온톨로지 객체 GCS 동기화", "stage2_resource_check 검증"]},
             ]},
             {"header": "3. 도메인 규칙 & 시맨틱 브릿지 통합", "color": "#F9AB00", "cards": [
                 {"title": "Gemini 후보 트리플 추출 & 검수", "code": "H.propose_triples() · gemini-3.8-flash",
@@ -268,7 +268,7 @@ BANNERS = [
                 {"title": "Compile Hierarchical Wiki Files", "code": "summary / entities / concepts / rules.md",
                  "bullets": ["L1 Domain Overview · L2 Core Entities", "L3 Semantic Concepts & Codified Rules"]},
                 {"title": "GCS Bucket & Manifest Sync", "code": "gs://seanjung-poc-starter-ontology/",
-                 "bullets": ["Sync 8 wiki & JSON-LD objects to GCS", "Verify via mcp_stage2_wiki_and_semantic"]},
+                 "bullets": ["Sync 8 wiki & JSON-LD objects to GCS", "Verify via stage2_resource_check"]},
             ]},
             {"header": "3. Rule & Semantic Bridge Binding", "color": "#F9AB00", "cards": [
                 {"title": "Gemini Candidate Triple Extraction", "code": "H.propose_triples() · gemini-3.8-flash",
@@ -299,7 +299,7 @@ BANNERS = [
             {"header": "2. 듀얼 그래프 DDL & 무결성 검증", "color": "#0284c7", "cards": [
                 {"title": "BigQuery & Spanner Graph DDL", "code": "pipeline/graph_builder.py",
                  "bullets": ["create_property_graph.sql (ISO SQL:2023)", "create_spanner_graph.sql (Spanner 호환)"]},
-                {"title": "Stage 3 파이프라인 MCP 검증", "code": "mcp_stage3_property_graph",
+                {"title": "Stage 3 리소스 검증 검증", "code": "stage3_resource_check",
                  "bullets": ["노드 PK 중복 키 0건(31 rows) 실측 검증", "25개 연결 노드 · 29개 엣지 토폴로지 도식"]},
             ]},
             {"header": "3. 바인딩 변수 기반 다중 홉 ISO GQL", "color": "#0d9488", "cards": [
@@ -330,7 +330,7 @@ BANNERS = [
             {"header": "2. Dual-Engine DDL & Integrity", "color": "#0284c7", "cards": [
                 {"title": "BigQuery & Spanner Graph DDLs", "code": "pipeline/graph_builder.py",
                  "bullets": ["create_property_graph.sql (ISO SQL:2023)", "create_spanner_graph.sql (Cloud Spanner)"]},
-                {"title": "Stage 3 Pipeline MCP Validation", "code": "mcp_stage3_property_graph",
+                {"title": "Stage 3 Resource Verification Validation", "code": "stage3_resource_check",
                  "bullets": ["Verify 0 duplicate node keys (31 rows)", "Visualize 25-node, 29-edge full topology"]},
             ]},
             {"header": "3. Parameterized Multi-Hop ISO GQL", "color": "#0d9488", "cards": [
@@ -360,7 +360,7 @@ BANNERS = [
                  "bullets": ["자연어 질문에서 하위 목표(Sub-Goals) 도출", "추출 슬롯과 정규식 검증 슬롯 교차 병합"]},
             ]},
             {"header": "2. 8종 모듈형 MCP 도구 스위트", "color": "#0284c7", "cards": [
-                {"title": "Stage 파이프라인 MCP 5종", "code": "mcp_stage1 ~ mcp_stage5",
+                {"title": "Stage 리소스 검증 5종", "code": "stage1_resource_check ~ stage5_resource_check",
                  "bullets": ["온톨로지 준비·파싱·그래프·에이전트·평가", "steps 파라미터 기반 선택 실행 지원"]},
                 {"title": "Runtime 도메인 MCP 3종", "code": "lookup_profile · calculate_penalty · query_graph",
                  "bullets": ["고객 약정 조회 · 180일 위약금/24M TCO 산식", "ISO GQL 문장·변수 출력 및 청크 앵커 인출"]},
@@ -391,7 +391,7 @@ BANNERS = [
                  "bullets": ["Decompose query into ordered sub-goals", "Merge LLM slots with regex-verified slots"]},
             ]},
             {"header": "2. 8-Tool Modular MCP Suite", "color": "#0284c7", "cards": [
-                {"title": "5 Stage Pipeline MCP Tools", "code": "mcp_stage1 ~ mcp_stage5",
+                {"title": "5 Stage Resource Verification Checks", "code": "stage1_resource_check ~ stage5_resource_check",
                  "bullets": ["Automate Stage 1..5 lifecycle steps", "Support selective step array execution"]},
                 {"title": "3 Runtime Domain MCP Tools", "code": "lookup_profile · calculate_penalty · query_graph",
                  "bullets": ["Customer profile & 180d penalty / 24M TCO", "Execute parameterized ISO GQL & fetch chunks"]},
@@ -420,7 +420,7 @@ BANNERS = [
                 {"title": "원천 파일 → CQ 답변 전 구간 추적", "code": "Source → DocChunk → Rule → Contract → CQ",
                  "bullets": ["Tier 0 원시 파일(CSV/MD) · Tier 1 해시 청크", "Tier 2 도메인 규칙 · Tier 3 약정 · Tier 4 CQ"]},
                 {"title": "멀티파타이트 리니지 그래프 도식", "code": "H.lineage_graph() · 18 Lineage Rows",
-                 "bullets": ["정책 조항 변경 시 영향받는 요금제·고객·CQ 식별", "mcp_stage5_lineage_and_eval 실시간 검증"]},
+                 "bullets": ["정책 조항 변경 시 영향받는 요금제·고객·CQ 식별", "stage5_resource_check 실시간 검증"]},
             ]},
             {"header": "2. Golden CQ 5종 결정론적 감사", "color": "#0284c7", "cards": [
                 {"title": "4대 채점 기준 자동 대조", "code": "pipeline/validator.py · H.recheck_cq()",
@@ -451,7 +451,7 @@ BANNERS = [
                 {"title": "Full Provenance Chain Tracking", "code": "Source → DocChunk → Rule → Contract → CQ",
                  "bullets": ["Tier 0 Raw CSV/MD · Tier 1 SHA-256 Chunk", "Tier 2 DomainRule · Tier 3 Contract · Tier 4 CQ"]},
                 {"title": "Multipartite Lineage Graph", "code": "H.lineage_graph() · 18 Lineage Rows",
-                 "bullets": ["Trace policy edits to impacted plans & CQs", "Verified via mcp_stage5_lineage_and_eval"]},
+                 "bullets": ["Trace policy edits to impacted plans & CQs", "Verified via stage5_resource_check"]},
             ]},
             {"header": "2. 5 Golden CQs Deterministic Audit", "color": "#0284c7", "cards": [
                 {"title": "4-Check Automated Grading Oracle", "code": "pipeline/validator.py · H.recheck_cq()",
