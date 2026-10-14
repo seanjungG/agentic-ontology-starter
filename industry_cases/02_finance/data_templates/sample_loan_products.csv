@@ -1,6 +1,0 @@
-prod_id,prod_name,base_rate,spread_rate,max_term_years,early_repay_fee_rate,category
-LOAN-MORT-FIXED,인터넷전문은행 A사 주택담보대출(혼합금리),3.45,0.85,40,0.0,MORTGAGE
-LOAN-CREDIT-PLUS,인터넷전문은행 A사 중신용플러스대출,4.12,1.58,10,0.0,CREDIT
-LOAN-OneApp Fintech-HANA,제휴 시중은행 C사-원앱 핀테크 B사 제휴 신용대출,3.88,1.22,5,0.7,CREDIT
-LOAN-OneApp Fintech-BANK,핀테크뱅크 신용대출,4.05,0.95,10,0.0,CREDIT
-LOAN-JEONHYUP-01,저축은행 중금리 사잇돌대출,6.50,3.20,5,1.2,CREDIT

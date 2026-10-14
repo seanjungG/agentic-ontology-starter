@@ -1,208 +1,164 @@
-# Agentic Ontology Starter (AOS v2.2 — Resource-Connected Starter Edition)
+# 🚀 Agentic Ontology Starter (v3.0 Minimal · `v1-mcp` Standard)
 
-[![Starter Portal (6-Tab Live)](https://img.shields.io/badge/Starter_Portal_(6--Tab)-Live_on_Cloud_Run-2563eb?style=for-the-badge)](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/)
-[![Reference Studio: LG U+ (12-Tab)](https://img.shields.io/badge/Reference_Studio_(LG_U%2B)-12--Tab_Full_Platform-4f46e5?style=for-the-badge)](https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/)
-[![Reference Studio: LG H&H (12-Tab)](https://img.shields.io/badge/Reference_Studio_(LG_H%26H)-12--Tab_Full_Platform-0d9488?style=for-the-badge)](https://agentic-ontology-studio-hnh-mcp-924723860007.asia-northeast3.run.app/)
-[![GCP Target](https://img.shields.io/badge/GCP_Resources-seanjung--poc_(asia--northeast3)-059669?style=for-the-badge)](#4-unified-stage-05-map-explanation--demo--process--resource--code--notebooks)
-
-> **Non-Commercial License Notice**
-> Copyright (c) 2026 **Sean Jung** (`seanjung@google.com`). All Rights Reserved.
-> Methodology & Documentation are licensed under **CC BY-NC-ND 4.0**; Source Code & Notebooks are licensed under **PolyForm Noncommercial License 1.0.0**. Commercial use requires prior written permission from `seanjung@google.com`.
+> **누구든 3분 만에 시작하는 초경량 엔터프라이즈 Agentic Ontology 스타터 팩**
+> 복잡한 온톨로지 컴파일러 코드는 **코어 빌더 MCP(`aos-builder-core-mcp`)**로 추상화하고, 내 도메인에 필요한 **데이터 경로(`P1 문서` · `P2 원장` · `P3 통합`)**와 **워크플로우(`W1 규정` · `W2 원장` · `W3 하이브리드`)**만 선택해 바로 실행·확장할 수 있도록 **단 5개의 핵심 Python 파일**만 남겼습니다.
 
 ---
 
-## 1. 핵심 컨셉: MCP 빌더는 추상화하고, Ready-to-Use 온톨로지 리소스에 즉시 연결 (Resource-Connected Starter)
+## 🌐 Live Studios & Reference Endpoints
 
-엔터프라이즈 온톨로지를 처음부터 구축하려면 무거운 파서, 시맨틱 그래프 컴파일러, DDL 합성기 등 복잡한 내부 빌더 인프라가 필요합니다.
-**Agentic Ontology Starter (v2.2)**는 **기준점 스튜디오(LG U+ 12-Tab / LG H&H 12-Tab Full Platform)**의 무거운 내부 MCP 빌더 파이프라인을 **플랫폼 계층으로 완전 추상화(Excluded & Abstracted)**하고, 개발자·FDE가 **이미 준비된(Ready-to-Use) Google Cloud 온톨로지 리소스 4종**에 즉시 연결하여 **도메인 비즈니스 도구(3종)와 AI FDE 추론 에이전트**만 간결하게 커스터마이징할 수 있도록 설계된 **Resource-Connected Starter Kit**입니다.
-
-```mermaid
-flowchart LR
-  subgraph FULL["🏛️ Enterprise Reference Standard (12-Tab Full Platform · Abstracted)"]
-    direction TB
-    F1["Heavy Document / PDF Parser & Gate 0 Engine"]
-    F2["OKF 3-Layer Wiki & JSON-LD Semantic Compiler"]
-    F3["Zero-ETL Property Graph & Spanner Graph Provisioner"]
-    F4["12-Tab Governance Studio & Closed-Loop Harness"]
-  end
-
-  subgraph GCP["☁️ Ready-to-Use GCP Ontology Resources (seanjung-poc)"]
-    direction TB
-    R1[("BigQuery DW Ledgers\nstarter_ontology_dw (10 Tables)")]
-    R2[("GCS 3-Layer OKF Wiki & Rules\ngs://seanjung-poc-starter-ontology/ontology/\nsummary · entities · concepts · rules\nbusiness_rules.json · business_workflows.json")]
-    R3[("Dual Property Graph\nBQ: STARTER_ONTOLOGY_GRAPH (SQL:2023)\nSpanner: starter-spanner (ISO GQL)")]
-    R4[("Evaluation & Lineage Tables\ntb_golden_cq_results (5/5 PASS)\n6-Layer Lineage (19 Nodes / 24 Edges)")]
-  end
-
-  subgraph STARTER["🚀 Agentic Ontology Starter (6-Tab Portal · Exposed & Customizable)"]
-    direction TB
-    S1["1. Resource Connector\nsrc/resource_connector.py\nsrc/gcp_client.py"]
-    S2["2. Domain Business Tools (3 Tools)\nsrc/agent/mcp_server.py\n• mcp_lookup_customer_profile\n• mcp_calculate_penalty_rule\n• mcp_query_graph_and_wiki"]
-    S3["3. AI FDE Reasoning Engine (Gate G2-W)\nsrc/agent/reasoning_engine.py"]
-    S4["4. 6-Tab Starter Portal & 12 Notebooks\nsrc/web/studio_server.py\nnotebooks/{ko,en}/stage0..5_*.ipynb"]
-  end
-
-  FULL ==>|"Compiles & Publishes"| GCP
-  GCP ==>|"Direct Zero-Config Connection"| S1
-  S1 --> S2 --> S3 --> S4
-```
-
----
-
-## 2. 라이브 데모 포털 & 기준점 스튜디오 허브 (Live Demo & Reference Studio Hub)
-
-스타터 포털 상단 글로벌 내비게이션 바와 `0. Overview` 탭에서 **스타터 포털(6-Tab)**과 **엔터프라이즈 기준점 스튜디오 2종(12-Tab)**을 실시간으로 교차 비교하고 실행할 수 있습니다.
-
-| 구분 | 스튜디오 명칭 | 라이브 데모 URL | 구성 및 역할 |
+| 구분 | 서비스명 | 라이브 URL | 설명 |
 | :--- | :--- | :--- | :--- |
-| **🚀 Starter Portal (6-Tab)** | **Agentic Ontology Starter v2.2** | [**https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/) | **Resource-Connected Starter** — 준비된 BigQuery · Property Graph · GCS 3-Layer 위키 · Spanner 리소스에 직결된 6-Tab 실습/커스터마이징 포털 |
-| **🏛️ Reference #1 (12-Tab)** | **LG U+ 공시지원금 & 결합 온톨로지 스튜디오** | [**https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/**](https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/) | **통신 도메인 엔터프라이즈 기준점** — 12-Tab 거버넌스 워크스페이스 · 6-Layer 표준 아키텍처 · P1/P2/P3 · W1~W3 · Gate G2-W 원본 레퍼런스 |
-| **🏛️ Reference #2 (12-Tab)** | **LG생활건강 화장품 표시광고 실증 스튜디오** | [**https://agentic-ontology-studio-hnh-mcp-924723860007.asia-northeast3.run.app/**](https://agentic-ontology-studio-hnh-mcp-924723860007.asia-northeast3.run.app/) | **규제·컴플라이언스 도메인 기준점** — 식약처 가이드라인 + 207개 시험문서 + 임상 DB 멀티트랙 실증 레퍼런스 |
+| **Starter Portal** | `agentic-ontology-starter` | [**Starter Live Studio ↗**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/) | **`0. Getting Started`** + 선택형 `P1/P2/P3 × W1/W2/W3` 플로우 구성기 + **2-Tier MCP 가이드 & 라이브 실행기** |
+| **Reference #1** | `lguplus_mcp_built` (`v1-mcp`) | [**LG U+ v1-MCP Studio ↗**](https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/) | `aos-builder-core-mcp`로 구축된 LG U+ 단말지원금·위약금 12-Tab 엔터프라이즈 기준 스튜디오 |
+| **Reference #2** | `hnh_mcp_built` (`v1-mcp`) | [**LG H&H v1-MCP Studio ↗**](https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/) | `aos-builder-core-mcp`로 구축된 LG생활건강 화장품 표시·광고 컴플라이언스 12-Tab 스튜디오 |
+| **Builder Core MCP** | `aos-builder-core-mcp` | `https://aos-builder-core-mcp-924723860007.asia-northeast3.run.app/mcp/builder` | 원천 문서·DW 원장으로부터 위키·워크플로우·BigQuery Property Graph를 자동 컴파일하는 **8종 코어 빌더 MCP** |
 
 ---
 
-## 3. 표준 온톨로지 프로세스: 6-Layer 아키텍처 × 5-Stage 11-Step × Gate G2-W
+## ⚡ 1. Quickstart (3분 만에 로컬 실행)
 
-스타터 팩은 기준점 스튜디오의 **6-Layer 엔터프라이즈 온톨로지 표준 프로세스**와 **실행형 비즈니스 온톨로지(P1/P2/P3 × W1/W2/W3 × Gate G2-W)**를 100% 동일하게 준수합니다.
+외부 무거운 패키지 설치 없이 **Python 3.11 표준 라이브러리**만으로 즉시 실행됩니다.
 
-### 3-1. 6-Layer 엔터프라이즈 데이터 리니지 계층 (`config/lineage_spec.json`)
-1. **Layer 1 — Source Connection (`CONNECTION`)**: 정형 마스터 원장(4종) 및 비정형 정책 가이드(2종) 원천 연결
-2. **Layer 2 — Raw & De-identified Assets (`RAW_TABLE`)**: PII 비식별화(`CUST_DEMO_*`) 완료 BigQuery 마스터 테이블 4종 및 원문 해시 앵커 청크(`tb_doc_chunks`)
-3. **Layer 3 — Knowledge & Edge Transform (`TRANSFORM`)**: 3-Layer OKF 위키(`summary/entities/concepts/rules.md`), 비즈니스 규칙(`tb_domain_rules`), 그래프 엣지 브릿지 테이블(4종)
-4. **Layer 4 — Semantic & Property Graph (`SEMANTIC_GRAPH`)**: BigQuery SQL:2023 `STARTER_ONTOLOGY_GRAPH` 및 Cloud Spanner Graph(`starter-spanner`)
-5. **Layer 5 — Domain Business Tools (`MCP_TOOL`)**: 비즈니스 로직을 캡슐화한 커스터마이징 대상 도메인 도구 3종
-6. **Layer 6 — AI FDE Runtime & Evaluation (`AGENT_EVAL`)**: 하위 목표 분해 · `Gate G2-W` 런타임 감사 · Golden CQ 5건 / Workflow CQ 5건 / Boundary 50회 검증
-
-### 3-2. 3-Persona (`P1/P2/P3`) × 3-Workflow (`W1/W2/W3`) × `Gate G2-W`
-* **P1 (데이터 오너 / 스튜어드)**: 정형 원장 4종 스키마·PK/FK 정합성 및 비식별화(`CUST_DEMO_*`) 관리
-* **P2 (정책·규제 오너)**: 공시지원금 180일 의무유지(`RULE_SIX_PLAN_180D`), 시니어 특례 면제(`RULE_WELFARE_EXEMPT`), 24개월 TCO(`RULE_TCO_24M`) 정책 조항 및 예외 워크플로 정의
-* **P3 (AI FDE / 도메인 개발자)**: Ready-to-Use 리소스에 도메인 비즈니스 도구 3종 연결 및 골든/바운더리 CQ 검증
-* **비즈니스 워크플로 3종 (`data/llm_wiki/business_workflows.json`)**:
-  * **`W1` (`WF_SUBSIDY_PURCHASE_CHECK`)**: 단말 개통 지원금 산정 및 실구매가 확정 워크플로 (`RULE_ADD_SUBSIDY_15PCT`)
-  * **`W2` (`WF_PLAN_CHANGE_PENALTY_AUDIT`)**: 180일 이내 요금제 변경 시 시니어 복지 면제 선검증 후 일할 위약금 산출 워크플로 (`RULE_WELFARE_EXEMPT` ➔ `RULE_SIX_PLAN_180D`)
-  * **`W3` (`WF_CONTRACT_24M_TCO_ADVISORY`)**: 24개월 공시지원금 vs 선택약정 25% 요금할인 TCO 비교 자문 워크플로 (`RULE_TCO_24M`)
-* **`Gate G2-W` (런타임 실행 게이트)**: 에이전트가 답변을 반환하기 직전 **(1) 수치의 SQL 결정론 산출 여부**, **(2) 예외 규칙(`SENIOR_EXEMPT`) 선행 분기 여부**, **(3) 원문 `DOC_CHUNK_*` SHA-256 해시 앵커 인용 여부**를 감사하여 환각을 원천 차단합니다.
-
----
-
-## 4. Unified Stage 0~5 Map: 설명 ↔ 데모 화면 ↔ 프로세스 ↔ 연결 리소스 ↔ 노출 코드 ↔ 노트북 (1:1 매핑)
-
-GitHub 문서 설명, 라이브 데모 포털 탭, 온톨로지 표준 프로세스, GCP 실물 리소스, 노출된 커스터마이징 코드, 그리고 한/영 실습 노트북(12종)이 **Stage 0~5 전 구간에서 1:1로 직결**되어 있습니다.
-
-| Stage | 데모 포털 화면 탭 | 표준 프로세스 (`Step` / `P·W·Gate`) | 연결된 Ready-to-Use GCP 리소스 (`seanjung-poc`) | 노출된 스타터 코드 (4 Core Files) | 방법론 가이드 (KO / EN) | 실습 노트북 (KO / EN 12종) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Stage 0** | [**`0. Overview`**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=overview) | **Architecture & Track Selection**<br>Track 1(Lite) / Track 2(Hybrid) / Track 3(Full) · 기준점 허브 | `config/starter_config.json`<br>`config/portal_profile.json` | [`src/resource_connector.py`](src/resource_connector.py)<br>[`src/gcp_client.py`](src/gcp_client.py) | [KO](methodology/ko/00_overview_and_4tracks_ko.md) · [EN](methodology/en/00_overview_and_4tracks_en.md) | [**`stage0_overview_walkthrough_ko.ipynb`**](notebooks/ko/stage0_overview_walkthrough_ko.ipynb)<br>[**`stage0_overview_walkthrough_en.ipynb`**](notebooks/en/stage0_overview_walkthrough_en.ipynb) |
-| **Stage 1** | [**`Stage 1. Asset`**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage1) | **Step 1-1 ~ 1-3 (`P1`·`P2` · Gate 0)**<br>비식별화 마스터 원장(4종) · 정책 청크(5건) · Golden CQ(5건) | **BigQuery DW (`starter_ontology_dw`)**<br>`tb_customer_contract` (6), `tb_device_master` (4), `tb_plan_master` (6), `tb_subsidy_policy` (5), `tb_doc_chunks` (5) | [`src/resource_connector.py`](src/resource_connector.py) (`stage1_resource_check`)<br>[`src/gcp_client.py`](src/gcp_client.py) | [KO](methodology/ko/01_stage1_asset_and_cq_ko.md) · [EN](methodology/en/01_stage1_asset_and_cq_en.md) | [**`stage1_asset_and_cq_ko.ipynb`**](notebooks/ko/stage1_asset_and_cq_ko.ipynb)<br>[**`stage1_asset_and_cq_en.ipynb`**](notebooks/en/stage1_asset_and_cq_en.ipynb) |
-| **Stage 2** | [**`Stage 2. Wiki & Semantic`**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage2) | **Step 2-1 ~ 2-3 (`P2` · `W1~W3`)**<br>3-Layer OKF 위키 · 비즈니스 규칙(4종) · 워크플로(3종) | **GCS (`gs://seanjung-poc-starter-ontology/ontology/`)**<br>`summary/entities/concepts/rules.md`, `business_rules.json`, `business_workflows.json`, BQ `tb_domain_rules` (4) | [`src/resource_connector.py`](src/resource_connector.py) (`stage2_resource_check`)<br>[`data/llm_wiki/`](data/llm_wiki/) | [KO](methodology/ko/02_stage2_wiki_and_semantic_graph_ko.md) · [EN](methodology/en/02_stage2_wiki_and_semantic_graph_en.md) | [**`stage2_wiki_and_semantic_graph_ko.ipynb`**](notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb)<br>[**`stage2_wiki_and_semantic_graph_en.ipynb`**](notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) |
-| **Stage 3** | [**`Stage 3. Property Graph`**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage3) | **Step 3-1 ~ 3-2 (`P1`·`P3`)**<br>Zero-ETL SQL:2023 `GRAPH_TABLE` & Spanner ISO GQL 멀티홉 탐색 | **BigQuery Graph & Spanner Graph**<br>`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`<br>`starter-spanner/starter_ontology_db/STARTER_ONTOLOGY_GRAPH` | [`src/gcp_client.py`](src/gcp_client.py) (`run_gql_MultiHop`)<br>[`src/resource_connector.py`](src/resource_connector.py) (`stage3_resource_check`) | [KO](methodology/ko/03_stage3_property_graph_ko.md) · [EN](methodology/en/03_stage3_property_graph_en.md) | [**`stage3_property_graph_bigquery_spanner_ko.ipynb`**](notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb)<br>[**`stage3_property_graph_bigquery_spanner_en.ipynb`**](notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) |
-| **Stage 4** | [**`Stage 4. Agent & Tools`**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage4) | **Step 4-1 ~ 4-2 (`P3` · `Gate G2-W`)**<br>도메인 비즈니스 도구 3종 체이닝 & AI FDE 결정론적 추론 | **Vertex AI `gemini-3.8-flash` + 3 Domain Tools**<br>`mcp_lookup_customer_profile`<br>`mcp_calculate_penalty_rule`<br>`mcp_query_graph_and_wiki` | [**`src/agent/mcp_server.py`**](src/agent/mcp_server.py)<br>[**`src/agent/reasoning_engine.py`**](src/agent/reasoning_engine.py) | [KO](methodology/ko/04_stage4_agent_and_mcp_ko.md) · [EN](methodology/en/04_stage4_agent_and_mcp_en.md) | [**`stage4_agent_and_mcp_execution_ko.ipynb`**](notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb)<br>[**`stage4_agent_and_mcp_execution_en.ipynb`**](notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
-| **Stage 5** | [**`Stage 5. Lineage & Eval`**](https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/?tab=stage5) | **Step 5-1 ~ 5-2 (Closed-Loop Eval)**<br>6-Layer 리니지 DAG · Golden CQ(5) · WF-CQ(5) · Boundary(50) | **BigQuery Eval & Lineage Spec**<br>`tb_golden_cq_results` (5/5 PASS)<br>`config/lineage_spec.json` (19 Nodes / 24 Edges) | [`src/lineage_service.py`](src/lineage_service.py)<br>[`pipeline/validator.py`](pipeline/validator.py) | [KO](methodology/ko/05_stage5_lineage_and_eval_ko.md) · [EN](methodology/en/05_stage5_lineage_and_eval_en.md) | [**`stage5_lineage_and_evaluation_ko.ipynb`**](notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb)<br>[**`stage5_lineage_and_evaluation_en.ipynb`**](notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
-
----
-
-## 5. 코드 노출 경계 (Code Exposure Boundary): 무엇을 숨기고 무엇을 노출하는가?
-
-스타터 팩은 사용자가 **온톨로지 빌더 내부 구현에 매몰되지 않고 비즈니스 도구와 에이전트 로직에 즉시 집중**할 수 있도록 코드 노출 범위를 명확히 분리합니다.
-
-### 5-1. 추상화/제외된 플랫폼 빌더 영역 (Excluded & Abstracted into Ready-to-Use GCP Resources)
-* ❌ **Internal Stage Builder MCP Server (`mcp_builder_*` / `mcp_stage1..5`)**: 스타터의 런타임 도구 카탈로그(`get_tool_catalog()`)에서 완전히 제외되었습니다.
-* ❌ **대용량 PDF/HWP/HTML 파서 및 LLM 멀티턴 위키/그래프 컴파일러**: 이미 컴파일되어 BigQuery(`starter_ontology_dw`), GCS(`gs://seanjung-poc-starter-ontology/ontology/`), Spanner(`starter-spanner`)에 적재된 **Ready-to-Use 리소스**로 제공됩니다.
-
-### 5-2. 스타터에 노출된 핵심 커스터마이징 코드 4종 (Exposed & Customizable in Starter)
-
-| 번호 | 노출된 핵심 파일 | 역할 및 커스터마이징 포인트 | 연결된 GCP 리소스 |
-| :---: | :--- | :--- | :--- |
-| **1** | [**`src/resource_connector.py`**](src/resource_connector.py) | **리소스 직결 커넥터 (`OntologyResourceConnector`)** — Stage 1~5별 준비된 BigQuery 테이블, GCS 3-Layer 위키, 비즈니스 규칙/워크플로, Property Graph 상태를 원클릭으로 확인 (`verify_ready_resources()`) | `seanjung-poc.starter_ontology_dw` · `gs://seanjung-poc-starter-ontology/ontology/` |
-| **2** | [**`src/gcp_client.py`**](src/gcp_client.py) | **GCP 라이브 클라이언트 (`EnterpriseOntologyBenchmarker`)** — BigQuery SQL / SQL:2023 `GRAPH_TABLE` / Cloud Spanner GQL / GCS / Vertex AI `gemini-3.8-flash` 직접 호출 래퍼 | BigQuery · Cloud Spanner · GCS · Vertex AI |
-| **3** | [**`src/agent/mcp_server.py`**](src/agent/mcp_server.py) | **도메인 비즈니스 도구 3종 (`DomainMcpServer`)** — 내 도메인의 테이블과 비즈니스 산식에 맞게 SQL/GQL 쿼리만 수정하면 즉시 동작하는 3대 핵심 도구:<br>1. `mcp_lookup_customer_profile` (고객 약정 · 단말 출고가 · 지원금 원장 조회)<br>2. `mcp_calculate_penalty_rule` (180일 일할 위약금 · 시니어 면제 · 24개월 TCO 결정론 산식)<br>3. `mcp_query_graph_and_wiki` (`STARTER_ONTOLOGY_GRAPH` 멀티홉 탐색 + `DOC_CHUNK_*` 해시 앵커 조인) | `tb_customer_contract`, `tb_device_master`, `tb_plan_master`, `tb_subsidy_policy`, `tb_domain_rules`, `STARTER_ONTOLOGY_GRAPH` |
-| **4** | [**`src/agent/reasoning_engine.py`**](src/agent/reasoning_engine.py) | **AI FDE 추론 엔진 (`AgenticReasoningEngine`)** — 사용자 질의를 하위 목표로 분해(Step 1)하고 도메인 비즈니스 도구 3종을 체이닝(Step 2)한 뒤 `Gate G2-W` 감사와 원문 해시 앵커를 결합하여 최종 답변 합성(Step 3) | Vertex AI `gemini-3.8-flash` + `DomainMcpServer` |
-
-```python
-# Quick Example: Ready-to-Use 리소스 점검 및 도메인 비즈니스 도구 즉시 호출
-from src.resource_connector import OntologyResourceConnector
-from src.agent.mcp_server import DomainMcpServer
-
-# 1) 준비된 GCP 온톨로지 리소스(Stage 1~5) 연결 상태 즉시 확인
-connector = OntologyResourceConnector()
-status = connector.verify_ready_resources()
-print("Overall Status:", status["overall_status"])  # READY
-
-# 2) 커스터마이징 가능한 3대 도메인 비즈니스 도구 카탈로그 확인 및 실행
-server = DomainMcpServer()
-print([t["name"] for t in server.get_tool_catalog()])
-# ['mcp_lookup_customer_profile', 'mcp_calculate_penalty_rule', 'mcp_query_graph_and_wiki']
-
-res = server.execute_tool("mcp_calculate_penalty_rule", {
-    "customer_id": "CUST_DEMO_001",
-    "target_plan_name": "5G Light",
-    "elapsed_days": 120,
-})
-print(res["calculations"][0]["penalty_krw"], res["calculations"][0]["grounded_chunk_id"])
-# 106667  DOC_CHUNK_001
-```
-
----
-
-## 6. 3분 빠른 시작 가이드 (Quickstart)
-
-### Step 1. 환경 준비 및 GCP 인증
 ```bash
+# 1. 저장소 클론 및 이동
 git clone https://github.com/seanjungG/agentic-ontology-starter.git
 cd agentic-ontology-starter
-pip install -r requirements.txt
+
+# 2. GCP 인증 (기본 제공되는 Ready-to-Use 샘플 리소스 즉시 사용 가능)
 gcloud auth application-default login
+
+# 3. 스타터 스튜디오 웹 서버 실행 (http://localhost:8080)
+python3 -m src.web.studio_server
 ```
 
-### Step 2. 연결된 GCP 리소스 일괄 점검 & Golden CQ 검증 (`run_pipeline.py`)
-```bash
-# Stage 1~5 연결 리소스(BigQuery DW, GCS 3-Layer Wiki, Property Graph, Domain Tools, Eval) 즉시 점검
-python3 run_pipeline.py --track full
-```
-
-### Step 3. 6-Tab 스타터 포털 로컬 실행 (`studio_server.py`)
-```bash
-python3 -m src.web.studio_server 8080
-# 브라우저에서 http://localhost:8080 접속
-```
-
-### Step 4. 내 도메인 프로젝트로 확장하기 (`new_project.py` 또는 UI 워크벤치)
-* 포털 우측 상단 **`+ 신규 프로젝트`** 버튼을 클릭하거나 아래 CLI로 자체 CSV 테이블과 정책 문서를 사용하는 신규 프로젝트를 생성할 수 있습니다:
-```bash
-python3 new_project.py --id my_domain --name "내 도메인 온톨로지" --track full --graph-engine bigquery
-```
+브라우저에서 **`http://localhost:8080`**을 열면 **`🚀 0. Getting Started`** 페이지가 나타나며, 플로우 선택부터 GCP 리소스 연결 검증, MCP 도구 실행까지 한 화면에서 진행할 수 있습니다.
 
 ---
 
-## 7. 저장소 디렉터리 구조 (Repository Structure)
+## 📂 2. 초경량 5-File 핵심 코드 구조 (Minimal Core)
+
+불필요한 슬라이드, 이론 문서, 테라폼, 내부 파이프라인 스크립트를 모두 제거하고 **실제 커스터마이징에 필요한 5개 핵심 코드**만 남겼습니다.
 
 ```text
 agentic-ontology-starter/
-├── README.md                          # [통합 허브] 컨셉 · 데모 · 프로세스 · 코드 경계 · 노트북 1:1 매핑
-├── 01_prod.md                         # 제품 헌장 & 엔터프라이즈 기준점 대비 스타터 명세
-├── PROTOTYPING_PLAYBOOK.md            # P1/P2/P3 × W1~W3 × Gate G2-W 실전 플레이북
-├── config/
-│   ├── starter_config.json            # GCP 리소스 연결 설정 (BigQuery, GCS, Spanner, Vertex AI)
-│   ├── portal_profile.json            # 6-Tab 스타터 포털 UI 메타데이터 (v2.2)
-│   └── lineage_spec.json              # 6-Layer 엔터프라이즈 데이터 리니지 DAG 명세 (19 Nodes / 24 Edges)
-├── src/                               # ★ 노출된 핵심 커스터마이징 코드 (Exposed Starter Code)
-│   ├── resource_connector.py          # [핵심 #1] Ready-to-Use GCP 리소스 직결 커넥터 (Stage 1~5 점검)
-│   ├── gcp_client.py                  # [핵심 #2] BigQuery SQL/GQL · Spanner GQL · GCS · Gemini 클라이언트
-│   ├── lineage_service.py             # 6-Layer 데이터 리니지 그래프 서비스
-│   ├── project_workbench.py           # 멀티 프로젝트 & Gemini 스텝별 워크벤치
+├── src/
+│   ├── resource_connector.py       # [파일 1] 내 GCP 리소스 연결(connect_my_resources) + 선택형 플로우 프리셋 + 2-Tier MCP 명세
+│   ├── gcp_client.py               # [파일 2] 순수 Python 표준 라이브러리 기반 BigQuery / Spanner / GCS / Vertex AI REST 어댑터
 │   ├── agent/
-│   │   ├── mcp_server.py              # [핵심 #3] 커스터마이징 대상 도메인 비즈니스 도구 3종
-│   │   └── reasoning_engine.py        # [핵심 #4] AI FDE 하위 목표 분해 · 도구 체이닝 · Gate G2-W 엔진
+│   │   ├── mcp_server.py           # [파일 3] 워크플로우 노드에 1:1 바인딩되는 런타임 도메인 비즈니스 MCP 도구 3종
+│   │   └── reasoning_engine.py     # [파일 4] Vertex AI (gemini-3.8-flash) 슬롯 추출 · 도메인 도구 체이닝 · SHA-256 근거 합성 엔진
 │   └── web/
-│       └── studio_server.py           # 6-Tab 스타터 포털 웹 서버 (기준점 허브 + 코드 경계 + Stage 1~5)
-├── data/
-│   ├── input/                         # 비식별화 샘플 마스터 원장(4종) · 정책 가이드(2종) · Golden/Boundary CQ
-│   ├── llm_wiki/                      # 3-Layer OKF 위키(4종) · business_rules.json · business_workflows.json
-│   └── output/                        # Property Graph DDL · 토폴로지 · Golden/Boundary 실측 리포트
-├── methodology/                       # Stage 0~5 방법론 상세 가이드 (한국어 6종 / 영어 6종)
-├── notebooks/                         # Stage 0~5 실습 Jupyter 노트북 (한국어 6종 / 영어 6종 = 총 12종)
-│   ├── ko/                            # stage0..5_*_ko.ipynb (OntologyResourceConnector + 도메인 도구 3종 실습)
-│   └── en/                            # stage0..5_*_en.ipynb (English edition)
-├── industry_cases/                    # 4대 산업군 8대 엔터프라이즈 온톨로지 아키텍처 템플릿
-└── tests/
-    └── test_data_fidelity.py          # 리소스 연결 · 도메인 도구 3종 · Golden CQ 정합성 자동 검증 테스트
+│       └── studio_server.py        # [파일 5] Getting Started + v1-MCP 선택형 플로우 UI + MCP 커스텀 가이드 웹 서버
+├── config/                         # starter_config.json, lineage_spec.json, eval_rubric.json
+├── data/                           # 즉시 실행 가능한 비식별 샘플 데이터 (문서 청크, 3-Layer OKF 위키, W1~W3 워크플로우, CSV)
+├── notebooks/{ko,en}/              # Stage 0 ~ Stage 5 한/영 Google Colab 실습 노트북 (12종)
+└── tests/test_data_fidelity.py     # 미니멀 코어 구조 · 플로우 프리셋 · 2-Tier MCP · API 엔드포인트 검증 테스트
+```
+
+---
+
+## 🧭 3. 선택형 플로우 구성기 (`P1/P2/P3 × W1/W2/W3 × Gate G2-W`)
+
+처음부터 모든 구성요소를 다 구축할 필요가 없습니다. 내 프로젝트의 데이터 준비 상황에 맞춰 **3가지 플로우 중 하나를 선택**하거나 개별 경로를 조합해 시작하세요.
+
+| 선택 플로우 | 데이터 경로 (`P1~P3`) | 워크플로우 (`W1~W3`) | 언제 선택하나요? | 필수 GCP 리소스 |
+| :--- | :---: | :---: | :--- | :--- |
+| **Flow A · Document-First** | **`P1`** (비정형 문서) | **`W1`** (규정 판정) | 정형 DB/원장 없이 **정책 가이드·약관·매뉴얼 문서**만으로 규정 질의응답 에이전트를 빠르게 시작할 때 | GCS OKF Wiki + `tb_doc_chunks` + Vertex AI |
+| **Flow B · Ledger-First** | **`P2`** (정형 DW 원장) | **`W2`** (원장 검증) | 기존 **BigQuery / Spanner 마스터·거래 테이블**을 Property Graph로 묶어 계약·상태 조회를 자동화할 때 | BigQuery DW & Property Graph + Vertex AI |
+| **Flow C · Full `v1-mcp` Hybrid** | **`P1 + P2 + P3`** | **`W1 + W2 + W3` + `Gate G2-W`** | **문서 규정(`P1`)과 고객 원장(`P2`)을 브릿지 엣지(`P3`) 및 단일 출처 상수(`G2-W`)로 결합**해 위약금/정산/컴플라이언스를 무환각 판정할 때 (LG U+ / LG H&H 표준) | BigQuery DW & Graph + GCS 3-Layer Wiki + Vertex AI (+ Spanner 선택) |
+
+---
+
+## 🛠️ 4. 2-Tier MCP 아키텍처: 역할 및 커스터마이징 가이드
+
+Agentic Ontology는 **① 온톨로지를 자동으로 컴파일하는 빌드 타임 코어 MCP(`aos-builder-core-mcp`)**와 **② 런타임에 실제 비즈니스 데이터를 조회·계산하는 도메인 비즈니스 MCP(`src/agent/mcp_server.py`)**로 역할을 분리합니다.
+
+### 🏗️ Tier 1 — 코어 빌더 MCP (`aos-builder-core-mcp` · 8종 도구)
+
+복잡한 파서나 그래프 컴파일러를 직접 코딩하지 않고, Gemini CLI / Claude Code / Cursor에 `aos-builder-core-mcp`를 연결하여 6단계 온톨로지 파이프라인을 실행합니다.
+
+#### ① MCP 클라이언트 연결 설정 (`~/.gemini/settings.json` 또는 `.mcp.json`)
+```json
+{
+  "mcpServers": {
+    "aos-builder-core-mcp": {
+      "type": "http",
+      "url": "https://aos-builder-core-mcp-924723860007.asia-northeast3.run.app/mcp/builder"
+    }
+  }
+}
+```
+
+#### ② `aos-builder-core-mcp` 8대 도구 역할 및 플로우별 사용 단계
+
+| 단계 | 코어 빌더 MCP 도구명 | 적용 플로우 | 핵심 역할 및 산출물 |
+| :---: | :--- | :---: | :--- |
+| **Init** | `mcp_builder_get_domain_spec_template` | `All` | 신규 도메인 온보딩용 선언형 `build_spec` JSON 템플릿 반환 |
+| **Stage 1** | `mcp_builder_inspect_and_scope_stage1` | `P1, P2, P3` | 원천 문서 번들(`P1`) 및 정형 DW 원장(`P2`) 스캔, PK/FK 무결성 점검 및 `project.json` 생성 |
+| **Gate 0** | `mcp_builder_parse_documents_gate0` | `P1, P3` | 비정형 문서를 문단/표 단위로 무손실 파싱(`>=95%`)하고 SHA-256 해시 앵커 부여 (`gate0_report.json`) |
+| **Stage 2** | `mcp_builder_compile_okf_wiki_stage2` | `P1, P3` | 3-Layer OKF 위키(`01_summary`, `02_entities`, `03_concepts`) 및 `graph.properties` 정책 상수 컴파일 |
+| **Stage 3** | `mcp_builder_extract_rules_workflows_stage3` | `W1, W2, W3, G2-W` | 비즈니스 룰(`BR-*`), `W1/W2/W3` 워크플로우 DAG, `Gate G2-W` 상수 검증 및 `D4.5` 도메인 도구 바인딩 생성 |
+| **Stage 4** | `mcp_builder_synthesize_bqg_stage4` | `P2, P3` | BigQuery에 정형 노드(`P2`) + 위키 룰 노드(`P1`) + 브릿지 엣지(`P3`) 적재 및 `CREATE PROPERTY GRAPH` 실행 |
+| **Stage 5** | `mcp_builder_verify_gates_and_cqs_stage5` | `All` | Gate 0 / Gate 2 / Gate G2-W / Gate 3 / Gate 4(`D4.5`) 및 워크플로우 CQ(`WCQ-*`) 결정론 리플레이 검증 |
+| **Stage 6** | `mcp_builder_provision_studio_infra_stage6` | `All` | 스튜디오 카탈로그(`assets_registry.json`, `cq_registry.json`), 호환 뷰, GCS 위키 동기화 (`mcp_builder_run_full_pipeline`으로 일괄 실행 가능) |
+
+---
+
+### ⚡ Tier 2 — 런타임 도메인 비즈니스 MCP (`src/agent/mcp_server.py` · 3종 도구)
+
+런타임 에이전트(`AiFdeAgentEngine`)와 워크플로우(`W1~W3`)가 호출하는 결정론적 비즈니스 도구 3종입니다.
+
+| 도메인 MCP 도구명 | 바인딩 플로우 | 핵심 역할 | 내 도메인 커스텀 포인트 (`src/agent/mcp_server.py`) |
+| :--- | :---: | :--- | :--- |
+| **`mcp_lookup_customer_profile`** | `P2 · W2` | 정형 DW 마스터·계약 원장에서 고객 계약, 단말 출고가, 지원금 정책을 결정론 SQL로 조회 | `_mcp_lookup_customer_profile()` 내 SQL을 내 도메인의 마스터/거래 원장 테이블 조회 쿼리로 교체 |
+| **`mcp_calculate_penalty_rule`** | `P3 · W3 · Gate G2-W` | 위키 정책 상수(`180일`, `45,000원`, 복지 면제)와 고객 원장을 결합해 일할 위약금 및 24개월 TCO를 SQL로 계산 | `_mcp_calculate_penalty_rule()` 내 수식을 내 도메인의 정산·한도·컴플라이언스 판정 산식으로 교체 |
+| **`mcp_query_graph_and_wiki`** | `P1 + P2 · W1/W3` | BigQuery/Spanner `GRAPH_TABLE` 멀티홉 탐색 + `tb_doc_chunks` SHA-256 원문 해시 앵커 결합 | `_mcp_query_graph_and_wiki()`의 `MATCH (a)-[r]->(b)` 패턴을 내 Property Graph 노드/엣지 라벨로 변경 |
+
+#### 내 도메인 적용 3단계 코드 레시피
+```python
+# Step 1. 내 GCP 리소스 연결 (src/resource_connector.py)
+from src.resource_connector import connect_my_resources
+manifest = connect_my_resources(
+    project_id="my-gcp-project",
+    dataset_id="my_ontology_dw",
+    gcs_bucket="my-ontology-wiki-bucket",
+    verify=True,
+)
+
+# Step 2. 런타임 도메인 MCP 도구 단독 테스트 (src/agent/mcp_server.py)
+from src.agent.mcp_server import DomainMcpServer
+mcp = DomainMcpServer(project_id="my-gcp-project", dataset_id="my_ontology_dw")
+res = mcp.execute_tool("mcp_calculate_penalty_rule", {
+    "customer_id": "CUST_DEMO_001",
+    "target_plan_name": "5G 슬림 (45,000원)",
+    "elapsed_days": 95,
+})
+
+# Step 3. AI FDE 에이전트 전체 추론 사이클 실행 (src/agent/reasoning_engine.py)
+from src.agent.reasoning_engine import AiFdeAgentEngine
+agent = AiFdeAgentEngine(project_id="my-gcp-project")
+answer = agent.execute_cycle("CUST_DEMO_001 고객이 95일째에 45,000원 요금제로 변경하면 위약금이 얼마인가요?")
+print(answer["final_synthesis"])
+```
+
+---
+
+## 📓 5. 단계별 Google Colab 실습 노트북 (`notebooks/{ko,en}/`)
+
+| 단계 | 한국어 노트북 | English Notebook | 핵심 실습 내용 |
+| :--- | :--- | :--- | :--- |
+| **Stage 0** | [`stage0_overview_walkthrough_ko.ipynb`](notebooks/ko/stage0_overview_walkthrough_ko.ipynb) | [`stage0_overview_walkthrough_en.ipynb`](notebooks/en/stage0_overview_walkthrough_en.ipynb) | `connect_my_resources()` 연결 및 `P1/P2/P3 × W1/W2/W3` 아키텍처 점검 |
+| **Stage 1** | [`stage1_asset_and_cq_ko.ipynb`](notebooks/ko/stage1_asset_and_cq_ko.ipynb) | [`stage1_asset_and_cq_en.ipynb`](notebooks/en/stage1_asset_and_cq_en.ipynb) | 원천 문서(Gate 0 SHA-256 앵커) 및 정형 DW 원장 데이터 준비성 점검 |
+| **Stage 2** | [`stage2_wiki_and_semantic_graph_ko.ipynb`](notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) | [`stage2_wiki_and_semantic_graph_en.ipynb`](notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) | OKF 3-Layer 위키(`summary/entities/concepts/rules.md`) 및 `Gate G2-W1` 단일 출처 상수 |
+| **Stage 3** | [`stage3_property_graph_bigquery_spanner_ko.ipynb`](notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) | [`stage3_property_graph_bigquery_spanner_en.ipynb`](notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) | BigQuery SQL:2023 `GRAPH_TABLE` & Cloud Spanner ISO GQL 멀티홉 탐색 |
+| **Stage 4** | [`stage4_agent_and_mcp_execution_ko.ipynb`](notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) | [`stage4_agent_and_mcp_execution_en.ipynb`](notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) | 도메인 비즈니스 MCP 도구 3종 및 Vertex AI `gemini-3.8-flash` AI FDE 실행 |
+| **Stage 5** | [`stage5_lineage_and_evaluation_ko.ipynb`](notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) | [`stage5_lineage_and_evaluation_en.ipynb`](notebooks/en/stage5_lineage_and_evaluation_en.ipynb) | 6-Layer 데이터 리니지 역추적 및 Golden/Boundary CQ 전수 검증 |
+
+---
+
+## 🧪 6. 테스트 실행
+
+```bash
+python3 -m unittest discover -s tests -p "test_*.py" -v
 ```

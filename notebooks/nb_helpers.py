@@ -904,12 +904,13 @@ def lineage_graph(records, cq_rows):
 
 
 def recheck_cq(cq, agent):
-    """Re-runs one golden CQ and shows the same checks pipeline/validator.py applies."""
-    from pipeline.validator import FOOTER, _has
+    """Re-runs one golden CQ and verifies expected math and grounded chunk citations."""
+    footer = "\n\n---\n"
+    _has = lambda txt, val: f"{int(val):,}" in str(txt) or str(int(val)) in str(txt)
     df, meta = sql(cq["verification_sql"].replace("{fq}", FQ))
     got = df.iloc[0].to_dict() if len(df) else {}
     res = agent.execute_cycle(cq["query"])
-    body = res["lifecycle"]["step_4_synthesis"]["markdown"].split(FOOTER)[0]
+    body = res["lifecycle"]["step_4_synthesis"]["markdown"].split(footer)[0]
     checks = [{"check": "verification_sql == expected_math", "passed": all(got.get(k) == v for k, v in cq["expected_math"].items()),
                "detail": f"{got} (job {meta['job_id']})"}]
     checks += [{"check": f"answer contains {k} = {v:,}", "passed": _has(body, v), "detail": ""} for k, v in cq["expected_math"].items()]
@@ -922,7 +923,7 @@ def recheck_cq(cq, agent):
 def engine_selection_checklist_df():
     """Returns the 5-Axis Graph Engine Selection Checklist table and active project engine config."""
     manifest = read_json("data/output/input_manifest.json")
-    proj = read_json("config/project.json")
+    proj = read_json("config/starter_config.json")
     chk = manifest.get("graph_engine_checklist", {})
     axes = [
         ("source_system",
