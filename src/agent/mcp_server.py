@@ -271,11 +271,6 @@ class DomainMcpServer:
             "mcp_explore_property_graph": "mcp_query_graph_and_wiki",
             "mcp_get_policy_anchor_grounding": "mcp_query_graph_and_wiki",
             "mcp_inspect_dw_table_schema": "mcp_query_graph_and_wiki",
-            "stage1_resource_check": "mcp_stage1_asset_discovery",
-            "stage2_resource_check": "mcp_stage2_wiki_and_semantic",
-            "stage3_resource_check": "mcp_stage3_property_graph",
-            "stage4_resource_check": "mcp_stage4_agent_orchestration",
-            "stage5_resource_check": "mcp_stage5_lineage_and_eval",
         }
         name = aliases.get(tool_name, tool_name)
         handler = getattr(self, "_" + name, None)
@@ -304,124 +299,7 @@ class DomainMcpServer:
             (t["steps"] for t in self.get_tool_catalog() if t["name"] == name), []))
         return out
 
-    # ------------------------------------------------------------------ stage MCPs
-    def _mcp_stage1_asset_discovery(self, args, jobs):
-        eng = _resolve_engine(args.get("engine"))
-        en = is_english_mode(args.get("lang"), args.get("query"))
-        if eng == "spanner":
-            t_names = (
-                "tb_device_master", "tb_plan_master", "tb_subsidy_policy", "tb_customer_contract",
-                "tb_doc_chunks", "tb_domain_rules", "edge_contract_device", "edge_contract_plan",
-                "edge_subsidy_binding", "edge_rule_applies_to_plan",
-            )
-            tables = self._run(
-                "SELECT table_id, row_count, size_bytes FROM (" + " UNION ALL ".join(
-                    f"SELECT '{t}' AS table_id, COUNT(*) AS row_count, CAST(0 AS INT64) AS size_bytes FROM `{t}`"
-                    for t in t_names
-                ) + ") ORDER BY table_id",
-                jobs, engine=eng,
-            )
-        else:
-            tables = self._run(f"SELECT table_id, row_count, size_bytes FROM `{self.fq}.__TABLES__` ORDER BY table_id", jobs, engine=eng)
-        pii = self._run(f"""
-            SELECT COUNT(*) AS contracts,
-                   IFNULL(SUM(IF(NOT REGEXP_CONTAINS(customer_id, r'^CUST_DEMO_[0-9]{{3}}$'), 1, 0)), 0) AS non_deidentified_ids
-            FROM `{self.fq}.tb_customer_contract`""", jobs, engine=eng)[0]
-        target_label = f"Cloud Spanner `{self.spanner_instance_id}/{self.spanner_database_id}`" if eng == "spanner" else f"BigQuery `{self.fq}`"
-        summary = (
-            f"{target_label}: {len(tables)} tables ({sum(t['row_count'] for t in tables)} rows measured) · "
-            f"{pii['non_deidentified_ids']} PII de-identification rule violations"
-            if en else
-            f"{target_label} 테이블 {len(tables)}개, 총 {sum(t['row_count'] for t in tables)}행 실측 · "
-            f"비식별 규칙 위반 고객 ID {pii['non_deidentified_ids']}건"
-        )
-        return {"status": "SUCCESS", "stage": "STAGE 1", "engine": eng, "table_inventory": tables, "pii_check": pii,
-                "summary": summary}
-
-    def _mcp_stage2_wiki_and_semantic(self, args, jobs):
-        eng = _resolve_engine(args.get("engine"))
-        en = is_english_mode(args.get("lang"), args.get("query"))
-        rows = self._run(f"""
-            SELECT ch.chunk_id, ch.source_file, ch.section_title, ch.content_sha256 AS anchor, ch.trust_tier,
-                   r.rule_id, r.rule_name, r.formula_expr
-            FROM `{self.fq}.tb_doc_chunks` ch
-            LEFT JOIN `{self.fq}.tb_domain_rules` r ON r.source_chunk_id = ch.chunk_id
-            ORDER BY ch.chunk_id, r.rule_id""", jobs, engine=eng)
-        objs = [f"gs://{self.gcs_bucket}/{o['name']}" for o in list_gcs_objects(bucket=self.gcs_bucket)]
-        return {
-            "status": "SUCCESS", "stage": "STAGE 2", "engine": eng, "gcs_objects": objs, "anchored_chunks": rows,
-            "anchor_format": "anchor_ + first 12 SHA-256 hex chars (pipeline/ingest.py)" if en else "anchor_ + SHA-256 hex 앞 12자리 (pipeline/ingest.py)",
-            "summary": f"{len(objs)} GCS objects · {len(rows)} chunk-to-rule joined rows ({eng})" if en else f"GCS 객체 {len(objs)}개 · 청크/규칙 조인 {len(rows)}행 ({eng})",
-        }
-
-    def _mcp_stage3_property_graph(self, args, jobs):
-        eng = _resolve_engine(args.get("engine"))
-        en = is_english_mode(args.get("lang"), args.get("query"))
-        dup = self._run(f"""
-            SELECT 'tb_device_master' AS node_table, COUNT(*) AS row_count, COUNT(*) - COUNT(DISTINCT device_id) AS duplicate_keys FROM `{self.fq}.tb_device_master`
-            UNION ALL SELECT 'tb_plan_master', COUNT(*), COUNT(*) - COUNT(DISTINCT plan_id) FROM `{self.fq}.tb_plan_master`
-            UNION ALL SELECT 'tb_subsidy_policy', COUNT(*), COUNT(*) - COUNT(DISTINCT policy_id) FROM `{self.fq}.tb_subsidy_policy`
-            UNION ALL SELECT 'tb_customer_contract', COUNT(*), COUNT(*) - COUNT(DISTINCT contract_id) FROM `{self.fq}.tb_customer_contract`
-            UNION ALL SELECT 'tb_doc_chunks', COUNT(*), COUNT(*) - COUNT(DISTINCT chunk_id) FROM `{self.fq}.tb_doc_chunks`
-            UNION ALL SELECT 'tb_domain_rules', COUNT(*), COUNT(*) - COUNT(DISTINCT rule_id) FROM `{self.fq}.tb_domain_rules`""", jobs, engine=eng)
-        paths = self._run(f"""
-            SELECT COUNT(*) AS device_plan_rule_paths, COUNT(DISTINCT policy_id) AS subsidy_edges
-            FROM GRAPH_TABLE(`{self.graph}`
-              MATCH (d:DeviceNode)-[hs:HAS_SUBSIDY_POLICY]->(p:PlanNode)<-[ap:APPLIES_TO_PLAN]-(r:DomainRuleNode)
-              COLUMNS (hs.policy_id AS policy_id))""", jobs, engine=eng)[0]
-        total_dup = sum(r["duplicate_keys"] for r in dup)
-        graph_id = f"{self.spanner_instance_id}/{self.spanner_database_id}/{self.spanner_graph}" if eng == "spanner" else self.graph
-        return {
-            "status": "SUCCESS", "stage": "STAGE 3", "engine": eng,
-            "graph_id": graph_id, "node_tables": dup, "duplicate_keys_total": total_dup, "gql_paths": paths,
-            "summary": (
-                f"[{eng.upper()}] {total_dup} duplicate keys across node tables · {paths['device_plan_rule_paths']} GQL paths (Device→Plan←Rule)"
-                if en else
-                f"[{eng.upper()}] 노드 테이블 중복 키 {total_dup}건 · GQL 경로(Device→Plan←Rule) {paths['device_plan_rule_paths']}개"
-            ),
-        }
-
-    def _mcp_stage4_agent_orchestration(self, args, jobs):
-        eng = _resolve_engine(args.get("engine"))
-        en = is_english_mode(args.get("lang"), args.get("query"))
-        rules = self._run(f"""
-            SELECT r.rule_id, r.rule_name, r.rule_category, r.condition_expr, r.formula_expr, r.source_chunk_id, ch.content_sha256 AS anchor
-            FROM `{self.fq}.tb_domain_rules` r LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = r.source_chunk_id
-            ORDER BY r.rule_id""", jobs, engine=eng)
-        return {
-            "status": "SUCCESS", "stage": "STAGE 4", "engine": eng, "active_rules": rules,
-            "summary": f"Retrieved {len(rules)} codified domain rules and grounding chunk anchors ({eng})" if en else f"도메인 규칙 {len(rules)}개와 근거 청크 앵커 조회 ({eng})",
-        }
-
-    def _mcp_stage5_lineage_and_eval(self, args, jobs):
-        eng = _resolve_engine(args.get("engine"))
-        en = is_english_mode(args.get("lang"), args.get("query"))
-        rows = self._run(f"""
-            SELECT c.contract_id, c.customer_id, d.device_name, p.plan_name, s.policy_id,
-                   e.rule_id, e.source_chunk_id, ch.content_sha256 AS anchor, ch.source_file
-            FROM `{self.fq}.tb_customer_contract` c
-            JOIN `{self.fq}.tb_device_master` d ON d.device_id = c.device_id
-            JOIN `{self.fq}.tb_plan_master` p ON p.plan_id = c.plan_id
-            LEFT JOIN `{self.fq}.tb_subsidy_policy` s ON s.device_id = c.device_id AND s.plan_id = c.plan_id
-            LEFT JOIN `{self.fq}.edge_rule_applies_to_plan` e ON e.plan_id = c.plan_id
-            LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = e.source_chunk_id
-            ORDER BY c.contract_id, e.rule_id""", jobs, engine=eng)
-        report, rp = {}, os.path.join(self.root_dir, "data/output/cq_benchmark_report.json")
-        if os.path.exists(rp):
-            with open(rp, "r", encoding="utf-8") as f:
-                r = json.load(f)
-            report = {k: r.get(k) for k in ("evaluated_at", "run_id", "total_cqs", "passed", "accuracy_rate", "synthetic_basis",
-                                           "unconfirmed_cqs", "method")}
-        return {
-            "status": "SUCCESS", "stage": "STAGE 5", "engine": eng, "lineage_records": rows, "latest_validation_report": report,
-            "summary": (
-                f"{len(rows)} lineage join rows ({eng}) · Latest validation report: {report or 'None'}"
-                if en else
-                f"리니지 조인 {len(rows)}행 ({eng}) · 최근 검증 리포트: {report or '없음'}"
-            ),
-        }
-
-    # ------------------------------------------------------------------ runtime MCPs
+    # ------------------------------------------------------------------ runtime domain MCPs (3 tools)
     def _mcp_lookup_customer_profile(self, args, jobs):
         eng = _resolve_engine(args.get("engine"))
         en = is_english_mode(args.get("lang"), args.get("query"))

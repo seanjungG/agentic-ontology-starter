@@ -1,6 +1,0 @@
-plan_code,plan_name,monthly_fee,subsidy_amount,t_universe_free,is_safe_lower_bound
-PLAN-5GX-PLATINUM,5GX 플래티넘,125000,650000,Y,N
-PLAN-5GX-PRIME,5GX 프라임,89000,500000,Y,N
-PLAN-5GX-REGULAR,5GX 레귤러,69000,320000,N,Y
-PLAN-5GX-BASIC,5GX 베이직,49000,200000,N,N
-PLAN-LTE-ESSENTIAL,LTE 에센셜,33000,100000,N,N

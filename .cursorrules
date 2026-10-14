@@ -1,5 +1,0 @@
-# Agentic Ontology Starter (v2.2 — Resource-Connected Edition) Cursor Rules
-- Connect directly to Ready-to-Use GCP Ontology Resources (`seanjung-poc.starter_ontology_dw`, `STARTER_ONTOLOGY_GRAPH`, `gs://seanjung-poc-starter-ontology/ontology/`, `starter-spanner`) via `src/resource_connector.py` and `src/gcp_client.py`.
-- Do NOT expose internal MCP builder tools in `DomainMcpServer.get_tool_catalog()`. Expose only the 3 customizable Domain Business Tools (`mcp_lookup_customer_profile`, `mcp_calculate_penalty_rule`, `mcp_query_graph_and_wiki`) in `src/agent/mcp_server.py`.
-- Enforce deterministic SQL/GQL execution and `Gate G2-W` runtime audit in `src/agent/reasoning_engine.py`.
-- Default Vertex AI model: `gemini-3.8-flash`.

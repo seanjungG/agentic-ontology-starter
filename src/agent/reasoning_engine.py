@@ -168,11 +168,10 @@ class AiFdeAgentEngine:
 
     def is_lite(self) -> bool:
         """track=lite (no customer tables): catalog and table tools are off; answers come from the chunks only."""
-        from src.project_context import project_for_root, resolve_track
-        try:
-            return resolve_track(project_for_root(self.server.root_dir))[0] == "lite"
-        except StopIteration:  # root is not a registered project
-            return False
+        if os.environ.get("STARTER_TRACK", "").lower() == "lite":
+            return True
+        tables_dir = os.path.join(self.server.root_dir, "data/input/03_tables")
+        return not (os.path.isdir(tables_dir) and any(f.endswith(".csv") for f in os.listdir(tables_dir)))
 
     def _lite_cycle(self, query: str, en: bool, t0: float) -> Dict[str, Any]:
         jobs: List[Dict[str, Any]] = []
