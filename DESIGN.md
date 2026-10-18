@@ -1,83 +1,68 @@
-# 웹 UI 디자인 표준 (`DESIGN.md`)
+# 디자인 시스템 (`DESIGN.md`) — Agentic Ontology Starter
 
-- **적용 대상**: `src/web/studio_server.py` (6-Tab Agentic Ontology Studio) 및 노트북/리포트 시각화 자산
-- **핵심 원칙**: Apple/Google Enterprise 단일 **라이트 테마(Light Mode Only)**를 사용합니다. 다크 테마(`[data-theme="dark"]`), 네온 컬러, 임의의 프론트엔드 프레임워크 교체, 장식용 이모지 남발을 금지합니다.
-
----
-
-## 1. 레이아웃 및 네비게이션 규격
-
-| 구성 요소 | 규격 | 구현 기준 (`src/web/studio_server.py`) |
-| :--- | :--- | :--- |
-| **글로벌 탑바 (Global Topbar)** | 높이 `44px`, 반투명 글래스(`rgba(255,255,255,0.88)`), `backdrop-filter: saturate(180%) blur(20px)`, 하단 `1px` 헤어라인 보더 | 좌측: Google `G` SVG 로고 + `Agentic Ontology Studio` 타이틀 + `PROJECT` 선택기(`projects/<id>`, `?project=`) + 도메인 배지<br>우측: 산업군 쇼케이스 셀렉터, Track 배지, `KOR / ENG` 언어 토글 |
-| **로컬 서브바 (Stage Sub-Navigation)** | 높이 `52px`, 가운데 정렬 Pill 세그먼트 바 | **6개 탭 고정**: `0. Overview` · `Stage 1. Asset` · `Stage 2. Wiki & Semantic Graph` · `Stage 3. Property Graph` · `Stage 4. Agent & MCP` · `Stage 5. Lineage & Eval` |
-| **본문 워크스페이스** | 최대 폭 `1440px`, 좌우 패딩 `24px`, 카드 그리드 간격 `16px` | 좌측 목록/그래프 캔버스(60%) + 우측 상세 인스펙터/실행 패널(40%) 스플릿 구조 |
-| **단일 포트 원칙** | 단일 HTTP 서버 포트(`8080`) | 탭 전환이나 서브 뷰를 위해 별도 포트(`8081`, `3000` 등)를 열지 않음 |
+- **적용 대상**: 스타터 데모 화면 `src/web/static/` — `index.html`(셸) · `app.css` · `app.js`(6단계 마법사) · `i18n.json`(KO · EN 문구) · 흐름도 `aolflow.js` / `aolflow.css`(공용 렌더러) + `flows.js`(스타터 흐름도 사양), README 그림(`docs/images/`).
+- **기준 화면**: `agentic-ontology-studio-lguplus`의 **0. Overview** 흐름도와 Agentic Ontology Notebook Lab — 세 화면이 같은 시각 문법(이하 Studio v6 문법)을 씁니다.
+- **원칙**: 라이트 테마 하나만 씁니다. 화면은 "흰 카드 + 얇은 경계 + 검정 강조"로 조용하게, 정보는 흐름도 · 표 · 실행 기록으로 정확하게 보여 줍니다.
 
 ---
 
-## 2. 컬러 토큰 및 타이포그래피
+## 1. 토큰 (새 색 추가 금지)
 
-```css
-:root {
-  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+| 구분 | 값 |
+| :--- | :--- |
+| 글꼴 | `"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif` · 코드 / ID `ui-monospace, SFMono-Regular, Menlo, monospace` |
+| 텍스트 | 본문 `#1d1d1f` · 보조 `#6e6e73` · 흐림 `#86868b` |
+| 배경 · 카드 | 페이지 `#f5f5f7` · 카드 `#fff` · 경계 `#e3e3e8` / `#d2d2d7` · 레인 `#f7f7f9` + `#eeeef2` |
+| 그림자 | `--shadow-1: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.04)` · `--shadow-2: 0 2px 4px rgba(0,0,0,.05), 0 14px 30px rgba(0,0,0,.08)` |
+| 레이어 색 | 원천 `#94a3b8` · 위키 `#0ea5e9` · 시맨틱 `#8b5cf6` · 워크플로우 `#f59e0b` · MCP `#10b981` · 에이전트 `#ef4444` · 평가 = 워크플로우 주황 · Gemini `#4285f4` · 시스템 `#64748b` |
+| 강조 | 활성 · 선택 = 검정 `#1d1d1f`(알약 · 세그먼트 · 카드 테두리 1.4px). 파랑 `#0071e3`은 링크와 주 동작 버튼에만 |
+| 크기 | h1 26px / 750 · 섹션 h2 19px / 720 · 카드 제목 14.5px / 700 · 본문 13px · 보조 12.5px · 메타 11.5px |
+| 모서리 | 카드 16~18px · 흐름도 노드 12px · 알약 999px |
 
-  /* Surfaces (Light Enterprise Only) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f7;
-  --bg-tertiary: #e8e8ed;
-  --bg-glass: rgba(255, 255, 255, 0.88);
+CSS 변수는 `src/web/static/app.css`의 `:root`에 있습니다(`--text`, `--muted`, `--faint`, `--page`, `--card`, `--line`, `--line-2`, `--lane`, `--c-source` … `--c-agent`, `--black`, `--blue`).
 
-  /* Typography */
-  --text-primary: #1d1d1f;
-  --text-secondary: #6e6e73;
-  --text-tertiary: #86868b;
+## 2. 레이아웃
 
-  /* Semantic Accents & Graph Node Palette */
-  --accent-blue: #0071e3;       /* Primary Action / Device Node */
-  --hub-sky-blue: #0284c7;      /* Central Semantic Hub Node (SubsidyRule / Core Policy) */
-  --node-indigo: #4f46e5;       /* Plan / Tier Node */
-  --node-amber: #d97706;        /* DomainRule / Penalty Node */
-  --node-emerald: #059669;      /* DocChunk / Grounding Node */
-  --node-purple: #7c3aed;       /* CustomerContract / Transaction Node */
+| 영역 | 규격 |
+| :--- | :--- |
+| 상단 바 | 고정 56px, 반투명 흰색 + blur, 하단 1px 경계. 왼쪽: Google G 로고 + `Agentic Ontology Starter` + 보조 문구. 오른쪽: 버전 칩 · 프로젝트 칩 · Core MCP 칩(상태 점 + 도구 수) · GitHub 링크 · `KO | EN` 토글(활성 = 검정 알약) |
+| 왼쪽 단계 레일 | 264px. 진행 막대(검정) → 단계 6개(번호 상자 24px: 현재 = 검정 채움, 완료 = 초록 링) → "현재 구성" 상자(구성 · 프로젝트 · 데이터셋 · 버킷 · 그래프 · 데이터 언어) |
+| 본문 | `#f5f5f7` 위 흰 카드, 최대 폭 1160px, 카드 간격 16px. 단계마다 **머리 카드**(eyebrow · h1 · 설명) → **작업 카드** → **이전 / 다음 단계** 버튼 |
+| 반응형 | 1180px 이하: 에이전트 근거 패널이 대화 아래로. 980px 이하: 레일 숨김, 모든 격자 1열 |
+| 주소 | 단계 = `#step-1` … `#step-6`. 선택 · 입력값 · 결과는 브라우저 `localStorage`에만 저장 |
 
-  /* Status Colors */
-  --status-pass: #16a34a;       /* GROUNDED / PASS */
-  --status-warn: #d97706;       /* INSUFFICIENT_PARAMETERS / WARN */
-  --status-fail: #dc2626;       /* MATCH_NOT_FOUND / FAIL */
+## 3. 컴포넌트
 
-  /* Borders & Radii */
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-default: rgba(0, 0, 0, 0.14);
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-pill: 980px;
-}
-```
+- **선택 카드**(1단계): 흰 바탕 1px 경계. 선택되면 검정 1.4px(1px 경계 + 0.4px 링)와 오른쪽 위 검정 체크 원. 경로는 검정 레인 알약(`P1`), 목적은 주황 원 배지(`W1`) — 흐름도와 같은 기호.
+- **버튼**: 주 동작(리소스 확인 · 적재 실행 · 보내기 · 평가 실행) = 파랑 채움. **다음 단계** = 외곽선, 그 단계의 일이 끝나면 검정 채움으로 바뀌어 진행 순서를 알려 줍니다. 보조 = 흰 외곽선.
+- **상태 표시**: 8px 점 + 글자. 초록 정상 · 완료 / 주황 경고 / 빨강 오류 / 하늘색 링 실행 중 / 회색 대기 · 건너뜀. 큰 색 덩어리나 배너 대신 점과 짧은 문장을 씁니다.
+- **태그**: 흰 바탕 1px 경계 22px 알약. Core MCP 도구 이름은 모노 10.5px 초록 글자(`#047857`) 한 줄로 표시합니다.
+- **메모(note)**: 레인 배경 회색 상자. 경고는 주황 경계, 오류는 빨강 경계만 바꿉니다. 해결 명령은 모노 코드 + 복사 버튼.
+- **표**: 11~12px, 머리글 `#fbfbfd`, 행 구분선 `#f0f0f3`, 숫자 오른쪽 정렬(tabular-nums). 실행 기록 = 단계 · Core MCP 도구 · 대상 · 건수 · ms · 상태.
+- **지표 상자**: 4칸 격자, 제목 11px 대문자(영문) · 값 24px / 750. 구성에 없는 값(예: Flow A의 테이블 수)은 상자를 만들지 않습니다.
+- **대화**: 질문 = 오른쪽 회색 말풍선, 답변 = 흰 카드(선택 시 검정 테두리). 실행 중에는 단계 목록, 끝나면 Markdown 답변. 위키 인용 `[rules]`은 모노 칩. 오른쪽 **근거 패널**은 sticky — 판정 · 워크플로우 단계 · G2-W 표 · 참조 · 쿼리(SQL/GQL + 결과 행) · 도구 호출 · 실행 단계 · 시간 · 토큰.
 
----
+## 4. 흐름도 — `aolflow.js` / `aolflow.css`
 
-## 3. 그래프 시각화 및 정보성 텍스트 태그 표준
+- 노트북 랩(`ontology_lab/web/`)과 **바이트 동일 사본**입니다. 스타터에서 직접 고치지 않습니다(테스트가 두 사본을 비교). 스타터 고유 내용은 `flows.js`(`STARTER_FLOWS.dataflow` · `resources` · `recipes`)에만 둡니다.
+- 문법: 레이어 **열**(24×4 색 막대 + 제목 + 보조) × 경로 **레인**(P1 문서 · P3 통합 · P2 정형, 회색 밴드 + 검정 알약) · 흰 카드(레이어 점 + 제목 13.5px + 보조 11.5px) · 연결선 = 옅은 기준선 + 도착 레이어 색 점선 흐름 · W1~W3 주황 배지 · G2-W 역방향 점선 · 아래 범례와 칩.
+- 좌표는 손으로 배치합니다. 선은 카드 · 레인 글자를 가로지르지 않고, 같은 카드로 들어오는 두 선은 다른 포트를 씁니다. 글자가 넘치면 렌더러가 84%까지 줄인 뒤 말줄임 + 툴팁.
+- 상태: `highlight` + `focusStyle: "dim"`(구성 밖 요소 16% 투명) · `states`(`done` 초록 체크 · `running` 하늘색 링 · `error` 빨강 · `current` 검정 테두리). 애니메이션은 `prefers-reduced-motion`을 따릅니다. 줌 · 팬 없음.
+- 사용처: 2단계 = 데이터 흐름도(구성 강조, 칩으로 Flow A/B/C 전환, 상자 클릭 → 해당 단계) · 3단계 = 적재 위치도(확인 결과 상태) · 4단계 = 적재 위치도(실행 중 · 완료 · 오류 상태).
 
-1. **그래프 노드·엣지 표현 규칙 (`Stage 2`, `Stage 3`, `Stage 5`)**:
-   - 중심 허브 노드(`SubsidyRule` 또는 도메인 핵심 중재 엔티티)는 스카이 블루(`#0284c7`)로 강조합니다.
-   - 엣지 선 두께는 `1.2px ~ 1.6px`의 가는 실선/점선으로 유지하여 라벨 겹침을 방지합니다.
-   - 한/영 전환(`KOR` / `ENG`) 시 노드 캡션과 엣지 라벨이 즉시 해당 언어로 전환되어야 합니다.
-   - `Stage 5` 리니지 DAG 카드는 `[CONN]` `[RAW]` `[ETL]` `[PII]` `[SEM]` `[MCP]` `[AGENT]` 카테고리 태그(`config/lineage_spec.json`의 `tag`)와 색 띠를 쓰고, BigQuery 실측 행 수 배지만 초록으로 구분합니다.
-2. **장식용 이모지 배제 및 정보성 텍스트 태그 사용**:
-   - 카드 제목이나 목록 앞에 불필요한 장식 이모지를 넣지 않고, 자산의 출처와 성격을 나타내는 대괄호 텍스트 태그를 사용합니다:
-     - `[문서:가이드]` (비정형 정책·업무 매뉴얼)
-     - `[DB:마스터]` (정형 기준 정보 테이블)
-     - `[DB:트랜잭션]` (정형 가입·거래 원장 테이블)
-     - `[위키:OKF]` (3-Layer 컴파일 위키 문서)
-     - `[평가:CQ]` (Golden Competency Question 및 경계값 케이스)
+## 5. KO / EN 2벌
 
----
+1. 화면 문구는 모두 `src/web/static/i18n.json`의 `ko` · `en` 두 세트(같은 키 · 같은 자리표시자)에서 옵니다. `app.js`와 `index.html`에는 한글을 직접 쓰지 않습니다.
+2. EN 화면은 **영문 데이터 세트**(`data/input/**/en`)로 적재 · 질의 · 채점합니다. ID · 키 · 숫자는 KO와 같습니다(같은 질문 = 같은 숫자 정답).
+3. 결과(확인 · 적재 · 대화 · 평가)는 **구성 + 언어별로 따로** 저장합니다. 언어를 바꾸면 그 언어로 실행한 결과만 보입니다.
+4. 흐름도 사양의 글자는 `[ko, en]` 쌍입니다(`AOLFlow.T`).
 
-## 4. UI 수정 체크리스트 (AI 코딩 에이전트 필독)
+## 6. 금지
 
-- [ ] 배경색이 `#f5f5f7` / `#ffffff` 기반 라이트 테마인가? (어두운 `#0f172a`, `#1e1e2e` 배경 사용 금지)
-- [ ] 상단 44px 글로벌 탑바와 52px 6-Tab 서브바 구조가 그대로 유지되었는가?
-- [ ] 도메인 문구 변경 시 `src/web/studio_server.py`에 텍스트를 직접 하드코딩하지 않고 `config/portal_profile.json`을 통해 주입했는가?
-- [ ] `KOR / ENG` 토글 클릭 시 새로 추가한 UI 문구도 누락 없이 한/영 전환되는가?
+- 내비게이션 · 탭 · 제목의 이모지, 채도 높은 채움 알약(파랑 · 보라 · 초록 덩어리), 그라데이션 머리글, 3px 이상 두꺼운 색 테두리, 회전 · 바운스 애니메이션, 다크 테마, 표 1~4절에 없는 새 색.
+
+## 7. 검수 체크리스트
+
+- [ ] KO · EN 각 단계 캡처(1440px): 겹침 0 · 넘침 0 · 토큰 일치
+- [ ] EN DOM 한글 스캔(`/[\u3131-\uD79D]/`, 텍스트 + `title` · `placeholder` · `aria-label` 속성) 0건 — 초기 화면, 적재 후, 에이전트 대화 후, 평가 후
+- [ ] `python -m pytest tests -q` 통과(정적 파일 · i18n 동등성 · 데이터 동등성 · 렌더러 사본 동일)

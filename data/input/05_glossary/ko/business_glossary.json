@@ -1,0 +1,11 @@
+[
+  {"concept_id": "CON-PUBLIC-SUBSIDY", "term": "공시지원금", "definition": "개통 시 출고가에서 한 번 차감해 주는 단말 구매 지원금입니다. 받으면 기준 요금제 유지 의무가 생깁니다.", "rules": ["RULE_SUBSIDY_CAP", "RULE_SIX_PLAN_180D"], "source_chunk_id": "DOC_CHUNK_001", "wiki_page": "concepts"},
+  {"concept_id": "CON-RETAIL-SUBSIDY", "term": "유통망 추가지원금", "definition": "대리점이 공시지원금에 더해 지급하는 지원금입니다. 상한은 공시지원금 대비 비율로 정합니다.", "rules": ["RULE_SUBSIDY_CAP"], "source_chunk_id": "DOC_CHUNK_001", "wiki_page": "concepts"},
+  {"concept_id": "CON-BASELINE-PLAN", "term": "기준 요금제선", "definition": "의무기간 동안 유지해야 하는 최저 월정액 요금제 수준입니다. 이보다 낮추면 차액정산금이 생깁니다.", "rules": ["RULE_SIX_PLAN_180D"], "source_chunk_id": "DOC_CHUNK_002", "wiki_page": "concepts"},
+  {"concept_id": "CON-COMMITMENT-180D", "term": "의무유지 약정", "definition": "공시지원금을 받은 고객이 개통일부터 정해진 기간 동안 기준 요금제선 이상을 유지하는 약정입니다.", "rules": ["RULE_SIX_PLAN_180D"], "source_chunk_id": "DOC_CHUNK_002", "wiki_page": "concepts"},
+  {"concept_id": "CON-DIFF-PENALTY", "term": "차액정산금 (위약금)", "definition": "의무기간 안에 기준선 미만으로 낮출 때 지원금 차액을 남은 기간 비율만큼 돌려받는 금액입니다.", "rules": ["RULE_SIX_PLAN_180D"], "source_chunk_id": "DOC_CHUNK_003", "wiki_page": "concepts"},
+  {"concept_id": "CON-WELFARE-EXEMPT", "term": "시니어 · 복지 면제", "definition": "확인된 시니어 · 사회복지 대상이 지정 요금제로 바꾸면 의무기간 안이라도 차액정산금을 면제하는 특례입니다.", "rules": ["RULE_WELFARE_EXEMPT"], "source_chunk_id": "DOC_CHUNK_004", "wiki_page": "concepts"},
+  {"concept_id": "CON-MILITARY-HOLD", "term": "군 입대 일시정지", "definition": "현역 입대로 회선을 정지하면 복무 기간 동안 의무기간 계산을 멈추는 특례입니다.", "rules": ["RULE_WELFARE_EXEMPT"], "source_chunk_id": "DOC_CHUNK_004", "wiki_page": "concepts"},
+  {"concept_id": "CON-SELECTIVE-25", "term": "선택약정 요금할인", "definition": "공시지원금 대신 매월 요금을 일정 비율 할인받는 약정입니다. 할인율은 규칙 페이지에 둡니다.", "rules": ["RULE_TCO_24M"], "source_chunk_id": "DOC_CHUNK_005", "wiki_page": "concepts"},
+  {"concept_id": "CON-TCO-24M", "term": "24개월 총비용 (TCO)", "definition": "약정 기간 동안 내는 단말 원금과 요금의 합계입니다. 공시지원금과 선택약정을 비교하는 기준입니다.", "rules": ["RULE_TCO_24M"], "source_chunk_id": "DOC_CHUNK_005", "wiki_page": "concepts"}
+]

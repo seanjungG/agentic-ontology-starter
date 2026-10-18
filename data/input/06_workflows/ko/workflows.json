@@ -1,0 +1,29 @@
+{
+  "version": "v4.0.0-GOAL-223",
+  "workflows": [
+    {"workflow_id": "WF-W1-GUIDE", "point": "W1", "recipes": ["A", "C"], "agent": "wiki",
+     "name": "규정 안내", "trigger": "규정 · 기간 · 면제 조건을 묻는 질문 (고객 · 계약 정보 없음)",
+     "steps": [
+       {"step_id": "W1-1", "order": 1, "kind": "question", "name": "질문 주제 확인", "rule_id": null, "tool": null},
+       {"step_id": "W1-2", "order": 2, "kind": "lookup", "name": "위키 규칙 · 정책값 읽기", "rule_id": "RULE_SIX_PLAN_180D", "tool": "wiki_pages"},
+       {"step_id": "W1-3", "order": 3, "kind": "end", "name": "근거 페이지 인용 답변", "rule_id": null, "tool": null}
+     ]},
+    {"workflow_id": "WF-W2-LOOKUP", "point": "W2", "recipes": ["B", "C"], "agent": "graph",
+     "name": "원장 조회", "trigger": "단말 · 요금제 · 고객 계약 값을 묻는 질문",
+     "steps": [
+       {"step_id": "W2-1", "order": 1, "kind": "question", "name": "고객 · 단말 · 요금제 식별", "rule_id": null, "tool": null},
+       {"step_id": "W2-2", "order": 2, "kind": "lookup", "name": "원장 조회", "rule_id": "RULE_SUBSIDY_CAP", "tool": "mcp_lookup_customer_profile"},
+       {"step_id": "W2-3", "order": 3, "kind": "lookup", "name": "그래프 경로 확인", "rule_id": "RULE_SUBSIDY_CAP", "tool": "mcp_query_graph_and_wiki"},
+       {"step_id": "W2-4", "order": 4, "kind": "end", "name": "지원금 · 실구매가 답변", "rule_id": null, "tool": null}
+     ]},
+    {"workflow_id": "WF-W3-DECIDE", "point": "W3", "recipes": ["C"], "agent": "workflow",
+     "name": "판정 · 계산", "trigger": "위약금 · 면제 · 24개월 총비용처럼 규정과 값이 함께 필요한 질문",
+     "steps": [
+       {"step_id": "W3-1", "order": 1, "kind": "lookup", "name": "계약 · 정책 조회", "rule_id": "RULE_SUBSIDY_CAP", "tool": "mcp_lookup_customer_profile"},
+       {"step_id": "W3-2", "order": 2, "kind": "decision", "name": "정책값 단일 출처 확인 (G2-W)", "rule_id": "RULE_SIX_PLAN_180D", "tool": "g2w_check"},
+       {"step_id": "W3-3", "order": 3, "kind": "decision", "name": "면제 · 의무기간 · 기준선 판정", "rule_id": "RULE_WELFARE_EXEMPT", "tool": "mcp_calculate_penalty_rule"},
+       {"step_id": "W3-4", "order": 4, "kind": "calc", "name": "위약금 · 24개월 총비용 계산", "rule_id": "RULE_TCO_24M", "tool": "mcp_calculate_penalty_rule"},
+       {"step_id": "W3-5", "order": 5, "kind": "end", "name": "결과 코드 · 근거 조항", "rule_id": null, "tool": "mcp_query_graph_and_wiki"}
+     ]}
+  ]
+}

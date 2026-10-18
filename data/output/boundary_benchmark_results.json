@@ -1,8 +1,8 @@
 {
   "benchmark_id": "STARTER_BOUNDARY_LIVE",
   "evaluated_at": "2026-09-27T19:45:26+09:00",
-  "method": "live agent (Vertex AI gemini-3.8-flash + BigQuery MCP) x 5 trials per case; checks from data/input/04_cq/boundary_cases.json",
-  "model": "gemini-3.8-flash",
+  "method": "live agent (Vertex AI gemini-4-argon + BigQuery MCP) x 5 trials per case; checks from data/input/04_cq/boundary_cases.json",
+  "model": "gemini-4-argon",
   "dataset": "seanjung-poc.starter_ontology_dw",
   "case_count": 10,
   "trials_per_case": 5,

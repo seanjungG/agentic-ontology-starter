@@ -32,7 +32,8 @@ from src.web.studio_server import ThreadingStudioServer, StudioHandler  # noqa: 
 
 class StarterMinimalVerificationTests(unittest.TestCase):
     def test_t1_minimal_repo_structure(self):
-        removed_dirs = ["slides", "industry_cases", "pipeline", "projects", "terraform", "docs", "methodology"]
+        # docs/ is allowed again since GOAL-223 (README diagram images · verification reports)
+        removed_dirs = ["slides", "industry_cases", "pipeline", "projects", "terraform", "methodology"]
         for d in removed_dirs:
             self.assertFalse(os.path.exists(os.path.join(ROOT, d)), f"Bloated directory should be removed: {d}")
         core_files = [
@@ -69,7 +70,7 @@ class StarterMinimalVerificationTests(unittest.TestCase):
     def test_t3_2tier_mcp_guide_and_custom_spec(self):
         t1 = MCP_ARCHITECTURE_GUIDE["tier1_builder_core_mcp"]
         self.assertEqual(t1["server_name"], "aos-builder-core-mcp")
-        self.assertIn("/mcp/builder", t1["endpoint_url"])
+        self.assertTrue(t1["endpoint_url"].rstrip("/").endswith(("/mcp", "/mcp/builder")), t1["endpoint_url"])
         self.assertEqual(len(t1["tools"]), 8)
         self.assertIn("aos-builder-core-mcp", t1["mcp_client_config_snippet"]["mcpServers"])
         self.assertIn("workflow_spec", t1["custom_build_spec_example"])
@@ -120,11 +121,12 @@ class StarterMinimalVerificationTests(unittest.TestCase):
             with urllib.request.urlopen(f"{base}/") as r:
                 html = r.read().decode("utf-8")
                 self.assertEqual(r.status, 200)
-                self.assertIn("0. Getting Started", html)
-                self.assertIn("aos-builder-core-mcp", html)
-                self.assertIn("v1-MCP Flow Grid", html)
+                # GOAL-223: the 6-tab page was replaced by the 6-step wizard (static shell + app.js)
+                self.assertIn("Agentic Ontology Starter", html)
+                self.assertIn("/static/app.js", html)
+                self.assertIn('id="lang-toggle"', html)
 
-            for ep in ("/health", "/api/resources", "/api/catalog", "/api/assets", "/api/graph", "/api/eval/summary", "/api/lineage/graph"):
+            for ep in ("/health", "/api/settings", "/api/catalog", "/api/catalog?lang=en", "/static/i18n.json"):
                 with urllib.request.urlopen(f"{base}{ep}") as r:
                     self.assertEqual(r.status, 200, f"Endpoint failed: {ep}")
                     data = json.loads(r.read().decode("utf-8"))

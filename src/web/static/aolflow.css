@@ -1,0 +1,94 @@
+/* aolflow.css — styles for aolflow.js (Studio v6 grammar). KEEP BYTE-IDENTICAL COPIES:
+   ontology_lab/web/aolflow.css ⇄ agentic-ontology-starter/src/web/static/aolflow.css */
+.af { --af-text: #1d1d1f; --af-muted: #6e6e73; --af-faint: #86868b; --af-line: #e3e3e8;
+  font-family: var(--apple-font-sans, "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif);
+  color: var(--af-text); }
+.af.af-card { background: #fff; border-radius: 18px; padding: 12px 16px 10px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.06); }
+.af-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+.af-stage { width: 100%; }
+.af-svg { display: block; width: 100%; height: auto; -webkit-user-select: none; user-select: none; }
+.af-svg text { font-family: inherit; }
+
+/* lanes · columns · groups */
+.af-lane { fill: #f7f7f9; stroke: #eeeef2; }
+.af-lane-soft { fill: #fbfbfd; }
+.af-lane-pill { fill: #1d1d1f; }
+.af-lane-pill-t { fill: #fff; font-size: 11px; font-weight: 700; text-anchor: middle; }
+.af-lane-name { fill: #1d1d1f; font-size: 12.5px; font-weight: 700; }
+.af-lane-desc { fill: #6e6e73; font-size: 12px; font-weight: 500; }
+.af-col-t { fill: #1d1d1f; font-size: 12.5px; font-weight: 700; text-anchor: middle; }
+.af-col-s { fill: #86868b; font-size: 10.5px; text-anchor: middle; }
+.af-group rect { fill: none; stroke: #b8b8c0; stroke-width: 1.2; stroke-dasharray: 5 5; }
+.af-group-t { fill: #6e6e73; font-size: 11px; font-weight: 700; }
+.af-group-s { fill: #86868b; font-size: 10.5px; font-weight: 500; }
+.af-bound line { stroke: #c7c7cc; stroke-width: 1.2; stroke-dasharray: 3 4; }
+.af-bound text { fill: #86868b; font-size: 10.5px; font-weight: 600; }
+.af-ghost rect { fill: none; stroke: #d2d2d7; stroke-dasharray: 4 4; }
+.af-ghost-t { fill: #86868b; font-size: 12px; font-weight: 650; text-anchor: middle; }
+.af-ghost-s { fill: #a1a1a6; font-size: 11px; text-anchor: middle; }
+.af-note { fill: #86868b; font-size: 10.5px; font-weight: 600; }
+.af-note.dark { fill: #3a3a3c; font-size: 11.5px; font-weight: 650; }
+
+/* nodes */
+.af-node { transition: opacity .25s ease; outline: none; }
+.af-node.click { cursor: pointer; }
+.af-node .af-cardr { fill: #fff; stroke: #e3e3e8; stroke-width: 1; transition: stroke .15s; }
+.af-node.dashed .af-cardr { stroke: #10b981; stroke-dasharray: 5 4; }
+.af-node.click:hover .af-cardr, .af-node:focus-visible .af-cardr { stroke: #b8b8c0; }
+.af-node.on .af-cardr, .af-node.st-current .af-cardr { stroke: #1d1d1f; stroke-width: 1.4; }
+.af-node .af-t { fill: #1d1d1f; font-size: 13.5px; font-weight: 650; letter-spacing: -.005em; }
+.af-node .af-s { fill: #6e6e73; font-size: 11.5px; }
+.af-node .af-chip-t { fill: #3a3a3c; font-size: 11px; font-weight: 600; }
+.af-node .af-hub-t { fill: #1d1d1f; font-size: 15px; font-weight: 750; text-anchor: middle; }
+.af-node .af-hub-s { fill: #6e6e73; font-size: 11.5px; text-anchor: middle; }
+.af-node .af-hub-n { fill: #1d1d1f; font-size: 26px; font-weight: 750; text-anchor: middle; letter-spacing: -.02em; }
+.af-wm circle { fill: #f59e0b; stroke: #fff; stroke-width: 2.5; }
+.af-wm text { fill: #1d1d1f; font-size: 11.5px; font-weight: 800; text-anchor: middle; }
+.af-st circle { fill: #10b981; }
+.af-st path { fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.af-node.st-error .af-st circle { fill: #ef4444; }
+.af-st .af-ring { fill: #fff; stroke: #0ea5e9; stroke-width: 2.2; animation: af-pulse 1.2s ease-in-out infinite; }
+.af-node.st-running .af-cardr { stroke: #7cc4ef; stroke-width: 1.4; }
+
+/* edges */
+.af-edge, .af-elabel { transition: opacity .25s ease; }
+.af-ehit { fill: none; stroke: transparent; stroke-width: 12; }
+.af-eb { fill: none; stroke-width: 1.6; stroke-opacity: .42; }
+.af-ef { fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: .1 13; animation: af-flow 1.8s linear infinite; pointer-events: none; }
+.af-eg { fill: none; stroke-width: 1.8; stroke-dasharray: 6 5; animation: af-march 1.2s linear infinite; }
+.af-ebr { fill: none; stroke-width: 1.4; stroke-dasharray: 3 3; stroke-opacity: .8; }
+.af-emcp { fill: none; stroke-width: 1.5; stroke-dasharray: 3 3; stroke-opacity: .9; }
+.af-elabel[data-tip-t], .af-edge[data-tip-t] { cursor: help; }
+.af-elabel rect { fill: #fff; stroke: #e3e3e8; }
+.af-elabel text { fill: #1d1d1f; font-size: 11.5px; font-weight: 600; text-anchor: middle; }
+.af-l-gate rect { fill: #fef3e2; stroke: #f8cf88; }
+.af-l-mcp rect { fill: #ecfdf5; stroke: #a7e3c9; }
+.af-elabel .af-el-t { fill: #3a3a3c; font-size: 11.5px; font-weight: 650; }
+.af-elabel .af-el-s { fill: #86868b; font-size: 10.5px; font-weight: 500; }
+.af-svg.af-focus .af-node.off, .af-svg.af-focus .af-edge.off, .af-svg.af-focus .af-elabel.off { opacity: .16; }
+.af-svg.af-preview .af-node:not(.pv), .af-svg.af-preview .af-edge:not(.pv), .af-svg.af-preview .af-elabel:not(.pv) { opacity: .28; }
+@keyframes af-flow { to { stroke-dashoffset: -13.1; } }
+@keyframes af-march { to { stroke-dashoffset: -11; } }
+@keyframes af-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .af-ef, .af-eg, .af-st .af-ring { animation: none; } }
+
+/* legend · chips */
+.af-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 6px; padding-top: 9px; border-top: 1px solid #f0f0f3; }
+.af-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.af-chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; color: #3a3a3c; background: #f5f5f7; border: 0; border-radius: 999px; padding: 4px 11px 4px 4px; cursor: pointer; transition: background .15s, color .15s; }
+.af-chip:hover { background: #ececf0; }
+.af-chip .n { min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #fff; color: #1d1d1f; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1px #e3e3e8; }
+.af-chip.on { background: #1d1d1f; color: #fff; }
+.af-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: #6e6e73; margin-left: auto; }
+.af-lg { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.af-lg-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.af-lg-badge { width: 16px; height: 16px; border-radius: 50%; background: #f59e0b; color: #1d1d1f; font-size: 8.5px; font-weight: 800; font-style: normal; display: inline-flex; align-items: center; justify-content: center; }
+.af-lg-done { width: 11px; height: 11px; border-radius: 50%; background: #10b981; display: inline-block; }
+.af-lg-run { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #0ea5e9; box-sizing: border-box; display: inline-block; }
+.af-lg-focus { width: 16px; height: 11px; border-radius: 4px; border: 1.4px solid #1d1d1f; box-sizing: border-box; display: inline-block; background: #fff; }
+.af-cap { color: #86868b; }
+
+/* tooltip */
+.af-tip { position: fixed; z-index: 80; max-width: 300px; pointer-events: none; background: rgba(29,29,31,.94); color: #fff; border-radius: 10px; padding: 9px 11px; font-size: 12px; line-height: 1.45; box-shadow: 0 8px 24px rgba(0,0,0,.18); font-family: var(--apple-font-sans, "Pretendard Variable", -apple-system, sans-serif); }
+.af-tip b { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
+.af-tip[hidden] { display: none; }

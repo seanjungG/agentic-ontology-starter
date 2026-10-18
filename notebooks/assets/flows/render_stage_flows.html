@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Stage flow renderer</title>
+<!-- Renders one Colab-notebook stage diagram for screenshots:
+     render_stage_flows.html?stage=stage3_property_graph_flow&lang=en
+     gbrowser screenshot --width 1300 --height 260 --device-scale-factor 2 --selector "#shot" URL out.png -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../../src/web/static/aolflow.css">
+<style>
+  html, body { margin: 0; background: #f5f5f7; font-family: "Pretendard Variable", -apple-system, sans-serif; }
+  #shot { width: 1240px; padding: 10px; background: #f5f5f7; }
+  #shot .af.af-card { padding: 10px 12px 8px; }
+</style>
+</head>
+<body>
+<div id="shot"><div id="f"></div></div>
+<script src="../../../src/web/static/aolflow.js"></script>
+<script src="nb_stage_flows.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const lang = q.get("lang") === "en" ? "en" : "ko";
+  const spec = NB_STAGE_FLOWS[q.get("stage") || "stage0_overview_flow"];
+  AOLFlow.render(document.getElementById("f"), spec, { lang, animate: "none", legend: false });
+  window.__residue = AOLFlow.hangulResidue(document);
+</script>
+</body>
+</html>

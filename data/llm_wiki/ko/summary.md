@@ -1,8 +1,23 @@
-# Enterprise Knowledge Wiki: Executive Summary (Layer 1)
-- **Domain**: Telecom Terminal Subsidy, Tariff Plans & Customer Commitment Management
-- **Target Framework**: OKF v0.2 & Dual Property Graph (`seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH`)
-- **Total Parsed Chunks**: 5 (Across 2 Policy Guides)
-- **BigQuery Tables Loaded**: 10 tables in `seanjung-poc.starter_ontology_dw` (schema: `terraform/bigquery.tf`)
+---
+id: summary
+title: 요약
+layer: L1
+sources: [DOC_CHUNK_001, DOC_CHUNK_002, DOC_CHUNK_003, DOC_CHUNK_004, DOC_CHUNK_005]
+---
+# 요약 — 단말 지원금 · 요금제 약정 도메인
 
-## Operational Philosophy
-Unstructured policy guides and structured BigQuery tables share one ontology. The agent answers with live BigQuery SQL/GQL results, SHA-256 paragraph anchors and Vertex AI Gemini, and cites the rule and chunk used.
+이 위키는 상담 가이드 2종(조항 5개)을 OKF 형식으로 정리한 지식 허브입니다. 에이전트는 원문 대신 이 위키를 읽고, 답변마다 근거 페이지를 인용합니다.
+
+## 페이지 구성
+- **[summary] 요약** — 도메인 범위와 페이지 안내 (이 페이지)
+- **[concepts] 핵심 개념** — 공시지원금 · 기준 요금제선 · 차액정산금 · 면제 특례 · 선택약정 · 24개월 총비용의 뜻과 관계
+- **[rules] 업무 규칙 · 정책값** — 규칙 4개와 모든 정책값(기간 · 기준선 · 비율). 정책값은 이 페이지의 frontmatter에만 적습니다.
+- **[entities] 엔티티 · 테이블 의미** — 테이블 · 컬럼의 업무 의미와 키 (문서 + 테이블 구성에서만 올립니다)
+
+## 도메인 한눈에
+1. 공시지원금을 받은 고객은 개통 후 일정 기간 기준 요금제선 이상을 유지해야 합니다.
+2. 그 기간 안에 기준선 아래로 낮추면 남은 기간에 비례한 차액정산금을 냅니다.
+3. 시니어 · 복지 대상은 면제되고, 군 입대 일시정지는 의무기간 계산이 멈춥니다.
+4. 약정 비교는 공시지원금과 선택약정의 24개월 총비용을 둘 다 계산해 더 낮은 쪽을 권합니다.
+
+구체적인 기간 · 금액 · 비율은 [rules]에서 확인합니다.

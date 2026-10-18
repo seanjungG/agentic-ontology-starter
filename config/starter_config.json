@@ -3,7 +3,7 @@
   "version": "2.2.0",
   "architecture_mode": "RESOURCE_CONNECTED_STARTER",
   "domain": "Telecom Subscription & Penalty Governance (Sample Reference)",
-  "default_serving_model": "gemini-3.8-flash",
+  "default_serving_model": "gemini-4-argon",
   "lite": {
     "max_context_chars": 300000
   },
@@ -27,17 +27,17 @@
   "reference_studios": {
     "starter_live_studio": {
       "title": "Starter Portal (6-Tab · Resource-Connected)",
-      "url": "https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/",
+      "url": "https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/",
       "scope": "Stage 0~5 Resource-Connected Starter UI & 3 Domain Business Tools"
     },
     "lguplus_reference_studio": {
       "title": "LGU+ Reference Studio (12-Tab · Full Platform)",
-      "url": "https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/",
+      "url": "https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/",
       "scope": "6-Layer Ontology Standard · P1/P2/P3 × W1/W2/W3 × Gate G2-W · Full Enterprise Governance"
     },
     "hnh_reference_studio": {
       "title": "LG H&H Reference Studio (12-Tab · Multi-Regulation)",
-      "url": "https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/",
+      "url": "https://hnh-agentic-ontology-studio-384182013777.asia-northeast3.run.app/",
       "scope": "KR/US/EU Cosmetics Ad & Restricted Ingredient Multi-Jurisdiction Graph"
     }
   },
@@ -54,11 +54,11 @@
     ]
   },
   "ready_to_use_resources": {
-    "gcp_project_id": "seanjung-poc",
+    "gcp_project_id": "seanjung-agentic-starter",
     "region": "asia-northeast3",
     "bq_dataset_id": "starter_ontology_dw",
     "bq_property_graph": "STARTER_ONTOLOGY_GRAPH",
-    "gcs_wiki_uri": "gs://seanjung-poc-starter-ontology/ontology/",
+    "gcs_wiki_uri": "gs://seanjung-agentic-starter-ontology/ontology/",
     "spanner_graph": "starter-spanner/starter_ontology_db/STARTER_ONTOLOGY_GRAPH",
     "business_workflows_path": "data/output/ontology/business_workflows.json",
     "workflow_cqs_path": "data/output/ontology/workflow_cqs.json"
@@ -70,8 +70,8 @@
   ],
   "ontology_layers": {
     "layer_1_physical": "data/input/03_tables/ & BigQuery DW Ledgers (tb_customer_contract, tb_device_master, tb_plan_master, tb_subsidy_policy)",
-    "layer_2_wiki": "data/output/ontology/{summary.md, entities.md, concepts.md, rules.md} & gs://seanjung-poc-starter-ontology/ontology/",
-    "layer_3_semantic_graph": "data/output/create_property_graph.sql & seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH (P1/P2/P3)",
+    "layer_2_wiki": "data/output/ontology/{summary.md, entities.md, concepts.md, rules.md} & gs://seanjung-agentic-starter-ontology/ontology/",
+    "layer_3_semantic_graph": "data/output/create_property_graph.sql & seanjung-agentic-starter.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH (P1/P2/P3)",
     "layer_4_workflows": "data/output/ontology/{business_rules.json, business_workflows.json, workflow_cqs.json} (W1/W2/W3 · Gate G2-W)",
     "layer_5_domain_tools": "src/agent/mcp_server.py (3 Domain Business Tools)",
     "layer_6_agent_and_eval": "src/agent/reasoning_engine.py & data/output/cq_eval_report.json (Golden CQ 15/15)"
