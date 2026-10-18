@@ -5,7 +5,7 @@
 # -*- coding: utf-8 -*-
 """
 AI FDE Reasoning Engine (Starter v2.0 - Live Gemini + BigQuery).
-1) Vertex AI `gemini-3.8-flash` maps the question to parameters using the live BigQuery catalog.
+1) Vertex AI `$VERTEX_GEMINI_MODEL` (default `gemini-4-argon`) maps the question to parameters using the live BigQuery catalog.
 2) Guard: fee/day numbers must appear literally in the question; names must exist in the catalog.
 3) MCP tools run real BigQuery SQL / GRAPH_TABLE queries.
 4) Gemini writes the answer strictly from the tool results.
@@ -15,11 +15,11 @@ import json
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.agent.i18n_en import is_english_mode, localize_en_obj
 from src.agent.mcp_server import DomainMcpServer
-from src.gcp_client import DEFAULT_GEMINI_MODEL, DEFAULT_PROJECT_ID, call_vertex_gemini
+from src.gcp_client import DEFAULT_GEMINI_MODEL, DEFAULT_PROJECT_ID, DEFAULT_VERTEX_LOCATION, call_vertex_gemini
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
@@ -59,11 +59,12 @@ SYNTH_SYS = """당신은 통신 온톨로지 AI FDE 에이전트입니다. 제�
 1. 결과 JSON에 있는 수치·이름·BigQuery Job ID·청크 ID만 인용. 결과에 없는 값은 쓰지 말 것.
 2. status 별 처리:
    - SUCCESS: 질문에 대한 결론을 먼저 제시하고 근거 수치와 산식을 제시.
-   - MATCH_NOT_FOUND: 첫 문장에서 "요청 조건과 일치하는 데이터가 BigQuery(`seanjung-poc.starter_ontology_dw`)에 없음(0건)"을 명시. 이어서 diagnostic_checks / available_* 결과로 실제 존재하는 값을 안내. 다른 조건의 값을 제시할 때는 "참고(질문과 다른 조건)"로 구분.
+   - MATCH_NOT_FOUND: 첫 문장에서 "요청 조건과 일치하는 데이터가 BigQuery(`{FQ_DATASET}`)에 없음(0건)"을 명시. 이어서 diagnostic_checks / available_* 결과로 실제 존재하는 값을 안내. 다른 조건의 값을 제시할 때는 "참고(질문과 다른 조건)"로 구분.
    - INSUFFICIENT_PARAMETERS: 부족한 정보(missing_slots)를 안내하고, rule_only_determination 이 있으면 그 결과만 제시.
    - BQ_QUERY_ERROR: 조회 실패를 알리고 수치를 제시하지 말 것.
 3. 구성: **결론** → **근거 데이터 (BigQuery)** → **규칙·원문 근거** (rule_id, 청크 ID) → **관련 추가 정보** (예외·주의사항 1~3개, 결과에 있는 것만) → **실행 정보** (Job ID). 과장 표현 금지.
 4. 결론은 질문에 주어진 조건을 규칙에 대입한 하나의 답으로 쓴다. '원칙은 A지만 B일 수도'처럼 흐리지 말고, 조건에 따라 갈리면 조건별로 나눠 쓴다.
+5. 수식은 LaTeX 없이 일반 텍스트로 쓴다 (예: (450,000 − 150,000) × (180 − 120) ÷ 180).
 """
 
 SYNTH_SYS_EN = """You are the Telecom Ontology AI FDE Agent. Write your Markdown answer strictly in English (ZERO Korean characters) based ONLY on the provided [Tool Execution Results JSON].
@@ -71,11 +72,12 @@ Rules:
 1. Cite ONLY numerical values, entity names, BigQuery Job IDs, rule IDs, and chunk IDs present in the JSON results. Never invent numbers.
 2. Handling by status:
    - SUCCESS: Present the direct conclusion first, followed by exact figures and formulas from BigQuery.
-   - MATCH_NOT_FOUND: State in the first sentence that "0 matching rows were found in BigQuery (`seanjung-poc.starter_ontology_dw`) for the requested criteria." Then list the actual catalog options from `diagnostic_checks` / `available_*`.
+   - MATCH_NOT_FOUND: State in the first sentence that "0 matching rows were found in BigQuery (`{FQ_DATASET}`) for the requested criteria." Then list the actual catalog options from `diagnostic_checks` / `available_*`.
    - INSUFFICIENT_PARAMETERS: Clearly list the `missing_slots` needed to compute an exact figure, and if `rule_only_determination` is present, report that rule-level determination.
    - BQ_QUERY_ERROR: Report the query failure and do not output any numerical estimates.
 3. Structure: **Conclusion** → **Grounded Data (BigQuery)** → **Applied Rules & Source Chunks** (`rule_id`, `chunk_id`, `anchor`) → **Related Information** (1-3 exceptions or caveats found in the results) → **Execution Telemetry** (`BigQuery Job IDs`). Write in clear, objective English only (do not include any Korean words).
 4. The conclusion applies the conditions given in the question to the rules and gives one answer. Do not hedge ('in principle A, but maybe B'); if the answer depends on a condition, split it by condition.
+5. Write formulas as plain text without LaTeX (e.g. (450,000 − 150,000) × (180 − 120) ÷ 180).
 """
 
 
@@ -111,10 +113,21 @@ def _strip_sql(obj: Any) -> Any:
 
 class AiFdeAgentEngine:
     def __init__(self, project_id: str = DEFAULT_PROJECT_ID, model_name: str = DEFAULT_GEMINI_MODEL,
-                 server: Optional[DomainMcpServer] = None):
+                 server: Optional[DomainMcpServer] = None, location: Optional[str] = None,
+                 tools: Optional[List[str]] = None, trace: Optional[Callable[[Dict[str, Any]], None]] = None):
         self.project_id = project_id
         self.model_name = model_name
         self.server = server or DomainMcpServer(project_id=project_id)
+        self.location = location or DEFAULT_VERTEX_LOCATION
+        self.allowed_tools = list(tools) if tools else None
+        self._trace = trace
+
+    def _emit(self, **event: Any) -> None:
+        if self._trace:
+            try:
+                self._trace(event)
+            except Exception:  # a broken client stream must not break the agent
+                pass
 
     def _merge_params(self, query: str, llm: Dict[str, Any], det: Dict[str, Any], cat: Dict[str, Any], en: bool = False) -> Tuple[Dict[str, Any], List[str]]:
         notes: List[str] = []
@@ -235,8 +248,13 @@ class AiFdeAgentEngine:
         if self.is_lite():
             return self._lite_cycle(query, en, t0)
         cat = self.server.get_live_catalog()
+        self._emit(step="catalog", status="done", job_id=cat.get("job_id"),
+                   label="BigQuery catalog" if en else "BigQuery 카탈로그 조회",
+                   detail=f"{len(cat['devices'])} devices · {len(cat['plans'])} plans · {len(cat['customers'])} customers")
         det = self.server.extract_params_from_text(query)
-        tools = [t["name"] for t in self.server.get_tool_catalog()]
+        tool_specs = [t for t in self.server.get_tool_catalog()
+                      if self.allowed_tools is None or t["name"] in self.allowed_tools]
+        tools = [t["name"] for t in tool_specs]
 
         catalog_txt = json.dumps({
             "devices": [d["name"] for d in cat["devices"]],
@@ -244,18 +262,19 @@ class AiFdeAgentEngine:
             "customers": [c["id"] for c in cat["customers"]],
         }, ensure_ascii=False)
         desc_key = "description_en" if en else "description"
-        tool_txt = "\n".join(f"- {t['name']}: {t[desc_key]}" for t in self.server.get_tool_catalog())
+        tool_txt = "\n".join(f"- {t['name']}: {t[desc_key]}" for t in tool_specs)
         decomp_sys = (DECOMPOSE_SYS_EN if en else DECOMPOSE_SYS).replace("{tools}", ", ".join(tools))
         decomp_prompt = (
             f"[BigQuery Catalog (Job {cat['job_id']})]\n{catalog_txt}\n\n[MCP Tools]\n{tool_txt}\n\n[User Question]\n{query}"
             if en else
             f"[BigQuery 카탈로그 (Job {cat['job_id']})]\n{catalog_txt}\n\n[MCP 도구]\n{tool_txt}\n\n[사용자 질문]\n{query}"
         )
+        self._emit(step="slots", status="running", label=f"Gemini · {'slot extraction' if en else '질문 해석 (슬롯 추출)'}")
         decomp = call_vertex_gemini(
             prompt=decomp_prompt,
             system_instruction=decomp_sys,
             response_mime_type="application/json", temperature=0.0, max_tokens=1024,
-            model_name=self.model_name, project_id=self.project_id)
+            model_name=self.model_name, project_id=self.project_id, location=self.location)
         llm: Dict[str, Any] = {}
         if decomp.get("status") == "SUCCESS":
             try:
@@ -269,6 +288,9 @@ class AiFdeAgentEngine:
                 if en else
                 f"Gemini 파라미터 추출 실패({decomp.get('status')}, {decomp.get('http_code', '')}) — 질문 내 숫자·카탈로그 일치 기반 추출 사용"
             )
+        self._emit(step="slots", status="done" if llm else "warn", ms=decomp.get("elapsed_ms"),
+                   label=f"Gemini · {'slot extraction' if en else '질문 해석 (슬롯 추출)'}",
+                   detail=json.dumps({k: v for k, v in params.items() if v is not None}, ensure_ascii=False))
 
         sub_goals = [dict(sg, category="stage_pipeline" if sg["tool"].startswith("mcp_stage") else "runtime_domain")
                      for sg in (llm.get("sub_goals") or []) if isinstance(sg, dict) and sg.get("tool") in tools]
@@ -280,8 +302,8 @@ class AiFdeAgentEngine:
                 picks.append(("mcp_calculate_penalty_rule", "Compute prorated penalty & 24M TCO" if en else "위약금·TCO 계산"))
             picks.append(("mcp_query_graph_and_wiki", "Traverse Property Graph & grounding chunks" if en else "그래프 경로·근거 청크 조회"))
             sub_goals = [{"id": f"G-{i + 1:02d}", "goal": g, "tool": t,
-                          "category": "runtime_domain"} for i, (t, g) in enumerate(picks)]
-        if any(sg["category"] == "runtime_domain" for sg in sub_goals) and \
+                          "category": "runtime_domain"} for i, (t, g) in enumerate(picks) if t in tools]
+        if any(sg["category"] == "runtime_domain" for sg in sub_goals) and "mcp_query_graph_and_wiki" in tools and \
                 not any(sg["tool"] == "mcp_query_graph_and_wiki" for sg in sub_goals):
             sub_goals.append({
                 "id": f"G-{len(sub_goals) + 1:02d}",
@@ -295,10 +317,14 @@ class AiFdeAgentEngine:
         target_ds = self.server.spanner_uri if eng_norm == "spanner" else self.server.fq
         target_graph = f"{self.server.spanner_instance_id}/{self.server.spanner_database_id}/{self.server.spanner_graph}" if eng_norm == "spanner" else self.server.graph
         for i, sg in enumerate(sub_goals):
+            self._emit(step=f"tool:{sg['tool']}", status="running", label=f"MCP · {sg['tool']}", detail=sg.get("goal", ""))
             res = self.server.execute_tool(sg["tool"], {**params, "engine": eng_norm, "lang": "en" if en else "ko"})
             outputs[sg["tool"]] = res
             job_ids += res.get("bq_job_ids", [])
             sql = res.get("executed_sql", "")
+            self._emit(step=f"tool:{sg['tool']}", status="done" if res.get("status") in ("SUCCESS",) else "warn",
+                       label=f"MCP · {sg['tool']}", ms=res.get("tool_elapsed_ms"),
+                       detail=f"{res.get('status')} · rows={res.get('matched_rows_count', res.get('matched_graph_paths_count', '-'))}")
             dispatched.append({
                 "step_index": i + 1, "tool_name": sg["tool"], "category": sg["category"], "reason": sg.get("goal", ""),
                 "output": res,
@@ -328,11 +354,14 @@ class AiFdeAgentEngine:
             f"[파라미터 검증 메모]\n{json.dumps(notes, ensure_ascii=False)}\n\n"
             f"[도구 실행 결과 JSON]\n{json.dumps(clean_outputs, ensure_ascii=False, default=str)}"
         )
+        self._emit(step="synth", status="running", label=f"Gemini · {'grounded answer' if en else '근거 기반 답변 작성'}")
         synth = call_vertex_gemini(
             prompt=synth_prompt,
-            system_instruction=SYNTH_SYS_EN if en else SYNTH_SYS,
+            system_instruction=(SYNTH_SYS_EN if en else SYNTH_SYS).replace("{FQ_DATASET}", self.server.fq),
             response_mime_type="text/plain", temperature=0.1, max_tokens=2048,
-            model_name=self.model_name, project_id=self.project_id)
+            model_name=self.model_name, project_id=self.project_id, location=self.location)
+        self._emit(step="synth", status="done" if synth.get("status") == "SUCCESS" else "error", ms=synth.get("elapsed_ms"),
+                   label=f"Gemini · {'grounded answer' if en else '근거 기반 답변 작성'}")
         if synth.get("status") != "SUCCESS" or not synth.get("text"):
             answer_status = "LLM_ERROR"
         p_tok = (decomp.get("prompt_tokens") or 0) + (synth.get("prompt_tokens") or 0)
@@ -364,10 +393,11 @@ class AiFdeAgentEngine:
             "status": "SUCCESS",
             "engine": eng_norm,
             "answer_status": answer_status,
+            "answer_body": body,
             "query": query,
             "applied_params": params,
             "param_notes": notes,
-            "llm_telemetry": {"model": self.model_name, "project_id": self.project_id,
+            "llm_telemetry": {"model": self.model_name, "project_id": self.project_id, "location": self.location,
                               "decomposition_status": decomp.get("status"), "synthesis_status": synth.get("status"),
                               "prompt_tokens": p_tok, "candidates_tokens": c_tok, "elapsed_ms": round(llm_ms, 2)},
             "bq_telemetry": {"engine": eng_norm, "dataset": target_ds, "graph": target_graph, "job_ids": job_ids,

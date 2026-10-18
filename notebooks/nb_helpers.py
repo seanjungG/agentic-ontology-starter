@@ -846,11 +846,11 @@ def propose_triples(chunk_ids):
     df, meta = sql(f"SELECT chunk_id, content FROM `{FQ}.tb_doc_chunks` WHERE chunk_id IN ({ids}) ORDER BY chunk_id")
     text = "\n\n".join(f"[{r.chunk_id}]\n{r.content}" for r in df.itertuples())
     r = call_vertex_gemini(prompt=text, system_instruction=TRIPLE_SYS, response_mime_type="application/json",
-                           temperature=0.0, max_tokens=4096)
+                           temperature=0.0, max_tokens=16384, thinking_level="HIGH")
     parsed = _parse_triples_json(r.get("text") or "")
     if not parsed:
         r2 = call_vertex_gemini(prompt=text, system_instruction=TRIPLE_SYS, response_mime_type="application/json",
-                                temperature=0.0, max_tokens=4096)
+                                temperature=0.0, max_tokens=16384, thinking_level="HIGH")
         parsed = _parse_triples_json(r2.get("text") or "")
         r["total_tokens"] = r.get("total_tokens", 0) + r2.get("total_tokens", 0)
         r["elapsed_ms"] = r.get("elapsed_ms", 0) + r2.get("elapsed_ms", 0)

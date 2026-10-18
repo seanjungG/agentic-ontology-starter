@@ -6,7 +6,7 @@
 """
 Domain & Stage Pipeline MCP Server (Starter v2.0 - Live GCP Dual-Engine).
 Every tool executes real BigQuery SQL / SQL:2023 GRAPH_TABLE queries against
-`seanjung-poc.starter_ontology_dw` (default) OR real Cloud Spanner Graph SQL/GQL queries
+`$GCP_PROJECT_ID.$BQ_DATASET_ID` (default) OR real Cloud Spanner Graph SQL/GQL queries
 against `starter-spanner/starter_ontology_db` when `engine="spanner"`, plus GCS.
 - No hardcoded answers. Parameter values are validated against the live catalog.
 - Query failures are returned as `BQ_QUERY_ERROR` (never as 0 rows).
@@ -27,6 +27,7 @@ from src.resource_connector import (
 from src.gcp_client import (
     DEFAULT_DATASET_ID,
     DEFAULT_GCS_BUCKET,
+    DEFAULT_LOCATION,
     DEFAULT_PROJECT_ID,
     DEFAULT_SPANNER_DATABASE,
     DEFAULT_SPANNER_INSTANCE,
@@ -57,6 +58,17 @@ def _resolve_engine(engine: Optional[str]) -> str:
     return "spanner" if str(engine or "bigquery").lower() == "spanner" else "bigquery"
 
 
+_CATALOG_CACHE: Dict[tuple, tuple] = {}
+# Label columns per language (BigQuery tables loaded by the GOAL-223 loader carry *_ko / *_en; Spanner keeps legacy names).
+_LABEL_COLS = {
+    "rule_name": {"ko": "rule_name", "en": "rule_name_en", "legacy": "rule_name"},
+    "description": {"ko": "description_ko", "en": "description_en", "legacy": "description_ko"},
+    "relation_label": {"ko": "relation_label_ko", "en": "relation_label_en", "legacy": "relation_label_ko"},
+    "section_title": {"ko": "section_title_ko", "en": "section_title_en", "legacy": "section_title"},
+    "content": {"ko": "content_ko", "en": "content_en", "legacy": "content"},
+}
+
+
 class DomainMcpServer:
     def __init__(
         self,
@@ -66,15 +78,23 @@ class DomainMcpServer:
         spanner_instance_id: str = DEFAULT_SPANNER_INSTANCE,
         spanner_database_id: str = DEFAULT_SPANNER_DATABASE,
         root_dir: Optional[str] = None,
+        graph_name: Optional[str] = None,
+        location: Optional[str] = None,
+        mode: str = "full",
         **_ignored,
     ):
         self.project_id = project_id
+        self.dataset_id = dataset_id
         self.gcs_bucket = gcs_bucket
         self.spanner_instance_id = spanner_instance_id or DEFAULT_SPANNER_INSTANCE
         self.spanner_database_id = spanner_database_id or DEFAULT_SPANNER_DATABASE
         self.root_dir = root_dir or os.environ.get("STARTER_PROJECT_ROOT") or BASE_DIR  # project data root
+        self.location = location or DEFAULT_LOCATION
+        # mode "ledger" (Flow B) = P2 tables only (no clause table); "full" (Flow C) = unified graph with clauses
+        self.mode = "ledger" if str(mode).lower() == "ledger" else "full"
+        self.graph_name = graph_name or "STARTER_ONTOLOGY_GRAPH"
         self.fq = f"{project_id}.{dataset_id}"
-        self.graph = f"{self.fq}.STARTER_ONTOLOGY_GRAPH"
+        self.graph = f"{self.fq}.{self.graph_name}"
         self.spanner_graph = "STARTER_ONTOLOGY_GRAPH"
         self.spanner_uri = f"projects/{self.project_id}/instances/{self.spanner_instance_id}/databases/{self.spanner_database_id}"
         self._catalog: Optional[Dict[str, Any]] = None
@@ -89,6 +109,13 @@ class DomainMcpServer:
         )
 
     # ------------------------------------------------------------------ helpers
+    def col(self, key: str, en: bool, eng: str = "bigquery") -> str:
+        """Language column for a label (`rule_name`, `description`, `relation_label`, `section_title`, `content`)."""
+        c = _LABEL_COLS[key]
+        if _resolve_engine(eng) == "spanner":
+            return c["legacy"]
+        return c["en" if en else "ko"]
+
     def _to_spanner_sql(self, sql: str) -> str:
         return (
             sql.replace(f"`{self.graph}`", f"`{self.spanner_graph}`")
@@ -109,7 +136,7 @@ class DomainMcpServer:
             )
         else:
             exec_sql = sql
-            res = execute_bq_sql(sql, project_id=self.project_id)
+            res = execute_bq_sql(sql, project_id=self.project_id, location=self.location)
         jobs.append({
             "job_id": res.get("job_id"),
             "engine": eng,
@@ -123,8 +150,13 @@ class DomainMcpServer:
         return res.get("rows", [])
 
     def get_live_catalog(self, force: bool = False, engine: str = "bigquery") -> Dict[str, Any]:
-        """Device / plan / customer catalog read live from BigQuery or Cloud Spanner (cached for 5 minutes)."""
+        """Device / plan / customer catalog read live from BigQuery or Cloud Spanner (cached per resource set)."""
         if self._catalog and not force and time.time() - self._catalog_at < CATALOG_TTL_SEC:
+            return self._catalog
+        key = (self.project_id, self.fq, self.location, _resolve_engine(engine))
+        hit = _CATALOG_CACHE.get(key)
+        if hit and not force and time.time() - hit[0] < 120:
+            self._catalog, self._catalog_at = hit[1], hit[0]
             return self._catalog
         jobs: List[Dict[str, Any]] = []
         rows = self._run(f"""
@@ -142,6 +174,7 @@ class DomainMcpServer:
             "job_id": jobs[0]["job_id"],
         }
         self._catalog_at = time.time()
+        _CATALOG_CACHE[key] = (self._catalog_at, self._catalog)
         return self._catalog
 
     def get_doc_chunks(self, jobs: List[Dict[str, Any]], engine: str = "bigquery") -> List[Dict[str, Any]]:
@@ -381,10 +414,15 @@ class DomainMcpServer:
         eng = _resolve_engine(args.get("engine"))
         en = is_english_mode(args.get("lang"), args.get("query"))
         p = self.resolve_params(args)
+        if self.mode == "full":
+            anchor_sel = "ch.content_sha256 AS anchor"
+            anchor_join = f"LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = r.source_chunk_id"
+        else:
+            anchor_sel, anchor_join = "CAST(NULL AS STRING) AS anchor", ""
         rules = self._run(f"""
-            SELECT r.rule_id, r.rule_name, r.condition_expr, r.formula_expr, r.source_chunk_id, r.description_ko,
-                   ch.content_sha256 AS anchor
-            FROM `{self.fq}.tb_domain_rules` r LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = r.source_chunk_id
+            SELECT r.rule_id, r.{self.col('rule_name', en, eng)} AS rule_name, r.condition_expr, r.formula_expr, r.source_chunk_id,
+                   r.{self.col('description', en, eng)} AS description, {anchor_sel}
+            FROM `{self.fq}.tb_domain_rules` r {anchor_join}
             ORDER BY r.rule_id""", jobs, engine=eng)
         tf = []
         if p["target_plan_name"]:
@@ -506,6 +544,7 @@ class DomainMcpServer:
 
     def _mcp_query_graph_and_wiki(self, args, jobs):
         eng = _resolve_engine(args.get("engine"))
+        en = is_english_mode(args.get("lang"), args.get("query"))
         p = self.resolve_params(args)
         where = []
         if p["customer_id"]:
@@ -521,21 +560,27 @@ class DomainMcpServer:
             where.append(f"g.plan_name = {_lit(p['plan_name'])}")
         if p["monthly_fee_krw"] is not None:
             where.append(f"g.monthly_fee_krw = {p['monthly_fee_krw']}")
-        gql_stmt = f"""SELECT g.*, ch.section_title, ch.content_sha256 AS anchor, ch.content AS chunk_text
+        if self.mode == "full":
+            chunk_sel = (f", ch.{self.col('section_title', en, eng)} AS section_title, ch.content_sha256 AS anchor, "
+                         f"ch.{self.col('content', en, eng)} AS chunk_text")
+            chunk_join = f"\nLEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = g.source_chunk_id"
+        else:
+            chunk_sel, chunk_join = "", ""
+        gql_stmt = f"""SELECT g.*{chunk_sel}
 FROM GRAPH_TABLE(`{self.graph}`
   MATCH {match}
   COLUMNS ({cols} d.device_name AS device_name, d.factory_price_krw AS factory_price_krw,
            p.plan_name AS plan_name, p.monthly_fee_krw AS monthly_fee_krw,
-           r.rule_id AS rule_id, r.rule_name AS rule_name,
-           ap.relation_label_ko AS relation_label_ko, ap.source_chunk_id AS source_chunk_id)) g
-LEFT JOIN `{self.fq}.tb_doc_chunks` ch ON ch.chunk_id = g.source_chunk_id
+           r.rule_id AS rule_id, r.{self.col('rule_name', en, eng)} AS rule_name,
+           ap.{self.col('relation_label', en, eng)} AS relation_label, ap.source_chunk_id AS source_chunk_id)) g{chunk_join}
 WHERE {' AND '.join(where) or 'TRUE'}
 ORDER BY g.device_name, g.monthly_fee_krw DESC, g.rule_id"""
         rows = self._run(gql_stmt, jobs, engine=eng)
         exec_gql = self._to_spanner_sql(gql_stmt) if eng == "spanner" else gql_stmt
         graph_name = f"{self.spanner_instance_id}/{self.spanner_database_id}/{self.spanner_graph}" if eng == "spanner" else self.graph
         nodes = {("D", r["device_name"]) for r in rows} | {("P", r["plan_name"]) for r in rows} | {("R", r["rule_id"]) for r in rows}
-        anchors = sorted({f"{r['source_chunk_id']} ({r['section_title']}, {r['anchor']})" for r in rows if r.get("source_chunk_id")})
+        anchors = sorted({f"{r['source_chunk_id']} ({r.get('section_title') or '-'}, {r.get('anchor') or '-'})"
+                          for r in rows if r.get("source_chunk_id")})
         return {"status": "SUCCESS" if rows else "MATCH_NOT_FOUND", "applied_params": p,
                 "engine": eng, "graph_engine": eng, "graph_name": graph_name,
                 "gql_path": match, "executed_gql": exec_gql, "traversal_hops": 3 if p["customer_id"] else 2,

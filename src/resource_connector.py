@@ -8,7 +8,7 @@ resource_connector.py — Minimal Resource Connector, Selective Flow Composer & 
 
 Core Design:
 1. Ready-to-Use GCP Resource Connection (`connect_my_resources()` / `OntologyResourceConnector`):
-   Connects directly to BigQuery DW & SQL:2023 Property Graph, GCS 3-Layer OKF Wiki, Cloud Spanner Graph, and Vertex AI (`gemini-3.8-flash`).
+   Connects directly to BigQuery DW & SQL:2023 Property Graph, GCS 3-Layer OKF Wiki, Cloud Spanner Graph, and Vertex AI (`gemini-4-argon`).
 2. Selective Flow Composer (`P1/P2/P3` Data Paths x `W1/W2/W3` Workflow Extraction Points x `Gate G2-W`):
    Allows teams to start with the exact subset of the `v1-mcp` architecture they need (Document-Only `P1+W1`, Ledger-Only `P2+W2`, or Full Hybrid `P3+W3`).
 3. 2-Tier MCP Architecture & Customization Guide:
@@ -22,6 +22,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from src.gcp_client import (
+    DEFAULT_CORE_MCP_URL,
     DEFAULT_DATASET_ID,
     DEFAULT_GCS_BUCKET,
     DEFAULT_GEMINI_MODEL,
@@ -35,31 +36,34 @@ from src.gcp_client import (
 )
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+STARTER_PUBLIC_URL = os.environ.get(
+    "STARTER_PUBLIC_URL", "https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/"
+)
 
 REFERENCE_STUDIOS = {
     "starter_live_studio": {
         "id": "starter",
         "name_ko": "스타터 스튜디오 (Minimal v1-MCP Flow Starter)",
         "name_en": "Starter Studio (Minimal v1-MCP Flow Starter)",
-        "url": "https://agentic-ontology-starter-924723860007.asia-northeast3.run.app/",
+        "url": STARTER_PUBLIC_URL,
         "domain": "Telecom Subsidy & Contract (De-identified Starter Sample)",
         "tabs": "Getting Started · 1. v1-MCP Flow Grid · 2. MCP Guide · 3. Wiki & Graph · 4. Workflow & Agent · 5. Lineage & Eval",
-        "resources": "seanjung-poc.starter_ontology_dw.STARTER_ONTOLOGY_GRAPH + gs://seanjung-poc-starter-ontology",
+        "resources": f"{DEFAULT_PROJECT_ID}.{DEFAULT_DATASET_ID}.STARTER_ONTOLOGY_GRAPH + gs://{DEFAULT_GCS_BUCKET}",
     },
     "lguplus_reference_studio": {
-        "id": "lguplus_mcp",
-        "name_ko": "기준 스튜디오 #1 · LG U+ v1-MCP 엔터프라이즈 스튜디오 (12-Tab Full Standard)",
-        "name_en": "Reference Standard #1 · LG U+ v1-MCP Enterprise Studio (12-Tab Full Standard)",
-        "url": "https://agentic-ontology-studio-lguplus-mcp-924723860007.asia-northeast3.run.app/",
+        "id": "uplus_ontology",
+        "name_ko": "기준 스튜디오 #1 · LG U+ 엔터프라이즈 스튜디오 (12-Tab Full Standard)",
+        "name_en": "Reference Standard #1 · LG U+ Enterprise Studio (12-Tab Full Standard)",
+        "url": "https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/",
         "domain": "LG U+ Mobile Subsidy, Penalty & Retention Consultation",
         "tabs": "12-Tab Full Standard (0. Overview ~ 11. Evaluation · 6-Layer × P1/P2/P3 × Gate G2-W)",
         "resources": "177 Anchors · 141 Wiki Nodes · 39 Rules · 10 Workflows (W1:1/W2:2/W3:7) · 14/14 WCQ · 4 Graphs",
     },
     "hnh_reference_studio": {
-        "id": "hnh_mcp",
-        "name_ko": "기준 스튜디오 #2 · LG생활건강(H&H) v1-MCP 스튜디오 (12-Tab Full Standard)",
-        "name_en": "Reference Standard #2 · LG H&H v1-MCP Cosmetics Compliance Studio",
-        "url": "https://hnh-agentic-ontology-studio-mcp-384182013777.asia-northeast3.run.app/",
+        "id": "hnh_ontology",
+        "name_ko": "기준 스튜디오 #2 · LG생활건강(H&H) 엔터프라이즈 스튜디오 (12-Tab Full Standard)",
+        "name_en": "Reference Standard #2 · LG H&H Cosmetics Compliance Studio",
+        "url": "https://hnh-agentic-ontology-studio-384182013777.asia-northeast3.run.app/",
         "domain": "LG H&H Cosmetics Labeling & Advertising Compliance",
         "tabs": "12-Tab Full Standard (0. Overview ~ 11. Evaluation · 6-Layer × P1/P2/P3 × Gate G2-W)",
         "resources": "49 Docs · 341 Wiki Nodes · 24 Rules · 10 Workflows · 20/20 WCQ · 43 BQ Tables",
@@ -68,9 +72,9 @@ REFERENCE_STUDIOS = {
         "id": "aos_builder_core_mcp",
         "name_ko": "코어 빌더 MCP 서버 (`aos-builder-core-mcp` · 8 Tools)",
         "name_en": "Builder Core MCP Server (`aos-builder-core-mcp` · 8 Tools)",
-        "url": "https://aos-builder-core-mcp-924723860007.asia-northeast3.run.app/mcp/builder",
+        "url": DEFAULT_CORE_MCP_URL,
         "domain": "6-Stage Automated Ontology & Studio Compiler MCP",
-        "tabs": "JSON-RPC 2.0 MCP Endpoint (`/mcp/builder`) & REST (`/api/mcp/builder/execute`)",
+        "tabs": "JSON-RPC 2.0 MCP Endpoint (`/mcp`, alias `/mcp/builder`) · Starter proxy (`GET /api/core-mcp/tools`, `POST /api/core-mcp/call`)",
         "resources": "Stage 1 Scope ➔ Gate 0 Parse ➔ Stage 2 Wiki ➔ Stage 3 Rules/WF ➔ Stage 4 BQG ➔ Stage 5 CQ Eval ➔ Stage 6 Provision",
     },
 }
@@ -87,7 +91,7 @@ SELECTIVE_FLOW_PRESETS: Dict[str, Dict[str, Any]] = {
         "workflows": ["W1"],
         "gate_g2w": True,
         "active_layers": ["L1", "L2", "L4", "L5", "L6"],
-        "required_gcp": ["GCS OKF Wiki Bucket (or Local data/llm_wiki)", "BigQuery tb_doc_chunks", "Vertex AI (gemini-3.8-flash)"],
+        "required_gcp": ["GCS OKF Wiki Bucket (or Local data/llm_wiki)", "BigQuery tb_doc_chunks", f"Vertex AI ({DEFAULT_GEMINI_MODEL})"],
         "builder_mcp_stages": [
             "mcp_builder_inspect_and_scope_stage1",
             "mcp_builder_parse_documents_gate0",
@@ -108,7 +112,7 @@ SELECTIVE_FLOW_PRESETS: Dict[str, Dict[str, Any]] = {
         "workflows": ["W2"],
         "gate_g2w": False,
         "active_layers": ["L1", "L3", "L4", "L5", "L6"],
-        "required_gcp": ["BigQuery DW Dataset (or Cloud Spanner)", "BigQuery Property Graph (GRAPH_TABLE)", "Vertex AI (gemini-3.8-flash)"],
+        "required_gcp": ["BigQuery DW Dataset (or Cloud Spanner)", "BigQuery Property Graph (GRAPH_TABLE)", f"Vertex AI ({DEFAULT_GEMINI_MODEL})"],
         "builder_mcp_stages": [
             "mcp_builder_inspect_and_scope_stage1",
             "mcp_builder_extract_rules_workflows_stage3",
@@ -130,9 +134,9 @@ SELECTIVE_FLOW_PRESETS: Dict[str, Dict[str, Any]] = {
         "active_layers": ["L1", "L2", "L3", "L4", "L5", "L6"],
         "required_gcp": [
             "BigQuery DW & Property Graph (STARTER_ONTOLOGY_GRAPH)",
-            "GCS 3-Layer OKF Wiki (gs://seanjung-poc-starter-ontology/ontology/)",
+            f"GCS 3-Layer OKF Wiki (gs://{DEFAULT_GCS_BUCKET}/ontology/)",
             "Cloud Spanner Graph (Optional Dual-Engine)",
-            "Vertex AI (gemini-3.8-flash)",
+            f"Vertex AI ({DEFAULT_GEMINI_MODEL})",
         ],
         "builder_mcp_stages": [
             "mcp_builder_get_domain_spec_template",
@@ -235,13 +239,14 @@ MCP_ARCHITECTURE_GUIDE: Dict[str, Any] = {
     "overview_en": "Agentic Ontology separates concerns into a 2-Tier MCP Architecture: (1) Build-Time Core MCP (`aos-builder-core-mcp`, 8 tools) that compiles raw docs & DW tables into OKF Wiki, W1~W3 workflows, and BigQuery Property Graph, and (2) Runtime Domain Business MCP (`src/agent/mcp_server.py`, 3 tools) bound 1:1 to workflow nodes for zero-hallucination execution.",
     "tier1_builder_core_mcp": {
         "server_name": "aos-builder-core-mcp",
-        "endpoint_url": "https://aos-builder-core-mcp-924723860007.asia-northeast3.run.app/mcp/builder",
-        "rest_execute_url": "https://aos-builder-core-mcp-924723860007.asia-northeast3.run.app/api/mcp/builder/execute",
+        "endpoint_url": DEFAULT_CORE_MCP_URL,
+        "rest_execute_url": DEFAULT_CORE_MCP_URL,  # JSON-RPC `tools/call` (the old /api/mcp/builder/execute REST path returns NOT_FOUND)
+        "starter_proxy": {"tools_list": "GET /api/core-mcp/tools", "tools_call": "POST /api/core-mcp/call {\"name\": ..., \"arguments\": {...}}"},
         "mcp_client_config_snippet": {
             "mcpServers": {
                 "aos-builder-core-mcp": {
                     "type": "http",
-                    "url": "https://aos-builder-core-mcp-924723860007.asia-northeast3.run.app/mcp/builder",
+                    "url": DEFAULT_CORE_MCP_URL,
                 }
             }
         },
@@ -354,10 +359,10 @@ MCP_ARCHITECTURE_GUIDE: Dict[str, Any] = {
                 ],
             },
             "graph_spec": {
-                "gcp_project_id": "seanjung-poc",
-                "target_dataset_id": "starter_ontology_dw",
+                "gcp_project_id": DEFAULT_PROJECT_ID,
+                "target_dataset_id": DEFAULT_DATASET_ID,
                 "graph_name": "STARTER_ONTOLOGY_GRAPH",
-                "gcs_bucket": "seanjung-poc-starter-ontology",
+                "gcs_bucket": DEFAULT_GCS_BUCKET,
             },
         },
     },
@@ -424,7 +429,7 @@ CODE_EXPOSURE_BOUNDARY = {
         {"file": "src/resource_connector.py", "role_ko": "내 GCP 리소스 연결(`connect_my_resources`), 선택형 플로우(`P1/P2/P3 × W1/W2/W3`) 프리셋 및 2-Tier MCP 가이드", "role_en": "GCP resource connector (`connect_my_resources`), selective flow presets (`P1/P2/P3 × W1/W2/W3`), and 2-Tier MCP guide"},
         {"file": "src/gcp_client.py", "role_ko": "외부 SDK 의존성 없는 순수 Python 표준 라이브러리 기반 BigQuery / Spanner / GCS / Vertex AI REST 클라이언트", "role_en": "Zero-dependency Python stdlib REST client for BigQuery, Cloud Spanner, GCS, and Vertex AI Gemini"},
         {"file": "src/agent/mcp_server.py", "role_ko": "워크플로우 노드에 1:1 바인딩되는 런타임 도메인 비즈니스 MCP 도구 3종 (`DomainMcpServer`)", "role_en": "3 Runtime Domain Business MCP tools bound 1:1 to workflow nodes (`DomainMcpServer`)"},
-        {"file": "src/agent/reasoning_engine.py", "role_ko": "Vertex AI `gemini-3.8-flash` 기반 슬롯 추출, 도메인 MCP 도구 체이닝 및 SHA-256 근거 합성 엔진 (`AiFdeAgentEngine`)", "role_en": "Vertex AI `gemini-3.8-flash` slot extraction, domain MCP tool chaining, and grounded synthesis (`AiFdeAgentEngine`)"},
+        {"file": "src/agent/reasoning_engine.py", "role_ko": "Vertex AI `gemini-4-argon` 기반 슬롯 추출, 도메인 MCP 도구 체이닝 및 SHA-256 근거 합성 엔진 (`AiFdeAgentEngine`)", "role_en": "Vertex AI `gemini-4-argon` slot extraction, domain MCP tool chaining, and grounded synthesis (`AiFdeAgentEngine`)"},
         {"file": "src/web/studio_server.py", "role_ko": "`0. Getting Started` + 선택형 `v1-mcp` 플로우 구성기 + `MCP 역할/커스텀 가이드` + 라이브 실행 스튜디오 UI", "role_en": "`0. Getting Started` + Selective `v1-mcp` Flow Composer + `MCP Guide` + Live Studio UI"},
     ],
 }
@@ -658,7 +663,7 @@ def connect_my_resources(
     conn = OntologyResourceConnector(
         project_id=project_id or os.environ.get("GCP_PROJECT_ID", DEFAULT_PROJECT_ID),
         dataset_id=dataset_id or os.environ.get("BQ_DATASET_ID", DEFAULT_DATASET_ID),
-        gcs_bucket=gcs_bucket or os.environ.get("GCS_BUCKET_NAME", DEFAULT_GCS_BUCKET),
+        gcs_bucket=gcs_bucket or DEFAULT_GCS_BUCKET,
         spanner_instance_id=spanner_instance_id or os.environ.get("SPANNER_INSTANCE_ID", DEFAULT_SPANNER_INSTANCE),
         spanner_database_id=spanner_database_id or os.environ.get("SPANNER_DATABASE_ID", DEFAULT_SPANNER_DATABASE),
     )

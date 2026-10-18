@@ -1,0 +1,276 @@
+{
+  "version": "v4.0.0-GOAL-223",
+  "_readme_ko": "BigQuery 적재 스키마 · 컬럼 설명(ko/en) · 그래프 요소 정의. 기존 컬럼과 타입은 그대로 두고(노트북 호환) *_ko / *_en 라벨 컬럼만 더합니다.",
+  "_readme_en": "BigQuery load schema, column descriptions (ko/en) and graph element definitions. Legacy columns and types are kept (notebook compatibility); only *_ko / *_en label columns are added.",
+  "groups": {
+    "p2_source": {"path": "P2", "ko": "원천 테이블 6종", "en": "6 source tables"},
+    "p2_edges": {"path": "P2", "ko": "파생 엣지 테이블 3종", "en": "3 derived edge tables"},
+    "p3_nodes": {"path": "P3", "ko": "위키 · 규칙 노드 테이블 4종", "en": "4 wiki / rule node tables"},
+    "p3_edges": {"path": "P3", "ko": "브릿지 엣지 테이블 4종", "en": "4 bridge edge tables"}
+  },
+  "tables": {
+    "tb_device_master": {
+      "group": "p2_source", "kind": "node", "label": "DeviceNode", "key": ["device_id"], "csv": "devices.csv",
+      "description_ko": "단말기 출고가 마스터 원장", "description_en": "Device factory price master ledger",
+      "columns": [
+        {"name": "device_id", "type": "STRING", "ko": "단말기 고유 ID (PK)", "en": "Device ID (PK)"},
+        {"name": "device_name", "type": "STRING", "ko": "단말기 모델명 (모델 + 용량)", "en": "Device model name (model + storage)"},
+        {"name": "manufacturer", "type": "STRING", "ko": "제조사", "en": "Manufacturer"},
+        {"name": "storage_gb", "type": "INTEGER", "ko": "내장 메모리 용량 (GB)", "en": "Storage (GB)"},
+        {"name": "factory_price_krw", "type": "INTEGER", "ko": "출고가 (원)", "en": "Factory price (KRW)"},
+        {"name": "release_date", "type": "STRING", "ko": "출시일 (YYYY-MM-DD)", "en": "Release date (YYYY-MM-DD)"},
+        {"name": "provenance", "type": "STRING", "ko": "데이터 출처 등급 (SYNTHETIC_DEMO 등)", "en": "Data provenance tier (for example SYNTHETIC_DEMO)"},
+        {"name": "source_ref", "type": "STRING", "ko": "원천 파일 · 참조 경로", "en": "Source file or reference"},
+        {"name": "model_code", "type": "STRING", "ko": "제조사 모델 코드", "en": "Manufacturer model code"}
+      ]
+    },
+    "tb_plan_master": {
+      "group": "p2_source", "kind": "node", "label": "PlanNode", "key": ["plan_id"], "csv": "plans.csv",
+      "description_ko": "모바일 요금제 마스터 원장", "description_en": "Mobile plan master ledger",
+      "columns": [
+        {"name": "plan_id", "type": "STRING", "ko": "요금제 고유 ID (PK)", "en": "Plan ID (PK)"},
+        {"name": "plan_name", "type": "STRING", "ko": "요금제 공식 명칭", "en": "Official plan name"},
+        {"name": "tier_category", "type": "STRING", "ko": "요금제 등급 (5G_HIGH · 5G_MID · BELOW_BASELINE)", "en": "Plan tier (5G_HIGH · 5G_MID · BELOW_BASELINE)"},
+        {"name": "monthly_fee_krw", "type": "INTEGER", "ko": "월정액 (원)", "en": "Monthly fee (KRW)"},
+        {"name": "min_maintenance_days", "type": "INTEGER", "ko": "공시지원금 의무유지 일수 (대상이 아니면 0)", "en": "Commitment days for public subsidy (0 when not applicable)"},
+        {"name": "selective_discount_rate", "type": "FLOAT", "ko": "선택약정 요금할인율", "en": "Selective contract discount rate"},
+        {"name": "provenance", "type": "STRING", "ko": "데이터 출처 등급", "en": "Data provenance tier"},
+        {"name": "source_ref", "type": "STRING", "ko": "원천 파일 · 참조 경로", "en": "Source file or reference"},
+        {"name": "network_type", "type": "STRING", "ko": "망 종류 (5G · LTE)", "en": "Network type (5G · LTE)"},
+        {"name": "is_baseline_tier", "type": "BOOLEAN", "ko": "기준 요금제선 이상 여부", "en": "At or above the baseline plan threshold"}
+      ]
+    },
+    "tb_subsidy_policy": {
+      "group": "p2_source", "kind": "node", "label": "SubsidyNode", "key": ["policy_id"], "csv": "subsidies.csv",
+      "description_ko": "단말기 × 요금제별 공시지원금 · 유통망 추가지원금 정책 원장", "description_en": "Public and retail subsidy policy per device x plan",
+      "columns": [
+        {"name": "policy_id", "type": "STRING", "ko": "지원금 정책 ID (PK)", "en": "Subsidy policy ID (PK)"},
+        {"name": "device_id", "type": "STRING", "ko": "단말기 ID (FK)", "en": "Device ID (FK)"},
+        {"name": "plan_id", "type": "STRING", "ko": "요금제 ID (FK)", "en": "Plan ID (FK)"},
+        {"name": "base_subsidy_krw", "type": "INTEGER", "ko": "공시지원금 (원)", "en": "Public subsidy (KRW)"},
+        {"name": "additional_subsidy_cap_krw", "type": "INTEGER", "ko": "유통망 추가지원금 상한 (원)", "en": "Retail additional subsidy cap (KRW)"},
+        {"name": "mandatory_retention_days", "type": "INTEGER", "ko": "의무유지 기간 (일)", "en": "Commitment period (days)"},
+        {"name": "effective_from", "type": "STRING", "ko": "시행 시작일", "en": "Effective from"},
+        {"name": "provenance", "type": "STRING", "ko": "데이터 출처 등급", "en": "Data provenance tier"},
+        {"name": "source_ref", "type": "STRING", "ko": "원천 파일 · 참조 경로", "en": "Source file or reference"},
+        {"name": "effective_to", "type": "STRING", "ko": "시행 종료일", "en": "Effective to"},
+        {"name": "total_subsidy_krw", "type": "INTEGER", "ko": "총 지원금 (공시 + 추가, 원)", "en": "Total subsidy (public + retail, KRW)"}
+      ]
+    },
+    "tb_customer_contract": {
+      "group": "p2_source", "kind": "node", "label": "CustomerContractNode", "key": ["contract_id"], "csv": "customer_contracts.csv",
+      "description_ko": "비식별 고객 약정 원장", "description_en": "De-identified customer contract ledger",
+      "columns": [
+        {"name": "customer_id", "type": "STRING", "ko": "비식별 고객 ID", "en": "De-identified customer ID"},
+        {"name": "contract_id", "type": "STRING", "ko": "약정 계약 ID (PK)", "en": "Contract ID (PK)"},
+        {"name": "customer_segment", "type": "STRING", "ko": "고객 세그먼트", "en": "Customer segment"},
+        {"name": "age_group", "type": "STRING", "ko": "연령대", "en": "Age group"},
+        {"name": "device_id", "type": "STRING", "ko": "개통 단말기 ID (FK)", "en": "Activated device ID (FK)"},
+        {"name": "plan_id", "type": "STRING", "ko": "가입 요금제 ID (FK)", "en": "Subscribed plan ID (FK)"},
+        {"name": "contract_type", "type": "STRING", "ko": "약정 유형 (PUBLIC_SUBSIDY · SELECTIVE_25PCT)", "en": "Contract type (PUBLIC_SUBSIDY · SELECTIVE_25PCT)"},
+        {"name": "commitment_months", "type": "INTEGER", "ko": "약정 기간 (개월)", "en": "Contract term (months)"},
+        {"name": "elapsed_days", "type": "INTEGER", "ko": "개통 후 경과일수", "en": "Days elapsed since activation"},
+        {"name": "granted_subsidy_krw", "type": "INTEGER", "ko": "지급된 총 지원금 (원)", "en": "Total subsidy granted (KRW)"},
+        {"name": "welfare_status", "type": "STRING", "ko": "복지 · 특례 자격 (NONE · SENIOR_EXEMPT · MILITARY_PAUSE_ELIGIBLE)", "en": "Welfare / exception status (NONE · SENIOR_EXEMPT · MILITARY_PAUSE_ELIGIBLE)"},
+        {"name": "status", "type": "STRING", "ko": "회선 상태", "en": "Line status"},
+        {"name": "provenance", "type": "STRING", "ko": "데이터 출처 등급", "en": "Data provenance tier"},
+        {"name": "source_ref", "type": "STRING", "ko": "원천 파일 · 참조 경로", "en": "Source file or reference"},
+        {"name": "policy_id", "type": "STRING", "ko": "적용 지원금 정책 ID", "en": "Applied subsidy policy ID"},
+        {"name": "activation_date", "type": "STRING", "ko": "개통일 (YYYY-MM-DD)", "en": "Activation date (YYYY-MM-DD)"}
+      ]
+    },
+    "tb_domain_rules": {
+      "group": "p2_source", "kind": "node", "label": "DomainRuleNode", "key": ["rule_id"], "csv": "domain_rules.csv",
+      "description_ko": "가이드에서 추출한 업무 판정 규칙 · 계산식", "description_en": "Business decision rules and formulas extracted from the guides",
+      "columns": [
+        {"name": "rule_id", "type": "STRING", "ko": "규칙 ID (PK)", "en": "Rule ID (PK)"},
+        {"name": "rule_name", "type": "STRING", "ko": "규칙 이름 (기존 컬럼, 한국어)", "en": "Rule name (legacy column, Korean)"},
+        {"name": "rule_category", "type": "STRING", "ko": "규칙 분류", "en": "Rule category"},
+        {"name": "condition_expr", "type": "STRING", "ko": "조건 논리식", "en": "Condition expression"},
+        {"name": "formula_expr", "type": "STRING", "ko": "계산식", "en": "Formula"},
+        {"name": "source_chunk_id", "type": "STRING", "ko": "근거 조항 ID", "en": "Source clause ID"},
+        {"name": "description_ko", "type": "STRING", "ko": "규칙 설명 (한국어)", "en": "Rule description (Korean)"},
+        {"name": "provenance", "type": "STRING", "ko": "데이터 출처 등급", "en": "Data provenance tier"},
+        {"name": "source_ref", "type": "STRING", "ko": "원천 파일 · 참조 경로", "en": "Source file or reference"},
+        {"name": "rule_name_ko", "type": "STRING", "ko": "규칙 이름 (한국어)", "en": "Rule name (Korean)"},
+        {"name": "rule_name_en", "type": "STRING", "ko": "규칙 이름 (영어)", "en": "Rule name (English)"},
+        {"name": "description_en", "type": "STRING", "ko": "규칙 설명 (영어)", "en": "Rule description (English)"}
+      ]
+    },
+    "edge_rule_applies_to_plan": {
+      "group": "p2_source", "kind": "edge", "label": "APPLIES_TO_PLAN", "key": ["edge_id"], "csv": "rule_plan_edges.csv",
+      "src": {"key": ["rule_id"], "ref": "tb_domain_rules", "ref_key": ["rule_id"]},
+      "dst": {"key": ["plan_id"], "ref": "tb_plan_master", "ref_key": ["plan_id"]},
+      "description_ko": "규칙 → 요금제 적용 관계 (P3 브릿지)", "description_en": "Rule → plan applicability (P3 bridge)",
+      "columns": [
+        {"name": "edge_id", "type": "STRING", "ko": "관계 ID (PK)", "en": "Edge ID (PK)"},
+        {"name": "rule_id", "type": "STRING", "ko": "규칙 ID (FK)", "en": "Rule ID (FK)"},
+        {"name": "plan_id", "type": "STRING", "ko": "요금제 ID (FK)", "en": "Plan ID (FK)"},
+        {"name": "source_chunk_id", "type": "STRING", "ko": "근거 조항 ID", "en": "Source clause ID"},
+        {"name": "relation_label_ko", "type": "STRING", "ko": "관계 설명 (한국어)", "en": "Relation label (Korean)"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"},
+        {"name": "provenance", "type": "STRING", "ko": "데이터 출처 등급", "en": "Data provenance tier"},
+        {"name": "source_ref", "type": "STRING", "ko": "원천 파일 · 참조 경로", "en": "Source file or reference"},
+        {"name": "relation_label_en", "type": "STRING", "ko": "관계 설명 (영어)", "en": "Relation label (English)"}
+      ]
+    },
+    "edge_contract_device": {
+      "group": "p2_edges", "kind": "edge", "label": "USES_DEVICE", "key": ["contract_id", "device_id"],
+      "src": {"key": ["contract_id"], "ref": "tb_customer_contract", "ref_key": ["contract_id"]},
+      "dst": {"key": ["device_id"], "ref": "tb_device_master", "ref_key": ["device_id"]},
+      "description_ko": "고객 계약 → 개통 단말 (계약 테이블에서 파생)", "description_en": "Customer contract → activated device (derived from contracts)",
+      "columns": [
+        {"name": "contract_id", "type": "STRING", "ko": "계약 ID", "en": "Contract ID"},
+        {"name": "customer_id", "type": "STRING", "ko": "고객 ID", "en": "Customer ID"},
+        {"name": "device_id", "type": "STRING", "ko": "단말기 ID", "en": "Device ID"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    },
+    "edge_contract_plan": {
+      "group": "p2_edges", "kind": "edge", "label": "SUBSCRIBES_PLAN", "key": ["contract_id", "plan_id"],
+      "src": {"key": ["contract_id"], "ref": "tb_customer_contract", "ref_key": ["contract_id"]},
+      "dst": {"key": ["plan_id"], "ref": "tb_plan_master", "ref_key": ["plan_id"]},
+      "description_ko": "고객 계약 → 가입 요금제 (계약 테이블에서 파생)", "description_en": "Customer contract → subscribed plan (derived from contracts)",
+      "columns": [
+        {"name": "contract_id", "type": "STRING", "ko": "계약 ID", "en": "Contract ID"},
+        {"name": "customer_id", "type": "STRING", "ko": "고객 ID", "en": "Customer ID"},
+        {"name": "plan_id", "type": "STRING", "ko": "요금제 ID", "en": "Plan ID"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    },
+    "edge_subsidy_binding": {
+      "group": "p2_edges", "kind": "edge", "label": "HAS_SUBSIDY_POLICY", "key": ["policy_id"],
+      "src": {"key": ["device_id"], "ref": "tb_device_master", "ref_key": ["device_id"]},
+      "dst": {"key": ["plan_id"], "ref": "tb_plan_master", "ref_key": ["plan_id"]},
+      "description_ko": "단말 → 요금제 지원금 결합 (지원금 정책에서 파생)", "description_en": "Device → plan subsidy binding (derived from subsidy policies)",
+      "columns": [
+        {"name": "policy_id", "type": "STRING", "ko": "지원금 정책 ID", "en": "Subsidy policy ID"},
+        {"name": "device_id", "type": "STRING", "ko": "단말기 ID", "en": "Device ID"},
+        {"name": "plan_id", "type": "STRING", "ko": "요금제 ID", "en": "Plan ID"},
+        {"name": "total_subsidy_krw", "type": "INTEGER", "ko": "총 지원금 (원)", "en": "Total subsidy (KRW)"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    },
+    "tb_doc_chunks": {
+      "group": "p3_nodes", "kind": "node", "label": "DocChunkNode", "key": ["chunk_id"],
+      "description_ko": "문서 조항 앵커 (SHA-256) · 한국어 / 영어 본문", "description_en": "Document clause anchors (SHA-256) with Korean / English text",
+      "columns": [
+        {"name": "chunk_id", "type": "STRING", "ko": "조항 ID (PK)", "en": "Clause ID (PK)"},
+        {"name": "source_file", "type": "STRING", "ko": "원천 문서 파일명", "en": "Source document file"},
+        {"name": "section_title", "type": "STRING", "ko": "조항 제목 (기존 컬럼, 영어)", "en": "Clause title (legacy column, English)"},
+        {"name": "content", "type": "STRING", "ko": "조항 본문 (기존 컬럼, 영어)", "en": "Clause text (legacy column, English)"},
+        {"name": "content_sha256", "type": "STRING", "ko": "본문 SHA-256 앵커", "en": "Text SHA-256 anchor"},
+        {"name": "trust_tier", "type": "STRING", "ko": "출처 등급", "en": "Trust tier"},
+        {"name": "source_doc", "type": "STRING", "ko": "원본 문서 이름", "en": "Source document name"},
+        {"name": "source_sha256", "type": "STRING", "ko": "원본 문서 SHA-256", "en": "Source document SHA-256"},
+        {"name": "page_from", "type": "INTEGER", "ko": "시작 쪽", "en": "Start page"},
+        {"name": "page_to", "type": "INTEGER", "ko": "끝 쪽", "en": "End page"},
+        {"name": "article_no", "type": "STRING", "ko": "조항 번호", "en": "Article number"},
+        {"name": "section_title_ko", "type": "STRING", "ko": "조항 제목 (한국어)", "en": "Clause title (Korean)"},
+        {"name": "section_title_en", "type": "STRING", "ko": "조항 제목 (영어)", "en": "Clause title (English)"},
+        {"name": "content_ko", "type": "STRING", "ko": "조항 본문 (한국어)", "en": "Clause text (Korean)"},
+        {"name": "content_en", "type": "STRING", "ko": "조항 본문 (영어)", "en": "Clause text (English)"}
+      ]
+    },
+    "tb_wiki_concepts": {
+      "group": "p3_nodes", "kind": "node", "label": "WikiConceptNode", "key": ["concept_id"],
+      "description_ko": "위키 개념 (용어집 기반)", "description_en": "Wiki concepts (from the glossary)",
+      "columns": [
+        {"name": "concept_id", "type": "STRING", "ko": "개념 ID (PK)", "en": "Concept ID (PK)"},
+        {"name": "name_ko", "type": "STRING", "ko": "개념 이름 (한국어)", "en": "Concept name (Korean)"},
+        {"name": "name_en", "type": "STRING", "ko": "개념 이름 (영어)", "en": "Concept name (English)"},
+        {"name": "definition_ko", "type": "STRING", "ko": "정의 (한국어)", "en": "Definition (Korean)"},
+        {"name": "definition_en", "type": "STRING", "ko": "정의 (영어)", "en": "Definition (English)"},
+        {"name": "source_chunk_id", "type": "STRING", "ko": "근거 조항 ID", "en": "Source clause ID"},
+        {"name": "wiki_page", "type": "STRING", "ko": "위키 페이지", "en": "Wiki page"}
+      ]
+    },
+    "tb_policy_params": {
+      "group": "p3_nodes", "kind": "node", "label": "PolicyParamNode", "key": ["param_id"],
+      "description_ko": "정책값 (위키 rules frontmatter의 단일 출처)", "description_en": "Policy values (single source: wiki rules frontmatter)",
+      "columns": [
+        {"name": "param_id", "type": "STRING", "ko": "정책값 키 (PK)", "en": "Policy value key (PK)"},
+        {"name": "value", "type": "FLOAT", "ko": "값", "en": "Value"},
+        {"name": "value_text", "type": "STRING", "ko": "값 (원문 표기)", "en": "Value (as written)"},
+        {"name": "unit", "type": "STRING", "ko": "단위", "en": "Unit"},
+        {"name": "rule_id", "type": "STRING", "ko": "사용하는 규칙 ID", "en": "Rule that uses it"},
+        {"name": "label_ko", "type": "STRING", "ko": "설명 (한국어)", "en": "Label (Korean)"},
+        {"name": "label_en", "type": "STRING", "ko": "설명 (영어)", "en": "Label (English)"},
+        {"name": "wiki_page", "type": "STRING", "ko": "선언된 위키 페이지", "en": "Declaring wiki page"},
+        {"name": "source_chunk_id", "type": "STRING", "ko": "근거 조항 ID", "en": "Source clause ID"}
+      ]
+    },
+    "tb_workflow_steps": {
+      "group": "p3_nodes", "kind": "node", "label": "WorkflowStepNode", "key": ["step_id"],
+      "description_ko": "워크플로우 단계 (W1 · W2 · W3)", "description_en": "Workflow steps (W1 · W2 · W3)",
+      "columns": [
+        {"name": "step_id", "type": "STRING", "ko": "단계 ID (PK)", "en": "Step ID (PK)"},
+        {"name": "workflow_id", "type": "STRING", "ko": "워크플로우 ID", "en": "Workflow ID"},
+        {"name": "workflow_point", "type": "STRING", "ko": "추출 시점 (W1 · W2 · W3)", "en": "Extraction point (W1 · W2 · W3)"},
+        {"name": "step_order", "type": "INTEGER", "ko": "단계 순서", "en": "Step order"},
+        {"name": "step_kind", "type": "STRING", "ko": "단계 종류 (question · lookup · decision · calc · end)", "en": "Step kind (question · lookup · decision · calc · end)"},
+        {"name": "name_ko", "type": "STRING", "ko": "단계 이름 (한국어)", "en": "Step name (Korean)"},
+        {"name": "name_en", "type": "STRING", "ko": "단계 이름 (영어)", "en": "Step name (English)"},
+        {"name": "workflow_name_ko", "type": "STRING", "ko": "워크플로우 이름 (한국어)", "en": "Workflow name (Korean)"},
+        {"name": "workflow_name_en", "type": "STRING", "ko": "워크플로우 이름 (영어)", "en": "Workflow name (English)"},
+        {"name": "rule_id", "type": "STRING", "ko": "적용 규칙 ID", "en": "Applied rule ID"},
+        {"name": "tool_name", "type": "STRING", "ko": "실행 도구", "en": "Tool"}
+      ]
+    },
+    "edge_concept_governs_rule": {
+      "group": "p3_edges", "kind": "edge", "label": "GOVERNS", "key": ["edge_id"],
+      "src": {"key": ["concept_id"], "ref": "tb_wiki_concepts", "ref_key": ["concept_id"]},
+      "dst": {"key": ["rule_id"], "ref": "tb_domain_rules", "ref_key": ["rule_id"]},
+      "description_ko": "개념 → 규칙", "description_en": "Concept → rule",
+      "columns": [
+        {"name": "edge_id", "type": "STRING", "ko": "관계 ID (PK)", "en": "Edge ID (PK)"},
+        {"name": "concept_id", "type": "STRING", "ko": "개념 ID", "en": "Concept ID"},
+        {"name": "rule_id", "type": "STRING", "ko": "규칙 ID", "en": "Rule ID"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    },
+    "edge_rule_uses_param": {
+      "group": "p3_edges", "kind": "edge", "label": "USES_PARAM", "key": ["edge_id"],
+      "src": {"key": ["rule_id"], "ref": "tb_domain_rules", "ref_key": ["rule_id"]},
+      "dst": {"key": ["param_id"], "ref": "tb_policy_params", "ref_key": ["param_id"]},
+      "description_ko": "규칙 → 정책값", "description_en": "Rule → policy value",
+      "columns": [
+        {"name": "edge_id", "type": "STRING", "ko": "관계 ID (PK)", "en": "Edge ID (PK)"},
+        {"name": "rule_id", "type": "STRING", "ko": "규칙 ID", "en": "Rule ID"},
+        {"name": "param_id", "type": "STRING", "ko": "정책값 키", "en": "Policy value key"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    },
+    "edge_rule_grounded_in": {
+      "group": "p3_edges", "kind": "edge", "label": "GROUNDED_IN", "key": ["edge_id"],
+      "src": {"key": ["rule_id"], "ref": "tb_domain_rules", "ref_key": ["rule_id"]},
+      "dst": {"key": ["chunk_id"], "ref": "tb_doc_chunks", "ref_key": ["chunk_id"]},
+      "description_ko": "규칙 → 근거 조항", "description_en": "Rule → source clause",
+      "columns": [
+        {"name": "edge_id", "type": "STRING", "ko": "관계 ID (PK)", "en": "Edge ID (PK)"},
+        {"name": "rule_id", "type": "STRING", "ko": "규칙 ID", "en": "Rule ID"},
+        {"name": "chunk_id", "type": "STRING", "ko": "조항 ID", "en": "Clause ID"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    },
+    "edge_step_applies_rule": {
+      "group": "p3_edges", "kind": "edge", "label": "APPLIES_RULE", "key": ["edge_id"],
+      "src": {"key": ["step_id"], "ref": "tb_workflow_steps", "ref_key": ["step_id"]},
+      "dst": {"key": ["rule_id"], "ref": "tb_domain_rules", "ref_key": ["rule_id"]},
+      "description_ko": "워크플로우 단계 → 규칙", "description_en": "Workflow step → rule",
+      "columns": [
+        {"name": "edge_id", "type": "STRING", "ko": "관계 ID (PK)", "en": "Edge ID (PK)"},
+        {"name": "step_id", "type": "STRING", "ko": "단계 ID", "en": "Step ID"},
+        {"name": "rule_id", "type": "STRING", "ko": "규칙 ID", "en": "Rule ID"},
+        {"name": "edge_type", "type": "STRING", "ko": "관계 종류", "en": "Edge type"}
+      ]
+    }
+  },
+  "policy_params": {
+    "mandatory_retention_days": {"unit": "days", "rule_id": "RULE_SIX_PLAN_180D", "source_chunk_id": "DOC_CHUNK_002", "ko": "공시지원금 의무유지 기간", "en": "Public subsidy commitment period"},
+    "baseline_fee_krw": {"unit": "KRW", "rule_id": "RULE_SIX_PLAN_180D", "source_chunk_id": "DOC_CHUNK_002", "ko": "5G 기준 요금제선 월정액", "en": "5G baseline plan monthly fee"},
+    "retail_subsidy_cap_rate": {"unit": "ratio", "rule_id": "RULE_SUBSIDY_CAP", "source_chunk_id": "DOC_CHUNK_001", "ko": "유통망 추가지원금 상한 비율", "en": "Retail additional subsidy cap ratio"},
+    "selective_discount_rate": {"unit": "ratio", "rule_id": "RULE_TCO_24M", "source_chunk_id": "DOC_CHUNK_005", "ko": "선택약정 할인율", "en": "Selective contract discount rate"},
+    "tco_months": {"unit": "months", "rule_id": "RULE_TCO_24M", "source_chunk_id": "DOC_CHUNK_005", "ko": "총비용 비교 기간", "en": "Total cost comparison period"}
+  }
+}

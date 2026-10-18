@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>README flow renderer</title>
+<!-- Renders the starter diagrams for README images:
+     render_readme_flows.html?diagram=dataflow|resources&lang=ko|en
+     gbrowser screenshot --width 1300 --height 720 --device-scale-factor 2 --selector "#shot" URL out.png -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../../src/web/static/aolflow.css">
+<style>
+  html, body { margin: 0; background: #f5f5f7; font-family: "Pretendard Variable", -apple-system, sans-serif; }
+  #shot { width: 1240px; padding: 10px; background: #f5f5f7; }
+</style>
+</head>
+<body>
+<div id="shot"><div id="f"></div></div>
+<script src="../../src/web/static/aolflow.js"></script>
+<script src="../../src/web/static/flows.js"></script>
+<script>
+  const q = new URLSearchParams(location.search);
+  const lang = q.get("lang") === "en" ? "en" : "ko";
+  const key = q.get("diagram") === "resources" ? "resources" : "dataflow";
+  AOLFlow.render(document.getElementById("f"), STARTER_FLOWS[key], { lang, animate: "none" });
+  window.__residue = AOLFlow.hangulResidue(document);
+</script>
+</body>
+</html>

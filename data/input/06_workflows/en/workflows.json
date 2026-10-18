@@ -1,0 +1,29 @@
+{
+  "version": "v4.0.0-GOAL-223",
+  "workflows": [
+    {"workflow_id": "WF-W1-GUIDE", "point": "W1", "recipes": ["A", "C"], "agent": "wiki",
+     "name": "Policy guidance", "trigger": "Questions about rules, periods or exemption conditions (no customer or contract data)",
+     "steps": [
+       {"step_id": "W1-1", "order": 1, "kind": "question", "name": "Identify the policy topic", "rule_id": null, "tool": null},
+       {"step_id": "W1-2", "order": 2, "kind": "lookup", "name": "Read wiki rules and policy values", "rule_id": "RULE_SIX_PLAN_180D", "tool": "wiki_pages"},
+       {"step_id": "W1-3", "order": 3, "kind": "end", "name": "Answer with cited pages", "rule_id": null, "tool": null}
+     ]},
+    {"workflow_id": "WF-W2-LOOKUP", "point": "W2", "recipes": ["B", "C"], "agent": "graph",
+     "name": "Ledger lookup", "trigger": "Questions about device, plan or customer contract values",
+     "steps": [
+       {"step_id": "W2-1", "order": 1, "kind": "question", "name": "Identify customer, device and plan", "rule_id": null, "tool": null},
+       {"step_id": "W2-2", "order": 2, "kind": "lookup", "name": "Ledger lookup", "rule_id": "RULE_SUBSIDY_CAP", "tool": "mcp_lookup_customer_profile"},
+       {"step_id": "W2-3", "order": 3, "kind": "lookup", "name": "Check the graph path", "rule_id": "RULE_SUBSIDY_CAP", "tool": "mcp_query_graph_and_wiki"},
+       {"step_id": "W2-4", "order": 4, "kind": "end", "name": "Answer subsidy and net price", "rule_id": null, "tool": null}
+     ]},
+    {"workflow_id": "WF-W3-DECIDE", "point": "W3", "recipes": ["C"], "agent": "workflow",
+     "name": "Decide and calculate", "trigger": "Questions that need rules and values together, such as penalties, exemptions and the 24-month total cost",
+     "steps": [
+       {"step_id": "W3-1", "order": 1, "kind": "lookup", "name": "Look up contract and policy", "rule_id": "RULE_SUBSIDY_CAP", "tool": "mcp_lookup_customer_profile"},
+       {"step_id": "W3-2", "order": 2, "kind": "decision", "name": "Single-source policy values (G2-W)", "rule_id": "RULE_SIX_PLAN_180D", "tool": "g2w_check"},
+       {"step_id": "W3-3", "order": 3, "kind": "decision", "name": "Exemption, commitment and baseline decision", "rule_id": "RULE_WELFARE_EXEMPT", "tool": "mcp_calculate_penalty_rule"},
+       {"step_id": "W3-4", "order": 4, "kind": "calc", "name": "Penalty and 24-month total cost", "rule_id": "RULE_TCO_24M", "tool": "mcp_calculate_penalty_rule"},
+       {"step_id": "W3-5", "order": 5, "kind": "end", "name": "Outcome code and source clause", "rule_id": null, "tool": "mcp_query_graph_and_wiki"}
+     ]}
+  ]
+}

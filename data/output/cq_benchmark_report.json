@@ -9,7 +9,7 @@
   ],
   "synthetic_basis": true,
   "unconfirmed_cqs": 5,
-  "method": "sql CQ: verification_sql(BigQuery) vs expected_math + live agent answer; citation CQ: agent answer must cite expected chunk and contain expected_facts (Vertex AI gemini-3.8-flash); every final answer is also scored by an LLM judge on a 100-point rubric (PASS verdict required) and checked for duplicates",
+  "method": "sql CQ: verification_sql(BigQuery) vs expected_math + live agent answer; citation CQ: agent answer must cite expected chunk and contain expected_facts (Vertex AI gemini-4-argon); every final answer is also scored by an LLM judge on a 100-point rubric (PASS verdict required) and checked for duplicates",
   "rubric": [
     {
       "key": "relevance",
@@ -47,7 +47,7 @@
   },
   "duplicate_pairs": [],
   "max_pairwise_jaccard_3gram": 0.253,
-  "model": "gemini-3.8-flash",
+  "model": "gemini-4-argon",
   "dataset": "seanjung-poc.starter_ontology_dw",
   "total_cqs": 5,
   "passed": 5,
