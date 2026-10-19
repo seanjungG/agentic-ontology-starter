@@ -1,216 +1,187 @@
 # Agentic Ontology Starter
 
-> 정책 문서와 원장 테이블을 **OKF 위키**와 **BigQuery Property Graph**로 만들고, 내 GCP 리소스 위에서 **Wiki · Graph · Workflow 에이전트**를 실행 · 평가해 보는 스타터 팩입니다.
-> 데이터는 합성 데이터 팩(가상 통신사의 단말 지원금 규정 · 원장)이며 **한국어 · 영어 2벌**(같은 ID · 같은 숫자)로 들어 있습니다. 서버는 Python 3.11 표준 라이브러리만 씁니다.
+> **이 스튜디오 + 이 깃헙만 있으면** 내 데이터 · 내 GCP로 엔터프라이즈 온톨로지 에이전트(OKF 위키 · BigQuery Property Graph · Wiki/Graph/Hybrid 에이전트 · CQ 평가)를 만들고, 같은 결과를 다시 만드는 **CLI · MCP 호출 파라미터 · 코드 번들**로 가져가는 스타터 팩입니다.
+> 방법론의 핵심 노하우(위키 컴파일 · 그래프 설계 · 에이전트 추론 · 채점)는 **Platform Core MCP 도구** 안에만 있고, 이 저장소는 그 도구를 **어떤 순서로 · 어떤 파라미터로** 부르는지를 담습니다. 서버는 Python 3.11 표준 라이브러리만 씁니다.
 
 | 구분 | 주소 | 설명 |
 | :--- | :--- | :--- |
-| **스타터 데모** | [agentic-ontology-starter ↗](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/) | 6단계 마법사: 유형 · 목적 → 흐름 → GCP 리소스 확인 → 데이터 적재 → 에이전트 → 평가 |
-| **노트북 랩** | [agentic-ontology-starter-notebook ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/) | 같은 방법론을 셀 단위로 직접 실행하는 실습 화면 |
-| **Platform Core MCP** | `https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp` | 도구 38종(빌드 10 + 데이터 플레인 28) · JSON-RPC `tools/list` · `tools/call` |
-| **Reference #1** | [LG U+ Enterprise Studio ↗](https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/) | LG U+ 단말지원금 · 위약금 12-Tab 엔터프라이즈 기준 스튜디오 |
-| **Reference #2** | [LG H&H Enterprise Studio ↗](https://hnh-agentic-ontology-studio-384182013777.asia-northeast3.run.app/) | LG생활건강 화장품 표시 · 광고 컴플라이언스 12-Tab 스튜디오 |
+| **스타터 스튜디오** | [agentic-ontology-starter ↗](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/) | 이해 → 상황 · 목적 → GCP · 권한 → 데이터 → 구축 → 스튜디오 → 코드 인계 |
+| **레퍼런스 마법사** | [`/wizard` ↗](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/wizard#step-1) | 큐레이션된 샘플 결과(Flow A/B/C, 기준 100점) — 비교용 |
+| **노트북 랩** | [agentic-ontology-starter-notebook ↗](https://agentic-ontology-starter-notebook-115847445822.asia-northeast3.run.app/) | 같은 방법론을 셀 단위로 배우는 실습 |
+| **Platform Core MCP** | `https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp` | 도구 44종 = 빌드 10 + 데이터 플레인 28 + **노하우 6** · JSON-RPC `tools/list` · `tools/call` |
+
+설계 문서: [`docs/20261019_v1_starter_v5_redesign.md`](docs/20261019_v1_starter_v5_redesign.md)
 
 ---
 
-## 1. 데모 화면 — 6단계
+## 1. 흐름 — 4단계 구성 + 스튜디오 + 인계
 
-![데이터 흐름 (KO)](docs/images/starter_dataflow_ko.png)
+```text
+⓪ 이해      전체 흐름도: 입력 → 수집 · CQ → OKF 위키 → Property Graph → 에이전트 → 평가 (P1 문서 · P3 통합 · P2 테이블)
+① 상황·목적  프리셋(통신 · 화장품 · 금융 · 보험 · 직접 입력) + 업무 목적 + 질문 유형 W1 규정 안내 · W2 데이터 조회 · W3 판정 · 계산
+② GCP·권한   프로젝트 · 리전 · 버킷 · 데이터셋 · 그래프 + 신원(데모 · 내 토큰 · SA) → 실제 권한 점검 + 그대로 실행할 설정 스크립트
+③ 데이터     파일 업로드(.md .txt .csv) · GCS 경로 · BigQuery 테이블 · 샘플 팩 — 섞어 쓰기 가능, P1/P2/P3 자동 결정
+④ 구축       S0 준비 → S1 수집 · 프로파일 → S2 CQ → S3 OKF 위키 → S4 Property Graph → S5 평가 (단계별 재실행)
+스튜디오     개요 · 자산 · 위키(보기 · 편집 · 게이트) · 그래프(스키마 · GQL/SQL 콘솔 · 설계 편집 → 재구축) · 검색 · 에이전트 실험 · 평가(CQ 편집)
+인계        CLI 재현 명령 · MCP 호출 로그(도구 + 파라미터, curl) · MCP 클라이언트 설정 · 단일 파일 에이전트 · 번들(zip)
+```
 
-| 단계 | 하는 일 | 실제로 호출하는 것 |
+| 단계 | 하는 일 | Core MCP 호출 |
 | :---: | :--- | :--- |
-| **1. 유형 · 목적** | 데이터 유형(문서만 P1 · 테이블만 P2 · 문서 + 테이블 P3) × 목적(규정 안내 W1 · 원장 조회 W2 · 판정 · 계산 W3)을 고르면 구성(Flow A · B · C), 실행할 에이전트, 만들어질 리소스가 정해집니다 | `/api/catalog` (서버 안 데이터 팩) |
-| **2. 흐름 확인** | 위 흐름도에서 선택한 구성의 범위가 강조되고, 3~6단계에서 어떤 서비스 · 리소스 · Core MCP 도구가 쓰이는지 목록으로 보여 줍니다 | — |
-| **3. GCP 리소스** | 프로젝트 · 리전 · 데이터셋 · 버킷 · 그래프 이름 · (선택) Spanner · 모델을 입력하고 실제로 확인합니다: 버킷 · 데이터셋 권한, BigQuery Graph 예약, Gemini 응답, Core MCP 연결. 실패하면 부족한 역할과 해결 명령을 보여 줍니다 | Core MCP `iam_test_permissions` · `storage_list_objects` · `bigquery_get_dataset_info` · `bigquery_check_reservation` · `tools/list`, Vertex AI |
-| **4. 데이터 적재** | 입력한 리소스에 실제로 적재합니다(문서 · 위키 → GCS `starter/<lang>/`, 테이블 → BigQuery, Property Graph DDL). 단계마다 Core MCP 도구 · 대상 · 건수 · ms를 실행 기록으로 남기고, 다시 실행해도 결과가 같습니다(덮어쓰기 · `WRITE_TRUNCATE` · `CREATE OR REPLACE`) | Core MCP `mcp_builder_parse_documents_gate0` · `mcp_builder_compile_okf_wiki_stage2` · `storage_upload_object` · `bigquery_create_dataset` · `bigquery_load_table` · `mcp_builder_synthesize_bqg_stage4` · `bigquery_execute_sql` |
-| **5. 에이전트 실행** | 구성에 포함된 에이전트와 대화합니다. 답변마다 근거 패널에 위키 페이지 · SQL/GQL · 결과 행 · 도구 호출 · 시간 · 토큰이 나옵니다 | Core MCP `storage_read_object` · `bigquery_execute_sql`, Vertex AI `gemini-4-argon` |
-| **6. 평가** | 기준 CQ(Competency Question)를 다시 묻고 기대 숫자 · 핵심어 일치로 채점합니다(LLM 채점 없음, 통과 1 · 부분 0.5 · 실패 0) | 5단계와 같음 |
+| S0 준비 | 버킷 권한 · 데이터셋 생성(데모 신원이면 테이블 7일 만료) · `workspace.json` | `iam_test_permissions` · `bigquery_get_dataset_info` · `bigquery_create_dataset` · `storage_upload_object` |
+| S1 수집 · 프로파일 | 문서 읽기 · CSV → BigQuery(병렬) · BigQuery 테이블 프로파일(복사 없음) · Gate 0 · PK/FK 스코핑 | `storage_read_object` · `bigquery_load_table` · `bigquery_get_table_info` · `bigquery_execute_sql` · `mcp_builder_parse_documents_gate0` · **`mcp_knowhow_scope`** |
+| S2 CQ | 목적 기반 역량 질문 + 기준 답 + 핵심 사실 | **`mcp_knowhow_draft_cqs`** |
+| S3 OKF 위키 | 요약 · 엔티티 · 개념 + 정책 상수(단일 출처) + applies_to + 게이트 W1~W7 → GCS | **`mcp_knowhow_compile_wiki`** · `storage_upload_object` |
+| S4 Property Graph | 설계 → 노드 · 엣지 테이블(SQL) → `CREATE PROPERTY GRAPH` → 검증 GQL | **`mcp_knowhow_design_graph`** · `bigquery_execute_sql` · `bigquery_load_table` |
+| S5 평가 | 모든 CQ를 담당 에이전트로 다시 묻고 채점 | **`mcp_knowhow_agent_step`** · 데이터 도구 · **`mcp_knowhow_judge`** |
 
-입력값과 결과는 브라우저(`localStorage`)에만 저장되고, 3단계에서 입력한 리소스가 이후 모든 요청에 함께 전달됩니다. 서버 전역 설정은 바뀌지 않으므로 여러 사람이 서로 다른 프로젝트로 동시에 쓸 수 있습니다. 주소 `#step-1` … `#step-6`, `?lang=en`, `?recipe=A|B|C`로 바로 열 수 있습니다.
-
-### Flow A · B · C
-
-| 구성 | 1단계 선택 | 에이전트 | 4단계에서 만들어지는 것 | 6단계 기준 CQ |
-| :---: | :--- | :--- | :--- | :---: |
-| **A · 문서 중심** | P1 문서만 × W1 규정 안내 | Wiki Agent | GCS `starter/<lang>/` — 원본 문서 2 · OKF 위키 페이지 3 · `manifest.json` | 7 |
-| **B · 테이블 중심** | P2 테이블만 × W2 원장 조회 | Graph Agent | BigQuery 테이블 9(원천 6 + 원장 엣지 3) · `STARTER_LEDGER_GRAPH` | 4 |
-| **C · 통합** | P3 문서 + 테이블 × W3 판정 · 계산 (위 둘을 뺀 나머지 조합도 C) | Wiki · Graph · Workflow Agent | GCS 문서 2 · 위키 4 · manifest + BigQuery 테이블 17 · `STARTER_ONTOLOGY_GRAPH` | 11 |
-
-- Flow B와 C는 그래프 이름이 달라 서로 덮어쓰지 않습니다.
-- Workflow Agent는 판정 전에 **G2-W**(위키 `rules.md`의 정책값이 원장 · 그래프 값과 같은지)를 확인하고, 답변에 W3 단계별 실행 결과를 붙입니다.
+실측(2026-10-19, `gemini-4-argon` MEDIUM): 샘플 팩 KO 구축 약 7분 · 평가 **100 (8/8)** · 업로드한 보험 청구 심사 데이터(문서 1 + CSV 3) 구축 약 6.5분 · 평가 **100 (8/8)**, Property Graph 검증 GQL 전부 통과.
 
 ---
 
-## 2. 아키텍처
-
-![적재 위치와 에이전트 (KO)](docs/images/starter_resources_ko.png)
+## 2. 3개 층 — 무엇이 공개이고 무엇이 보호되나
 
 ```text
-브라우저 (src/web/static/app.js)
-  └─ 스타터 서버 (src/web/studio_server.py · 표준 라이브러리 HTTP · JSON / NDJSON 스트림)
-       ├─ Platform Core MCP  ── GCS · BigQuery · Spanner · IAM · 예약 · 빌드 도구 (JSON-RPC tools/call)
-       │     요청 헤더 X-AOS-Access-Token = 스타터 서버의 OAuth 토큰
-       └─ Vertex AI gemini-4-argon (직접 호출 · 에이전트 답변 thinking LOW · 빌드 · 추출 HIGH)
+브라우저 / CLI / 내 코드
+  └─ 스타터 (이 저장소: 화면 · 순서 · CLI · 워크스페이스 형식)
+       ├─ Platform Core MCP ─ 노하우 mcp_knowhow_* (무상태 · 프롬프트 · 규칙 · 게이트)  ← 보호
+       │                    └ 데이터 플레인 storage_* · bigquery_* · iam_* (호출자 토큰으로만 실행)
+       └─ Vertex AI (상태 점검 · 기본 모델 gemini-4-argon)
+  모든 결과물 · Gemini 비용 = 내 GCP (GCS 워크스페이스 · BigQuery 데이터셋 · Property Graph)
 ```
 
-- **GCS · BigQuery · Spanner · IAM 호출은 모두 Core MCP를 거칩니다.** 스타터 서버가 직접 부르는 GCP API는 Vertex AI(Gemini) 하나뿐입니다.
-- **Core MCP는 Zero-Privilege입니다.** Core MCP 자신의 서비스 계정에는 데이터 권한이 없고, 데이터 도구는 호출자가 `X-AOS-Access-Token` 헤더로 넘긴 토큰으로만 실행됩니다. 토큰이 없으면 `401 AUTH_REQUIRED`입니다. 따라서 실제 권한은 **스타터 서버를 실행하는 주체**(Cloud Run 런타임 서비스 계정, 로컬에서는 `gcloud` 로그인 계정)가 가진 IAM 역할로 결정됩니다.
-- Core MCP 일시 오류(502 · 503 · 504)는 재시도합니다. `AOS_CORE_MCP_FALLBACK=strict`(기본)이면 Core MCP에 닿지 못할 때 직접 API로 우회하지 않고 오류를 그대로 보여 줍니다.
-- **쓰기 보호**: 4단계 적재는 `STARTER_WRITE_PROJECTS`에 있는 프로젝트에만 실행됩니다(기본값 = `GCP_PROJECT_ID`). 다른 프로젝트는 3단계 확인과 조회만 됩니다.
-- **BigQuery Graph는 Enterprise(또는 Enterprise Plus) 예약이 필요합니다.** 예약이 없는 프로젝트에서는 Property Graph DDL · GQL이 `HTTP 412`로 실패합니다. 3단계 확인이 이를 미리 알려 주고 예약 생성 명령을 보여 줍니다.
-
----
-
-## 3. KO / EN 데이터 세트
-
-| 데이터 | 위치 | 비고 |
+| 노하우 도구 | 입력 | 출력 |
 | :--- | :--- | :--- |
-| 정책 문서 2종 | `data/input/01_guides/{ko,en}/` | `DOC_CHUNK_00x` 조항 앵커 |
-| OKF 위키 4페이지 | `data/llm_wiki/{ko,en}/` | `rules.md` frontmatter = 정책값 단일 출처 |
-| 테이블 17종 | `data/input/03_tables/` + `table_specs.json` | 라벨 컬럼은 `*_ko` / `*_en`, 컬럼 설명 KO · EN |
-| 기준 CQ · 경계 질문 | `data/input/04_cq/{ko,en}/` | 기대 숫자 · 핵심어 |
-| 용어집 · 워크플로우 | `data/input/05_glossary/{ko,en}/` · `data/input/06_workflows/` | W1~W3 단계 · 규칙 바인딩 |
+| `mcp_knowhow_scope` | 목적 · 문서 머리말 · 테이블 스키마 + 표본 | 데이터 유형 · 질문 유형 · 문서 역할 · PK · FK 후보 · 단계 · 에이전트 |
+| `mcp_knowhow_draft_cqs` | 목적 · 문서 · 테이블 표본 | CQ(질문 · 유형 · 기준 답 · 핵심 사실) |
+| `mcp_knowhow_compile_wiki` | 문서 · 테이블 컬럼 (또는 `mode=validate` + 편집한 페이지) | OKF 페이지 · Markdown · 게이트 · 인덱스 |
+| `mcp_knowhow_design_graph` | 테이블 · 위키 페이지 · 데이터셋 · 그래프 이름 (또는 편집한 `design`) | 검증된 설계 · 실행 SQL · 적재 행 · 그래프 DDL · 검증 GQL · 에이전트 스키마 |
+| `mcp_knowhow_agent_step` | 에이전트 · 질문 · 컨텍스트 · 관찰 | 다음 행동(`read_wiki` · `gql` · `sql` · `answer`), 계산은 도구 안에서 |
+| `mcp_knowhow_judge` | 질문 · 기준 답 · 핵심 사실 · 답변 | 판정(1 · 0.5 · 0) |
 
-- EN 화면은 영어 세트로 적재 · 질의 · 채점하고, 에이전트 지시문 · 답변 · 근거 라벨도 영어입니다. ID · 키 · 숫자는 KO와 같아서 같은 질문에는 같은 숫자가 정답입니다(테스트로 확인).
-- GCS는 언어별 경로(`starter/ko/`, `starter/en/`)에 따로 올리고, BigQuery 테이블은 두 언어가 같이 씁니다(라벨 컬럼이 언어별로 따로 있음). Wiki Agent를 영어로 쓰려면 영어 화면에서 4단계를 한 번 실행하세요.
+- 노하우 도구는 데이터를 저장하지 않고, Gemini는 **호출자 토큰 · 호출자 프로젝트**로 실행합니다. Core MCP 서비스 계정에는 데이터 권한이 없습니다.
+- 에이전트 루프는 스타터(또는 내 코드)가 돕니다: `agent_step` → 행동 실행(내 신원) → 관찰 전달 → … → `answer`.
 
 ---
 
-## 4. 코드 구조
+## 3. 신원 — "특정 권한 SA를 주면"
+
+| 모드 | 동작 | 언제 |
+| :--- | :--- | :--- |
+| 데모 (`runtime`) | 스타터 서버 신원. 쓰기는 `STARTER_WRITE_PROJECTS`만 | 공개 스튜디오에서 바로 체험 |
+| 내 토큰 (`token`) | `gcloud auth print-access-token` 또는 `--impersonate-service-account=SA`로 만든 토큰을 붙여 넣기. 서버는 저장 · 기록하지 않음(브라우저 탭에만 보관) | 공개 스튜디오에서 **내 프로젝트 · 내 SA**로 구축 |
+| SA 위임 (`impersonate`) | SA 이메일만 입력 → 서버가 IAM Credentials로 단기 토큰 발급 (`STARTER_IMPERSONATE_ALLOW` 패턴에 맞는 SA만, 런타임 SA에 Token Creator 필요) | 내가 배포한 스타터 |
+
+② 단계의 **설정 스크립트**가 API 활성화 · 버킷 · 전용 SA(`aos-starter@`) · 최소 역할(`bigquery.dataEditor` · `bigquery.jobUser` · `aiplatform.user` · 버킷 `storage.objectAdmin`) · Graph 예약 · 토큰 발급까지 그대로 만들어 줍니다.
+
+---
+
+## 4. 빠른 시작
+
+### 4.1 공개 스튜디오
+1. [스튜디오](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/) → **샘플로 바로 체험** (데모 신원 · 샘플 팩) → **전체 실행**
+2. 내 데이터: **내 데이터로 시작** → 목적 입력 → 신원에 토큰(또는 SA 토큰) → 버킷 · 프로젝트 → **환경 점검** → 데이터 업로드 → 구축
+3. 스튜디오에서 위키 · 그래프 · 에이전트를 실험하고 **코드 · MCP 인계**에서 번들을 내려받습니다. 워크스페이스는 `?bucket=<버킷>&ws=<ID>` 링크로 다시 열 수 있습니다.
+
+### 4.2 로컬
+```bash
+git clone https://github.com/seanjungG/agentic-ontology-starter.git && cd agentic-ontology-starter
+gcloud auth login
+cp .env.example .env   # GCP_PROJECT_ID · GCS_WIKI_BUCKET · STARTER_WRITE_PROJECTS · CORE_MCP_URL
+set -a && source .env && set +a
+python3 -m src.web.studio_server        # http://localhost:8080
+```
+
+### 4.3 CLI (화면 없이 같은 파이프라인)
+```bash
+python3 -m src.cli check --project MY_PROJECT --bucket MY_BUCKET --region asia-northeast3
+python3 -m src.cli new --spec spec.json [--impersonate aos-starter@MY_PROJECT.iam.gserviceaccount.com]   # → ws-YYYYMMDD-xxxxxx
+python3 -m src.cli build --bucket MY_BUCKET --ws ws-… [--stages ingest,cqs,wiki,graph,eval]
+python3 -m src.cli ask   --bucket MY_BUCKET --ws ws-… --agent hybrid "질문"
+python3 -m src.cli eval  --bucket MY_BUCKET --ws ws-…
+python3 -m src.cli calls --bucket MY_BUCKET --ws ws-… --stage graph      # MCP 호출 (도구 · 인자 · 상태 · ms)
+```
+`spec.json` = `{"scenario": {"title", "objective", "question_type"}, "env": {"project", "bucket", "region"}, "sources": {"docs": [{"name", "origin": "gcs", "uri": "gs://…"}], "tables": [{"name", "origin": "gcs|bigquery", "uri"|"fq"}]}, "lang": "ko"}`
+
+### 4.4 내 Cloud Run
+```bash
+gcloud run deploy agentic-ontology-starter --source . --region asia-northeast3 \
+  --service-account aos-starter@MY_PROJECT.iam.gserviceaccount.com --timeout 600 \
+  --set-env-vars GCP_PROJECT_ID=MY_PROJECT,BQ_LOCATION=asia-northeast3,GCS_WIKI_BUCKET=MY_BUCKET,STARTER_WRITE_PROJECTS=MY_PROJECT,CORE_MCP_URL=https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp
+```
+
+---
+
+## 5. 워크스페이스 — 결과물의 단위
 
 ```text
-agentic-ontology-starter/
-├── src/
-│   ├── web/studio_server.py      HTTP 서버 · 정적 파일 · API (/api/settings · catalog · verify · load · agent · eval)
-│   ├── web/static/               마법사 화면: index.html · app.js · app.css · i18n.json(KO·EN) · flows.js · aolflow.js/.css
-│   ├── config.py                 요청 단위 리소스 설정(StarterConfig) · 쓰기 허용 프로젝트 · 버전
-│   ├── recipes.py                1단계 선택 → Flow A/B/C · 적재 계획 · 단계 계획 · IAM 표
-│   ├── datapack.py               KO/EN 데이터 팩 로더 · 그래프 DDL 생성
-│   ├── loader.py                 3단계 확인(verify) · 4단계 적재(run_load) — Core MCP 도구 호출
-│   ├── evaluation.py             6단계 기준 CQ 채점
-│   ├── gcp_client.py             Core MCP 클라이언트(토큰 전달 · 재시도) · Vertex AI 호출 · 런타임 설정
-│   ├── agent/agents.py           5단계 Wiki · Graph · Workflow Agent (G2-W 확인 포함)
-│   ├── agent/mcp_server.py       도메인 MCP 도구 3종 — Graph · Workflow Agent가 사용 (SQL은 Core MCP로 실행)
-│   ├── agent/reasoning_engine.py Graph · Workflow Agent 추론 엔진 (Gemini 파라미터 추출 → 도구 → 답변)
-│   ├── agent/i18n_en.py          영어 모드 보조 (mcp_server · reasoning_engine가 사용)
-│   ├── resource_connector.py     이전 포털의 리소스 도우미 — 현재는 공개 URL 등 일부 상수만 사용 (레거시)
-│   └── lineage/                  리니지 엔진 — Stage 5 노트북 전용 (데모 화면은 사용 안 함)
-├── data/                         KO/EN 데이터 팩 (위 3절) · data/output/ = 노트북 참고 산출물 + Spanner DDL
-├── config/                       엔진 · 노트북 설정 (starter_config.json · lineage_spec.json · eval_rubric.json)
-├── notebooks/                    Colab 노트북 12종 (아래 6절)
-├── docs/images/                  README 그림 (KO · EN)
-├── tests/                        pytest
-├── DESIGN.md                     화면 디자인 규격 (토큰 · 흐름도 문법 · KO/EN 규칙)
-├── Dockerfile · .env.example
-└── LICENSE
+gs://<버킷>/aos/<ws_id>/
+  workspace.json · raw/ · parsed/{docs,tables}.json · cqs.json
+  wiki/{01_summary,02_entities,03_concepts}/*.md · wiki/{pages,index,gates}.json
+  graph/plan.json · graph/statements.sql · runs/latest.json · mcp_calls.jsonl
+BigQuery <프로젝트>.<데이터셋 (기본 aos_<ws>)>
+  원천 테이블 · N_<Label> 노드 · E_<LABEL>_<From>_<To> 엣지 · <GRAPH> Property Graph
 ```
+BigQuery Graph는 Enterprise 예약이 필요합니다. 예약이 없으면 그래프 DDL은 실패하지만 노드 · 엣지 테이블은 만들어지고 에이전트는 SQL로 답합니다.
+
+## 6. 코드 · MCP 인계 번들
+
+| 파일 | 용도 |
+| :--- | :--- |
+| `workspace.json` · `.env` | 같은 리소스로 깃헙 스타터를 실행 |
+| `setup_gcp.sh` | GCP 환경 준비 (API · 버킷 · SA · 역할 · 예약 · 토큰) |
+| `run_build.sh` · `ask.sh` | CLI로 재구축 · 질문 · 평가 |
+| `mcp_calls.jsonl` | 실행한 MCP 호출 순서 그대로 (도구 · 인자 · 상태 · ms) |
+| `mcp_config.gemini-cli.json` | MCP 클라이언트에 Core MCP를 도구로 등록하는 예시 (`AOS_ACCESS_TOKEN`) |
+| `aos_agent_standalone.py` | 저장소 없이 Core MCP만으로 워크스페이스에 질문하는 단일 파일 에이전트 |
 
 ---
 
-## 5. 빠른 시작
+## 7. 코드 구조
 
-### 5.1 로컬
-
-```bash
-git clone https://github.com/seanjungG/agentic-ontology-starter.git
-cd agentic-ontology-starter
-
-gcloud auth login                 # 로컬에서는 gcloud 계정 토큰을 Core MCP에 넘깁니다
-cp .env.example .env              # 내 프로젝트 · 데이터셋 · 버킷으로 수정
-set -a && source .env && set +a
-
-python3 -m src.web.studio_server  # http://localhost:8080 (PORT로 변경)
+```text
+src/
+├── web/studio_server.py   HTTP 서버 · 정적 파일 · /api/v5/* (v5_routes.py) · /wizard · /ucc
+├── web/static/            studio.html · studio.js · studio.css · studio_i18n.json(KO·EN) · flows_v5.js (+ 레퍼런스 마법사 index.html · app.js)
+├── aos/ws.py              워크스페이스 · GCS 영속화 · MCP 호출 로그
+├── aos/sources.py         업로드 · GCS · BigQuery · 샘플 팩 · CSV 스키마 추론
+├── aos/pipeline.py        구축 단계 S0~S5
+├── aos/agent.py           Wiki · Graph · Hybrid 에이전트 루프 (추론 = mcp_knowhow_agent_step)
+├── aos/studio.py          프리셋 · 환경 점검 · 설정 스크립트 · 편집 · 쿼리 · 검색 · 번들
+├── identity.py            요청 단위 신원 (runtime · token · impersonate)
+├── cli.py                 CLI
+└── (레퍼런스 마법사) config · recipes · datapack · loader · evaluation · agent/
+data/ · config/ · notebooks/(Colab 12종) · tests/ · docs/
 ```
 
-`gcloud` 계정에는 아래 5.3의 역할이 필요합니다. 버킷은 미리 만들어 두고, 데이터셋은 없으면 4단계에서 만듭니다.
-
-### 5.2 Cloud Run
-
-```bash
-gcloud run deploy agentic-ontology-starter \
-  --source . --region asia-northeast3 \
-  --service-account starter-runtime@MY_PROJECT.iam.gserviceaccount.com \
-  --set-env-vars GCP_PROJECT_ID=MY_PROJECT,BQ_DATASET_ID=starter_ontology_dw,BQ_LOCATION=asia-northeast3,GCS_WIKI_BUCKET=MY_BUCKET,STARTER_WRITE_PROJECTS=MY_PROJECT,CORE_MCP_URL=https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp
-```
-
-`Dockerfile`이 `VERTEX_GEMINI_MODEL=gemini-4-argon`, `VERTEX_LOCATION=global`, `VERTEX_THINKING_LEVEL=LOW`, `VERTEX_BUILD_THINKING_LEVEL=HIGH`를 넣습니다. Cloud Run에서는 런타임 서비스 계정 토큰(메타데이터 서버)을 Core MCP에 넘깁니다. 공개로 열 때(`--allow-unauthenticated`)는 쓰기 대상이 `STARTER_WRITE_PROJECTS`로 제한된다는 점을 확인하세요.
-
-### 5.3 실행 주체에 필요한 IAM 역할
-
-| 단계 | 역할 | 범위 | 이유 |
-| :---: | :--- | :--- | :--- |
-| 3 | `roles/aiplatform.user` | 프로젝트 | Gemini 확인 · 에이전트 답변 |
-| 3 | `roles/bigquery.metadataViewer` | 프로젝트 또는 데이터셋 | 데이터셋 · 그래프 확인 |
-| 3 | `roles/bigquery.resourceViewer` (선택) | 프로젝트 | Enterprise 예약 할당 확인 |
-| 4 | `roles/storage.objectAdmin` | 버킷 | 문서 · 위키 업로드 (`starter/<lang>/`) |
-| 4 | `roles/bigquery.dataEditor` | 프로젝트(데이터셋 생성 시) 또는 데이터셋 | 데이터셋 · 테이블 · 그래프 생성과 적재 |
-| 4 | `roles/bigquery.jobUser` | 프로젝트 | 적재 · DDL · 쿼리 작업 |
-| 4 | `roles/spanner.databaseUser` + `databaseAdmin` (선택) | Spanner DB | Spanner 그래프 갱신을 켤 때만 |
-| 5·6 | `roles/bigquery.dataViewer` · `roles/storage.objectViewer` | 데이터셋 · 버킷 | 에이전트 조회 (4단계 역할에 포함) |
-
-Core MCP 서비스 자체에는 데이터 역할을 주지 않습니다(호출자 토큰으로 실행). Core MCP를 인증 필요 서비스로 배포했다면 호출 주체에 `roles/run.invoker`도 필요합니다.
-
-BigQuery Graph 예약(없으면 HTTP 412) 예시:
-
-```bash
-bq mk --reservation --project_id=MY_PROJECT --location=asia-northeast3 --edition=ENTERPRISE \
-  --slots=0 --autoscale_max_slots=50 starter-graph-enterprise
-bq mk --reservation_assignment --reservation_id=MY_PROJECT:asia-northeast3.starter-graph-enterprise \
-  --job_type=QUERY --assignee_type=PROJECT --assignee_id=MY_PROJECT
-```
-
-### 5.4 환경 변수
+## 8. 환경 변수
 
 | 변수 | 기본값 | 설명 |
 | :--- | :--- | :--- |
-| `GCP_PROJECT_ID` | — | 기본 프로젝트 (3단계 입력의 기본값) |
-| `BQ_DATASET_ID` · `BQ_LOCATION` | `starter_ontology_dw` · `asia-northeast3` | 기본 데이터셋 · 리전 |
-| `GCS_WIKI_BUCKET` (또는 `GCS_BUCKET_NAME`) | — | 기본 버킷 |
-| `SPANNER_INSTANCE_ID` · `SPANNER_DATABASE_ID` | `starter-spanner` · `starter_ontology_db` | 선택 기능(Spanner 그래프 갱신) |
+| `GCP_PROJECT_ID` · `BQ_LOCATION` · `GCS_WIKI_BUCKET` | — · `asia-northeast3` · — | 기본 리소스 (② 단계 기본값) |
 | `VERTEX_GEMINI_MODEL` · `VERTEX_LOCATION` | `gemini-4-argon` · `global` | Gemini 모델 |
-| `VERTEX_THINKING_LEVEL` · `VERTEX_BUILD_THINKING_LEVEL` | `LOW` · `HIGH` | 대화 / 빌드 · 추출 thinking 수준 |
-| `CORE_MCP_URL` | Core MCP `/mcp` 주소 | Platform Core MCP 엔드포인트 (요청으로는 바꿀 수 없음) |
-| `AOS_CORE_MCP_FALLBACK` | `strict` | `direct`로 두면 Core MCP 장애 시 직접 API로 우회 (개발용) |
-| `STARTER_WRITE_PROJECTS` | `GCP_PROJECT_ID` | 적재를 허용할 프로젝트 목록 (쉼표 구분, `*` = 모두) |
+| `CORE_MCP_URL` | Core MCP `/mcp` | Platform Core MCP (요청으로 바꿀 수 없음) |
+| `STARTER_WRITE_PROJECTS` | `GCP_PROJECT_ID` | 데모 신원이 쓸 수 있는 프로젝트 (`*` = 모두). 사용자 신원에는 적용 안 함 |
+| `STARTER_IMPERSONATE_ALLOW` | (비어 있음 = 끔) | 서버 측 SA 위임을 허용할 SA 패턴 (예: `*@my-project.iam.gserviceaccount.com`) |
+| `AOS_CORE_MCP_FALLBACK` | `strict` | `direct`면 Core MCP 장애 시 직접 API 우회 (개발용) |
 | `PORT` | `8080` | HTTP 포트 |
 
----
-
-## 6. Colab 노트북 (12종)
-
-데모 화면이 **무엇을 · 어떤 순서로** 하는지 보여 준다면, 노트북은 같은 방법론을 **코드 수준**으로 따라갑니다. 자세한 안내: [`notebooks/README.md`](notebooks/README.md)
-
-| 단계 | 내용 | 한국어 | English |
-| :---: | :--- | :--- | :--- |
-| Stage 0 | 전체 흐름 워크스루 | [ko](notebooks/ko/stage0_overview_walkthrough_ko.ipynb) | [en](notebooks/en/stage0_overview_walkthrough_en.ipynb) |
-| Stage 1 | 입력 자산 · 테이블 프로파일링 · Golden CQ | [ko](notebooks/ko/stage1_asset_and_cq_ko.ipynb) | [en](notebooks/en/stage1_asset_and_cq_en.ipynb) |
-| Stage 2 | 조항 앵커 · 3-Layer 위키 · 룰 바인딩 | [ko](notebooks/ko/stage2_wiki_and_semantic_graph_ko.ipynb) | [en](notebooks/en/stage2_wiki_and_semantic_graph_en.ipynb) |
-| Stage 3 | Property Graph DDL · GQL | [ko](notebooks/ko/stage3_property_graph_bigquery_spanner_ko.ipynb) | [en](notebooks/en/stage3_property_graph_bigquery_spanner_en.ipynb) |
-| Stage 4 | 도메인 MCP 도구 · 에이전트 | [ko](notebooks/ko/stage4_agent_and_mcp_execution_ko.ipynb) | [en](notebooks/en/stage4_agent_and_mcp_execution_en.ipynb) |
-| Stage 5 | 리니지 · 평가 | [ko](notebooks/ko/stage5_lineage_and_evaluation_ko.ipynb) | [en](notebooks/en/stage5_lineage_and_evaluation_en.ipynb) |
-
----
-
-## 7. 테스트
-
+## 9. 테스트
 ```bash
-python3 -m pip install pytest      # 테스트에만 필요
-python3 -m pytest tests -q
+python3 -m pip install pytest && python3 -m pytest tests -q
 ```
-
-정적 파일 서빙과 경로 탈출 차단, KO/EN 문구 키 · 자리표시자 동등성(EN 한글 0), KO/EN 데이터 팩 동등성(같은 ID · 숫자), 구성 · 적재 계획, API 요청 검증(설정 오류는 GCP 호출 전에 400)을 확인합니다. GCP 호출이 없는 테스트만 들어 있습니다. 실제 적재 · 에이전트 확인은 데모 화면 3~6단계로 합니다.
+v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 검증 · CSV 추론 · 쿼리 가드 · 신원 오류(네트워크 호출 전 401) + 레퍼런스 마법사 테스트. GCP 호출이 없는 테스트만 들어 있습니다.
 
 ---
 
 ## English summary
 
-**Agentic Ontology Starter** turns policy documents and ledger tables into an **OKF wiki** and a **BigQuery Property Graph**, then runs and scores **Wiki, Graph and Workflow agents** on your own GCP resources. The data pack is synthetic (a fictional telecom's handset subsidy rules and ledgers) and ships in a **Korean and an English set** with the same ids and numbers. The server uses only the Python 3.11 standard library.
+**Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, BigQuery Property Graph, Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `mcp_knowhow_*` tools**; this repository holds which tools are called in which order with which parameters.
 
-- **Demo (6-step wizard)**: https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/ — 1 type & purpose → 2 flow → 3 verify GCP resources (real permission, reservation, Gemini and Core MCP checks) → 4 load data (GCS `starter/<lang>/`, BigQuery tables, property graph; streamed log of every Core MCP call) → 5 chat with the agents (evidence panel: wiki pages, SQL/GQL, rows, tool calls, timing) → 6 golden-CQ evaluation (numbers and key terms, no LLM judge).
-- **Recipes**: Flow A = P1 documents × W1 policy guidance → Wiki Agent, 7 CQs · Flow B = P2 tables × W2 ledger lookup → Graph Agent, 4 CQs · Flow C = P3 documents + tables × W3 decide & calculate (and every other combination) → all three agents incl. the G2-W policy-value check, 11 CQs.
-- **Architecture**: every GCS, BigQuery, Spanner and IAM call goes through the **Platform Core MCP** (`/mcp`, 38 tools = 10 build + 28 data-plane). The Core MCP is **zero-privilege**: data tools run only with the caller's OAuth token sent in `X-AOS-Access-Token` (no token → `401 AUTH_REQUIRED`), so permissions are those of the identity running the starter server. Only Vertex AI (`gemini-4-argon`) is called directly. Loads are limited to `STARTER_WRITE_PROJECTS`. BigQuery Graph needs an Enterprise reservation (HTTP 412 otherwise).
-- **Quick start**: `gcloud auth login`, `cp .env.example .env`, edit, `set -a && source .env && set +a`, `python3 -m src.web.studio_server`. Cloud Run: `gcloud run deploy agentic-ontology-starter --source . --region asia-northeast3 --service-account … --set-env-vars GCP_PROJECT_ID=…,GCS_WIKI_BUCKET=…,STARTER_WRITE_PROJECTS=…,CORE_MCP_URL=…`. Required roles per step are listed in 5.3.
-- **Notebooks**: 6 Colab notebooks in Korean and English walk through the same method at code level — see [`notebooks/README.md`](notebooks/README.md). **Tests**: `python3 -m pytest tests -q`.
+- **Flow**: understand → situation & goal (presets or custom, W1/W2/W3) → GCP & permissions (demo identity, pasted token, or SA; live checks + a ready-to-run setup script) → data (upload .md/.txt/.csv, GCS paths, BigQuery tables, sample pack) → build S0–S5 (re-run any stage) → studio (assets, wiki edit + gates, graph schema + GQL/SQL console + design rebuild, search, agent experiments, CQ evaluation) → hand-off (CLI, MCP call log with curl, MCP client config, single-file agent, zip bundle).
+- **Measured** (2026-10-19, `gemini-4-argon` MEDIUM): sample pack ~7 min build, eval **100 (8/8)**; an uploaded insurance-claims data set (1 doc + 3 CSVs) ~6.5 min, eval **100 (8/8)**.
+- **Security**: the Core MCP is zero-privilege; data tools and Gemini run with the caller's token in the caller's project. Pasted tokens are never stored. Demo writes are limited to `STARTER_WRITE_PROJECTS`; server-side SA impersonation only for `STARTER_IMPERSONATE_ALLOW`.
+- **Quick start**: `python3 -m src.web.studio_server` (local) · `python3 -m src.cli build --bucket … --ws …` (CLI) · `gcloud run deploy … --source .` (your Cloud Run). The curated reference wizard stays at `/wizard`.
 
 ## License
 

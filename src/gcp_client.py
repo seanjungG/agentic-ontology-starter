@@ -35,8 +35,9 @@ DEFAULT_GCS_BUCKET = (
 )
 DEFAULT_GEMINI_MODEL = os.environ.get("VERTEX_GEMINI_MODEL", "gemini-4-argon")
 DEFAULT_VERTEX_LOCATION = os.environ.get("VERTEX_LOCATION", "global")
-DEFAULT_THINKING_LEVEL = os.environ.get("VERTEX_THINKING_LEVEL", "LOW").upper()
-DEFAULT_BUILD_THINKING_LEVEL = os.environ.get("VERTEX_BUILD_THINKING_LEVEL", "HIGH").upper()
+# GOAL-228: gemini-4-argon thinkingLevel MEDIUM for chat/agent answers AND build/extraction (HIGH was 2-3x slower).
+DEFAULT_THINKING_LEVEL = os.environ.get("VERTEX_THINKING_LEVEL", "MEDIUM").upper()
+DEFAULT_BUILD_THINKING_LEVEL = os.environ.get("VERTEX_BUILD_THINKING_LEVEL", "MEDIUM").upper()
 DEFAULT_GEMINI_TIMEOUT_S = int(os.environ.get("VERTEX_TIMEOUT_S", "150"))
 DEFAULT_SPANNER_INSTANCE = os.environ.get("SPANNER_INSTANCE_ID", "starter-spanner")
 DEFAULT_SPANNER_DATABASE = os.environ.get("SPANNER_DATABASE_ID", "starter_ontology_db")
@@ -93,8 +94,16 @@ _SPANNER_SESSIONS: Dict[Tuple[str, str, str], Tuple[str, float]] = {}
 
 
 def get_gcp_token() -> str:
-    """Retrieves a valid GCP OAuth2 access token from Cloud Run Metadata Server or gcloud CLI."""
+    """Retrieves a valid GCP OAuth2 access token: the request-bound user/SA token (src.identity, GOAL-233) if any,
+    else the runtime identity from the Cloud Run Metadata Server or the gcloud CLI."""
     global _CACHED_TOKEN, _TOKEN_EXPIRY
+    try:
+        from src.identity import current_token
+        bound = current_token()
+    except Exception:  # identity module unavailable (stand-alone use)
+        bound = None
+    if bound:
+        return bound
     now = time.time()
     if _CACHED_TOKEN and now < _TOKEN_EXPIRY:
         return _CACHED_TOKEN
@@ -350,7 +359,7 @@ _LEVEL_MODELS: set = set()  # models that reject thinkingBudget and need thinkin
 def _thinking_cfg(model_name: str, level: str) -> Dict[str, Any]:
     """gemini-4-* rejects `thinkingBudget` (HTTP 400) and accepts `thinkingLevel` LOW/MEDIUM/HIGH (MINIMAL rejected)."""
     if model_name.startswith("gemini-4") or model_name in _LEVEL_MODELS:
-        lvl = level if level in ("LOW", "MEDIUM", "HIGH") else "LOW"
+        lvl = level if level in ("LOW", "MEDIUM", "HIGH") else "MEDIUM"
         return {"thinkingLevel": lvl}
     return {"thinkingBudget": 0}
 
@@ -371,8 +380,8 @@ def call_vertex_gemini(
     Calls the real Vertex AI Gemini model (`$VERTEX_GEMINI_MODEL`, default `gemini-4-argon`) on `location`
     (default `$VERTEX_LOCATION`, request-scoped callers pass their own).
     Never downgrades the model silently; returns full telemetry (model, latency_ms, token usage, text).
-    Thought tokens count against maxOutputTokens, so the limit is floored at 2048 and an empty
-    MAX_TOKENS answer is retried with a 4x larger limit. 429/5xx/timeouts are retried with backoff.
+    Thought tokens count against maxOutputTokens, so the limit is floored (LOW 2048 / MEDIUM 8192 / HIGH 16384)
+    and an empty MAX_TOKENS answer is retried with a 4x larger limit. 429/5xx/timeouts are retried with backoff.
     """
     t0 = time.perf_counter()
     location = location or DEFAULT_VERTEX_LOCATION
@@ -382,7 +391,7 @@ def call_vertex_gemini(
         f"publishers/google/models/{model_name}:generateContent"
     )
     eff_level = str(thinking_level or DEFAULT_THINKING_LEVEL).upper()
-    min_out = 16384 if eff_level == "HIGH" else 2048
+    min_out = {"HIGH": 16384, "MEDIUM": 8192}.get(eff_level, 2048)
     gen_cfg: Dict[str, Any] = {
         "temperature": temperature,
         "maxOutputTokens": max(int(max_tokens), min_out),
@@ -1001,6 +1010,13 @@ def error_message(payload: Any) -> str:
 
 def token_principal() -> str:
     """Email of the identity behind get_gcp_token() (Cloud Run SA, or the gcloud user locally)."""
+    try:
+        from src.identity import current
+        bound = current()
+        if bound.get("mode") in ("token", "impersonate") and bound.get("principal"):
+            return str(bound["principal"])
+    except Exception:
+        pass
     now = time.time()
     if _PRINCIPAL["email"] and now - _PRINCIPAL["at"] < 600:
         return _PRINCIPAL["email"]

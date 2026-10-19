@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UCC · Enterprise Agentic Ontology — BRD · SDD</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="/static/ucc.css">
+</head>
+<body>
+<!-- UCC shared-doc viewer (GOAL-230/231): BRD ⇄ SDD tabs, KO/EN toggle, Demo is a one-way link (the demo app has no "back" control). All visible strings are set by ucc.js (I18N). -->
+<header class="ucc-top">
+  <a class="ucc-brand" href="/" title="Agentic Ontology Starter"><svg class="glogo" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg><span>Agentic Ontology Starter</span><span class="ucc-crumb">/ UCC</span></a>
+  <nav class="ucc-tabs" id="ucc-tabs" aria-label="문서">
+    <a class="ucc-tab" data-doc="brd" href="/ucc/brd">BRD <small></small></a>
+    <a class="ucc-tab" data-doc="sdd" href="/ucc/sdd">SDD <small></small></a>
+    <a class="ucc-tab ucc-demo" id="ucc-demo" href="#" rel="noopener">Demo <small></small><span class="arrow">↗</span></a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="ucc-meta" id="ucc-meta"></span>
+  <span class="lang-toggle" id="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="ko">KO</button><button type="button" data-lang="en">EN</button></span>
+  <button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-toggle-panel" title="">💬 <span id="ucc-count">0</span></button>
+</header>
+
+<div class="ucc-layout">
+  <aside class="ucc-toc" id="ucc-toc" aria-label="목차"></aside>
+  <main class="ucc-main">
+    <div class="ucc-doc-head">
+      <div class="ucc-doc-title" id="ucc-doc-title">Loading…</div>
+      <div class="ucc-doc-sub" id="ucc-doc-sub"></div>
+    </div>
+    <article class="ucc-doc" id="ucc-doc"></article>
+    <p class="ucc-foot" id="ucc-foot"></p>
+  </main>
+  <aside class="ucc-panel" id="ucc-panel" aria-label="코멘트">
+    <div class="ucc-panel-head"><b id="ucc-panel-title"></b> <span class="ucc-dim" id="ucc-panel-sub"></span><span class="spacer"></span><button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-admin" title="">🔑</button><button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-refresh" title="">↻</button></div>
+    <div class="ucc-panel-list" id="ucc-panel-list"></div>
+  </aside>
+</div>
+
+<div class="ucc-composer" id="ucc-composer" hidden>
+  <div class="ucc-composer-head"><span id="ucc-composer-sec"></span><span class="spacer"></span><button type="button" class="ucc-x" id="ucc-composer-close" aria-label="닫기">×</button></div>
+  <blockquote class="ucc-quote" id="ucc-composer-quote" hidden></blockquote>
+  <input type="text" id="ucc-author" maxlength="80" placeholder="">
+  <textarea id="ucc-text" maxlength="2000" rows="4" placeholder=""></textarea>
+  <div class="ucc-composer-foot"><span class="ucc-dim" id="ucc-composer-hint"></span><span class="spacer"></span><button type="button" class="ucc-btn" id="ucc-cancel"></button><button type="button" class="ucc-btn ucc-btn-primary" id="ucc-send"></button></div>
+</div>
+
+<div class="ucc-toast" id="ucc-toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "strict", fontFamily: "Pretendard Variable, Pretendard, sans-serif" });
+  window.__mermaid = mermaid;
+  window.dispatchEvent(new Event("mermaid-ready"));
+</script>
+<script src="/static/ucc.js"></script>
+</body>
+</html>

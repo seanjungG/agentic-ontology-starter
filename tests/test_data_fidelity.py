@@ -123,7 +123,7 @@ class StarterMinimalVerificationTests(unittest.TestCase):
                 self.assertEqual(r.status, 200)
                 # GOAL-223: the 6-tab page was replaced by the 6-step wizard (static shell + app.js)
                 self.assertIn("Agentic Ontology Starter", html)
-                self.assertIn("/static/app.js", html)
+                self.assertIn("/static/studio.js", html)  # GOAL-233: "/" = v5 studio, the wizard moved to /wizard
                 self.assertIn('id="lang-toggle"', html)
 
             for ep in ("/health", "/api/settings", "/api/catalog", "/api/catalog?lang=en", "/static/i18n.json"):

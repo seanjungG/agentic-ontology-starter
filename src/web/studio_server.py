@@ -11,7 +11,8 @@ Six steps: 1 type & purpose → 2 flow → 3 GCP resources (real checks) → 4 l
 → 5 run agents (streamed) → 6 evaluate (streamed). Every request carries the resources entered in step 3
 (request-scoped StarterConfig); global defaults come from the environment and are never mutated.
 
-  GET  /                      index.html
+  GET  /                      studio.html (v5 studio, GOAL-233) · GET /wizard = classic 6-step wizard (index.html)
+  GET  /api/v5/bootstrap · POST /api/v5/*   v5 studio API — see src/web/v5_routes.py
   GET  /static/<file>         static assets (flat directory, whitelisted extensions)
   GET  /health                version · project · model
   GET  /api/settings          env defaults, graph names per recipe, writable projects
@@ -24,6 +25,10 @@ Six steps: 1 type & purpose → 2 flow → 3 GCP resources (real checks) → 4 l
   POST /api/mcp/execute       one domain MCP tool              {config, recipe, lang, tool_name, args}
   GET  /api/core-mcp/tools    Platform Core MCP tools/list
   POST /api/core-mcp/call     Platform Core MCP tools/call (mcp_builder_* only)
+  GET  /ucc · /ucc/brd · /ucc/sdd   UCC shared docs viewer (ucc.html) — GOAL-230
+  GET  /api/ucc/docs · /api/ucc/doc?id= · /api/ucc/comments?doc=    see src/web/ucc_pages.py
+  POST /api/ucc/comments      per-section comment → GCS (relayed to Jetski Chat by the Cloudtop relay)
+  POST /api/ucc/comments/delete  soft delete (author delete_token or UCC_ADMIN_KEY) — GOAL-231; docs are KO/EN (?lang=)
 """
 import http.server
 import json
@@ -46,10 +51,13 @@ from src.evaluation import run_eval  # noqa: E402
 from src.gcp_client import call_core_mcp, runtime_settings  # noqa: E402
 from src.loader import graph_check_sql, run_load, verify  # noqa: E402
 from src.resource_connector import STARTER_PUBLIC_URL  # noqa: E402
+from src.web import ucc_pages  # noqa: E402
+from src.web import v5_routes  # noqa: E402
 
 PORT = int(os.environ.get("PORT", 8080))
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 MAX_BODY = 512 * 1024
+MAX_BODY_V5 = 12 * 1024 * 1024  # /api/v5/* (uploads ≤ 6 MB as base64, wiki pages, workspaces)
 _STATIC_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$")
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8",
@@ -106,6 +114,17 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
+    def _send_bytes(self, code: int, body: bytes, ctype: str, headers: Dict[str, str]):
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        for k, v in (headers or {}).items():
+            self.send_header(k, v)
+        self.end_headers()
+        self.wfile.write(body)
+
     def _json(self, obj: Any, code: int = 200):
         self._send(code, json.dumps(obj, ensure_ascii=False, default=str).encode("utf-8"), "application/json; charset=utf-8")
 
@@ -149,7 +168,8 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
 
     def _body(self) -> Dict[str, Any]:
         length = int(self.headers.get("Content-Length") or 0)
-        if length > MAX_BODY:
+        limit = MAX_BODY_V5 if urlparse(self.path).path.startswith("/api/v5/") else MAX_BODY
+        if length > limit:
             raise ValueError("request body too large")
         raw = self.rfile.read(length).decode("utf-8") if length else ""
         data = json.loads(raw) if raw else {}
@@ -165,10 +185,28 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path, qs = parsed.path, parse_qs(parsed.query)
         arg = lambda k, d="": (qs.get(k) or [d])[0]  # noqa: E731
-        if path in ("/", "/index.html"):
+        if path in ("/", "/index.html", "/studio"):
+            hit = resolve_static("studio.html")
+            with open(hit[0], "rb") as f:
+                return self._send(200, f.read(), hit[1])
+        if path in ("/wizard", "/wizard/"):  # GOAL-233: the classic 6-step wizard (curated sample, Flow A/B/C)
             hit = resolve_static("index.html")
             with open(hit[0], "rb") as f:
                 return self._send(200, f.read(), hit[1])
+        if path == "/api/v5/bootstrap":
+            return self._json(v5_routes.bootstrap("en" if arg("lang") == "en" else "ko"))
+        if path in ("/ucc", "/ucc/", "/ucc/brd", "/ucc/sdd"):
+            hit = resolve_static("ucc.html")
+            with open(hit[0], "rb") as f:
+                return self._send(200, f.read(), hit[1])
+        if path == "/api/ucc/docs":
+            return self._json(ucc_pages.docs_payload())
+        if path == "/api/ucc/doc":
+            doc = ucc_pages.load_doc(arg("id", "brd").lower(), arg("lang", "ko"))
+            return self._json(doc) if doc else self._json({"status": "NOT_FOUND", "message": "document not published"}, 404)
+        if path == "/api/ucc/comments":
+            code, payload = ucc_pages.list_comments(arg("doc", "brd").lower(), force=arg("refresh") == "1")
+            return self._json(payload, code)
         if path.startswith("/static/"):
             hit = resolve_static(path[len("/static/"):])
             if not hit:
@@ -197,6 +235,16 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             data = self._body()
         except (ValueError, json.JSONDecodeError) as e:
             return self._json({"status": "BAD_REQUEST", "message": str(e)}, 400)
+        if v5_routes.handle_post(path, data, lambda obj, code=200: self._json(obj, code), self._stream,
+                                 lambda code, body, ctype, headers: self._send_bytes(code, body, ctype, headers)):
+            return None
+        if path == "/api/ucc/comments":
+            remote = (self.headers.get("X-Forwarded-For") or "").split(",")[0].strip() or self.client_address[0]
+            code, payload = ucc_pages.create_comment(data, remote=remote, user_agent=self.headers.get("User-Agent", ""))
+            return self._json(payload, code)
+        if path == "/api/ucc/comments/delete":
+            code, payload = ucc_pages.delete_comment(data)
+            return self._json(payload, code)
         lang = "en" if data.get("lang") == "en" else "ko"
         recipe = str(data.get("recipe") or "C").upper()
         if recipe not in recipes.RECIPES:
