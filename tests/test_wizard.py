@@ -194,9 +194,11 @@ class ApiTests(unittest.TestCase):
             return e.code, json.loads(e.read())
 
     def test_index_and_static(self):
-        code, ctype, body = self.get("/")
+        code, ctype, body = self.get("/wizard")  # GOAL-233: the classic wizard moved to /wizard ("/" = v5 studio)
         self.assertEqual((code, "text/html" in ctype), (200, True))
         self.assertIn(b"/static/app.js", body)
+        code, ctype, body = self.get("/")
+        self.assertIn(b"/static/studio.js", body)
         code, ctype, _ = self.get("/static/app.js")
         self.assertEqual((code, "javascript" in ctype), (200, True))
         code, ctype, body = self.get("/static/i18n.json")
