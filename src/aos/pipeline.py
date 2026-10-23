@@ -153,8 +153,18 @@ def stage_ingest(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
         else:
             seen_ids[did] = 1
         title = next((ln.lstrip("# ").strip() for ln in text.splitlines() if ln.startswith("# ")), d["name"])
-        docs.append({"doc_id": did, "title": title[:200], "name": d["name"], "uri": d["uri"], "origin": d["origin"], "text": text})
-        _step(emit, f"doc:{did}", "done", t(lang, "문서 ", "document ") + did, f"{len(text):,} chars", _ms(s))
+        item = {"doc_id": did, "title": title[:200], "name": d["name"], "uri": d["uri"], "origin": d["origin"], "text": text}
+        if d.get("kind"):  # GOAL-243: user-confirmed document type + wiki strategy (types step)
+            item["kind"] = d["kind"]
+        if d.get("strategy"):
+            item["strategy"] = d["strategy"]
+        conv = d.get("conversion") or {}
+        if conv:
+            item["conversion"] = {k: conv.get(k) for k in ("source", "source_ext", "method", "fidelity", "grade", "pages") if conv.get(k) is not None}
+        docs.append(item)
+        _step(emit, f"doc:{did}", "done", t(lang, "문서 ", "document ") + did,
+              f"{len(text):,} chars" + (f" · {d['kind']}/{d.get('strategy') or '-'}" if d.get("kind") else "")
+              + (f" · fidelity {conv.get('fidelity')}" if conv.get("fidelity") is not None else ""), _ms(s))
 
     tables: List[Dict[str, Any]] = []
     used: set = set()
@@ -247,6 +257,9 @@ def stage_ingest(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     ws["scope"] = scope
     ws.setdefault("summary", {}).update(docs=len(docs), tables=len(tables), data_type=sc.get("data_type"), agents=sc.get("agents"),
                                         rows=sum(tb["row_count"] for tb in tables), chars=sum(len(d["text"]) for d in docs))
+    strat = {k: sum(1 for d in docs if d.get("strategy") == k) for k in ("direct", "typed", "reconvert")}
+    if any(strat.values()):
+        ws["summary"]["doc_strategies"] = strat
     return {"docs": len(docs), "tables": len(tables), "data_type": sc.get("data_type"), "question_type": sc.get("question_type"),
             "fk_candidates": len(sc.get("fk_candidates") or []), "gate0": gate0, "warnings": sc.get("warnings") or []}
 
@@ -287,6 +300,18 @@ def stage_cqs(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
 
 
 # ================================================================================================ S3 wiki
+def wiki_doc(d: Dict[str, Any]) -> Dict[str, Any]:
+    """compile_wiki payload for one parsed document (GOAL-243). `kind` is sent only when the confirmed strategy needs a
+    type-specific guide (typed · reconvert); 'direct' documents use the standard OKF prompt. Core MCPs before 1.5.0
+    ignore the extra fields, so the call stays backward compatible."""
+    out = {"doc_id": d["doc_id"], "title": d["title"], "text": d["text"]}
+    if d.get("kind") and d.get("strategy") != "direct":
+        out["kind"] = d["kind"]
+    if d.get("strategy"):
+        out["strategy"] = d["strategy"]
+    return out
+
+
 def stage_wiki(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     lang, env = ws.get("lang", "ko"), ws["env"]
     p = _parsed(ws, log)
@@ -294,9 +319,12 @@ def stage_wiki(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
         raise StageSkip(t(lang, "문서가 없어 위키 단계를 건너뜁니다 (P2)", "no documents — wiki stage skipped (P2)"))
     s = time.perf_counter()
     _step(emit, "wiki", "running", t(lang, "OKF 위키 컴파일 · Gemini (약 2~4분)", "OKF wiki compile · Gemini (~2–4 min)"))
+    kh_docs = [wiki_doc(d) for d in p["docs"]]
+    typed = [f"{d['doc_id']}={d['kind']}" for d in kh_docs if d.get("kind")]
+    if typed:
+        _step(emit, "wiki_types", "done", t(lang, "유형별 위키 지침", "type-specific wiki guides"), ", ".join(typed)[:200])
     r = log.call("mcp_knowhow_compile_wiki", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
-                                              "docs": [{"doc_id": d["doc_id"], "title": d["title"], "text": d["text"]} for d in p["docs"]],
-                                              "tables": _kh_tables(p["tables"], 5)}, timeout_s=600)
+                                              "docs": kh_docs, "tables": _kh_tables(p["tables"], 5)}, timeout_s=600)
     if r.get("status") != "SUCCESS":
         raise RuntimeError("mcp_knowhow_compile_wiki: " + error_text(r))
     _step(emit, "wiki", "done", t(lang, "위키 컴파일", "wiki compiled"),

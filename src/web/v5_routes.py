@@ -11,7 +11,12 @@ workspace reference `ws: {bucket, ws_id}`; the server keeps no state (workspaces
   POST /api/v5/check                  environment check (Core MCP · bucket · project · dataset · reservation · Gemini)
   POST /api/v5/setup-script           bash script that prepares the GCP environment
   POST /api/v5/ws/draft               new workspace id + default dataset
-  POST /api/v5/upload                 one file → gs://bucket/aos/<ws>/raw/<name>
+  POST /api/v5/upload                 one file → gs://bucket/aos/<ws>/raw/<name> (pdf/office/html → converted/<stem>.md)
+  POST /api/v5/convert                convert a gs:// PDF/Office/HTML document (Core MCP mcp_knowhow_convert_document)
+  POST /api/v5/catalog · template     flow & service catalog · build template (Core MCP mcp_knowhow_catalog / compose_template)
+  POST /api/v5/drive/list · import    Google Drive folder listing · import (+ conversion) via Core MCP drive_*
+  POST /api/v5/classify · types/save  document types + wiki strategy (mcp_knowhow_classify_documents) · user confirmation
+  POST /api/v5/deploy/plan            deployment readiness + steps (mcp_knowhow_deploy_plan)
   POST /api/v5/gcs/list               documents · CSVs under a gs:// prefix
   POST /api/v5/bq/tables              tables of a BigQuery dataset
   POST /api/v5/ws/create · open · list · update
@@ -31,13 +36,13 @@ from typing import Any, Callable, Dict
 
 from src import identity
 from src.aos import agent as agent_mod
-from src.aos import pipeline, sources, studio
-from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, default_dataset, env_defaults, error_text, load, new_workspace,
-                        new_ws_id, now_iso, prefix, save)
+from src.aos import intake, pipeline, sources, studio
+from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, clean_template, default_dataset, env_defaults, error_text, load,
+                        new_workspace, new_ws_id, now_iso, save)
 from src.config import APP_VERSION, GITHUB_URL
 from src.gcp_client import call_core_mcp_tool, runtime_settings
 
-UPLOAD_MAX = sources.MAX_FILE_BYTES
+UPLOAD_MAX = intake.MAX_CONVERT_BYTES  # GOAL-243: binary documents up to 12 MB (converted by Core MCP)
 STREAM_PATHS = {"/api/v5/build", "/api/v5/agent", "/api/v5/eval", "/api/v5/graph/rebuild"}
 
 
@@ -46,7 +51,7 @@ def bootstrap(lang: str) -> Dict[str, Any]:
     return {"version": APP_VERSION, "lang": lang, "presets": studio.presets(lang), "env_defaults": env_defaults(),
             "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL,
             "model": s["vertex_model"], "impersonation": bool(__import__("os").environ.get("STARTER_IMPERSONATE_ALLOW", "").strip()),
-            "stages": list(pipeline.STAGES), "max_upload_bytes": UPLOAD_MAX}
+            "stages": list(pipeline.STAGES), "max_upload_bytes": UPLOAD_MAX, "upload_ext": list(intake.ALL_UPLOAD_EXT)}
 
 
 def _ws_ref(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -71,7 +76,8 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
             try:
                 send_json(fn(), code_ok)
             except WsError as e:
-                send_json(e.to_dict(lang), 400 if e.code in ("CONFIG_ERROR", "BAD_REQUEST") else 404 if e.code == "WS_NOT_FOUND" else 403)
+                send_json(e.to_dict(lang), 400 if e.code in ("CONFIG_ERROR", "BAD_REQUEST") else 404 if e.code == "WS_NOT_FOUND"
+                          else 501 if e.code == "MCP_UPDATE_NEEDED" else 403)
             except ValueError as e:
                 send_json({"status": "BAD_REQUEST", "message": str(e)[:400]}, 400)
 
@@ -96,46 +102,45 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
             ws_id = new_ws_id()
             return {"status": "OK", "ws_id": ws_id, "dataset": default_dataset(ws_id)}
         guarded(draft)
-    elif path == "/api/v5/upload":
-        def upload() -> Dict[str, Any]:
-            env = clean_env(data.get("env"), str(data.get("ws_id") or ""))
-            ws_id = str(data.get("ws_id") or "")
-            from src.aos.ws import check_ws_id, can_write
-            check_ws_id(ws_id)
-            ok, allowed = can_write(env)
-            if not ok:
-                raise WsError("WRITE_BLOCKED", f"데모 신원은 {allowed}에만 업로드할 수 있습니다", f"the demo identity may only upload to {allowed}")
-            name = sources.safe_name(str(data.get("name") or ""))
-            kind = sources.detect_kind(name)
-            if not kind:
-                raise ValueError("supported files: .md .txt .csv")
-            raw = base64.b64decode(str(data.get("content_base64") or "")) if data.get("content_base64") else str(data.get("text") or "").encode("utf-8")
-            if len(raw) > UPLOAD_MAX:
-                raise ValueError(f"file too large ({len(raw)} > {UPLOAD_MAX} bytes)")
-            text = raw.decode("utf-8", errors="replace")
-            info: Dict[str, Any] = {}
-            if kind == "table":
-                parsed = sources.parse_csv(text)
-                info = {"columns": parsed["columns"], "rows": len(parsed["rows"]), "sample": parsed["rows"][:5]}
-            obj = f"{prefix(ws_id)}raw/{name}"
-            log = McpLog("upload", None)
-            r = log.call("storage_upload_object", {"bucket": env["bucket"], "name": obj, "content_base64": base64.b64encode(raw).decode("ascii"),
-                                                   "content_type": "text/csv; charset=utf-8" if kind == "table" else "text/markdown; charset=utf-8"},
-                         timeout_s=90)
-            if r.get("status") != "SUCCESS":
-                return {"status": "ERROR", "message": error_text(r)}
-            uri = f"gs://{env['bucket']}/{obj}"
-            entry = {"name": name if kind == "doc" else sources.table_name(name), "origin": "upload", "uri": uri}
-            entry.update({"chars": len(text)} if kind == "doc" else {"rows": info.get("rows", 0)})
-            return {"status": "OK", "kind": kind, "entry": entry, "info": info, "bytes": len(raw)}
-        guarded(upload)
+    elif path == "/api/v5/upload":  # GOAL-243: md/txt/csv as before · pdf/docx/pptx/xlsx/html → Core MCP conversion
+        guarded(lambda: intake.upload(data, lang))
+    elif path == "/api/v5/convert":
+        guarded(lambda: intake.convert_gcs(data, lang))
+    elif path == "/api/v5/catalog":
+        guarded(lambda: intake.catalog(lang))
+    elif path == "/api/v5/template":
+        guarded(lambda: intake.template(data, lang))
+    elif path == "/api/v5/drive/list":
+        guarded(lambda: intake.drive_list(data))
+    elif path == "/api/v5/drive/import":
+        guarded(lambda: intake.drive_import(data, lang))
+    elif path == "/api/v5/classify":
+        guarded(lambda: intake.classify(data, lang))
+    elif path == "/api/v5/types/save":
+        def types_save() -> Dict[str, Any]:
+            decisions = [d for d in (data.get("decisions") or []) if isinstance(d, dict)][:40]
+            ref = data.get("ws") if isinstance(data.get("ws"), dict) else {}
+            if ref.get("ws_id") and ref.get("bucket"):  # workspace exists → persist (sources + doc_types.json)
+                ws = _ws_ref(data)
+                log = McpLog("types", None)
+                intake.save_types(ws, decisions, log)
+                r = save(ws, log)
+                if r.get("status") != "SUCCESS":
+                    return {"status": "ERROR", "message": error_text(r)}
+                return {"status": "OK", "persisted": True, "sources": ws["sources"], "ws": ws}
+            src = clean_sources(data.get("sources") or {})  # before the workspace exists: merge only, client keeps it
+            return {"status": "OK", "persisted": False, "sources": clean_sources(intake.apply_types(src, decisions))}
+        guarded(types_save)
+    elif path == "/api/v5/deploy/plan":
+        guarded(lambda: intake.deploy_plan(_ws_ref(data), data, str(pub.get("mode") or "runtime"), runtime_settings()["core_mcp_url"], lang))
     elif path == "/api/v5/gcs/list":
         guarded(lambda: sources.list_gcs(McpLog("gcs", None), str(data.get("uri") or "")))
     elif path == "/api/v5/bq/tables":
         guarded(lambda: sources.bq_list_tables(McpLog("bq", None), str(data.get("dataset") or ""), str((data.get("env") or {}).get("region") or env_defaults()["region"])))
     elif path == "/api/v5/ws/create":
         def create() -> Dict[str, Any]:
-            spec = {"scenario": data.get("scenario") or {}, "env": data.get("env") or {}, "sources": data.get("sources") or {}}
+            spec = {"scenario": data.get("scenario") or {}, "env": data.get("env") or {}, "sources": data.get("sources") or {},
+                    "template": data.get("template") or {}}
             ws = new_workspace(spec, lang)
             want = str(data.get("ws_id") or "")
             if want:
@@ -164,6 +169,8 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
                         ws["scenario"][k] = str(sc[k])[:2000]
             if isinstance(data.get("sources"), dict):
                 ws["sources"] = clean_sources(data["sources"])
+            if isinstance(data.get("template"), dict):
+                ws["template"] = clean_template(data["template"])
             save(ws, McpLog("update", None))
             return {"status": "OK", "ws": ws}
         guarded(update)

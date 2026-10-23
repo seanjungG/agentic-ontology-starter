@@ -149,3 +149,35 @@ textarea.ta.tall { min-height: 220px; }
   .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .wk, .ag-wrap { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---- v6 intake (GOAL-243): catalog · template · conversion · types · deploy ---- */
+.sel-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sel-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sel-grid.four .sel .ex { font-size: 11px; }
+.svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.svc { text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 11px 12px; cursor: pointer; display: grid; gap: 4px; font: inherit; color: inherit; }
+.svc:hover { border-color: var(--line-2); }
+.svc.on { border-color: var(--black); box-shadow: 0 0 0 .4px var(--black); }
+.svc.off { opacity: .45; cursor: not-allowed; }
+.svc:disabled { cursor: default; }
+.svc .top { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
+.svc .ttl { font-size: 13px; font-weight: 700; }
+.svc .desc { color: var(--muted); font-size: 12px; }
+.svc .ex { color: var(--faint); font-size: 11px; overflow-wrap: anywhere; }
+.tpl-prev { border-top: 1px solid var(--line); padding-top: 12px; }
+.tbl.conv td, .tbl.types td { vertical-align: top; }
+.tbl tr.sub td { background: #fafafb; border-top: 0; }
+.tbl.types tr.ask td { background: #fffbf3; }
+.tbl.types select { height: 30px; border: 1px solid var(--line-2); border-radius: 9px; max-width: 220px; }
+.ask-chip { display: inline-block; margin-top: 6px; font-size: 11px; color: #b45309; border: 1px solid rgba(245,158,11,.45); border-radius: 999px; padding: 1px 8px; background: #fff; }
+.tag.strat-direct { color: #047857; border-color: rgba(16,185,129,.35); }
+.tag.strat-typed { color: #1d4ed8; border-color: rgba(59,130,246,.35); }
+.tag.strat-reconvert { color: #b45309; border-color: rgba(245,158,11,.45); }
+.conv-md { max-height: 420px; overflow: auto; }
+.pick label.off { opacity: .5; }
+ul.plain { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+ul.plain code { font-family: var(--mono); font-size: 11.5px; }
+.st.big b { font-size: 15px; }
+.dep-steps { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 12px; }
+.dep-steps li .t { font-size: 13.5px; margin-bottom: 6px; }
+@media (max-width: 1100px) { .sel-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

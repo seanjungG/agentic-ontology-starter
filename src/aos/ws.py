@@ -199,18 +199,60 @@ def new_workspace(spec: Dict[str, Any], lang: str) -> Dict[str, Any]:
         "env": env,
         "identity": identity.current(),
         "sources": clean_sources(spec.get("sources") or {}),
+        "template": clean_template(spec.get("template")),
         "stages": {}, "summary": {},
     }
+
+
+TEMPLATE_FLOWS = ("A", "B", "C", "D")
+TEMPLATE_TARGETS = ("sandbox", "own")
+_SVC_RX = re.compile(r"^[a-z][a-z0-9_]{1,30}$")
+_STAGE_RX = re.compile(r"^[a-z]{2,20}$")
+
+
+def clean_template(raw: Any) -> Dict[str, Any]:
+    """GOAL-243: the build template the user composed from the Core MCP catalog (flow · services · target).
+    Only identifiers are kept (no scripts / secrets); an empty dict means "no template" (older workspaces)."""
+    if not isinstance(raw, dict) or not raw:
+        return {}
+    fobj = raw.get("flow") if isinstance(raw.get("flow"), dict) else {}
+    flow = str(fobj.get("id") if fobj else raw.get("flow") or "").upper()[:1]
+    if flow not in TEMPLATE_FLOWS:
+        return {}
+    target = str(raw.get("target") or "sandbox")
+    svcs: List[str] = []
+    for s in raw.get("services") or []:
+        sid = str(s.get("id") if isinstance(s, dict) else s)
+        if _SVC_RX.match(sid) and sid not in svcs:
+            svcs.append(sid)
+    stages = [str(s) for s in (raw.get("stages") or []) if _STAGE_RX.match(str(s))][:12]
+    agents = [str(a) for a in (raw.get("agents") or fobj.get("agents") or []) if str(a) in ("wiki", "graph", "hybrid")]
+    out: Dict[str, Any] = {"flow": flow, "target": target if target in TEMPLATE_TARGETS else "sandbox", "services": svcs[:12],
+                           "stages": stages, "agents": agents, "at": str(raw.get("at") or now_iso())[:40]}
+    for k in ("data_type", "question_type"):
+        v = str(raw.get(k) or fobj.get(k) or "")
+        if re.match(r"^[PW][1-3]$", v):
+            out[k] = v
+    if raw.get("catalog_version"):
+        out["catalog_version"] = str(raw["catalog_version"])[:40]
+    return out
 
 
 def clean_sources(src: Dict[str, Any]) -> Dict[str, Any]:
     docs, tables = [], []
     for d in (src.get("docs") or [])[:40]:
-        if isinstance(d, dict) and d.get("origin") in ("upload", "gcs", "sample") and (d.get("uri") or d.get("path")):
-            docs.append({"name": str(d.get("name") or "")[:200], "origin": d["origin"], "uri": str(d.get("uri") or d.get("path"))[:500],
-                         "chars": int(d.get("chars") or 0)})
+        if isinstance(d, dict) and d.get("origin") in ("upload", "gcs", "sample", "drive") and (d.get("uri") or d.get("path")):
+            e = {"name": str(d.get("name") or "")[:200], "origin": d["origin"], "uri": str(d.get("uri") or d.get("path"))[:500],
+                 "chars": int(d.get("chars") or 0)}
+            if d.get("kind"):  # GOAL-243: document type + wiki strategy (Core MCP mcp_knowhow_classify_documents, user-confirmed)
+                e["kind"] = re.sub(r"[^a-z]", "", str(d["kind"]))[:20]
+            if d.get("strategy") in ("direct", "typed", "reconvert"):
+                e["strategy"] = d["strategy"]
+            if isinstance(d.get("conversion"), dict):
+                e["conversion"] = {k: v for k, v in d["conversion"].items() if isinstance(v, (str, int, float, bool, type(None), dict, list))}
+            docs.append(e)
     for tb in (src.get("tables") or [])[:40]:
-        if isinstance(tb, dict) and tb.get("origin") in ("upload", "gcs", "sample", "bigquery") and (tb.get("uri") or tb.get("fq") or tb.get("path")):
+        if isinstance(tb, dict) and tb.get("origin") in ("upload", "gcs", "sample", "bigquery", "drive") and (tb.get("uri") or tb.get("fq") or tb.get("path")):
             tables.append({"name": re.sub(r"[^A-Za-z0-9_]", "_", str(tb.get("name") or ""))[:120], "origin": tb["origin"],
                            "uri": str(tb.get("uri") or tb.get("path") or "")[:500], "fq": str(tb.get("fq") or "")[:300],
                            "rows": int(tb.get("rows") or 0)})

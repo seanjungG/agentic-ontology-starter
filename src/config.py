@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from src.gcp_client import runtime_settings
 
-APP_VERSION = "v5.0.0-GOAL-233"
+APP_VERSION = "v6.0.0-GOAL-243"
 GITHUB_URL = os.environ.get("STARTER_GITHUB_URL", "https://github.com/seanjungG/agentic-ontology-starter")
 
 # Graph names per recipe: the ledger-only graph (Flow B) never overwrites the unified graph (Flow C).

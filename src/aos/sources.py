@@ -21,6 +21,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 SAMPLE_DIR = os.path.join(BASE_DIR, "data", "input")
 DOC_EXT = (".md", ".markdown", ".txt")
 TABLE_EXT = (".csv",)
+CONVERT_EXT = (".pdf", ".docx", ".pptx", ".xlsx", ".html", ".htm")  # GOAL-243: converted to Markdown by Core MCP
 MAX_FILE_BYTES = 6 * 1024 * 1024
 MAX_FILES = 30
 _GS = re.compile(r"^gs://([a-z0-9][a-z0-9._-]{1,220}[a-z0-9])/?(.*)$")
@@ -195,6 +196,8 @@ def list_gcs(log: McpLog, uri: str) -> Dict[str, Any]:
         low = name.lower()
         if low.endswith(DOC_EXT):
             docs.append({**entry, "origin": "gcs", "chars": size})
+        elif low.endswith(CONVERT_EXT):  # GOAL-243: PDF / Office / HTML → converted by Core MCP when added
+            docs.append({**entry, "origin": "gcs", "chars": 0, "convert": True})
         elif low.endswith(TABLE_EXT):
             tables.append({**entry, "origin": "gcs", "name": table_name(name)})
         else:
