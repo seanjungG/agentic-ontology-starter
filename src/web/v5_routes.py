@@ -58,6 +58,9 @@ def _ws_ref(data: Dict[str, Any]) -> Dict[str, Any]:
     return studio.ws_from_request(data)
 
 
+IDENTITY_FREE_PATHS = frozenset({"/api/v5/catalog", "/api/v5/ws/draft"})  # metadata only — never need the caller's GCP identity
+
+
 def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int], None], stream: Callable[[Callable], None],
                 send_bytes: Callable[[int, bytes, str, Dict[str, str]], None]) -> bool:
     """Returns True when the path was handled."""
@@ -67,8 +70,12 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
     try:
         ident = identity.resolve(data.get("identity"), lang)
     except identity.IdentityError as e:
-        send_json(e.to_dict(lang), 401)
-        return True
+        # GOAL-244: catalog / draft id need no caller identity — an incomplete SA or token left in the browser
+        # (step 2 setting) must not break step 1. Fall back to the runtime identity for these routes only.
+        if path not in IDENTITY_FREE_PATHS:
+            send_json(e.to_dict(lang), 401)
+            return True
+        ident = identity.resolve(None, lang)
     pub = identity.public(ident)
 
     def guarded(fn: Callable[[], Any], code_ok: int = 200) -> None:

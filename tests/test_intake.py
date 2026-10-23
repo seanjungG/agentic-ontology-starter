@@ -317,3 +317,19 @@ class LangOnlyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_identity_free_routes_survive_bad_identity(monkeypatch):
+    """GOAL-244: an incomplete SA/token left in the browser must not break the step-1 catalog."""
+    from src.web import v5_routes
+    from src import identity
+    monkeypatch.setattr(v5_routes.intake, "catalog", lambda lang: {"status": "OK", "flows": []})
+    monkeypatch.setattr(identity, "resolve",
+                        lambda spec, lang="ko": (_ for _ in ()).throw(identity.IdentityError("SA_FORMAT", "x", "x"))
+                        if spec else {"mode": "runtime", "token": None, "principal": "rt", "expires_in": None, "user_identity": False})
+    out = []
+    bad = {"identity": {"mode": "impersonate", "sa": ""}, "lang": "ko"}
+    assert v5_routes.handle_post("/api/v5/catalog", bad, lambda b, c: out.append((c, b)), None, None)
+    assert out[-1][0] == 200 and out[-1][1]["status"] == "OK"
+    assert v5_routes.handle_post("/api/v5/check", bad, lambda b, c: out.append((c, b)), None, None)
+    assert out[-1][0] == 401
