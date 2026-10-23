@@ -17,6 +17,7 @@
     ko: {
       title: (d, v) => `UCC · ${d} ${v}`, docHead: (t) => `UCC 2027 · Enterprise Agentic Ontology — ${t}`, ver: (v) => `판 ${v}`,
       loading: "불러오는 중…", loadFail: "문서를 불러오지 못했습니다: ", listFail: "문서 목록을 불러오지 못했습니다: ", cFail: "코멘트를 불러오지 못했습니다: ",
+      cOffline: "코멘트 목록을 잠시 불러올 수 없습니다. 자동으로 다시 시도합니다.",
       toc: "목차", overview: "개요", comment: "코멘트", commentBtnTitle: "이 섹션에 코멘트", panelTitle: "코멘트",
       empty: "아직 코멘트가 없습니다. 섹션 옆 💬 버튼으로 첫 의견을 남겨 주세요.", count: (n, d) => `${n}건 · ${d}`,
       relayed: "✓ Jetski Chat 전달됨", pending: "· Jetski Chat 전달 대기 (1분 이내)", anon: "익명",
@@ -31,6 +32,7 @@
     en: {
       title: (d, v) => `UCC · ${d} ${v}`, docHead: (t) => `UCC 2027 · Enterprise Agentic Ontology — ${t}`, ver: (v) => `Version ${v}`,
       loading: "Loading…", loadFail: "Failed to load the document: ", listFail: "Failed to load the document list: ", cFail: "Failed to load comments: ",
+      cOffline: "Comments are temporarily unavailable. Retrying automatically.",
       toc: "Contents", overview: "Overview", comment: "Comment", commentBtnTitle: "Comment on this section", panelTitle: "Comments",
       empty: "No comments yet. Use the 💬 button next to a section to leave the first one.", count: (n, d) => `${n} · ${d}`,
       relayed: "✓ Delivered to Jetski Chat", pending: "· Delivery to Jetski Chat pending (within 1 min)", anon: "Anonymous",
@@ -169,7 +171,8 @@
   function renderPanel() {
     const t = T(), list = $("#ucc-panel-list"); list.innerHTML = "";
     $("#ucc-panel-sub").textContent = state.comments.length ? t.count(state.comments.length, t.docLabel[state.docId] || "") : (t.docLabel[state.docId] || "");
-    if (!state.comments.length) { list.appendChild(el("div", "ucc-empty", t.empty)); return; }
+    if (state.cOffline) list.appendChild(el("div", "ucc-dim ucc-offline", t.cOffline));
+    if (!state.comments.length) { if (!state.cOffline) list.appendChild(el("div", "ucc-empty", t.empty)); return; }
     const titles = {}; (state.doc.sections || []).forEach((s) => { titles[s.id] = s.title; });
     const mine = tokens(), admin = adminKey();
     [...state.comments].reverse().forEach((c) => {
@@ -203,8 +206,16 @@
     history.replaceState(null, "", urlFor(state.docId, state.lang, "#" + id));
   }
   async function loadComments(force) {
-    try { const r = await getJSON(`/api/ucc/comments?doc=${state.docId}${force ? "&refresh=1" : ""}`); state.comments = (r && r.comments) || []; }
-    catch (e) { state.comments = state.comments || []; toast(T().cFail + e.message, true); }
+    // GOAL-234: comments are secondary — a list failure must never cover the document with an error toast.
+    // Keep the last good list, show a dim note in the panel and retry quietly in the background.
+    try {
+      const r = await getJSON(`/api/ucc/comments?doc=${state.docId}${force ? "&refresh=1" : ""}`);
+      state.comments = (r && r.comments) || []; state.cOffline = false; clearTimeout(loadComments._retry);
+    } catch (e) {
+      state.comments = state.comments || []; state.cOffline = true;
+      if (window.console) console.warn("[ucc] comments unavailable:", e.message);
+      clearTimeout(loadComments._retry); loadComments._retry = setTimeout(() => loadComments(false), 15000);
+    }
     applyCommentMarks();
   }
   async function deleteComment(c) {

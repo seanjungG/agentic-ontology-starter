@@ -247,6 +247,8 @@ def list_comments(doc_id: str, force: bool = False) -> Tuple[int, Dict[str, Any]
     bucket = _bucket()
     code, payload = gcs_list(f"{COMMENTS_PREFIX}{doc_id}/", bucket)
     if code != 200:
+        if hit:  # GOAL-234: transient storage/auth failure → keep showing the last good list instead of an error
+            return 200, {"status": "SUCCESS", "doc": doc_id, "comments": hit[1], "cached": True, "stale": True}
         return 502, {"status": "ERROR", "message": f"list failed (GCS {code}): {error_message(payload)}", "comments": []}
     items = payload.get("items") or []
     names = sorted(str(it.get("name") or it) for it in items if str(it.get("name") or it).endswith(".json"))

@@ -114,6 +114,8 @@ def get_gcp_token() -> str:
         _TOKEN_EXPIRY = now + 1800
         return _CACHED_TOKEN
 
+    ttl = {"s": 600.0}  # cache lifetime of the token picked below (gcloud: conservative 10 min)
+
     def _from_metadata() -> str:
         for host in ("metadata.google.internal", "169.254.169.254"):
             try:
@@ -125,6 +127,9 @@ def get_gcp_token() -> str:
                     data = json.loads(resp.read().decode("utf-8"))
                     tok = data.get("access_token", "")
                     if tok:
+                        # GOAL-234: the metadata server may return a token with only minutes left — never cache it past
+                        # its real expiry (a fixed 40-min cache delegated expired tokens → GCS 401 Invalid Credentials).
+                        ttl["s"] = max(30.0, min(float(data.get("expires_in") or 600) - 300.0, 2400.0))
                         return tok
             except Exception:
                 pass
@@ -155,7 +160,7 @@ def get_gcp_token() -> str:
         tok = fn()
         if tok:
             _CACHED_TOKEN = tok
-            _TOKEN_EXPIRY = now + 2400
+            _TOKEN_EXPIRY = now + ttl["s"]
             return _CACHED_TOKEN
 
     raise RuntimeError(
@@ -560,6 +565,7 @@ def call_core_mcp_tool(
     url: Optional[str] = None,
     timeout_s: int = 120,
     access_token: Optional[str] = None,
+    _retry_401: bool = False,
 ) -> Dict[str, Any]:
     """Invokes a single tool on Platform Core MCP (`tools/call`) with caller token delegation and returns `structuredContent`."""
     r = call_core_mcp(
@@ -586,7 +592,28 @@ def call_core_mcp_tool(
         except Exception:
             sc = {"status": "ERROR", "error": {"http_status": 500, "api": tool_name, "message": "Invalid structuredContent from Core MCP"}}
     sc.setdefault("ms", r.get("elapsed_ms", 0))
+    if access_token is None and not _retry_401 and _is_auth_401(sc) and not _bound_token():
+        # GOAL-234: the cached runtime token went stale → drop it and retry once with a fresh one.
+        invalidate_gcp_token()
+        return call_core_mcp_tool(tool_name, arguments, url=url, timeout_s=timeout_s, _retry_401=True)
     return sc
+
+
+def _bound_token() -> Optional[str]:
+    try:
+        from src.identity import current_token
+        return current_token()
+    except Exception:
+        return None
+
+
+def _is_auth_401(sc: Dict[str, Any]) -> bool:
+    if sc.get("status") == "SUCCESS":
+        return False
+    err = sc.get("error")
+    code = (err.get("http_status") or err.get("code")) if isinstance(err, dict) else sc.get("http_code")
+    text = str(err or "")
+    return str(code) == "401" or "Invalid Credentials" in text or "UNAUTHENTICATED" in text
 
 
 def _mcp_err(sc: Dict[str, Any]) -> Tuple[int, str, str]:

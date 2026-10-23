@@ -14,15 +14,19 @@
 
 ---
 
-## 1. 흐름 — 4단계 구성 + 스튜디오 + 인계
+## 1. 흐름 — 5단계 구성 + 스튜디오 + 배포 · 인계
+
+> **v6 (GOAL-243)**: 플로우 · 서비스 카탈로그로 **템플릿 구성**(스타터 샌드박스 또는 내 GCP 프로젝트) → 데이터는 **로컬 업로드 · GCS · Google Drive**, PDF · DOCX · PPTX · XLSX · HTML은 **Markdown 변환 + 변환율 측정** → **문서 유형 자동 판별 + 사용자 확인**(그대로 / 유형별 프롬프팅 / 재변환) → 위키 → **에이전트 바로 테스트** → **배포 단계**(준비도 점검 · 명령). 노하우는 모두 Core MCP(`mcp_knowhow_catalog · compose_template · convert_document · classify_documents · deploy_plan`, `drive_*`)에 있고, 구버전 Core MCP면 화면에 `MCP_UPDATE_NEEDED` 안내가 뜹니다(기존 흐름은 그대로 동작).
 
 ```text
 ⓪ 이해      전체 흐름도: 입력 → 수집 · CQ → OKF 위키 → Property Graph → 에이전트 → 평가 (P1 문서 · P3 통합 · P2 테이블)
-① 상황·목적  프리셋(통신 · 화장품 · 금융 · 보험 · 직접 입력) + 업무 목적 + 질문 유형 W1 규정 안내 · W2 데이터 조회 · W3 판정 · 계산
-② GCP·권한   프로젝트 · 리전 · 버킷 · 데이터셋 · 그래프 + 신원(데모 · 내 토큰 · SA) → 실제 권한 점검 + 그대로 실행할 설정 스크립트
-③ 데이터     파일 업로드(.md .txt .csv) · GCS 경로 · BigQuery 테이블 · 샘플 팩 — 섞어 쓰기 가능, P1/P2/P3 자동 결정
-④ 구축       S0 준비 → S1 수집 · 프로파일 → S2 CQ → S3 OKF 위키 → S4 Property Graph → S5 평가 (단계별 재실행)
+① 상황·목적  프리셋 + 업무 목적 + 질문 유형 W1/W2/W3 + 플로우(A 문서 · B 테이블 · C 통합 · D 변환 우선) · GCP 서비스 카탈로그
+② GCP·권한   템플릿 대상(스타터 샌드박스 · 내 프로젝트) → 템플릿 미리보기(단계 · 서비스 · API · IAM · 스크립트) + 신원 · 리소스 실제 점검
+③ 데이터     업로드(.md .txt .csv + .pdf .docx .pptx .xlsx .html, 12MB) · GCS · Google Drive · BigQuery · 샘플 — 변환 결과표(방식 · 변환율 · 페이지 · 미리보기 · PDF)
+④ 문서 유형  자동 판별(규칙 + 선택 Gemini) · 확신 낮으면 질문 · 전략(direct · typed · reconvert) 저장 → S3에 유형별 지침 반영
+⑤ 구축       S0 준비 → S1 수집 · 프로파일 → S2 CQ → S3 OKF 위키 → S4 Property Graph → S5 평가 (단계별 재실행) → 에이전트 테스트 → 배포 단계
 스튜디오     개요 · 자산 · 위키(보기 · 편집 · 게이트) · 그래프(스키마 · GQL/SQL 콘솔 · 설계 편집 → 재구축) · 검색 · 에이전트 실험 · 평가(CQ 편집)
+배포        준비도 점검(평가 기준 · CQ · 게이트 · 그래프 · 내 프로젝트 여부) · Cloud Run / MCP 클라이언트 단계별 명령 · Cloud Shell
 인계        CLI 재현 명령 · MCP 호출 로그(도구 + 파라미터, curl) · MCP 클라이언트 설정 · 단일 파일 에이전트 · 번들(zip)
 ```
 
@@ -179,6 +183,7 @@ v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 �
 **Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, BigQuery Property Graph, Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `mcp_knowhow_*` tools**; this repository holds which tools are called in which order with which parameters.
 
 - **Flow**: understand → situation & goal (presets or custom, W1/W2/W3) → GCP & permissions (demo identity, pasted token, or SA; live checks + a ready-to-run setup script) → data (upload .md/.txt/.csv, GCS paths, BigQuery tables, sample pack) → build S0–S5 (re-run any stage) → studio (assets, wiki edit + gates, graph schema + GQL/SQL console + design rebuild, search, agent experiments, CQ evaluation) → hand-off (CLI, MCP call log with curl, MCP client config, single-file agent, zip bundle).
+- **v6 intake** (GOAL-243): pick a flow and services from the Core MCP catalog and compose a template for the starter sandbox or your own project; bring data from local upload, GCS or Google Drive — PDF/DOCX/PPTX/XLSX/HTML are converted to Markdown with a fidelity score; Core MCP detects each document's type (and asks when unsure) and the chosen wiki strategy (direct · typed · re-convert) feeds the wiki compile; then test the agent and open the deployment page (readiness checks + commands). An older Core MCP shows `MCP_UPDATE_NEEDED` while the existing flow keeps working.
 - **Measured** (2026-10-19, `gemini-4-argon` MEDIUM): sample pack ~7 min build, eval **100 (8/8)**; an uploaded insurance-claims data set (1 doc + 3 CSVs) ~6.5 min, eval **100 (8/8)**.
 - **Security**: the Core MCP is zero-privilege; data tools and Gemini run with the caller's token in the caller's project. Pasted tokens are never stored. Demo writes are limited to `STARTER_WRITE_PROJECTS`; server-side SA impersonation only for `STARTER_IMPERSONATE_ALLOW`.
 - **Quick start**: `python3 -m src.web.studio_server` (local) · `python3 -m src.cli build --bucket … --ws …` (CLI) · `gcloud run deploy … --source .` (your Cloud Run). The curated reference wizard stays at `/wizard`.

@@ -1,6 +1,8 @@
-/* Agentic Ontology Starter v5 studio (GOAL-233).
+/* Agentic Ontology Starter v6 studio (GOAL-233 · v6 intake GOAL-243).
  * Vanilla JS, no build step. All visible text comes from studio_i18n.json (KO · EN) — keep this file free of UI prose.
- * Routes: #/start · #/scenario · #/env · #/data · #/build · #/studio/{overview,assets,wiki,graph,search,agents,eval} · #/handoff
+ * Routes: #/start · #/scenario · #/env · #/data · #/types · #/build · #/studio/{overview,assets,wiki,graph,search,agents,eval} · #/deploy · #/handoff
+ * v6 (GOAL-243): flow & service catalog + template (Core MCP), local/GCS/Drive intake with PDF/Office → Markdown conversion and
+ * fidelity, document types + wiki strategy, deployment plan. Every piece of know-how is a Core MCP call made by the server.
  * State: localStorage "aol.studio.v5" (no secrets) · the pasted token lives in sessionStorage only.
  * QA hook: window.AOLStudio = { state(), go(route), setLang(l), api(path, body) }
  */
@@ -9,13 +11,15 @@
   const LS = "aol.studio.v5";
   const TOKEN_KEY = "aol.studio.v5.token";
   const STAGES = ["prepare", "ingest", "cqs", "wiki", "graph", "eval"];
-  const ROUTES = ["start", "scenario", "env", "data", "build", "studio/overview", "studio/assets", "studio/wiki", "studio/graph",
-    "studio/search", "studio/agents", "studio/eval", "handoff"];
+  const ROUTES = ["start", "scenario", "env", "data", "types", "build", "studio/overview", "studio/assets", "studio/wiki", "studio/graph",
+    "studio/search", "studio/agents", "studio/eval", "deploy", "handoff"];
+  const STRATEGIES = ["direct", "typed", "reconvert"];
   const S = {
     lang: "ko", boot: null, i18n: {}, route: "start",
     scenario: { preset: "", title: "", customer: "", objective: "", question_type: "W3" },
     env: {}, identMode: "runtime", sa: "", identInfo: null, draftId: "", wsId: "", wsCreated: false, ws: null,
     sources: { docs: [], tables: [] }, check: null, data: {}, dataFor: "", busy: {}, log: [], ui: {},
+    tpl: { flow: "", services: [], target: "sandbox" }, catalog: null, template: null, types: null, deploy: null, previews: {},
   };
 
   // ------------------------------------------------------------------ utils
@@ -42,14 +46,15 @@
   }
   function save() {
     const keep = { lang: S.lang, scenario: S.scenario, env: S.env, identMode: S.identMode, sa: S.sa, draftId: S.draftId, wsId: S.wsId,
-      wsCreated: S.wsCreated, sources: S.sources, ui: { tab: S.ui.tab, agent: S.ui.agent } };
+      wsCreated: S.wsCreated, sources: S.sources, tpl: S.tpl, template: S.template, ui: { tab: S.ui.tab, agent: S.ui.agent } };
     localStorage.setItem(LS, JSON.stringify(keep));
   }
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(LS) || "{}");
       Object.assign(S, { lang: d.lang || S.lang, scenario: d.scenario || S.scenario, env: d.env || {}, identMode: d.identMode || "runtime",
-        sa: d.sa || "", draftId: d.draftId || "", wsId: d.wsId || "", wsCreated: !!d.wsCreated, sources: d.sources || S.sources });
+        sa: d.sa || "", draftId: d.draftId || "", wsId: d.wsId || "", wsCreated: !!d.wsCreated, sources: d.sources || S.sources,
+        tpl: Object.assign({ flow: "", services: [], target: "sandbox" }, d.tpl || {}), template: d.template || null });
       S.ui = Object.assign({}, d.ui || {});
     } catch (e) { /* fresh start */ }
   }
@@ -127,6 +132,38 @@
     const d = S.sources.docs.length, t = S.sources.tables.length;
     return d && t ? "P3" : d ? "P1" : t ? "P2" : "";
   }
+  const typesDone = () => S.sources.docs.length > 0 && S.sources.docs.every((d) => d.kind && d.strategy);
+  // Core MCP know-how errors: an older Core MCP without the v6 tools answers MCP_UPDATE_NEEDED → explain instead of failing silently
+  function errNote(j) {
+    if (!j) return "";
+    if (j.status === "MCP_UPDATE_NEEDED") return `<div class="note warn"><b>${T("mcp.updateTitle")}</b> ${esc(j.message || "")}<div class="meta mt8">${esc(T("mcp.updateHelp", { u: (S.boot && S.boot.core_mcp_url) || "" }))}</div></div>`;
+    if (j.code === "DRIVE_ACCESS") return `<div class="note err">${esc(j.message || j.status)}</div>${driveHelp()}`;
+    return `<div class="note err">${esc(j.message || j.error || j.status)}</div>`;
+  }
+  function errToast(j, extra) {
+    toast((j.status === "MCP_UPDATE_NEEDED" ? T("mcp.updateTitle") + " " : "") + (j.message || j.error || j.status) + (extra ? " · " + extra : ""), 6000);
+  }
+  function driveHelp() {
+    const who = (S.identInfo && S.identInfo.principal) || "";
+    return `<div class="note"><b>${T("drive.helpTitle")}</b><ul class="plain">
+      <li>${esc(T("drive.helpRuntime", { p: who || T("drive.saUnknown") }))}</li>
+      <li>${esc(T("drive.helpToken"))} <code>gcloud auth login --enable-gdrive-access</code></li></ul></div>`;
+  }
+  const pct = (v) => (v == null || v === "" ? "-" : Math.round(Number(v) * 100) + "%");
+  const gradeCls = (g) => ({ A: "ok", B: "ok", C: "warn", D: "error", F: "error" }[String(g || "").toUpperCase()] || "idle");
+  const gsHttp = (uri) => { const m = /^gs:\/\/([^/]+)\/(.+)$/.exec(uri || ""); return m ? `https://storage.cloud.google.com/${m[1]}/${m[2].split("/").map(encodeURIComponent).join("/")}` : ""; };
+  function templateSpec() {
+    const t = S.template;
+    if (t && t.flow) return { flow: t.flow.id, services: (t.services || []).map((x) => x.id), target: t.target, stages: t.stages, agents: t.flow.agents,
+      data_type: t.flow.data_type, question_type: t.flow.question_type, catalog_version: (S.catalog && S.catalog.catalog_version) || "" };
+    return S.tpl.flow ? { flow: S.tpl.flow, services: S.tpl.services, target: S.tpl.target } : {};
+  }
+  async function ensureCatalog() {
+    if (S.catalog && S.catalog._lang === S.lang) return;
+    const j = await api("/api/v5/catalog", {});
+    if (j.status === "OK") { j._lang = S.lang; S.catalog = j; S.ui.catErr = null; } else S.ui.catErr = j;
+    if (S.route === "scenario" || S.route === "env") rerender();
+  }
 
   // ------------------------------------------------------------------ shell
   function topbar() {
@@ -159,10 +196,12 @@
         ${railItem("scenario", "1", T("rail.scenario"), T("rail.scenario.s"), S.scenario.objective ? "done" : "")}
         ${railItem("env", "2", T("rail.env"), T("rail.env.s"), S.check && S.check.status === "OK" ? "done" : "")}
         ${railItem("data", "3", T("rail.data"), T("rail.data.s"), dataType() ? "done" : "")}
-        ${railItem("build", "4", T("rail.build"), T("rail.build.s"), buildState)}</div>
+        ${railItem("types", "4", T("rail.types"), T("rail.types.s"), typesDone() ? "done" : "")}
+        ${railItem("build", "5", T("rail.build"), T("rail.build.s"), buildState)}</div>
       <div class="rail-group"><div class="rail-label">${T("rail.g.studio")}</div>
         ${studio.map(([r, k], i) => railItem(r, String.fromCharCode(65 + i), T(k), "", "", has)).join("")}</div>
-      <div class="rail-group"><div class="rail-label">${T("rail.g.handoff")}</div>${railItem("handoff", "→", T("rail.handoff"), T("rail.handoff.s"), "", has)}</div>
+      <div class="rail-group"><div class="rail-label">${T("rail.g.handoff")}</div>${railItem("deploy", "↗", T("rail.deploy"), T("rail.deploy.s"), S.deploy && S.deploy.verdict === "ready" ? "done" : "", has)}
+        ${railItem("handoff", "→", T("rail.handoff"), T("rail.handoff.s"), "", has)}</div>
       <div class="rail-actions"><button class="btn small" data-act="ws-open-modal">${T("rail.open")}</button><button class="btn small" data-act="reset">${T("rail.new")}</button></div>`;
   }
   function go(route) { location.hash = "#/" + route; }
@@ -170,7 +209,7 @@
     let h = location.hash.replace(/^#\/?/, "");
     if (/^step-\d/.test(h)) h = "start";
     if (!ROUTES.includes(h)) h = "start";
-    if ((h.startsWith("studio/") || h === "handoff") && !built()) h = S.wsId ? "build" : "start";
+    if ((h.startsWith("studio/") || h === "handoff" || h === "deploy") && !built()) h = S.wsId ? "build" : "start";
     S.route = h;
     render();
   }
@@ -231,8 +270,61 @@
       <div class="field full"><label>${T("scn.qtype")}</label><div class="sel-grid">
         ${["W1", "W2", "W3"].map((w) => `<button class="sel ${q === w ? "on" : ""}" data-act="qtype" data-q="${w}"><span class="check"></span><div class="top"><span class="wbadge">${w}</span><span class="ttl">${T("scn." + w.toLowerCase())}</span></div><div class="desc">${T("scn." + w.toLowerCase() + "d")}</div></button>`).join("")}
       </div></div></div></div>
+    ${catalogCard()}
     <div class="step-nav"><a class="btn" href="#/start">${T("common.prev")}</a><span class="spacer"></span><button class="btn primary" data-act="go" data-route="env" data-need="objective">${T("common.next")}</button></div>`;
   };
+
+  function catalogCard() {
+    const c = S.catalog;
+    if (!c) return `<div class="card"><div class="card-head"><h3>${T("cat.title")}</h3></div>${S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}</div>`;
+    const flow = (c.flows || []).find((f) => f.id === S.tpl.flow);
+    const svcName = {};
+    (c.services || []).forEach((x) => { svcName[x.id] = x.name; });
+    const flows = (c.flows || []).map((f) => `<button class="sel ${S.tpl.flow === f.id ? "on" : ""}" data-act="tpl-flow" data-id="${esc(f.id)}"><span class="check"></span>
+      <div class="top"><span class="ttl">${esc(f.title)}</span></div><div class="desc">${esc(f.summary)}</div>
+      <div class="flex mt8"><span class="pill-p">${esc(f.data_type)}</span><span class="wbadge">${esc(f.question_type)}</span>${f.convert ? `<span class="tag mcp">${T("cat.convert")}</span>` : ""}</div>
+      <div class="ex">${esc(T("cat.stages"))}: ${(f.stages || []).map(esc).join(" → ")} · ${esc(T("cat.agents"))}: ${(f.agents || []).map((a) => esc(T("ag." + a))).join(", ")}</div></button>`).join("");
+    const svc = (c.services || []).map((x) => {
+      const req = flow ? flow.services.includes(x.id) : x.required;
+      const opt = flow ? (flow.optional || []).includes(x.id) : !x.required;
+      const on = req || S.tpl.services.includes(x.id);
+      const dis = flow && !req && !opt;
+      return `<button class="svc ${on ? "on" : ""} ${dis ? "off" : ""}" data-act="tpl-svc" data-id="${esc(x.id)}" ${req || dis ? "disabled" : ""}>
+        <div class="top"><span class="ttl">${esc(x.name)}</span>${req ? `<span class="tag">${T("cat.required")}</span>` : opt ? `<span class="tag mcp">${T("cat.optional")}</span>` : ""}</div>
+        <div class="desc">${esc(x.role)}</div><div class="ex">${esc(T("cat.cost"))}: ${esc(x.cost)}${(x.apis || []).length ? " · " + x.apis.map(esc).join(", ") : ""}</div></button>`;
+    }).join("");
+    return `<div class="card"><div class="card-head"><h3>${T("cat.title")}</h3><span class="sub">${T("cat.sub")}</span><span class="right"><span class="tag mono">catalog ${esc(c.catalog_version || "")}</span></span></div>
+      <div class="sel-grid four">${flows}</div>
+      <div class="eyebrow mt16">${T("cat.services")}${flow ? " · " + esc(flow.title) : ""}</div><div class="svc-grid mt8">${svc}</div>
+      ${flow ? `<div class="note">${esc(T("cat.picked", { f: flow.title, s: (flow.services || []).concat(S.tpl.services.filter((x) => (flow.optional || []).includes(x))).map((x) => svcName[x] || x).join(", ") }))}</div>` : `<div class="note">${T("cat.pickHint")}</div>`}</div>`;
+  }
+  AFTER.scenario = () => { ensureCatalog(); };
+
+  function templateCard() {
+    const c = S.catalog, t = S.template;
+    const targets = (c && c.targets) || [];
+    const tg = targets.map((x) => `<button class="sel ${S.tpl.target === x.id ? "on" : ""}" data-act="tpl-target" data-id="${esc(x.id)}"><span class="check"></span>
+      <div class="top"><span class="ttl">${esc(x.title)}</span></div><div class="desc">${esc(x.summary)}</div></button>`).join("");
+    let prev = "";
+    if (t && t.flow) {
+      prev = `<div class="tpl-prev mt12"><div class="flex"><span class="pill-p">${esc(t.flow.data_type)}</span><span class="wbadge">${esc(t.flow.question_type)}</span><b>${esc(t.flow.title)}</b>
+          <span class="tag">${esc(T("tpl.target." + t.target))}</span><span class="tag">${esc(T("tpl.identity"))}: ${esc(t.identity && t.identity.mode)}</span></div>
+        <div class="cols3"><div class="box"><div class="ttl">${T("tpl.stages")}</div><ul>${(t.stages || []).map((x) => `<li><span class="ld"></span><span class="lt mono">${esc(x)}</span></li>`).join("")}</ul></div>
+          <div class="box"><div class="ttl">${T("tpl.services")}</div><ul>${(t.services || []).map((x) => `<li><span class="ld" style="background:var(--c-mcp)"></span><span class="lt">${esc(x.name)}${x.required ? "" : ` <span class="k">${T("cat.optional")}</span>`}</span></li>`).join("")}</ul></div>
+          <div class="box"><div class="ttl">${T("tpl.sources")}</div><ul>${(t.sources || []).map((x) => `<li><span class="ld" style="background:var(--c-wiki)"></span><span class="lt">${esc(T("data.origin." + x))}</span></li>`).join("")}</ul></div></div>
+        <div class="grid2 mt12"><div class="box"><div class="ttl">${T("tpl.apis")}</div><div class="mono small">${(t.apis || []).map(esc).join("<br>") || "-"}</div></div>
+          <div class="box"><div class="ttl">${T("tpl.iam")}</div><div class="mono small">${(t.iam || []).map(esc).join("<br>") || "-"}</div></div></div>
+        ${t.identity && t.identity.note ? `<div class="note">${esc(t.identity.note)}</div>` : ""}
+        ${(t.warnings || []).length ? `<div class="note warn">${t.warnings.map(esc).join(" · ")}</div>` : ""}
+        ${t.setup_script ? `<div class="card-head mt16"><h3>${T("tpl.script")}</h3><span class="right"><button class="btn small" data-act="dl-tpl-script">${T("common.download")}</button></span></div>${codeBlock(t.setup_script)}` : ""}</div>`;
+    }
+    return `<div class="card"><div class="card-head"><h3>${T("tpl.title")}</h3><span class="sub">${T("tpl.sub")}</span></div>
+      ${S.tpl.flow ? "" : `<div class="note warn">${T("tpl.needFlow")} <a class="btn small" href="#/scenario">${T("rail.scenario")}</a></div>`}
+      ${c ? `<div class="sel-grid two">${tg}</div>` : S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}
+      <div class="form-actions"><button class="btn primary" data-act="tpl-compose" ${!S.tpl.flow || S.busy.tpl ? "disabled" : ""}>${S.busy.tpl ? T("common.loading") : T("tpl.compose")}</button>
+        ${t && t.flow ? `<span class="st">${statusDot("ok")}<b>${esc(T("tpl.ready", { f: t.flow.id, n: (t.stages || []).length }))}</b></span>` : ""}</div>
+      ${S.ui.tplErr ? errNote(S.ui.tplErr) : ""}${prev}</div>`;
+  }
 
   // 2 env
   PAGES.env = () => {
@@ -241,7 +333,7 @@
     const saCmd = `gcloud auth print-access-token --impersonate-service-account=${S.sa || "aos-starter@" + (e.project || "PROJECT") + ".iam.gserviceaccount.com"}`;
     const mode = (m, t, d) => `<button class="sel ${S.identMode === m ? "on" : ""}" data-act="ident-mode" data-mode="${m}"><span class="check"></span><div class="top"><span class="ttl">${T(t)}</span></div><div class="desc">${T(d)}</div></button>`;
     const fld = (k, lab, help) => `<div class="field"><label>${T(lab)}</label><input data-bind="env.${k}" value="${esc(e[k] || "")}" ${k === "dataset" ? `placeholder="aos_${esc((S.draftId || "").replace("ws-", "").replace(/-/g, "_"))}"` : ""}>${help ? `<span class="help">${T(help)}</span>` : ""}</div>`;
-    return head(T("rail.g.build"), T("env.title"), T("env.lead")) + `
+    return head(T("rail.g.build"), T("env.title"), T("env.lead")) + templateCard() + `
     <div class="card"><div class="card-head"><h3>${T("env.idTitle")}</h3></div>
       <div class="modes">${mode("runtime", "env.idRuntime", "env.idRuntimeD")}${mode("token", "env.idToken", "env.idTokenD")}${mode("impersonate", "env.idSa", "env.idSaD")}</div>
       ${S.identMode === "token" ? `<div class="field mt12"><label>${T("env.tokenLabel")}</label><textarea class="ta" id="tok" rows="2" spellcheck="false">${esc(token())}</textarea>
@@ -266,6 +358,7 @@
     </div>
     <div class="step-nav"><a class="btn" href="#/scenario">${T("common.prev")}</a><span class="spacer"></span><a class="btn primary" href="#/data">${T("common.next")}</a></div>`;
   };
+  AFTER.env = () => { ensureCatalog(); };
 
   // 3 data
   PAGES.data = () => {
@@ -274,8 +367,8 @@
     const src = (x, kind, i) => `<div class="src"><span class="tag">${T("data.origin." + x.origin)}</span><div class="nm">${esc(x.name)} <div class="uri">${esc(x.uri || x.fq || "")}</div></div>
       <span class="meta">${kind === "doc" ? (x.chars ? x.chars.toLocaleString() + " chars" : "") : (x.rows ? T("common.rows", { n: x.rows }) : "")}</span>
       <button class="btn small danger" data-act="src-del" data-kind="${kind}" data-i="${i}">${T("common.delete")}</button></div>`;
-    const tabs = ["sample", "upload", "gcs", "bq"];
-    const tk = { sample: "data.tabSample", upload: "data.tabUpload", gcs: "data.tabGcs", bq: "data.tabBq" };
+    const tabs = ["sample", "upload", "gcs", "drive", "bq"];
+    const tk = { sample: "data.tabSample", upload: "data.tabUpload", gcs: "data.tabGcs", drive: "data.tabDrive", bq: "data.tabBq" };
     let body = "";
     if (tab === "sample") {
       const sm = (S.boot && S.boot.sample) || { docs: [], tables: [] };
@@ -283,13 +376,22 @@
         <div class="box"><div class="ttl">${T("data.tables")}</div><ul>${sm.tables.map((t) => `<li>${esc(t.name)} <span class="k">${T("common.rows", { n: t.rows })}</span></li>`).join("")}</ul></div></div>
         <div class="form-actions"><button class="btn primary" data-act="add-sample">${T("data.sampleAdd")}</button></div>`;
     } else if (tab === "upload") {
-      body = `<div class="drop" id="drop">${T("data.uploadD", { b: esc(S.env.bucket || ""), w: esc(S.draftId) })}<div class="mt12"><label class="btn"><input type="file" id="file-in" multiple accept=".md,.markdown,.txt,.csv" hidden>${T("data.uploadPick")}</label></div>
+      const acc = ((S.boot && S.boot.upload_ext) || [".md", ".markdown", ".txt", ".csv"]).join(",");
+      body = `<div class="drop" id="drop">${T("data.uploadD", { b: esc(S.env.bucket || ""), w: esc(S.draftId) })}<div class="meta mt8">${esc(T("data.uploadTypes", { m: Math.round(((S.boot && S.boot.max_upload_bytes) || 0) / 1048576) }))}</div>
+        <div class="mt12"><label class="btn"><input type="file" id="file-in" multiple accept="${esc(acc)}" hidden>${T("data.uploadPick")}</label>
+        <label class="small muted"><input type="checkbox" id="pdf-gemini" ${S.ui.pdfMode === "baseline" ? "" : "checked"}> ${T("data.pdfGemini")}</label></div>
         ${S.ui.upMsg ? `<div class="mt8 meta">${esc(S.ui.upMsg)}</div>` : ""}</div>`;
     } else if (tab === "gcs") {
       const r = S.ui.gcs;
       body = `<p class="muted">${T("data.gcsD")}</p><div class="flex"><input class="grow mono" style="height:34px;border:1px solid var(--line-2);border-radius:10px;padding:0 10px" id="gcs-uri" value="${esc(S.ui.gcsUri || "gs://" + (S.env.bucket || "") + "/")}"><button class="btn" data-act="gcs-list">${T("data.gcsList")}</button></div>
-        ${r ? (r.status !== "SUCCESS" ? `<div class="note err">${esc(r.error || r.message)}</div>` : `<div class="pick">${[...r.docs.map((d) => ["doc", d]), ...r.tables.map((t) => ["table", t])].map(([k, x], i) => `<label><input type="checkbox" data-pick="${i}" checked> <span class="tag">${k === "doc" ? T("data.docs") : T("data.tables")}</span> ${esc(x.name)} <span class="mono">${esc(x.uri)}</span></label>`).join("") || `<div class="empty">${T("common.none")}</div>`}</div>
-        <div class="form-actions"><button class="btn primary" data-act="gcs-add">${T("data.addSel")}</button></div>`) : ""}`;
+        ${r ? (r.status !== "SUCCESS" ? errNote(r) : `<div class="pick">${[...r.docs.map((d) => ["doc", d]), ...r.tables.map((t) => ["table", t])].map(([k, x], i) => `<label><input type="checkbox" data-pick="${i}" checked> <span class="tag">${k === "doc" ? T("data.docs") : T("data.tables")}</span>${x.convert ? ` <span class="tag mcp">${T("data.willConvert")}</span>` : ""} ${esc(x.name)} <span class="mono">${esc(x.uri)}</span></label>`).join("") || `<div class="empty">${T("common.none")}</div>`}</div>
+        <div class="form-actions"><button class="btn primary" data-act="gcs-add" ${S.busy.conv ? "disabled" : ""}>${T("data.addSel")}</button>${S.ui.convMsg ? `<span class="meta">${esc(S.ui.convMsg)}</span>` : ""}</div>`) : ""}`;
+    } else if (tab === "drive") {
+      const r = S.ui.drive;
+      body = `<p class="muted">${T("data.driveD")}</p><div class="flex"><input class="grow mono" style="height:34px;border:1px solid var(--line-2);border-radius:10px;padding:0 10px" id="drive-url" placeholder="https://drive.google.com/drive/folders/..." value="${esc(S.ui.driveUrl || "")}"><button class="btn" data-act="drive-list">${T("data.driveList")}</button></div>
+        ${driveHelp()}
+        ${r ? (r.status !== "OK" ? errNote(r) : `<div class="pick">${r.files.map((f, i) => `<label class="${f.kind === "folder" || f.kind === "other" ? "off" : ""}"><input type="checkbox" data-pick="${i}" ${f.kind === "folder" || f.kind === "other" ? "disabled" : "checked"}> <span class="tag">${esc(T("data.dkind." + f.kind))}</span> ${esc(f.name)} <span class="mono">${esc(f.mimeType || "")}</span></label>`).join("") || `<div class="empty">${T("common.none")}</div>`}</div>
+        <div class="form-actions"><button class="btn primary" data-act="drive-add" ${S.busy.conv ? "disabled" : ""}>${T("data.addSel")}</button>${S.ui.convMsg ? `<span class="meta">${esc(S.ui.convMsg)}</span>` : ""}</div>`) : ""}`;
     } else {
       const r = S.ui.bq;
       body = `<p class="muted">${T("data.bqD")}</p><div class="flex"><input class="grow mono" style="height:34px;border:1px solid var(--line-2);border-radius:10px;padding:0 10px" id="bq-ds" value="${esc(S.ui.bqDs || (S.env.project || "") + ".")}"><button class="btn" data-act="bq-list">${T("data.bqList")}</button></div>
@@ -302,11 +404,35 @@
       <div><div class="eyebrow">${T("data.tables")} · ${S.sources.tables.length}</div><div class="srclist mt8">${S.sources.tables.map((t, i) => src(t, "table", i)).join("")}</div></div></div>`}</div>
     <div class="card"><div class="tabs">${tabs.map((t) => `<button class="${tab === t ? "on" : ""}" data-act="dtab" data-t="${t}">${T(tk[t])}</button>`).join("")}</div>
       ${tab !== "sample" && S.identMode === "runtime" && !S.identInfo ? `<div class="note">${T("data.needEnv")}</div>` : ""}${body}</div>
-    <div class="step-nav"><a class="btn" href="#/env">${T("common.prev")}</a><span class="spacer"></span><a class="btn primary" href="#/build">${T("common.next")}</a></div>`;
+    ${conversionCard()}
+    <div class="step-nav"><a class="btn" href="#/env">${T("common.prev")}</a><span class="spacer"></span><a class="btn primary" href="#/${S.sources.docs.length ? "types" : "build"}">${T("common.next")}</a></div>`;
   };
+  function conversionCard() {
+    const conv = S.sources.docs.map((d, i) => [d, i]).filter(([d]) => d.conversion);
+    if (!conv.length) return "";
+    const rows = conv.map(([d, i]) => {
+      const c = d.conversion, st = c.structure || {}, prev = S.previews[d.uri];
+      return `<tr><td><b>${esc(d.name)}</b><div class="meta mono">${esc(c.source_ext || "")} · ${esc(T("data.origin." + d.origin))}</div></td>
+        <td class="mono small">${esc(c.method || "")}</td>
+        <td><span class="st">${statusDot(gradeCls(c.grade))}<b>${esc(pct(c.fidelity))}</b> <span class="tag">${esc(c.grade || "-")}</span></span><div class="meta">${esc(T("conv.recall", { t: pct(c.token_recall), n: pct(c.number_recall) }))}</div></td>
+        <td class="num">${c.pages != null ? esc(c.pages) : "-"}</td>
+        <td class="meta">${esc(T("conv.structure", { h: st.headings || 0, t: st.tables || 0, l: st.list_items || 0 }))}</td>
+        <td>${d.kind ? `<span class="tag">${esc(T("types.t." + d.kind))}</span>` : ""}${d.strategy ? ` <span class="tag strat-${esc(d.strategy)}">${esc(T("types.s." + d.strategy))}</span>` : ""}</td>
+        <td class="nowrap">${c.pdf ? `<a class="btn small" href="${esc(gsHttp(c.pdf))}" target="_blank" rel="noopener">PDF</a>` : ""} <a class="btn small" href="${esc(gsHttp(d.uri))}" target="_blank" rel="noopener">MD</a></td></tr>
+        ${(c.notes || []).length ? `<tr class="sub"><td colspan="7" class="meta">${c.notes.map(esc).join(" · ")}</td></tr>` : ""}
+        ${prev ? `<tr class="sub"><td colspan="7"><details class="fold"><summary>${T("conv.preview")}</summary><div class="inner md conv-md">${md(prev)}</div></details></td></tr>` : ""}`;
+    }).join("");
+    const avg = conv.reduce((a, [d]) => a + (Number(d.conversion.fidelity) || 0), 0) / conv.length;
+    return `<div class="card"><div class="card-head"><h3>${T("conv.title")} · ${conv.length}</h3><span class="sub">${esc(T("conv.sub", { a: pct(avg) }))}</span>
+      <span class="right"><a class="btn small primary" href="#/types">${T("conv.toTypes")}</a></span></div>
+      <div class="tbl-wrap"><table class="tbl conv"><thead><tr><th>${T("conv.doc")}</th><th>${T("conv.method")}</th><th>${T("conv.fidelity")}</th><th>${T("conv.pages")}</th><th>${T("conv.struct")}</th><th>${T("conv.type")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="note">${T("conv.legend")}</div></div>`;
+  }
   AFTER.data = () => {
     const fin = $("#file-in"), drop = $("#drop");
     if (fin) fin.addEventListener("change", () => uploadFiles(fin.files));
+    const pg = $("#pdf-gemini");
+    if (pg) pg.addEventListener("change", () => { S.ui.pdfMode = pg.checked ? "auto" : "baseline"; });
     if (drop) {
       drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
       drop.addEventListener("dragleave", () => drop.classList.remove("over"));
@@ -320,18 +446,99 @@
       S.ui.upMsg = T("data.uploading", { n: f.name });
       rerender();
       const b64 = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.readAsDataURL(f); });
-      const j = await api("/api/v5/upload", { env: S.env, ws_id: S.draftId, name: f.name, content_base64: b64 });
-      if (j.status === "OK") {
-        (j.kind === "doc" ? S.sources.docs : S.sources.tables).push(j.entry);
-        n += 1;
-      } else { toast((j.message || j.status) + " · " + f.name, 5000); }
+      const max = (S.boot && S.boot.max_upload_bytes) || 0;
+      if (max && f.size > max) { toast(T("data.tooBig", { n: f.name, m: Math.round(max / 1048576) }), 5000); continue; }
+      const j = await api("/api/v5/upload", { env: S.env, ws_id: S.draftId, name: f.name, content_base64: b64, pdf_mode: S.ui.pdfMode || "auto" });
+      if (j.status === "OK") { addIntake(j); n += 1; } else { errToast(j, f.name); }
     }
     S.ui.upMsg = T("data.uploaded", { n });
     save();
     rerender();
   }
 
-  // 4 build
+  function addIntake(j) {
+    // one upload / conversion / Drive import result → selected sources (converted docs replace an earlier entry for the same file)
+    const e = j.entry;
+    if (!e) return;
+    const list = j.kind === "table" ? S.sources.tables : S.sources.docs;
+    const at = list.findIndex((x) => x.uri === e.uri);
+    if (at >= 0) list.splice(at, 1, e); else list.push(e);
+    (j.tables || []).forEach((t) => { if (!S.sources.tables.some((x) => x.uri === t.uri)) S.sources.tables.push(t); });
+    if (j.markdown_preview) S.previews[e.uri] = j.markdown_preview;
+    S.types = null;
+  }
+  async function convertMany(items, call) {
+    S.busy.conv = true;
+    let n = 0;
+    for (const x of items) {
+      S.ui.convMsg = T("data.converting", { n: x.name }); rerender();
+      const j = await call(x);
+      if (j.status === "OK") { addIntake(j); n += 1; } else { errToast(j, x.name); if (j.status === "MCP_UPDATE_NEEDED") break; }
+    }
+    S.busy.conv = false; S.ui.convMsg = T("data.uploaded", { n }); save(); rerender();
+  }
+
+  // 4 types
+  PAGES.types = () => {
+    const docs = S.sources.docs;
+    const r = S.types;
+    if (!docs.length) return head(T("rail.g.build"), T("types.title"), T("types.lead")) + `<div class="card"><div class="empty">${T("types.noDocs")}</div></div>
+      <div class="step-nav"><a class="btn" href="#/data">${T("common.prev")}</a><span class="spacer"></span><a class="btn primary" href="#/build">${T("common.next")}</a></div>`;
+    const typeIds = ((r && r.types) || []).map((x) => x.id);
+    const opts = (cur) => (typeIds.length ? typeIds : ["policy", "manual", "faq", "contract", "report", "slides", "spreadsheet", "dialogue", "spec", "notice", "other"])
+      .map((id) => `<option value="${esc(id)}" ${cur === id ? "selected" : ""}>${esc(T("types.t." + id))}</option>`).join("");
+    const byUri = {};
+    ((r && r.documents) || []).forEach((x) => { byUri[x.uri] = x; });
+    const rows = docs.map((d, i) => {
+      const x = byUri[d.uri] || {};
+      const dec = (S.ui.typeDec || {})[d.uri] || {};
+      const type = dec.type || x.type || d.kind || "";
+      const strat = dec.strategy || x.strategy || d.strategy || "";
+      const ask = x.ask && !dec.type;
+      const conv = d.conversion || {};
+      return `<tr class="${ask ? "ask" : ""}"><td><b>${esc(d.name)}</b><div class="meta">${esc(T("data.origin." + d.origin))}${conv.fidelity != null ? " · " + esc(T("types.fid", { f: pct(conv.fidelity) })) : ""}</div></td>
+        <td><select data-tdec="${i}" data-f="type"><option value="">-</option>${opts(type)}</select>${x.method ? `<div class="meta">${esc(T("types.method." + (x.method === "rules+llm" ? "llm" : x.method)))}${x.confidence != null ? " · " + pct(x.confidence) : ""}</div>` : ""}
+          ${ask ? `<div class="ask-chip">${T("types.ask")}</div>` : ""}</td>
+        <td><select data-tdec="${i}" data-f="strategy"><option value="">-</option>${STRATEGIES.map((s2) => `<option value="${s2}" ${strat === s2 ? "selected" : ""}>${esc(T("types.s." + s2))}</option>`).join("")}</select>
+          ${x.reason ? `<div class="meta">${esc(x.reason)}</div>` : ""}</td>
+        <td class="meta">${x.guide ? `<details class="fold"><summary>${T("types.guide")}</summary><div class="inner">${esc(x.guide)}</div></details>` : ""}
+          ${strat === "reconvert" && /^gs:\/\//.test(conv.source || "") ? `<button class="btn small" data-act="reconvert" data-i="${i}" ${S.busy.conv ? "disabled" : ""}>${T("types.reconvert")}</button>` : ""}</td></tr>`;
+    }).join("");
+    const sm = r && r.summary;
+    return head(T("rail.g.build"), T("types.title"), T("types.lead")) + `
+    <div class="card"><div class="card-head"><h3>${T("types.auto")}</h3><span class="sub">${T("types.autoD")}</span>
+      <span class="right"><label class="small muted"><input type="checkbox" id="cls-llm" ${S.ui.clsLlm ? "checked" : ""}> ${T("types.useLlm")}</label>
+      <button class="btn primary" data-act="classify" ${S.busy.cls ? "disabled" : ""}>${S.busy.cls ? T("types.classifying") : T("types.run")}</button></span></div>
+      ${S.ui.clsErr ? errNote(S.ui.clsErr) : ""}
+      ${r && r.question ? `<div class="note"><b>${esc(r.question.text)}</b></div>` : ""}
+      ${sm ? `<div class="flex mt8">${STRATEGIES.map((k) => `<span class="tag strat-${k}">${esc(T("types.s." + k))} <b>${sm[k] || 0}</b></span>`).join("")}</div>` : ""}
+      <div class="tbl-wrap mt12"><table class="tbl types"><thead><tr><th>${T("conv.doc")}</th><th>${T("types.type")}</th><th>${T("types.strategy")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="note">${T("types.legend")}</div>
+      <div class="form-actions"><button class="btn primary" data-act="types-save" ${S.busy.cls ? "disabled" : ""}>${T("types.save")}</button>
+        ${typesDone() ? `<span class="st">${statusDot("ok")}<b>${T("types.saved")}</b></span>` : ""}</div></div>
+    <div class="step-nav"><a class="btn" href="#/data">${T("common.prev")}</a><span class="spacer"></span><a class="btn primary" href="#/build">${T("common.next")}</a></div>`;
+  };
+  AFTER.types = () => {
+    document.querySelectorAll("[data-tdec]").forEach((el) => el.addEventListener("change", () => {
+      const d = S.sources.docs[+el.dataset.tdec];
+      S.ui.typeDec = S.ui.typeDec || {};
+      const cur = S.ui.typeDec[d.uri] || (S.ui.typeDec[d.uri] = {});
+      cur[el.dataset.f] = el.value;
+    }));
+    const cb = $("#cls-llm");
+    if (cb) cb.addEventListener("change", () => { S.ui.clsLlm = cb.checked; });
+  };
+  function typeDecisions() {
+    const byUri = {};
+    ((S.types && S.types.documents) || []).forEach((x) => { byUri[x.uri] = x; });
+    return S.sources.docs.map((d) => {
+      const x = byUri[d.uri] || {}, dec = (S.ui.typeDec || {})[d.uri] || {};
+      return { uri: d.uri, name: d.name, type: dec.type || x.type || d.kind || "", strategy: dec.strategy || x.strategy || d.strategy || "",
+        confidence: dec.type ? 1 : x.confidence, method: dec.type || dec.strategy ? "user" : x.method || "" };
+    }).filter((x) => x.type && x.strategy);
+  }
+
+  // 5 build
   PAGES.build = () => {
     const e = S.env;
     const ds = e.dataset || "aos_" + (S.draftId || "").replace("ws-", "").replace(/-/g, "_");
@@ -347,7 +554,8 @@
     <div class="card"><div class="card-head"><h3>${T("build.target")}</h3><span class="right"><button class="btn primary" data-act="run-all" ${S.busy.build ? "disabled" : ""}>${built() ? T("build.runFrom") : T("build.runAll")}</button></span></div>
       <div class="flex small"><span class="tag mono">gs://${esc(e.bucket)}/aos/${esc(S.wsId || S.draftId)}/</span><span class="tag mono">${esc(e.project)}.${esc(ds)}</span><span class="tag mono">${esc(e.graph_name)}</span>
       <span class="tag">${esc(T("id." + S.identMode))}${S.identInfo ? " · " + esc(S.identInfo.principal) : ""}</span>${dataType() ? `<span class="pill-p">${dataType()}</span>` : ""}</div>
-      ${allDone ? `<div class="note mt12"><b>${T("build.done")}</b> <a class="btn small primary" href="#/studio/overview">${T("build.toStudio")}</a></div>` : ""}
+      ${allDone ? `<div class="note mt12"><b>${T("build.done")}</b> <a class="btn small primary" href="#/studio/agents">${T("build.toAgent")}</a> <a class="btn small" href="#/studio/overview">${T("build.toStudio")}</a> <a class="btn small dark" href="#/deploy">${T("build.toDeploy")}</a></div>` : ""}
+      ${S.template && S.template.flow ? `<div class="flex small mt8"><span class="tag">${esc(T("build.tpl", { f: S.template.flow.title }))}</span><span class="tag">${esc(T("tpl.target." + S.template.target))}</span></div>` : ""}
       <ul class="stage-list mt12">${rows}</ul></div>
     <div class="card"><div class="card-head"><h3>${T("build.log")}</h3></div><div class="stream" id="stream">${S.log.length ? S.log.map(logLine).join("") : `<div class="mc">${T("build.logEmpty")}</div>`}</div></div>`;
   };
@@ -373,12 +581,12 @@
     if (!dataType()) { toast(T("build.needData")); go("data"); return false; }
     if (!S.wsCreated) {
       pushLog({ type: "step", status: "running", label: T("build.create") });
-      const j = await api("/api/v5/ws/create", { ws_id: S.draftId, scenario: S.scenario, env: S.env, sources: S.sources });
+      const j = await api("/api/v5/ws/create", { ws_id: S.draftId, scenario: S.scenario, env: S.env, sources: S.sources, template: templateSpec() });
       if (j.status !== "OK") { pushLog({ type: "error", message: j.message || j.status }); toast(j.message || j.status, 6000); return false; }
       S.ws = j.ws; S.wsId = j.ws.ws_id; S.wsCreated = true; S.env = Object.assign({}, S.env, { dataset: j.ws.env.dataset });
       save();
     } else {
-      const j = await api("/api/v5/ws/update", { ws: wsRef(), scenario: S.scenario, sources: S.sources });
+      const j = await api("/api/v5/ws/update", { ws: wsRef(), scenario: S.scenario, sources: S.sources, template: templateSpec() });
       if (j.status === "OK") S.ws = j.ws;
     }
     return true;
@@ -661,6 +869,42 @@
       <div class="boundary">${["public", "mcp", "gcp"].map((k, i) => `<div class="layer l${i + 1}"><h3>${T("ho.b." + k)}</h3><p>${T("ho.b." + k + ".d")}</p></div>`).join("")}</div></div>`;
   });
 
+  // deploy (GOAL-243): readiness + steps from Core MCP mcp_knowhow_deploy_plan
+  PAGES.deploy = () => {
+    const d = S.deploy;
+    if (!d || d._ws !== S.wsId || d._lang !== S.lang) {
+      if (!S.busy.dep) loadDeploy();
+      return head(T("rail.g.handoff"), T("dep.title"), T("dep.lead")) + `<div class="card">${S.ui.depErr ? errNote(S.ui.depErr) : `<div class="empty">${T("common.loading")}</div>`}</div>`;
+    }
+    const vcls = { ready: "ok", ready_with_warnings: "warn", not_ready: "error" }[d.verdict] || "idle";
+    const ev = ((S.ws && S.ws.summary) || {}).eval || {};
+    return head(T("rail.g.handoff"), T("dep.title"), T("dep.lead")) + `
+    <div class="card"><div class="flex"><span class="st big">${statusDot(vcls)}<b>${esc(T("dep.v." + d.verdict))}</b></span>
+      <span class="tag">${esc(T("dep.score", { s: ev.score != null ? ev.score : "-", t: d.threshold }))}</span><span class="spacer grow"></span>
+      <label class="small">${T("dep.target")} <select id="dep-target">${["cloud_run", "mcp_server"].map((x) => `<option value="${x}" ${d.target === x ? "selected" : ""}>${esc(T("dep.t." + x))}</option>`).join("")}</select></label>
+      <label class="small">${T("dep.threshold")} <input id="dep-th" type="number" min="0" max="100" value="${esc(d.threshold)}" style="width:64px"></label>
+      <button class="btn small" data-act="dep-refresh" ${S.busy.dep ? "disabled" : ""}>${T("dep.refresh")}</button></div>
+      <div class="checks mt12">${(d.checks || []).map((c) => `<div class="check-row">${statusDot(c.level === "ok" ? "ok" : c.level === "warn" ? "warn" : "error")}<div><div class="l1"><span class="lbl">${esc(T("dep.c." + c.id))}</span></div><div class="det">${esc(c.detail)}</div></div><div class="api">${esc(T("dep.lv." + c.level))}</div></div>`).join("")}</div>
+      ${d.verdict === "not_ready" ? `<div class="note warn">${T("dep.notReady")} <a class="btn small" href="#/studio/agents">${T("build.toAgent")}</a> <a class="btn small" href="#/studio/eval">${T("rail.eval")}</a></div>` : ""}</div>
+    <div class="card"><div class="card-head"><h3>${T("dep.steps")}</h3><span class="sub">${esc(d.service_name || "")}</span><span class="right"><button class="btn small primary" data-act="bundle" ${S.busy.bundle ? "disabled" : ""}>${T("ho.bundleBtn")}</button>
+      ${d.cloud_shell ? `<a class="btn small" href="${esc(d.cloud_shell)}" target="_blank" rel="noopener">${T("dep.cloudShell")}</a>` : ""}</span></div>
+      <ol class="dep-steps">${(d.steps || []).map((x) => `<li><div class="t"><b>${esc(x.n)}.</b> ${esc(x.title)}</div>${x.cmd ? codeBlock(x.cmd) : ""}</li>`).join("")}</ol>
+      ${(d.apis || []).length ? `<div class="meta">${T("tpl.apis")}: <span class="mono">${d.apis.map(esc).join(", ")}</span></div>` : ""}
+      <div class="form-actions"><a class="btn" href="#/handoff">${T("dep.toHandoff")}</a></div></div>`;
+  };
+  AFTER.deploy = () => {
+    const tg = $("#dep-target"), th = $("#dep-th");
+    if (tg) tg.addEventListener("change", () => { S.ui.depTarget = tg.value; loadDeploy(); });
+    if (th) th.addEventListener("change", () => { S.ui.depTh = +th.value || 80; });
+  };
+  async function loadDeploy() {
+    S.busy.dep = true; S.ui.depErr = null;
+    const j = await api("/api/v5/deploy/plan", { ws: wsRef(), target: S.ui.depTarget || "cloud_run", threshold: S.ui.depTh || 80 });
+    S.busy.dep = false;
+    if (j.status === "OK") { j._ws = S.wsId; j._lang = S.lang; S.deploy = j; } else { S.ui.depErr = j; S.deploy = null; }
+    if (S.route === "deploy") rerender(); else rail();
+  }
+
   // ------------------------------------------------------------------ actions
   const ACTIONS = {
     go: (a) => { if (a.dataset.need === "objective" && !S.scenario.objective.trim()) { toast(T("scn.needObjective")); return; } go(a.dataset.route); },
@@ -707,18 +951,90 @@
       sm.tables.forEach((t) => { if (!have.has(t.uri)) S.sources.tables.push(t); });
       save(); toast(T("data.sampleAdded")); rerender();
     },
-    "src-del": (a) => { (a.dataset.kind === "doc" ? S.sources.docs : S.sources.tables).splice(+a.dataset.i, 1); save(); rerender(); },
+    "src-del": (a) => { (a.dataset.kind === "doc" ? S.sources.docs : S.sources.tables).splice(+a.dataset.i, 1); S.types = null; save(); rerender(); },
     "gcs-list": async () => { S.ui.gcsUri = $("#gcs-uri").value.trim(); S.ui.gcs = await api("/api/v5/gcs/list", { uri: S.ui.gcsUri }); rerender(); },
-    "gcs-add": () => {
+    "gcs-add": async () => {
       const r = S.ui.gcs, items = [...r.docs.map((d) => ["doc", d]), ...r.tables.map((t) => ["table", t])];
+      const toConvert = [];
       document.querySelectorAll("[data-pick]").forEach((cb) => {
         if (!cb.checked) return;
         const [k, x] = items[+cb.dataset.pick];
-        if (k === "doc") S.sources.docs.push({ name: x.name, origin: "gcs", uri: x.uri, chars: x.size });
+        if (k === "doc" && x.convert) toConvert.push(x);
+        else if (k === "doc") S.sources.docs.push({ name: x.name, origin: "gcs", uri: x.uri, chars: x.size });
         else S.sources.tables.push({ name: x.name, origin: "gcs", uri: x.uri });
       });
-      S.ui.gcs = null; save(); rerender();
+      S.ui.gcs = null; S.types = null; save(); rerender();
+      if (toConvert.length) await convertMany(toConvert, (x) => api("/api/v5/convert", { env: S.env, ws_id: S.draftId, uri: x.uri, pdf_mode: S.ui.pdfMode || "auto" }));
     },
+    "drive-list": async () => {
+      S.ui.driveUrl = $("#drive-url").value.trim();
+      if (!S.ui.driveUrl) return;
+      S.ui.drive = await api("/api/v5/drive/list", { url: S.ui.driveUrl }); rerender();
+    },
+    "drive-add": async () => {
+      const files = (S.ui.drive && S.ui.drive.files) || [];
+      const pick = [];
+      document.querySelectorAll("[data-pick]").forEach((cb) => { if (cb.checked && !cb.disabled) pick.push(files[+cb.dataset.pick]); });
+      S.ui.drive = null; rerender();
+      await convertMany(pick, (f) => api("/api/v5/drive/import", { env: S.env, ws_id: S.draftId, file_id: f.id }));
+    },
+    "tpl-flow": (a) => {
+      S.tpl.flow = a.dataset.id; S.template = null;
+      const f = ((S.catalog && S.catalog.flows) || []).find((x) => x.id === a.dataset.id);
+      if (f) { S.scenario.question_type = f.question_type; S.tpl.services = S.tpl.services.filter((x) => (f.optional || []).includes(x)); }
+      save(); rerender();
+    },
+    "tpl-svc": (a) => {
+      const id = a.dataset.id, i = S.tpl.services.indexOf(id);
+      if (i >= 0) S.tpl.services.splice(i, 1); else S.tpl.services.push(id);
+      S.template = null; save(); rerender();
+    },
+    "tpl-target": (a) => {
+      S.tpl.target = a.dataset.id; S.template = null;
+      if (a.dataset.id === "sandbox") {  // starter sandbox = runtime identity + the starter project defaults
+        S.identMode = "runtime"; S.identInfo = null; S.check = null;
+        for (const [k, v] of Object.entries((S.boot && S.boot.env_defaults) || {})) if (k !== "dataset") S.env[k] = v;
+      } else if (S.identMode === "runtime") { S.identMode = "token"; S.identInfo = null; S.check = null; }
+      save(); rerender();
+    },
+    "tpl-compose": async () => {
+      S.busy.tpl = true; S.ui.tplErr = null; rerender();
+      const j = await api("/api/v5/template", { flow: S.tpl.flow, services: S.tpl.services, target: S.tpl.target, env: S.env, ws_id: S.draftId });
+      S.busy.tpl = false;
+      if (j.status === "OK") { delete j._http; S.template = j; } else S.ui.tplErr = j;
+      save(); rerender();
+    },
+    "dl-tpl-script": () => download("setup_template.sh", (S.template && S.template.setup_script) || "", "text/x-shellscript"),
+    classify: async () => {
+      S.busy.cls = true; S.ui.clsErr = null; rerender();
+      const user = {};
+      for (const [u, d] of Object.entries(S.ui.typeDec || {})) if (d.type) user[u] = d.type;
+      const j = await api("/api/v5/classify", { env: S.env, ws_id: S.draftId, sources: S.sources, user_types: user, use_llm: !!S.ui.clsLlm });
+      S.busy.cls = false;
+      if (j.status === "OK") S.types = j; else S.ui.clsErr = j;
+      rerender();
+    },
+    "types-save": async () => {
+      const decisions = typeDecisions();
+      if (!decisions.length) { toast(T("types.needRun")); return; }
+      S.busy.cls = true; rerender();
+      const j = await api("/api/v5/types/save", { decisions, sources: S.sources, ws: S.wsCreated ? wsRef() : null });
+      S.busy.cls = false;
+      if (j.status === "OK") {
+        if (j.ws) S.ws = j.ws;
+        const prev = {};
+        S.sources.docs.forEach((d) => { prev[d.uri] = d; });
+        S.sources = j.sources;
+        S.sources.docs.forEach((d) => { if (!d.conversion && prev[d.uri] && prev[d.uri].conversion) d.conversion = prev[d.uri].conversion; });
+        S.ui.typeDec = {}; save(); toast(T("types.savedN", { n: decisions.length })); rerender();
+      } else errToast(j);
+    },
+    reconvert: async (a) => {
+      const d = S.sources.docs[+a.dataset.i];
+      if (!d || !d.conversion || !d.conversion.source) return;
+      await convertMany([{ name: d.name, uri: d.conversion.source }], (x) => api("/api/v5/convert", { env: S.env, ws_id: S.draftId, uri: x.uri, pdf_mode: "gemini" }));
+    },
+    "dep-refresh": () => { const th = $("#dep-th"); if (th) S.ui.depTh = +th.value || 80; loadDeploy(); },
     "bq-list": async () => { S.ui.bqDs = $("#bq-ds").value.trim(); S.ui.bq = await api("/api/v5/bq/tables", { dataset: S.ui.bqDs, env: S.env }); rerender(); },
     "bq-add": () => {
       document.querySelectorAll("[data-pick]").forEach((cb) => { if (cb.checked) { const t = S.ui.bq.tables[+cb.dataset.pick]; S.sources.tables.push({ name: t.name, origin: "bigquery", fq: t.fq, uri: t.fq }); } });
@@ -854,7 +1170,10 @@
   }
   function openWs(ws) {
     S.ws = ws; S.wsId = ws.ws_id; S.wsCreated = true; S.env = Object.assign({}, ws.env); S.scenario = Object.assign({}, S.scenario, ws.scenario);
-    S.sources = ws.sources || S.sources; S.dataFor = ""; S.data = {}; S.draftId = ws.ws_id; save();
+    S.sources = ws.sources || S.sources; S.dataFor = ""; S.data = {}; S.draftId = ws.ws_id; S.deploy = null; S.types = null;
+    const tp = ws.template || {};
+    if (tp.flow) S.tpl = { flow: tp.flow, services: (tp.services || []).slice(), target: tp.target || "sandbox" };
+    save();
   }
   function openModal() {
     $("#modal-card").innerHTML = `<div class="card-head"><h2>${T("ws.openTitle")}</h2><span class="right"><button class="btn small" data-act="modal-close">${T("common.close")}</button></span></div>
@@ -883,6 +1202,7 @@
   function setLang(l) {
     S.lang = l === "en" ? "en" : "ko";
     save();
+    S.template = null; S.types = null;
     fetch("/api/v5/bootstrap?lang=" + S.lang).then((r) => r.json()).then((b) => { S.boot = b; render(); });
   }
   window.addEventListener("hashchange", route);

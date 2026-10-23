@@ -57,7 +57,7 @@ from src.web import v5_routes  # noqa: E402
 PORT = int(os.environ.get("PORT", 8080))
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 MAX_BODY = 512 * 1024
-MAX_BODY_V5 = 12 * 1024 * 1024  # /api/v5/* (uploads ≤ 6 MB as base64, wiki pages, workspaces)
+MAX_BODY_V5 = 20 * 1024 * 1024  # /api/v5/* (uploads ≤ 12 MB as base64 — GOAL-243 PDF/Office, wiki pages, workspaces)
 _STATIC_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,80}$")
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8",

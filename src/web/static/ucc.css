@@ -138,3 +138,4 @@ a:hover { text-decoration: underline; }
 .ucc-del { margin-left: auto; font: inherit; font-size: 11.5px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--red); cursor: pointer; }
 .ucc-del:hover { background: #fce8e6; border-color: #f5c6c2; }
 #ucc-admin.on { background: var(--yellow); border-color: var(--yellow-line); }
+.ucc-offline { font-size: 12px; padding: 8px 6px 12px; text-align: center; }
