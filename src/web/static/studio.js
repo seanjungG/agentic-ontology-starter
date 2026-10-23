@@ -19,8 +19,11 @@
     scenario: { preset: "", title: "", customer: "", objective: "", question_type: "W3" },
     env: {}, identMode: "runtime", sa: "", identInfo: null, draftId: "", wsId: "", wsCreated: false, ws: null,
     sources: { docs: [], tables: [] }, check: null, data: {}, dataFor: "", busy: {}, log: [], ui: {},
-    tpl: { flow: "", services: [], target: "sandbox" }, catalog: null, template: null, types: null, deploy: null, previews: {},
+    tpl: { flow: "", services: [], target: "sandbox", source: "" }, catalog: null, template: null, types: null, deploy: null, previews: {},
   };
+  // step-1 data source (catalog `sources`) → step-3 tab
+  const SRC_TAB = { upload: "upload", gcs: "gcs", drive: "drive", bigquery: "bq", sample: "sample" };
+  const SRC_ORDER = ["upload", "gcs", "drive", "sample", "bigquery"];
 
   // ------------------------------------------------------------------ utils
   const $ = (s, el) => (el || document).querySelector(s);
@@ -54,7 +57,7 @@
       const d = JSON.parse(localStorage.getItem(LS) || "{}");
       Object.assign(S, { lang: d.lang || S.lang, scenario: d.scenario || S.scenario, env: d.env || {}, identMode: d.identMode || "runtime",
         sa: d.sa || "", draftId: d.draftId || "", wsId: d.wsId || "", wsCreated: !!d.wsCreated, sources: d.sources || S.sources,
-        tpl: Object.assign({ flow: "", services: [], target: "sandbox" }, d.tpl || {}), template: d.template || null });
+        tpl: Object.assign({ flow: "", services: [], target: "sandbox", source: "" }, d.tpl || {}), template: d.template || null });
       S.ui = Object.assign({}, d.ui || {});
     } catch (e) { /* fresh start */ }
   }
@@ -254,60 +257,119 @@
       focusStyle: "dim", onChip: (c) => { if (built()) go(c.key === "eval" ? "studio/agents" : c.key === "graph" ? "studio/graph" : c.key === "wiki" ? "studio/wiki" : "studio/assets"); } });
   };
 
-  // 1 scenario
+  // 1 flow & services (GOAL-244): picker + live diagram → target · data source · template → objective (presets folded)
   PAGES.scenario = () => {
     const ps = (S.boot && S.boot.presets) || [];
     const q = S.scenario.question_type || "W3";
-    return head(T("rail.g.build"), T("scn.title"), T("scn.lead")) + `
-    <div class="card"><div class="card-head"><h3>${T("scn.presets")}</h3></div><div class="sel-grid">
+    const cur = ps.find((p) => p.id === S.scenario.preset);
+    return head(T("rail.g.build"), T("scn.title"), T("scn.lead")) + catalogCard() + whereCard() + `
+    <div class="card"><div class="card-head"><h3>${T("pick.goalTitle")}</h3><span class="sub">${T("pick.goalSub")}</span></div>
+      <details class="fold preset-fold" id="preset-fold" ${S.ui.presetOpen ? "open" : ""}><summary>${T("scn.presets")}${cur ? ` <span class="tag">${esc(cur.title)}</span>` : ""}<span class="meta">${T("scn.presetsHint")}</span></summary>
+        <div class="inner"><div class="sel-grid">
       ${ps.map((p) => `<button class="sel ${S.scenario.preset === p.id ? "on" : ""}" data-act="preset" data-id="${p.id}"><span class="check"></span>
         <div class="top"><span class="ttl">${esc(p.title)}</span>${p.sample ? `<span class="tag mcp">${T("scn.sampleTag")}</span>` : ""}</div>
-        <div class="desc">${esc(p.customer)}</div><div class="ex">${esc(p.data)}</div></button>`).join("")}</div></div>
-    <div class="card"><div class="form">
+        <div class="desc">${esc(p.customer)}</div><div class="ex">${esc(p.data)}</div></button>`).join("")}</div></div></details>
+      <div class="form mt16">
       <div class="field"><label>${T("scn.fTitle")}</label><input data-bind="scenario.title" value="${esc(S.scenario.title)}"></div>
       <div class="field"><label>${T("scn.fCustomer")}</label><input data-bind="scenario.customer" value="${esc(S.scenario.customer)}"></div>
       <div class="field full"><label>${T("scn.fObjective")}</label><textarea rows="3" data-bind="scenario.objective" placeholder="${esc(T("scn.fObjectiveHelp"))}">${esc(S.scenario.objective)}</textarea></div>
       <div class="field full"><label>${T("scn.qtype")}</label><div class="sel-grid">
         ${["W1", "W2", "W3"].map((w) => `<button class="sel ${q === w ? "on" : ""}" data-act="qtype" data-q="${w}"><span class="check"></span><div class="top"><span class="wbadge">${w}</span><span class="ttl">${T("scn." + w.toLowerCase())}</span></div><div class="desc">${T("scn." + w.toLowerCase() + "d")}</div></button>`).join("")}
       </div></div></div></div>
-    ${catalogCard()}
     <div class="step-nav"><a class="btn" href="#/start">${T("common.prev")}</a><span class="spacer"></span><button class="btn primary" data-act="go" data-route="env" data-need="objective">${T("common.next")}</button></div>`;
   };
 
+  const curFlow = () => ((S.catalog && S.catalog.flows) || []).find((f) => f.id === S.tpl.flow) || null;
+  // services in effect: the flow's required ones + the optional ones switched on
+  const onServices = (flow) => (flow ? (flow.services || []).concat(S.tpl.services.filter((x) => (flow.optional || []).includes(x))) : []);
   function catalogCard() {
     const c = S.catalog;
-    if (!c) return `<div class="card"><div class="card-head"><h3>${T("cat.title")}</h3></div>${S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}</div>`;
-    const flow = (c.flows || []).find((f) => f.id === S.tpl.flow);
+    const hd = `<div class="card-head"><h3>${T("cat.title")}</h3><span class="sub">${T("cat.sub")}</span>${c ? `<span class="right"><span class="tag mono">catalog ${esc(c.catalog_version || "")}</span></span>` : ""}</div>`;
+    if (!c) return `<div class="card">${hd}${S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}</div>`;
+    const flow = curFlow();
     const svcName = {};
     (c.services || []).forEach((x) => { svcName[x.id] = x.name; });
     const flows = (c.flows || []).map((f) => `<button class="sel ${S.tpl.flow === f.id ? "on" : ""}" data-act="tpl-flow" data-id="${esc(f.id)}"><span class="check"></span>
       <div class="top"><span class="ttl">${esc(f.title)}</span></div><div class="desc">${esc(f.summary)}</div>
       <div class="flex mt8"><span class="pill-p">${esc(f.data_type)}</span><span class="wbadge">${esc(f.question_type)}</span>${f.convert ? `<span class="tag mcp">${T("cat.convert")}</span>` : ""}</div>
-      <div class="ex">${esc(T("cat.stages"))}: ${(f.stages || []).map(esc).join(" → ")} · ${esc(T("cat.agents"))}: ${(f.agents || []).map((a) => esc(T("ag." + a))).join(", ")}</div></button>`).join("");
+      <div class="ex">${esc(T("cat.agents"))}: ${(f.agents || []).map((a) => esc(T("ag." + a))).join(", ")}</div></button>`).join("");
     const svc = (c.services || []).map((x) => {
       const req = flow ? flow.services.includes(x.id) : x.required;
       const opt = flow ? (flow.optional || []).includes(x.id) : !x.required;
       const on = req || S.tpl.services.includes(x.id);
       const dis = flow && !req && !opt;
-      return `<button class="svc ${on ? "on" : ""} ${dis ? "off" : ""}" data-act="tpl-svc" data-id="${esc(x.id)}" ${req || dis ? "disabled" : ""}>
+      const tip = `${T("cat.cost")}: ${x.cost || "-"}${(x.apis || []).length ? " · " + x.apis.join(", ") : ""}`;
+      return `<button class="svc ${on ? "on" : ""} ${dis ? "off" : ""}" data-act="tpl-svc" data-id="${esc(x.id)}" title="${esc(tip)}" ${req || dis ? "disabled" : ""}>
         <div class="top"><span class="ttl">${esc(x.name)}</span>${req ? `<span class="tag">${T("cat.required")}</span>` : opt ? `<span class="tag mcp">${T("cat.optional")}</span>` : ""}</div>
-        <div class="desc">${esc(x.role)}</div><div class="ex">${esc(T("cat.cost"))}: ${esc(x.cost)}${(x.apis || []).length ? " · " + x.apis.map(esc).join(", ") : ""}</div></button>`;
+        <div class="desc">${esc(x.role)}</div></button>`;
     }).join("");
-    return `<div class="card"><div class="card-head"><h3>${T("cat.title")}</h3><span class="sub">${T("cat.sub")}</span><span class="right"><span class="tag mono">catalog ${esc(c.catalog_version || "")}</span></span></div>
-      <div class="sel-grid four">${flows}</div>
-      <div class="eyebrow mt16">${T("cat.services")}${flow ? " · " + esc(flow.title) : ""}</div><div class="svc-grid mt8">${svc}</div>
-      ${flow ? `<div class="note">${esc(T("cat.picked", { f: flow.title, s: (flow.services || []).concat(S.tpl.services.filter((x) => (flow.optional || []).includes(x))).map((x) => svcName[x] || x).join(", ") }))}</div>` : `<div class="note">${T("cat.pickHint")}</div>`}</div>`;
+    const src = S.tpl.source ? T("pick.src." + S.tpl.source) : "";
+    const sum = flow ? `<span class="pill-p">${esc(flow.data_type)}</span><span class="wbadge">${esc(flow.question_type)}</span><b>${esc(flow.title)}</b>
+        <span class="meta">${esc(onServices(flow).map((x) => svcName[x] || x).join(" · "))}</span>${src ? `<span class="tag">${esc(T("pick.source"))}: ${esc(src)}</span>` : ""}`
+      : `<span class="meta">${T("pick.noFlow")}</span>`;
+    return `<div class="card pick-card">${hd}
+      <div class="pick2"><div class="pick-left">
+        <div class="eyebrow">${T("pick.flows")}</div><div class="sel-grid two mt8">${flows}</div>
+        <div class="eyebrow mt16">${T("cat.services")}${flow ? " · " + esc(flow.title) : ""}</div><div class="svc-grid compact mt8">${svc}</div>
+        ${flow ? "" : `<div class="note">${T("cat.pickHint")}</div>`}</div>
+      <div class="pick-right"><div class="pick-dia-head"><b>${T("pick.diagram")}</b><span class="sub">${T("pick.diagramSub")}</span></div>
+        <div id="pick-flow" class="pick-flow" data-flow="${esc(S.tpl.flow)}" data-source="${esc(S.tpl.source || "")}"></div>
+        <div class="pick-sum" id="pick-sum">${sum}</div></div></div></div>`;
   }
-  AFTER.scenario = () => { ensureCatalog(); };
-
-  function templateCard() {
+  // target · data source · compose — right below the picker so the whole choice happens on one screen
+  function whereCard() {
     const c = S.catalog, t = S.template;
     const targets = (c && c.targets) || [];
     const tg = targets.map((x) => `<button class="sel ${S.tpl.target === x.id ? "on" : ""}" data-act="tpl-target" data-id="${esc(x.id)}"><span class="check"></span>
       <div class="top"><span class="ttl">${esc(x.title)}</span></div><div class="desc">${esc(x.summary)}</div></button>`).join("");
+    const have = (c && c.sources) || SRC_ORDER;
+    const srcs = SRC_ORDER.filter((x) => have.includes(x));
+    const sg = srcs.map((x) => `<button class="sel ${S.tpl.source === x ? "on" : ""}" data-act="tpl-source" data-id="${esc(x)}"><span class="check"></span>
+      <div class="top"><span class="ttl">${esc(T("pick.src." + x))}</span></div><div class="desc">${esc(T("pick.src." + x + "D"))}</div></button>`).join("");
+    const prev = templatePreview(t);
+    return `<div class="card"><div class="card-head"><h3>${T("pick.whereTitle")}</h3><span class="sub">${T("pick.whereSub")}</span></div>
+      <div class="eyebrow">${T("pick.target")}</div>
+      ${c ? `<div class="sel-grid two mt8">${tg}</div>` : S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}
+      <div class="eyebrow mt16">${T("pick.source")}</div><div class="sel-grid five mt8">${sg}</div>
+      <div class="meta mt8">${T("pick.sourceHint")}</div>
+      <div class="form-actions"><button class="btn primary" data-act="tpl-compose" ${!S.tpl.flow || S.busy.tpl ? "disabled" : ""}>${S.busy.tpl ? T("common.loading") : T("tpl.compose")}</button>
+        ${t && t.flow ? `<span class="st">${statusDot("ok")}<b>${esc(T("tpl.ready", { f: t.flow.id, n: (t.stages || []).length }))}</b></span>` : !S.tpl.flow ? `<span class="meta">${T("tpl.needFlowHere")}</span>` : ""}</div>
+      ${S.ui.tplErr ? errNote(S.ui.tplErr) : ""}
+      ${prev ? `<details class="fold mt12" id="tpl-fold" ${S.ui.tplOpen === false ? "" : "open"}><summary>${T("pick.preview")}</summary><div class="inner">${prev}</div></details>` : ""}</div>`;
+  }
+  // diagram highlight = flow path ∪ services in effect ∪ picked data source (the source card also gets the black "current" border)
+  function pickHighlight() {
+    const V = window.STARTER_V6;
+    if (!V) return { hl: [], states: {} };
+    const flow = curFlow(), hl = new Set();
+    if (flow) {
+      (V.flowNodes[flow.id] || []).forEach((n) => hl.add(n));
+      onServices(flow).forEach((x) => (V.serviceNodes[x] || []).forEach((n) => hl.add(n)));
+    }
+    const src = V.sourceNodes[S.tpl.source] || [];
+    src.forEach((n) => hl.add(n));
+    const states = {};
+    if (src[0]) states[src[0]] = "current";
+    return { hl: Array.from(hl), states };
+  }
+  function drawPick() {
+    const host = $("#pick-flow");
+    if (!host || !window.AOLFlow || !window.STARTER_V6) return;
+    const { hl, states } = pickHighlight();
+    window.AOLFlow.render(host, window.STARTER_V6.pick, { lang: S.lang, highlight: hl, states, focusStyle: "dim", card: false, animate: "focus" });
+  }
+  AFTER.scenario = () => {
+    ensureCatalog();
+    drawPick();
+    const pf = $("#preset-fold"), tf = $("#tpl-fold");
+    if (pf) pf.addEventListener("toggle", () => { S.ui.presetOpen = pf.open; });
+    if (tf) tf.addEventListener("toggle", () => { S.ui.tplOpen = tf.open; });
+  };
+
+  function templatePreview(t) {
     let prev = "";
     if (t && t.flow) {
-      prev = `<div class="tpl-prev mt12"><div class="flex"><span class="pill-p">${esc(t.flow.data_type)}</span><span class="wbadge">${esc(t.flow.question_type)}</span><b>${esc(t.flow.title)}</b>
+      prev = `<div class="tpl-prev"><div class="flex"><span class="pill-p">${esc(t.flow.data_type)}</span><span class="wbadge">${esc(t.flow.question_type)}</span><b>${esc(t.flow.title)}</b>
           <span class="tag">${esc(T("tpl.target." + t.target))}</span><span class="tag">${esc(T("tpl.identity"))}: ${esc(t.identity && t.identity.mode)}</span></div>
         <div class="cols3"><div class="box"><div class="ttl">${T("tpl.stages")}</div><ul>${(t.stages || []).map((x) => `<li><span class="ld"></span><span class="lt mono">${esc(x)}</span></li>`).join("")}</ul></div>
           <div class="box"><div class="ttl">${T("tpl.services")}</div><ul>${(t.services || []).map((x) => `<li><span class="ld" style="background:var(--c-mcp)"></span><span class="lt">${esc(x.name)}${x.required ? "" : ` <span class="k">${T("cat.optional")}</span>`}</span></li>`).join("")}</ul></div>
@@ -318,12 +380,23 @@
         ${(t.warnings || []).length ? `<div class="note warn">${t.warnings.map(esc).join(" · ")}</div>` : ""}
         ${t.setup_script ? `<div class="card-head mt16"><h3>${T("tpl.script")}</h3><span class="right"><button class="btn small" data-act="dl-tpl-script">${T("common.download")}</button></span></div>${codeBlock(t.setup_script)}` : ""}</div>`;
     }
-    return `<div class="card"><div class="card-head"><h3>${T("tpl.title")}</h3><span class="sub">${T("tpl.sub")}</span></div>
-      ${S.tpl.flow ? "" : `<div class="note warn">${T("tpl.needFlow")} <a class="btn small" href="#/scenario">${T("rail.scenario")}</a></div>`}
-      ${c ? `<div class="sel-grid two">${tg}</div>` : S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}
-      <div class="form-actions"><button class="btn primary" data-act="tpl-compose" ${!S.tpl.flow || S.busy.tpl ? "disabled" : ""}>${S.busy.tpl ? T("common.loading") : T("tpl.compose")}</button>
-        ${t && t.flow ? `<span class="st">${statusDot("ok")}<b>${esc(T("tpl.ready", { f: t.flow.id, n: (t.stages || []).length }))}</b></span>` : ""}</div>
-      ${S.ui.tplErr ? errNote(S.ui.tplErr) : ""}${prev}</div>`;
+    return prev;
+  }
+  // step 2 only summarises what step 1 picked (the choice itself lives in step 1)
+  function templateCard() {
+    const c = S.catalog, t = S.template, flow = curFlow();
+    const svcName = {};
+    ((c && c.services) || []).forEach((x) => { svcName[x.id] = x.name; });
+    const tgt = ((c && c.targets) || []).find((x) => x.id === S.tpl.target);
+    const body = !c ? (S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`)
+      : !flow ? `<div class="note warn">${T("tpl.needFlow")} <a class="btn small" href="#/scenario">${T("rail.scenario")}</a></div>`
+        : `<div class="flex"><span class="pill-p">${esc(flow.data_type)}</span><span class="wbadge">${esc(flow.question_type)}</span><b>${esc(flow.title)}</b>
+          <span class="tag">${esc(T("pick.target"))}: ${esc(tgt ? tgt.title : S.tpl.target)}</span>${S.tpl.source ? `<span class="tag">${esc(T("pick.source"))}: ${esc(T("pick.src." + S.tpl.source))}</span>` : ""}
+          ${t && t.flow ? `<span class="st">${statusDot("ok")}<b>${esc(T("tpl.ready", { f: t.flow.id, n: (t.stages || []).length }))}</b></span>` : `<span class="st">${statusDot("idle")}${esc(T("env.tplNotComposed"))}</span>`}</div>
+          <div class="meta mt8">${esc(T("tpl.services"))}: ${esc(onServices(flow).map((x) => svcName[x] || x).join(" · "))}</div>`;
+    return `<div class="card"><div class="card-head"><h3>${T("tpl.title")}</h3><span class="sub">${T("env.tplSummary")}</span>
+        <span class="right"><a class="btn small" href="#/scenario">${T("env.tplEdit")}</a></span></div>${body}
+      ${t && t.setup_script && S.tpl.target === "own" ? `<details class="fold mt12"><summary>${T("tpl.script")}</summary><div class="inner">${codeBlock(t.setup_script)}</div></details>` : ""}</div>`;
   }
 
   // 2 env
@@ -362,7 +435,7 @@
 
   // 3 data
   PAGES.data = () => {
-    const tab = S.ui.dtab || "sample";
+    const tab = S.ui.dtab || SRC_TAB[S.tpl.source] || "sample";
     const dt = dataType();
     const src = (x, kind, i) => `<div class="src"><span class="tag">${T("data.origin." + x.origin)}</span><div class="nm">${esc(x.name)} <div class="uri">${esc(x.uri || x.fq || "")}</div></div>
       <span class="meta">${kind === "doc" ? (x.chars ? x.chars.toLocaleString() + " chars" : "") : (x.rows ? T("common.rows", { n: x.rows }) : "")}</span>
@@ -989,6 +1062,15 @@
       if (i >= 0) S.tpl.services.splice(i, 1); else S.tpl.services.push(id);
       S.template = null; save(); rerender();
     },
+    "tpl-source": (a) => {
+      // step-1 data source: preselects the step-3 tab and switches on the matching optional service (Drive · BigQuery)
+      const id = a.dataset.id;
+      S.tpl.source = id;
+      S.ui.dtab = SRC_TAB[id] || "sample";
+      const f = curFlow(), svc = id === "drive" ? "drive" : id === "bigquery" ? "bigquery" : "";
+      if (f && svc && (f.optional || []).includes(svc) && !S.tpl.services.includes(svc)) { S.tpl.services.push(svc); S.template = null; }
+      save(); rerender();
+    },
     "tpl-target": (a) => {
       S.tpl.target = a.dataset.id; S.template = null;
       if (a.dataset.id === "sandbox") {  // starter sandbox = runtime identity + the starter project defaults
@@ -1172,7 +1254,7 @@
     S.ws = ws; S.wsId = ws.ws_id; S.wsCreated = true; S.env = Object.assign({}, ws.env); S.scenario = Object.assign({}, S.scenario, ws.scenario);
     S.sources = ws.sources || S.sources; S.dataFor = ""; S.data = {}; S.draftId = ws.ws_id; S.deploy = null; S.types = null;
     const tp = ws.template || {};
-    if (tp.flow) S.tpl = { flow: tp.flow, services: (tp.services || []).slice(), target: tp.target || "sandbox" };
+    if (tp.flow) S.tpl = { flow: tp.flow, services: (tp.services || []).slice(), target: tp.target || "sandbox", source: tp.source || S.tpl.source || "" };
     save();
   }
   function openModal() {

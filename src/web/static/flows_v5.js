@@ -36,7 +36,7 @@
       { id: "wiki", x: 420, y: 80, w: 150, layer: "wiki", t: ["OKF 위키", "OKF wiki"], s: [["요약 · 엔티티 · 개념", "Summary · entity · concept"], ["정책 상수 · W1~W7", "Policy constants · W1–W7"]],
         tip: { d: ["mcp_knowhow_compile_wiki가 목적에 맞춰 3-Layer 위키를 만들고 품질 게이트 W1~W7을 검사합니다. 정책 상수는 한 페이지에만, applies_to는 테이블 행과 연결됩니다.",
                    "mcp_knowhow_compile_wiki compiles a 3-layer wiki for the objective and runs gates W1–W7. Policy constants live on one page; applies_to links to table rows."] } },
-      { id: "wagent", x: 840, y: 80, w: 150, layer: "agent", t: "Wiki Agent", s: [["위키만 근거", "Wiki only"], ["read_wiki → answer", "read_wiki → answer"]],
+      { id: "wagent", x: 840, y: 80, w: 150, layer: "agent", t: "Wiki", s: [["위키만 근거", "Wiki only"], ["read_wiki → answer", "read_wiki → answer"]],
         tip: { d: ["mcp_knowhow_agent_step이 읽을 페이지를 고르고, 스타터가 페이지를 넘겨 주면 근거를 인용해 답합니다.",
                    "mcp_knowhow_agent_step picks the pages to read; the starter hands them over and the agent answers with citations."] } },
       { id: "cqs", x: 225, y: 208, w: 150, layer: "workflow", t: ["CQ 초안", "CQ draft"], s: [["목적 → 역량 질문", "Objective → questions"], ["기준 답 · 핵심 사실", "Reference · key facts"]],
@@ -45,7 +45,7 @@
       { id: "unified", x: 625, y: 208, w: 150, layer: "semantic", t: ["통합 그래프", "Unified graph"], s: [["위키 노드 + 테이블 노드", "Wiki + table nodes"], ["wiki_bridge · FK", "wiki_bridge · FK"]],
         tip: { d: ["mcp_knowhow_design_graph가 설계 · 검증하고 BigQuery DDL을 만들면, 스타터가 Core MCP bigquery_execute_sql로 CREATE PROPERTY GRAPH를 실행합니다.",
                    "mcp_knowhow_design_graph designs, validates and generates the BigQuery DDL; the starter runs CREATE PROPERTY GRAPH through Core MCP bigquery_execute_sql."] } },
-      { id: "hagent", x: 840, y: 208, w: 150, layer: "agent", t: "Hybrid Agent", s: [["규칙 + 데이터 + 계산", "Rules + data + math"], ["판정 · 계산 (W3)", "Decide & calculate (W3)"]],
+      { id: "hagent", x: 840, y: 208, w: 150, layer: "agent", t: "Hybrid", s: [["규칙 + 데이터 + 계산", "Rules + data + math"], ["판정 · 계산 (W3)", "Decide & calculate (W3)"]],
         tip: { d: ["위키의 규칙 · 상수와 그래프의 실제 값을 함께 조회하고, 계산은 Core MCP 안에서 처리해 판정까지 답합니다.",
                    "Reads wiki rules/constants and graph values together; calculations run inside the Core MCP, up to a decision."] } },
       { id: "eval", x: 1060, y: 208, w: 150, layer: "mcp", t: ["평가", "Evaluation"], s: [["CQ 재질의 · 채점", "Re-ask CQs · score"], ["통과 1 · 부분 0.5", "pass 1 · partial 0.5"]],
@@ -60,7 +60,7 @@
       { id: "nodes", x: 625, y: 336, w: 150, layer: "semantic", t: ["노드 · 엣지 테이블", "Node · edge tables"], s: [["N_<Label> · E_<…>", "N_<Label> · E_<…>"], ["SQL로 생성", "Built with SQL"]],
         tip: { d: ["테이블 노드와 FK · 브릿지 엣지는 원천 테이블에서 SQL로 만들어 데이터 크기와 상관없이 동작합니다. Enterprise 예약이 없으면 에이전트는 이 테이블에 SQL로 답합니다.",
                    "Table nodes and FK/bridge edges are built with SQL from the source tables, so size does not matter. Without an Enterprise reservation the agents answer with SQL on these tables."] } },
-      { id: "gagent", x: 840, y: 336, w: 150, layer: "agent", t: "Graph Agent", s: [["GQL · SQL만 근거", "GQL · SQL only"], ["gql/sql → answer", "gql/sql → answer"]],
+      { id: "gagent", x: 840, y: 336, w: 150, layer: "agent", t: "Graph", s: [["GQL · SQL만 근거", "GQL · SQL only"], ["gql/sql → answer", "gql/sql → answer"]],
         tip: { d: ["mcp_knowhow_agent_step이 GQL(GRAPH_TABLE) 또는 SQL을 쓰고, 스타터가 내 신원으로 실행해 결과를 돌려줍니다.",
                    "mcp_knowhow_agent_step writes GQL (GRAPH_TABLE) or SQL; the starter runs it with your identity and returns the rows."] } },
     ],
@@ -105,4 +105,82 @@
     eval: ["wagent", "gagent", "hagent", "eval"] };
 
   root.STARTER_V5 = { build, paths, stageNodes };
+
+  /* ---- v6 step 1 (GOAL-244): "flow & services" picker diagram ----
+   * A compact, top-down canvas that fits half of the step-1 card: data sources → convert · load → wiki · graph → agents → deploy.
+   * Rows are grey bands with a caption in the left gutter (so no edge crosses a label); 4 columns at x = 88 / 206 / 324 / 442.
+   * The studio highlights  flowNodes[flow] ∪ serviceNodes[each on service] ∪ sourceNodes[data source]  with focusStyle "dim",
+   * and marks the picked data source with state "current".
+   *   AOLFlow.render(host, STARTER_V6.pick, { lang, highlight, states, focusStyle: "dim", card: false })
+   */
+  const R = [4, 92, 180, 268, 356];            // row band tops (band h = 80, node y = top + 13, node h = 54)
+  const NY = (r) => R[r] + 13;
+  const NB = (r) => R[r] + 67;                 // node bottom
+  const C = [88, 206, 324, 442];               // column x (w = 108)
+  const CX = (c, f) => C[c] + 108 * (f == null ? 0.5 : f);
+  const v = (x, r1, r2, layer, id, from, to) => ({ id, from, to, pts: [[x, NB(r1)], [x, NY(r2) - 2]], layer });
+  const pick = {
+    id: "starter-v6-pick",
+    title: ["플로우 · 서비스 구성도 — 데이터 소스 → 변환 → 위키 · 그래프 → 에이전트", "Flow & services map — data sources → convert → wiki · graph → agents"],
+    w: 560, h: 440, minWidth: 420,
+    lanes: R.map((y) => ({ y, h: 80, x: 8, w: 544, name: "" })),
+    notes: [
+      { x: 18, y: R[0] + 44, t: ["데이터 소스", "Sources"], cls: "dark" },
+      { x: 18, y: R[1] + 44, t: ["변환 · 적재", "Convert"], cls: "dark" },
+      { x: 18, y: R[2] + 44, t: ["위키 · 그래프", "Knowledge"], cls: "dark" },
+      { x: 18, y: R[3] + 44, t: ["에이전트", "Agents"], cls: "dark" },
+      { x: 18, y: R[4] + 44, t: ["배포", "Deploy"], cls: "dark" },
+    ],
+    nodes: [
+      { id: "src_upload", x: C[0], y: NY(0), w: 108, h: 54, layer: "source", t: ["로컬 업로드", "Upload"], s: [["PDF · Office · MD · CSV", "PDF · Office · MD · CSV"]],
+        tip: { d: ["내 PC의 파일을 올립니다. PDF · Office는 Markdown으로 변환됩니다.", "Upload files from your computer. PDF and Office files are converted to Markdown."] } },
+      { id: "src_drive", x: C[1], y: NY(0), w: 108, h: 54, layer: "source", t: "Drive", s: [["Docs · Sheets · PDF", "Docs · Sheets · PDF"]],
+        tip: { d: ["Drive 폴더 · 파일을 가져와 Markdown으로 변환합니다.", "Import Drive folders or files and convert them to Markdown."] } },
+      { id: "src_gcs", x: C[2], y: NY(0), w: 108, h: 54, layer: "source", t: "GCS", s: [["gs:// · 샘플 팩", "gs:// · sample pack"]],
+        tip: { d: ["버킷의 파일을 그 자리에서 읽습니다. 샘플 팩도 GCS에 있습니다.", "Reads files in place from a bucket. The sample pack also lives in GCS."] } },
+      { id: "src_bq", x: C[3], y: NY(0), w: 108, h: 54, layer: "source", t: "BigQuery", s: [["테이블 그대로", "Tables in place"]],
+        tip: { d: ["이미 BigQuery에 있는 테이블을 복사하지 않고 읽습니다.", "Tables already in BigQuery are read in place, not copied."] } },
+      { id: "convert", x: C[0], y: NY(1), w: 226, h: 54, layer: "workflow", t: ["문서 변환 → Markdown", "Convert → Markdown"], s: [["PDF · Office · Drive · 보존율 등급", "PDF · Office · Drive · fidelity grade"]],
+        tip: { d: ["Core MCP mcp_knowhow_convert_document가 변환하고 보존율을 채점합니다.", "Core MCP mcp_knowhow_convert_document converts and scores fidelity."] } },
+      { id: "parse", x: C[2], y: NY(1), w: 108, h: 54, layer: "source", t: ["파싱", "Parse"], s: [["Gate 0 · 섹션", "Gate 0 · sections"]] },
+      { id: "load", x: C[3], y: NY(1), w: 108, h: 54, layer: "source", t: ["적재", "Load"], s: [["프로파일 · PK · FK", "Profile · PK · FK"]] },
+      { id: "vertex", x: C[0], y: NY(2), w: 108, h: 54, layer: "gemini", t: "Vertex AI", s: [["Gemini", "Gemini"]],
+        tip: { d: ["변환 · 위키 컴파일 · 에이전트 추론에 쓰는 모델입니다.", "The model behind conversion, wiki compile and agent reasoning."] } },
+      { id: "wiki", x: C[1], y: NY(2), w: 226, h: 54, layer: "wiki", t: ["OKF 위키", "OKF wiki"], s: [["요약 · 엔티티 · 개념 · GCS", "Summary · entity · concept · GCS"]] },
+      { id: "graph", x: C[3], y: NY(2), w: 108, h: 54, layer: "semantic", t: ["그래프", "Graph"], s: [["Property Graph", "Property Graph"]] },
+      { id: "coremcp", x: C[0], y: NY(3), w: 108, h: 54, layer: "mcp", t: "Core MCP", s: [["노하우 · 도구", "Know-how · tools"]],
+        tip: { d: ["모든 구축 노하우와 데이터 접근을 Core MCP 도구 호출로 처리합니다.", "All build know-how and data access go through Core MCP tool calls."] } },
+      { id: "wagent", x: C[1], y: NY(3), w: 108, h: 54, layer: "agent", t: "Wiki", s: [["W1 규정 안내", "W1 guidance"]] },
+      { id: "hagent", x: C[2], y: NY(3), w: 108, h: 54, layer: "agent", t: "Hybrid", s: [["W3 판정 · 계산", "W3 decide"]] },
+      { id: "gagent", x: C[3], y: NY(3), w: 108, h: 54, layer: "agent", t: "Graph", s: [["W2 데이터 조회", "W2 lookup"]] },
+      { id: "deploy", x: C[1], y: NY(4), w: 344, h: 54, layer: "system", t: ["Cloud Run 배포", "Cloud Run deploy"], s: [["에이전트 · MCP 서버로 서비스", "Serve the agents as an app or MCP server"]] },
+    ],
+    edges: [
+      v(CX(0), 0, 1, "workflow", "upload-convert", "src_upload", "convert"),
+      v(CX(1), 0, 1, "workflow", "drive-convert", "src_drive", "convert"),
+      v(CX(2), 0, 1, "source", "gcs-parse", "src_gcs", "parse"),
+      v(CX(3), 0, 1, "source", "bq-load", "src_bq", "load"),
+      { id: "convert-wiki", pts: [[C[1] + 74, NB(1)], [C[1] + 74, NY(2) - 2]], layer: "wiki", from: "convert", to: "wiki" },
+      v(CX(2), 1, 2, "wiki", "parse-wiki", "parse", "wiki"),
+      v(CX(3), 1, 2, "semantic", "load-graph", "load", "graph"),
+      { id: "wiki-wagent", pts: [[CX(1), NB(2)], [CX(1), NY(3) - 2]], layer: "agent", from: "wiki", to: "wagent" },
+      { id: "wiki-hagent", pts: [[CX(2, 0.3), NB(2)], [CX(2, 0.3), NY(3) - 2]], layer: "agent", from: "wiki", to: "hagent" },
+      { id: "graph-hagent", pts: [[CX(3, 0.15), NB(2)], [CX(3, 0.15), NB(2) + 17], [CX(2, 0.75), NB(2) + 17], [CX(2, 0.75), NY(3) - 2]], layer: "agent", from: "graph", to: "hagent" },
+      { id: "graph-gagent", pts: [[CX(3, 0.6), NB(2)], [CX(3, 0.6), NY(3) - 2]], layer: "agent", from: "graph", to: "gagent" },
+      v(CX(1), 3, 4, "system", "wagent-deploy", "wagent", "deploy"),
+      v(CX(2), 3, 4, "system", "hagent-deploy", "hagent", "deploy"),
+      v(CX(3), 3, 4, "system", "gagent-deploy", "gagent", "deploy"),
+    ],
+    legend: [
+      { kind: "flow", color: "wiki", t: ["선택한 경로 · 색 = 도착 레이어", "Selected path · colour = target layer"] },
+      { kind: "focus", t: ["선택한 데이터 소스", "Picked data source"] },
+    ],
+  };
+  const docs = ["src_upload", "src_gcs", "parse", "wiki", "wagent", "vertex", "coremcp"];
+  const tables = ["src_upload", "src_gcs", "src_bq", "load", "graph", "gagent", "vertex", "coremcp"];
+  const flowNodes = { A: docs, B: tables, C: docs.concat(tables, ["hagent"]), D: docs.concat(["convert"]) };
+  const serviceNodes = { gcs: ["src_gcs"], vertex_ai: ["vertex"], core_mcp: ["coremcp"], drive: ["src_drive", "convert"],
+    bigquery: ["src_bq", "load"], bq_graph: ["graph"], cloud_run: ["deploy"] };
+  const sourceNodes = { upload: ["src_upload", "convert"], drive: ["src_drive", "convert"], gcs: ["src_gcs"], sample: ["src_gcs"], bigquery: ["src_bq", "load"] };
+  root.STARTER_V6 = { pick, flowNodes, serviceNodes, sourceNodes };
 })(typeof window !== "undefined" ? window : this);
