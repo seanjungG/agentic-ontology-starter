@@ -342,7 +342,7 @@ def step_gate0(cfg, recipe, lang, emit, ctx, principal):
     inline = [{"bundle": "normative", "doc_stem": d["doc_id"], "content": d["text"]} for d in docs]
     args = {"project_id": f"aol_starter_{lang}", "domain_profile": "custom_starter", "inline_documents": inline, "detail_level": "compact"}
     s = time.perf_counter()
-    r = call_core_mcp("tools/call", {"name": "mcp_builder_parse_documents_gate0", "arguments": args}, url=cfg.core_mcp_url, timeout_s=120)
+    r = call_core_mcp("tools/call", {"name": "aos_builder_parse_documents_gate0", "arguments": args}, url=cfg.core_mcp_url, timeout_s=120)
     sc: Dict[str, Any] = {}
     if r.get("status") == "SUCCESS":
         res = r.get("result") or {}
@@ -359,14 +359,14 @@ def step_gate0(cfg, recipe, lang, emit, ctx, principal):
         detail = t(lang, f"문서 {m.get('total_documents_parsed')}개 · 앵커 {m.get('total_anchors')}개 · 보존율 {g.get('measured_fidelity')} → {g.get('gate0_status')}",
                    f"{m.get('total_documents_parsed')} documents · {m.get('total_anchors')} anchors · fidelity {g.get('measured_fidelity')} → {g.get('gate0_status')}")
         ctx["gate0"] = {"status": g.get("gate0_status"), "fidelity": g.get("measured_fidelity"), "anchors": m.get("total_anchors")}
-        _log(emit, "gate0", "Core MCP tools/call mcp_builder_parse_documents_gate0", t(lang, f"문서 {len(docs)}종", f"{len(docs)} documents"),
+        _log(emit, "gate0", "Core MCP tools/call aos_builder_parse_documents_gate0", t(lang, f"문서 {len(docs)}종", f"{len(docs)} documents"),
              _ms(s), "ok", m.get("total_anchors"), "anchors", detail)
         return {"status": "done" if g.get("gate0_status") in ("PASS", None) else "warn", "detail": detail}
     err = error_message(r.get("error")) if r.get("status") != "SUCCESS" else f"{sc.get('status')} {str(sc.get('message', ''))[:200]}"
     detail = t(lang, f"Core MCP 응답 오류: {err} · 로컬 조항 확인 {local_chunks}개로 계속 진행",
                f"Core MCP error: {err} · continuing with the local clause check ({local_chunks} clauses)")
     ctx["gate0"] = {"status": "LOCAL", "anchors": local_chunks}
-    _log(emit, "gate0", "Core MCP tools/call mcp_builder_parse_documents_gate0", t(lang, f"문서 {len(docs)}종", f"{len(docs)} documents"),
+    _log(emit, "gate0", "Core MCP tools/call aos_builder_parse_documents_gate0", t(lang, f"문서 {len(docs)}종", f"{len(docs)} documents"),
          _ms(s), "warn", local_chunks, "clauses", detail)
     return {"status": "warn", "detail": detail}
 
@@ -393,7 +393,7 @@ def step_wiki(cfg, recipe, lang, emit, ctx, principal):
     pages = datapack.wiki_pages(lang, recipe)
     s0 = time.perf_counter()
     sc = call_core_mcp_tool(
-        "mcp_builder_compile_okf_wiki_stage2",
+        "aos_builder_compile_okf_wiki_stage2",
         {
             "project_id": f"aol_starter_{lang}",
             "inline_pages": [{"page": p["page"], "text": p["text"]} for p in pages],
@@ -407,7 +407,7 @@ def step_wiki(cfg, recipe, lang, emit, ctx, principal):
         _log(
             emit,
             "wiki",
-            "Core MCP tools/call mcp_builder_compile_okf_wiki_stage2",
+            "Core MCP tools/call aos_builder_compile_okf_wiki_stage2",
             t(lang, f"위키 {len(pages)}개 검증", f"Validate {len(pages)} wiki pages"),
             _ms(s0),
             "ok",
@@ -500,7 +500,7 @@ def step_graph(cfg, recipe, lang, emit, ctx, principal):
     emit({"type": "ddl", "sql": ddl})
     s_val = time.perf_counter()
     sc = call_core_mcp_tool(
-        "mcp_builder_synthesize_bqg_stage4",
+        "aos_builder_synthesize_bqg_stage4",
         {
             "project_id": cfg.project_id,
             "dataset_id": cfg.dataset_id,
@@ -517,7 +517,7 @@ def step_graph(cfg, recipe, lang, emit, ctx, principal):
         _log(
             emit,
             "graph",
-            "Core MCP tools/call mcp_builder_synthesize_bqg_stage4",
+            "Core MCP tools/call aos_builder_synthesize_bqg_stage4",
             cfg.graph_fq,
             _ms(s_val),
             "ok",

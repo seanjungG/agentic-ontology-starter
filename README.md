@@ -16,7 +16,7 @@
 
 ## 1. 흐름 — 5단계 구성 + 스튜디오 + 배포 · 인계
 
-> **v6 (GOAL-243)**: 플로우 · 서비스 카탈로그로 **템플릿 구성**(스타터 샌드박스 또는 내 GCP 프로젝트) → 데이터는 **로컬 업로드 · GCS · Google Drive**, PDF · DOCX · PPTX · XLSX · HTML은 **Markdown 변환 + 변환율 측정** → **문서 유형 자동 판별 + 사용자 확인**(그대로 / 유형별 프롬프팅 / 재변환) → 위키 → **에이전트 바로 테스트** → **배포 단계**(준비도 점검 · 명령). 노하우는 모두 Core MCP(`mcp_knowhow_catalog · compose_template · convert_document · classify_documents · deploy_plan`, `drive_*`)에 있고, 구버전 Core MCP면 화면에 `MCP_UPDATE_NEEDED` 안내가 뜹니다(기존 흐름은 그대로 동작).
+> **v6 (GOAL-243)**: 플로우 · 서비스 카탈로그로 **템플릿 구성**(스타터 샌드박스 또는 내 GCP 프로젝트) → 데이터는 **로컬 업로드 · GCS · Google Drive**, PDF · DOCX · PPTX · XLSX · HTML은 **Markdown 변환 + 변환율 측정** → **문서 유형 자동 판별 + 사용자 확인**(그대로 / 유형별 프롬프팅 / 재변환) → 위키 → **에이전트 바로 테스트** → **배포 단계**(준비도 점검 · 명령). 노하우는 모두 Core MCP(`aos_core_catalog · compose_template · convert_document · classify_documents · deploy_plan`, `drive_*`)에 있고, 구버전 Core MCP면 화면에 `MCP_UPDATE_NEEDED` 안내가 뜹니다(기존 흐름은 그대로 동작).
 
 ```text
 ⓪ 이해      전체 흐름도: 입력 → 수집 · CQ → OKF 위키 → Property Graph → 에이전트 → 평가 (P1 문서 · P3 통합 · P2 테이블)
@@ -33,11 +33,11 @@
 | 단계 | 하는 일 | Core MCP 호출 |
 | :---: | :--- | :--- |
 | S0 준비 | 버킷 권한 · 데이터셋 생성(데모 신원이면 테이블 7일 만료) · `workspace.json` | `iam_test_permissions` · `bigquery_get_dataset_info` · `bigquery_create_dataset` · `storage_upload_object` |
-| S1 수집 · 프로파일 | 문서 읽기 · CSV → BigQuery(병렬) · BigQuery 테이블 프로파일(복사 없음) · Gate 0 · PK/FK 스코핑 | `storage_read_object` · `bigquery_load_table` · `bigquery_get_table_info` · `bigquery_execute_sql` · `mcp_builder_parse_documents_gate0` · **`mcp_knowhow_scope`** |
-| S2 CQ | 목적 기반 역량 질문 + 기준 답 + 핵심 사실 | **`mcp_knowhow_draft_cqs`** |
-| S3 OKF 위키 | 요약 · 엔티티 · 개념 + 정책 상수(단일 출처) + applies_to + 게이트 W1~W7 → GCS | **`mcp_knowhow_compile_wiki`** · `storage_upload_object` |
-| S4 Property Graph | 설계 → 노드 · 엣지 테이블(SQL) → `CREATE PROPERTY GRAPH` → 검증 GQL | **`mcp_knowhow_design_graph`** · `bigquery_execute_sql` · `bigquery_load_table` |
-| S5 평가 | 모든 CQ를 담당 에이전트로 다시 묻고 채점 | **`mcp_knowhow_agent_step`** · 데이터 도구 · **`mcp_knowhow_judge`** |
+| S1 수집 · 프로파일 | 문서 읽기 · CSV → BigQuery(병렬) · BigQuery 테이블 프로파일(복사 없음) · Gate 0 · PK/FK 스코핑 | `storage_read_object` · `bigquery_load_table` · `bigquery_get_table_info` · `bigquery_execute_sql` · `aos_builder_parse_documents_gate0` · **`aos_core_scope`** |
+| S2 CQ | 목적 기반 역량 질문 + 기준 답 + 핵심 사실 | **`aos_core_draft_cqs`** |
+| S3 OKF 위키 | 요약 · 엔티티 · 개념 + 정책 상수(단일 출처) + applies_to + 게이트 W1~W7 → GCS | **`aos_core_compile_wiki`** · `storage_upload_object` |
+| S4 Property Graph | 설계 → 노드 · 엣지 테이블(SQL) → `CREATE PROPERTY GRAPH` → 검증 GQL | **`aos_core_design_graph`** · `bigquery_execute_sql` · `bigquery_load_table` |
+| S5 평가 | 모든 CQ를 담당 에이전트로 다시 묻고 채점 | **`aos_core_agent_step`** · 데이터 도구 · **`aos_core_judge`** |
 
 실측(2026-10-19, `gemini-4-argon` MEDIUM): 샘플 팩 KO 구축 약 7분 · 평가 **100 (8/8)** · 업로드한 보험 청구 심사 데이터(문서 1 + CSV 3) 구축 약 6.5분 · 평가 **100 (8/8)**, Property Graph 검증 GQL 전부 통과.
 
@@ -48,7 +48,7 @@
 ```text
 브라우저 / CLI / 내 코드
   └─ 스타터 (이 저장소: 화면 · 순서 · CLI · 워크스페이스 형식)
-       ├─ Platform Core MCP ─ 노하우 mcp_knowhow_* (무상태 · 프롬프트 · 규칙 · 게이트)  ← 보호
+       ├─ Platform Core MCP ─ 노하우 aos_core_* (무상태 · 프롬프트 · 규칙 · 게이트)  ← 보호
        │                    └ 데이터 플레인 storage_* · bigquery_* · iam_* (호출자 토큰으로만 실행)
        └─ Vertex AI (상태 점검 · 기본 모델 gemini-4-argon)
   모든 결과물 · Gemini 비용 = 내 GCP (GCS 워크스페이스 · BigQuery 데이터셋 · Property Graph)
@@ -56,12 +56,12 @@
 
 | 노하우 도구 | 입력 | 출력 |
 | :--- | :--- | :--- |
-| `mcp_knowhow_scope` | 목적 · 문서 머리말 · 테이블 스키마 + 표본 | 데이터 유형 · 질문 유형 · 문서 역할 · PK · FK 후보 · 단계 · 에이전트 |
-| `mcp_knowhow_draft_cqs` | 목적 · 문서 · 테이블 표본 | CQ(질문 · 유형 · 기준 답 · 핵심 사실) |
-| `mcp_knowhow_compile_wiki` | 문서 · 테이블 컬럼 (또는 `mode=validate` + 편집한 페이지) | OKF 페이지 · Markdown · 게이트 · 인덱스 |
-| `mcp_knowhow_design_graph` | 테이블 · 위키 페이지 · 데이터셋 · 그래프 이름 (또는 편집한 `design`) | 검증된 설계 · 실행 SQL · 적재 행 · 그래프 DDL · 검증 GQL · 에이전트 스키마 |
-| `mcp_knowhow_agent_step` | 에이전트 · 질문 · 컨텍스트 · 관찰 | 다음 행동(`read_wiki` · `gql` · `sql` · `answer`), 계산은 도구 안에서 |
-| `mcp_knowhow_judge` | 질문 · 기준 답 · 핵심 사실 · 답변 | 판정(1 · 0.5 · 0) |
+| `aos_core_scope` | 목적 · 문서 머리말 · 테이블 스키마 + 표본 | 데이터 유형 · 질문 유형 · 문서 역할 · PK · FK 후보 · 단계 · 에이전트 |
+| `aos_core_draft_cqs` | 목적 · 문서 · 테이블 표본 | CQ(질문 · 유형 · 기준 답 · 핵심 사실) |
+| `aos_core_compile_wiki` | 문서 · 테이블 컬럼 (또는 `mode=validate` + 편집한 페이지) | OKF 페이지 · Markdown · 게이트 · 인덱스 |
+| `aos_core_design_graph` | 테이블 · 위키 페이지 · 데이터셋 · 그래프 이름 (또는 편집한 `design`) | 검증된 설계 · 실행 SQL · 적재 행 · 그래프 DDL · 검증 GQL · 에이전트 스키마 |
+| `aos_core_agent_step` | 에이전트 · 질문 · 컨텍스트 · 관찰 | 다음 행동(`read_wiki` · `gql` · `sql` · `answer`), 계산은 도구 안에서 |
+| `aos_core_judge` | 질문 · 기준 답 · 핵심 사실 · 답변 | 판정(1 · 0.5 · 0) |
 
 - 노하우 도구는 데이터를 저장하지 않고, Gemini는 **호출자 토큰 · 호출자 프로젝트**로 실행합니다. Core MCP 서비스 계정에는 데이터 권한이 없습니다.
 - 에이전트 루프는 스타터(또는 내 코드)가 돕니다: `agent_step` → 행동 실행(내 신원) → 관찰 전달 → … → `answer`.
@@ -150,7 +150,7 @@ src/
 ├── aos/ws.py              워크스페이스 · GCS 영속화 · MCP 호출 로그
 ├── aos/sources.py         업로드 · GCS · BigQuery · 샘플 팩 · CSV 스키마 추론
 ├── aos/pipeline.py        구축 단계 S0~S5
-├── aos/agent.py           Wiki · Graph · Hybrid 에이전트 루프 (추론 = mcp_knowhow_agent_step)
+├── aos/agent.py           Wiki · Graph · Hybrid 에이전트 루프 (추론 = aos_core_agent_step)
 ├── aos/studio.py          프리셋 · 환경 점검 · 설정 스크립트 · 편집 · 쿼리 · 검색 · 번들
 ├── identity.py            요청 단위 신원 (runtime · token · impersonate)
 ├── cli.py                 CLI
@@ -180,7 +180,7 @@ v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 �
 
 ## English summary
 
-**Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, BigQuery Property Graph, Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `mcp_knowhow_*` tools**; this repository holds which tools are called in which order with which parameters.
+**Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, BigQuery Property Graph, Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `aos_core_*` tools**; this repository holds which tools are called in which order with which parameters.
 
 - **Flow**: understand → situation & goal (presets or custom, W1/W2/W3) → GCP & permissions (demo identity, pasted token, or SA; live checks + a ready-to-run setup script) → data (upload .md/.txt/.csv, GCS paths, BigQuery tables, sample pack) → build S0–S5 (re-run any stage) → studio (assets, wiki edit + gates, graph schema + GQL/SQL console + design rebuild, search, agent experiments, CQ evaluation) → hand-off (CLI, MCP call log with curl, MCP client config, single-file agent, zip bundle).
 - **v6 intake** (GOAL-243): pick a flow and services from the Core MCP catalog and compose a template for the starter sandbox or your own project; bring data from local upload, GCS or Google Drive — PDF/DOCX/PPTX/XLSX/HTML are converted to Markdown with a fidelity score; Core MCP detects each document's type (and asks when unsure) and the chosen wiki strategy (direct · typed · re-convert) feeds the wiki compile; then test the agent and open the deployment page (readiness checks + commands). An older Core MCP shows `MCP_UPDATE_NEEDED` while the existing flow keeps working.

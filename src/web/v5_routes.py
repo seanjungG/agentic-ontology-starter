@@ -12,11 +12,11 @@ workspace reference `ws: {bucket, ws_id}`; the server keeps no state (workspaces
   POST /api/v5/setup-script           bash script that prepares the GCP environment
   POST /api/v5/ws/draft               new workspace id + default dataset
   POST /api/v5/upload                 one file → gs://bucket/aos/<ws>/raw/<name> (pdf/office/html → converted/<stem>.md)
-  POST /api/v5/convert                convert a gs:// PDF/Office/HTML document (Core MCP mcp_knowhow_convert_document)
-  POST /api/v5/catalog · template     flow & service catalog · build template (Core MCP mcp_knowhow_catalog / compose_template)
+  POST /api/v5/convert                convert a gs:// PDF/Office/HTML document (Core MCP aos_core_convert_document)
+  POST /api/v5/catalog · template     flow & service catalog · build template (Core MCP aos_core_catalog / compose_template)
   POST /api/v5/drive/list · import    Google Drive folder listing · import (+ conversion) via Core MCP drive_*
-  POST /api/v5/classify · types/save  document types + wiki strategy (mcp_knowhow_classify_documents) · user confirmation
-  POST /api/v5/deploy/plan            deployment readiness + steps (mcp_knowhow_deploy_plan)
+  POST /api/v5/classify · types/save  document types + wiki strategy (aos_core_classify_documents) · user confirmation
+  POST /api/v5/deploy/plan            deployment readiness + steps (aos_core_deploy_plan)
   POST /api/v5/gcs/list               documents · CSVs under a gs:// prefix
   POST /api/v5/bq/tables              tables of a BigQuery dataset
   POST /api/v5/ws/create · open · list · update

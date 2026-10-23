@@ -101,17 +101,17 @@ class TemplateAndSourcesTests(unittest.TestCase):
 
 class IntakeTests(unittest.TestCase):
     def test_catalog_and_missing_tool(self):
-        fake = FakeMcp({"mcp_knowhow_catalog": {"status": "SUCCESS", "flows": [{"id": "A"}], "services": [], "targets": [], "catalog_version": "1"}})
+        fake = FakeMcp({"aos_core_catalog": {"status": "SUCCESS", "flows": [{"id": "A"}], "services": [], "targets": [], "catalog_version": "1"}})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake):
             self.assertEqual(intake.catalog("en")["flows"], [{"id": "A"}])
-        with mock.patch("src.aos.ws.call_core_mcp_tool", FakeMcp({"mcp_knowhow_catalog": unknown("mcp_knowhow_catalog")})):
+        with mock.patch("src.aos.ws.call_core_mcp_tool", FakeMcp({"aos_core_catalog": unknown("aos_core_catalog")})):
             with self.assertRaises(WsError) as cm:
                 intake.catalog("en")
         self.assertEqual(cm.exception.code, "MCP_UPDATE_NEEDED")
         self.assertIsNone(HANGUL.search(cm.exception.to_dict("en")["message"]))
 
     def test_template_passes_selection(self):
-        fake = FakeMcp({"mcp_knowhow_compose_template": lambda a: {"status": "SUCCESS", "flow": {"id": a["flow"]}, "target": a["target"],
+        fake = FakeMcp({"aos_core_compose_template": lambda a: {"status": "SUCCESS", "flow": {"id": a["flow"]}, "target": a["target"],
                                                                      "services": [{"id": s} for s in a["services"]], "tool": "x", "version": "1"}})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake):
             r = intake.template({"flow": "D", "services": ["drive"], "target": "own", "env": ENV, "ws_id": WS_ID}, "ko")
@@ -120,7 +120,7 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual(fake.calls[0][1]["project"], "my-project-1")
 
     def test_upload_pdf_converts_and_stores_markdown(self):
-        fake = FakeMcp({"mcp_knowhow_convert_document": CONVERTED})
+        fake = FakeMcp({"aos_core_convert_document": CONVERTED})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake), identity.bind("t", USER):
             r = intake.upload({"env": ENV, "ws_id": WS_ID, "name": "Claims Manual.pdf", "content_base64": base64.b64encode(b"%PDF-1.4 x").decode()}, "en")
         self.assertEqual((r["status"], r["kind"], r["converted"]), ("OK", "doc", True))
@@ -132,7 +132,7 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual(e["conversion"]["pdf"], f"gs://my-bucket/aos/{WS_ID}/raw/Claims_Manual.pdf")  # the PDF itself is the source
         self.assertIn(("my-bucket", f"aos/{WS_ID}/converted/Claims_Manual.md"), fake.objects)
         self.assertTrue(r["markdown_preview"].startswith("# Claims manual"))
-        self.assertEqual(fake.tools(), ["storage_upload_object", "mcp_knowhow_convert_document", "storage_upload_object"])
+        self.assertEqual(fake.tools(), ["storage_upload_object", "aos_core_convert_document", "storage_upload_object"])
 
     def test_upload_text_and_csv_unchanged(self):
         fake = FakeMcp()
@@ -141,13 +141,13 @@ class IntakeTests(unittest.TestCase):
             csv = intake.upload({"env": ENV, "ws_id": WS_ID, "name": "Claims.csv", "text": "id,amt\n1,10\n2,20\n"}, "ko")
         self.assertEqual((md["kind"], md["entry"]["chars"]), ("doc", 13))
         self.assertEqual((csv["kind"], csv["entry"]["name"], csv["entry"]["rows"]), ("table", "claims", 2))
-        self.assertNotIn("mcp_knowhow_convert_document", fake.tools())
+        self.assertNotIn("aos_core_convert_document", fake.tools())
         with self.assertRaises(ValueError), identity.bind("t", USER):
             intake.upload({"env": ENV, "ws_id": WS_ID, "name": "evil.exe", "text": "x"}, "ko")
 
     def test_upload_xlsx_sheets_become_tables(self):
         res = dict(CONVERTED, source_ext=".xlsx", method="stdlib", sheets_csv=[{"name": "Rates", "rows": 2, "csv": "a,b\n1,2\n3,4\n"}])
-        fake = FakeMcp({"mcp_knowhow_convert_document": res})
+        fake = FakeMcp({"aos_core_convert_document": res})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake), identity.bind("t", USER):
             r = intake.upload({"env": ENV, "ws_id": WS_ID, "name": "plan.xlsx", "content_base64": base64.b64encode(b"PK..").decode()}, "ko")
         self.assertEqual([(t["name"], t["rows"]) for t in r["tables"]], [("plan_rates", 2)])
@@ -159,7 +159,7 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual(cm.exception.code, "WRITE_BLOCKED")
 
     def test_convert_gcs(self):
-        fake = FakeMcp({"mcp_knowhow_convert_document": CONVERTED})
+        fake = FakeMcp({"aos_core_convert_document": CONVERTED})
         fake.objects[("src-bucket", "in/a.pdf")] = base64.b64encode(b"%PDF").decode()
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake), identity.bind("t", USER):
             r = intake.convert_gcs({"env": ENV, "ws_id": WS_ID, "uri": "gs://src-bucket/in/a.pdf", "pdf_mode": "gemini"}, "ko")
@@ -175,7 +175,7 @@ class IntakeTests(unittest.TestCase):
             "drive_get_file": {"status": "SUCCESS", "file": {"id": "2", "name": "Guide"}, "exports": [
                 {"ext": ".md", "mime_type": "text/markdown", "content_base64": base64.b64encode(b"# Guide\n## A\nx").decode()},
                 {"ext": ".pdf", "mime_type": "application/pdf", "content_base64": base64.b64encode(b"%PDF").decode()}]},
-            "mcp_knowhow_convert_document": dict(CONVERTED, source_ext=".md", method="stdlib")})
+            "aos_core_convert_document": dict(CONVERTED, source_ext=".md", method="stdlib")})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake), identity.bind("t", USER):
             ls = intake.drive_list({"url": "https://drive.google.com/drive/folders/abc"})
             imp = intake.drive_import({"env": ENV, "ws_id": WS_ID, "file_id": "2"}, "en")
@@ -188,7 +188,7 @@ class IntakeTests(unittest.TestCase):
         self.assertEqual((r["status"], r["code"]), ("ERROR", "DRIVE_ACCESS"))
 
     def test_classify_and_types(self):
-        fake = FakeMcp({"mcp_knowhow_classify_documents": lambda a: {"status": "SUCCESS", "documents": [
+        fake = FakeMcp({"aos_core_classify_documents": lambda a: {"status": "SUCCESS", "documents": [
             {"type": "faq", "confidence": 0.4, "strategy": "typed", "reason": "r", "ask": True, "method": "rules"} for _ in a["docs"]],
             "summary": {"direct": 0, "typed": len(a["docs"]), "reconvert": 0}, "types_catalog": [{"id": "faq"}], "question": {"text": "q"}}})
         fake.objects[("my-bucket", "x/a.md")] = base64.b64encode("Q: 왜?\nA: 그래서".encode()).decode()
@@ -204,7 +204,7 @@ class IntakeTests(unittest.TestCase):
             intake.classify({"env": ENV, "sources": {"docs": []}}, "ko")
 
     def test_deploy_plan_args(self):
-        fake = FakeMcp({"mcp_knowhow_deploy_plan": lambda a: {"status": "SUCCESS", "verdict": "not_ready" if a["sandbox"] else "ready", "steps": [], "args": a}})
+        fake = FakeMcp({"aos_core_deploy_plan": lambda a: {"status": "SUCCESS", "verdict": "not_ready" if a["sandbox"] else "ready", "steps": [], "args": a}})
         ws = {"ws_id": WS_ID, "env": dict(ENV, dataset="aos_x", graph_name="G"), "summary": {"eval": {"score": 100, "total": 8}}, "template": {"target": "sandbox"}}
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake):
             r = intake.deploy_plan(ws, {"target": "mcp_server"}, "token", "http://core/mcp", "en")
@@ -227,7 +227,7 @@ class PipelineTests(unittest.TestCase):
             sent.update(a)
             return {"status": "SUCCESS", "pages": [{"id": "SUM-1"}], "files": {"a.md": "x"}, "index": {}, "gates": [], "gates_passed": 7,
                     "gates_total": 7, "counts": {"summary": 1}}
-        fake = FakeMcp({"mcp_knowhow_compile_wiki": compile_wiki})
+        fake = FakeMcp({"aos_core_compile_wiki": compile_wiki})
         pf = f"aos/{WS_ID}/"
         docs = [{"doc_id": "FAQ", "title": "FAQ", "text": "Q", "kind": "faq", "strategy": "typed"},
                 {"doc_id": "POL", "title": "Policy", "text": "P", "kind": "policy", "strategy": "direct"}]
@@ -274,11 +274,11 @@ class IntakeApiTests(unittest.TestCase):
         self.assertTrue(b["version"].startswith("v6."))
 
     def test_catalog_route_and_mcp_update_needed(self):
-        ok = FakeMcp({"mcp_knowhow_catalog": {"status": "SUCCESS", "flows": [{"id": "A"}, {"id": "D"}], "services": [], "targets": []}})
+        ok = FakeMcp({"aos_core_catalog": {"status": "SUCCESS", "flows": [{"id": "A"}, {"id": "D"}], "services": [], "targets": []}})
         with mock.patch("src.aos.ws.call_core_mcp_tool", ok):
             code, body = self.post("/api/v5/catalog", {"lang": "en"})
         self.assertEqual((code, body["status"], len(body["flows"])), (200, "OK", 2))
-        with mock.patch("src.aos.ws.call_core_mcp_tool", FakeMcp({"mcp_knowhow_catalog": unknown("mcp_knowhow_catalog")})):
+        with mock.patch("src.aos.ws.call_core_mcp_tool", FakeMcp({"aos_core_catalog": unknown("aos_core_catalog")})):
             code, body = self.post("/api/v5/catalog", {"lang": "en"})
         self.assertEqual((code, body["status"]), (501, "MCP_UPDATE_NEEDED"))
         self.assertIsNone(HANGUL.search(body["message"]))
@@ -302,14 +302,14 @@ class LangOnlyTest(unittest.TestCase):
            "catalog_version": "1.0.0", "doc_types": [{"id": "policy", "ko": "규정", "en": "Policy", "desc_ko": "조항", "desc_en": "Articles"}]}
 
     def test_catalog_en_has_no_hangul(self):
-        fake = FakeMcp({"mcp_knowhow_catalog": self.CAT})
+        fake = FakeMcp({"aos_core_catalog": self.CAT})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake):
             out = intake.catalog("en")
         self.assertEqual(out["doc_types"], [{"id": "policy", "en": "Policy", "desc_en": "Articles"}])
         self.assertFalse(HANGUL.search(json.dumps(out, ensure_ascii=False)))
 
     def test_catalog_ko_keeps_korean(self):
-        fake = FakeMcp({"mcp_knowhow_catalog": self.CAT})
+        fake = FakeMcp({"aos_core_catalog": self.CAT})
         with mock.patch("src.aos.ws.call_core_mcp_tool", fake):
             out = intake.catalog("ko")
         self.assertEqual(out["doc_types"], [{"id": "policy", "ko": "규정", "desc_ko": "조항"}])

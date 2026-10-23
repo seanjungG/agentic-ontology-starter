@@ -244,7 +244,7 @@ def clean_sources(src: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(d, dict) and d.get("origin") in ("upload", "gcs", "sample", "drive") and (d.get("uri") or d.get("path")):
             e = {"name": str(d.get("name") or "")[:200], "origin": d["origin"], "uri": str(d.get("uri") or d.get("path"))[:500],
                  "chars": int(d.get("chars") or 0)}
-            if d.get("kind"):  # GOAL-243: document type + wiki strategy (Core MCP mcp_knowhow_classify_documents, user-confirmed)
+            if d.get("kind"):  # GOAL-243: document type + wiki strategy (Core MCP aos_core_classify_documents, user-confirmed)
                 e["kind"] = re.sub(r"[^a-z]", "", str(d["kind"]))[:20]
             if d.get("strategy") in ("direct", "typed", "reconvert"):
                 e["strategy"] = d["strategy"]

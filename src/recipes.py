@@ -106,12 +106,12 @@ def load_plan(recipe: str) -> List[Dict[str, Any]]:
     steps = []
     if "P1" in RECIPES[recipe]["paths"]:
         steps += [
-            {"key": "gate0", "node": "gcs", "service": "Core MCP", "core_mcp": "mcp_builder_parse_documents_gate0",
+            {"key": "gate0", "node": "gcs", "service": "Core MCP", "core_mcp": "aos_builder_parse_documents_gate0",
              "t": T("문서 파싱 · Gate 0 (원문 보존율)", "Parse documents · Gate 0 (fidelity)"),
              "target": T("문서 2종 → Core MCP", "2 documents → Core MCP")},
             {"key": "docs", "node": "gcs", "service": "Cloud Storage", "core_mcp": "storage_upload_object",
              "t": T("원본 문서 업로드", "Upload source documents"), "target": "gs://{bucket}/starter/{lang}/docs/"},
-            {"key": "wiki", "node": "gcs", "service": "Cloud Storage", "core_mcp": "mcp_builder_compile_okf_wiki_stage2 + storage_upload_object",
+            {"key": "wiki", "node": "gcs", "service": "Cloud Storage", "core_mcp": "aos_builder_compile_okf_wiki_stage2 + storage_upload_object",
              "t": T(f"OKF 위키 페이지 {pages}개 업로드", f"Upload {pages} OKF wiki pages"), "target": "gs://{bucket}/starter/{lang}/wiki/"},
         ]
     if "P2" in RECIPES[recipe]["paths"]:
@@ -128,7 +128,7 @@ def load_plan(recipe: str) -> List[Dict[str, Any]]:
                       "target": "{project}.{dataset}", "tables": p3})
     if "P2" in RECIPES[recipe]["paths"]:
         steps += [
-            {"key": "graph", "node": "graph", "service": "BigQuery Graph", "core_mcp": "mcp_builder_synthesize_bqg_stage4 + bigquery_execute_sql",
+            {"key": "graph", "node": "graph", "service": "BigQuery Graph", "core_mcp": "aos_builder_synthesize_bqg_stage4 + bigquery_execute_sql",
              "t": T("Property Graph 생성 (CREATE OR REPLACE)", "Create the property graph (CREATE OR REPLACE)"),
              "target": "{project}.{dataset}.{graph}"},
             {"key": "graph_check", "node": "graph", "service": "BigQuery Graph", "core_mcp": "bigquery_execute_sql (GQL)",

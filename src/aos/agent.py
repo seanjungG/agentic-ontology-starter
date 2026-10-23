@@ -5,7 +5,7 @@
 # -*- coding: utf-8 -*-
 """Generic agents over a workspace (GOAL-233): Wiki · Graph · Hybrid.
 
-The reasoning (prompts, next-action policy, calculation) lives in the Core MCP tool `mcp_knowhow_agent_step`.
+The reasoning (prompts, next-action policy, calculation) lives in the Core MCP tool `aos_core_agent_step`.
 This loop only executes the actions with the caller's credentials and feeds the observations back:
 
     agent_step → read_wiki (workspace pages) | gql / sql (Core MCP bigquery_execute_sql) → agent_step … → answer
@@ -77,17 +77,17 @@ def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = No
     tel = {"llm_ms": 0, "tokens_in": 0, "tokens_out": 0, "data_ms": 0, "steps": 0, "model": ""}
     answer, citations, confidence, status = "", [], "", "ERROR"
     for i in range(max_steps):
-        emit({"type": "step", "step": f"think-{i + 1}", "status": "running", "label": t(lang, f"추론 {i + 1} · Core MCP mcp_knowhow_agent_step", f"Reason {i + 1} · Core MCP mcp_knowhow_agent_step")})
-        res = log.call("mcp_knowhow_agent_step", {"agent": agent, "question": question, "lang": lang, "context": context,
+        emit({"type": "step", "step": f"think-{i + 1}", "status": "running", "label": t(lang, f"추론 {i + 1} · Core MCP aos_core_agent_step", f"Reason {i + 1} · Core MCP aos_core_agent_step")})
+        res = log.call("aos_core_agent_step", {"agent": agent, "question": question, "lang": lang, "context": context,
                                                   "observations": observations, "max_steps": max_steps, "project": env["project"],
                                                   "model": env["model"], "location": env["vertex_location"]}, timeout_s=300)
         if res.get("status") != "SUCCESS" and res.get("status") != "AUTH_REQUIRED":  # one retry for transient model errors
-            res = log.call("mcp_knowhow_agent_step", {"agent": agent, "question": question, "lang": lang, "context": context,
+            res = log.call("aos_core_agent_step", {"agent": agent, "question": question, "lang": lang, "context": context,
                                                       "observations": observations, "max_steps": max_steps, "project": env["project"],
                                                       "model": env["model"], "location": env["vertex_location"]}, timeout_s=300)
         if res.get("status") != "SUCCESS":
             msg = error_text(res)
-            emit({"type": "step", "step": f"think-{i + 1}", "status": "error", "label": "mcp_knowhow_agent_step", "detail": msg[:300]})
+            emit({"type": "step", "step": f"think-{i + 1}", "status": "error", "label": "aos_core_agent_step", "detail": msg[:300]})
             return _fail(agent, "ERROR", msg, lang, t0, steps)
         tt = res.get("telemetry") or {}
         tel["llm_ms"] += int(tt.get("ms") or 0)
