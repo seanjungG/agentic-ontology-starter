@@ -6,10 +6,10 @@
 """Starter v6 intake (GOAL-243): flow & service catalog · template · data intake (local · GCS · Drive) · conversion · types · deploy plan.
 
 This module only ORCHESTRATES. Every piece of method know-how is a Core MCP call:
-    mcp_knowhow_catalog · mcp_knowhow_compose_template      flow & service catalog, build template
-    mcp_knowhow_convert_document                             PDF / Office / HTML → Markdown + conversion fidelity
-    mcp_knowhow_classify_documents                           document type + wiki strategy (direct · typed · reconvert)
-    mcp_knowhow_deploy_plan                                  deployment readiness + next steps
+    aos_core_catalog · aos_core_compose_template      flow & service catalog, build template
+    aos_core_convert_document                             PDF / Office / HTML → Markdown + conversion fidelity
+    aos_core_classify_documents                           document type + wiki strategy (direct · typed · reconvert)
+    aos_core_deploy_plan                                  deployment readiness + next steps
     drive_list_files · drive_get_file · storage_*            data plane, with the request identity's token
 Results are written to the user's bucket:  gs://<bucket>/aos/<ws>/raw/<original>  ·  converted/<name>.md  ·  converted/<name>.pdf
 """
@@ -80,7 +80,7 @@ def lang_only(obj: Any, lang: str) -> Any:
 
 # ------------------------------------------------------------------------------------------------ catalog · template
 def catalog(lang: str) -> Dict[str, Any]:
-    r = _call(McpLog("catalog", None), "mcp_knowhow_catalog", {"lang": lang}, timeout_s=30)
+    r = _call(McpLog("catalog", None), "aos_core_catalog", {"lang": lang}, timeout_s=30)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "message": error_text(r)}
     return {"status": "OK", **lang_only({k: r.get(k) for k in ("flows", "services", "targets", "sources", "doc_types", "catalog_version")}, lang)}
@@ -91,7 +91,7 @@ def template(data: Dict[str, Any], lang: str) -> Dict[str, Any]:
     args = {"lang": lang, "flow": data.get("flow"), "services": data.get("services") or [], "target": data.get("target") or "sandbox",
             "project": env.get("project", ""), "region": env.get("region", ""), "bucket": env.get("bucket", ""), "ws_id": data.get("ws_id", ""),
             "model": env.get("model", ""), "sa_name": data.get("sa_name") or "aos-starter"}
-    r = _call(McpLog("template", None), "mcp_knowhow_compose_template", args, timeout_s=30)
+    r = _call(McpLog("template", None), "aos_core_compose_template", args, timeout_s=30)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "message": error_text(r)}
     return {"status": "OK", **{k: v for k, v in r.items() if k not in ("status", "tool", "version")}}
@@ -108,7 +108,7 @@ def convert_and_store(log: McpLog, env: Dict[str, Any], ws_id: str, name: str, d
     """Convert one binary document via Core MCP and store converted/<stem>.md (+ .pdf when available). Returns a doc entry."""
     if len(data) > MAX_CONVERT_BYTES:
         raise ValueError(f"file too large for conversion ({len(data)} > {MAX_CONVERT_BYTES} bytes)")
-    r = _call(log, "mcp_knowhow_convert_document", {**_kh(env, lang), "name": name, "content_base64": base64.b64encode(data).decode("ascii"),
+    r = _call(log, "aos_core_convert_document", {**_kh(env, lang), "name": name, "content_base64": base64.b64encode(data).decode("ascii"),
                                                      "pdf_mode": pdf_mode}, timeout_s=330, label=name)
     if r.get("status") != "SUCCESS":
         raise RuntimeError(f"{name}: {error_text(r)}")
@@ -267,7 +267,7 @@ def classify(data: Dict[str, Any], lang: str) -> Dict[str, Any]:
         payload.append({"doc_id": f"D{i + 1:02d}", "title": d.get("name", ""), "name": d.get("name", ""), "text": text[:60000],
                         "ext": conv.get("source_ext") or ext_of(d.get("name", "")), "fidelity": conv.get("fidelity"),
                         "user_type": (data.get("user_types") or {}).get(str(d.get("uri")), "")})
-    r = _call(log, "mcp_knowhow_classify_documents", {**_kh(env, lang), "docs": payload, "use_llm": bool(data.get("use_llm"))}, timeout_s=120)
+    r = _call(log, "aos_core_classify_documents", {**_kh(env, lang), "docs": payload, "use_llm": bool(data.get("use_llm"))}, timeout_s=120)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "message": error_text(r)}
     out = []
@@ -290,7 +290,7 @@ def deploy_plan(ws: Dict[str, Any], data: Dict[str, Any], identity_mode: str, co
             "target": data.get("target") or "cloud_run", "threshold": data.get("threshold") or 80, "identity_mode": identity_mode,
             "sandbox": (ws.get("template") or {}).get("target") == "sandbox", "service_name": data.get("service_name") or f"aos-agent-{ws['ws_id'][-6:]}",
             "workspace_uri": f"gs://{env.get('bucket')}/{prefix(ws['ws_id'])}workspace.json", "ws_id": ws["ws_id"], "core_mcp_url": core_mcp_url}
-    r = _call(McpLog("deploy", None), "mcp_knowhow_deploy_plan", args, timeout_s=30)
+    r = _call(McpLog("deploy", None), "aos_core_deploy_plan", args, timeout_s=30)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "message": error_text(r)}
     return {"status": "OK", **{k: v for k, v in r.items() if k not in ("status", "tool", "version")}}

@@ -942,7 +942,7 @@
       <div class="boundary">${["public", "mcp", "gcp"].map((k, i) => `<div class="layer l${i + 1}"><h3>${T("ho.b." + k)}</h3><p>${T("ho.b." + k + ".d")}</p></div>`).join("")}</div></div>`;
   });
 
-  // deploy (GOAL-243): readiness + steps from Core MCP mcp_knowhow_deploy_plan
+  // deploy (GOAL-243): readiness + steps from Core MCP aos_core_deploy_plan
   PAGES.deploy = () => {
     const d = S.deploy;
     if (!d || d._ws !== S.wsId || d._lang !== S.lang) {

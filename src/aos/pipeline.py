@@ -7,13 +7,13 @@
 
     prepare  dataset (+ 7-day table expiry for the demo identity) · bucket permission · workspace.json
     ingest   documents → parsed/docs.json · CSV → BigQuery tables · BigQuery tables → profile · Gate 0 · scope
-    cqs      Competency Questions (Core MCP mcp_knowhow_draft_cqs) → cqs.json
-    wiki     OKF 3-layer wiki + gates (mcp_knowhow_compile_wiki) → wiki/*.md · pages.json · index.json
-    graph    design → node/edge tables → Property Graph → verification GQL (mcp_knowhow_design_graph + bigquery_*)
-    eval     every CQ through its agent (mcp_knowhow_agent_step) + scoring (mcp_knowhow_judge) → runs/
+    cqs      Competency Questions (Core MCP aos_core_draft_cqs) → cqs.json
+    wiki     OKF 3-layer wiki + gates (aos_core_compile_wiki) → wiki/*.md · pages.json · index.json
+    graph    design → node/edge tables → Property Graph → verification GQL (aos_core_design_graph + bigquery_*)
+    eval     every CQ through its agent (aos_core_agent_step) + scoring (aos_core_judge) → runs/
 
 All GCS / BigQuery work is a Core MCP data-plane call with the request identity's token; all method know-how is a
-Core MCP `mcp_knowhow_*` call. This module only decides the order and moves the results around.
+Core MCP `aos_core_*` call. This module only decides the order and moves the results around.
 """
 from __future__ import annotations
 
@@ -231,24 +231,24 @@ def stage_ingest(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     gate0: Dict[str, Any] = {}
     if docs:
         s = time.perf_counter()
-        g = log.call("mcp_builder_parse_documents_gate0", {"project_id": ws["ws_id"].replace("-", "_"), "domain_profile": "custom",
+        g = log.call("aos_builder_parse_documents_gate0", {"project_id": ws["ws_id"].replace("-", "_"), "domain_profile": "custom",
                                                            "inline_documents": [{"bundle": ws["ws_id"], "doc_stem": d["doc_id"], "content": d["text"][:200000]} for d in docs],
                                                            "detail_level": "compact"}, timeout_s=120)
         gate0 = {"status": g.get("status"), "fidelity": g.get("gate0_fidelity") or g.get("fidelity") or (g.get("gate0") or {}).get("fidelity"),
                  "passed": g.get("gate0_passed") if "gate0_passed" in g else (g.get("gate0") or {}).get("passed"),
                  "sections": g.get("total_sections") or g.get("sections_count")}
-        _step(emit, "gate0", "done" if g.get("status") == "SUCCESS" else "warn", "Gate 0 · mcp_builder_parse_documents_gate0",
+        _step(emit, "gate0", "done" if g.get("status") == "SUCCESS" else "warn", "Gate 0 · aos_builder_parse_documents_gate0",
               json.dumps({k: v for k, v in gate0.items() if v is not None}, ensure_ascii=False)[:200], _ms(s))
     s = time.perf_counter()
-    sc = log.call("mcp_knowhow_scope", {"objective": ws["scenario"].get("objective", ""), "question_type": ws["scenario"].get("question_type", ""),
+    sc = log.call("aos_core_scope", {"objective": ws["scenario"].get("objective", ""), "question_type": ws["scenario"].get("question_type", ""),
                                         "lang": lang, "docs": [{"doc_id": d["doc_id"], "title": d["title"], "text": d["text"][:3000]} for d in docs],
                                         "tables": [{"name": tb["name"], "columns": tb["columns"], "rows": tb["rows"][:60], "row_count": tb["row_count"]} for tb in tables]},
                   timeout_s=60)
     if sc.get("status") != "SUCCESS":
-        raise RuntimeError("mcp_knowhow_scope: " + error_text(sc))
+        raise RuntimeError("aos_core_scope: " + error_text(sc))
     for tb in tables:
         tb["pk"] = (sc.get("primary_keys") or {}).get(tb["name"], "")
-    _step(emit, "scope", "done", "mcp_knowhow_scope", f"{sc.get('data_type')} × {sc.get('question_type')} · FK {len(sc.get('fk_candidates') or [])}", _ms(s))
+    _step(emit, "scope", "done", "aos_core_scope", f"{sc.get('data_type')} × {sc.get('question_type')} · FK {len(sc.get('fk_candidates') or [])}", _ms(s))
     b = env["bucket"]
     put_json(log, b, pf + "parsed/docs.json", docs)
     put_json(log, b, pf + "parsed/tables.json", tables)
@@ -284,12 +284,12 @@ def stage_cqs(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     p = _parsed(ws, log)
     s = time.perf_counter()
     _step(emit, "cqs", "running", t(lang, "CQ 초안 · Gemini (약 40초)", "CQ draft · Gemini (~40 s)"))
-    r = log.call("mcp_knowhow_draft_cqs", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
+    r = log.call("aos_core_draft_cqs", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
                                            "question_type": ws["scenario"].get("question_type", "W3"), "count": 8,
                                            "docs": [{"doc_id": d["doc_id"], "title": d["title"], "text": d["text"]} for d in p["docs"]],
                                            "tables": _kh_tables(p["tables"], 120)}, timeout_s=300)
     if r.get("status") != "SUCCESS":
-        raise RuntimeError("mcp_knowhow_draft_cqs: " + error_text(r))
+        raise RuntimeError("aos_core_draft_cqs: " + error_text(r))
     cqs = r.get("cqs") or []
     put_json(log, ws["env"]["bucket"], prefix(ws["ws_id"]) + "cqs.json", cqs)
     _step(emit, "cqs", "done", t(lang, f"CQ {len(cqs)}개", f"{len(cqs)} CQs"), ", ".join(sorted({c['type'] for c in cqs})), _ms(s))
@@ -323,10 +323,10 @@ def stage_wiki(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     typed = [f"{d['doc_id']}={d['kind']}" for d in kh_docs if d.get("kind")]
     if typed:
         _step(emit, "wiki_types", "done", t(lang, "유형별 위키 지침", "type-specific wiki guides"), ", ".join(typed)[:200])
-    r = log.call("mcp_knowhow_compile_wiki", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
+    r = log.call("aos_core_compile_wiki", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
                                               "docs": kh_docs, "tables": _kh_tables(p["tables"], 5)}, timeout_s=600)
     if r.get("status") != "SUCCESS":
-        raise RuntimeError("mcp_knowhow_compile_wiki: " + error_text(r))
+        raise RuntimeError("aos_core_compile_wiki: " + error_text(r))
     _step(emit, "wiki", "done", t(lang, "위키 컴파일", "wiki compiled"),
           f"{r.get('counts')} · gates {r.get('gates_passed')}/{r.get('gates_total')}", _ms(s))
     s = time.perf_counter()
@@ -364,9 +364,9 @@ def stage_graph(ws: Dict[str, Any], log: McpLog, emit: Emit, design: Optional[Di
             "tables": _kh_tables(p["tables"], 120), "pages": pages}
     if design:
         args["design"] = design
-    r = log.call("mcp_knowhow_design_graph", args, timeout_s=400)
+    r = log.call("aos_core_design_graph", args, timeout_s=400)
     if r.get("status") != "SUCCESS":
-        raise RuntimeError("mcp_knowhow_design_graph: " + error_text(r) + (" · " + "; ".join(r.get("errors") or [])[:400] if r.get("errors") else ""))
+        raise RuntimeError("aos_core_design_graph: " + error_text(r) + (" · " + "; ".join(r.get("errors") or [])[:400] if r.get("errors") else ""))
     nd = r.get("design") or {}
     _step(emit, "design", "done", t(lang, "그래프 설계", "graph design"),
           f"{len(nd.get('nodes') or [])} nodes · {len(nd.get('edges') or [])} edges" + (f" · {len(r.get('warnings') or [])} warnings" if r.get("warnings") else ""), _ms(s))
@@ -468,7 +468,7 @@ def stage_eval(ws: Dict[str, Any], log: McpLog, emit: Emit, cq_ids: Optional[Lis
         s1 = time.perf_counter()
         quiet = McpLog("eval", None)
         res = agent_mod.run(ws, ag, cq["question"], None, ctx, quiet)
-        j = quiet.call("mcp_knowhow_judge", {**_kh_common(ws), "question": cq["question"], "reference_answer": cq.get("reference_answer", ""),
+        j = quiet.call("aos_core_judge", {**_kh_common(ws), "question": cq["question"], "reference_answer": cq.get("reference_answer", ""),
                                              "key_facts": cq.get("key_facts") or [], "answer": res.get("answer", "")}, timeout_s=120)
         log.calls.extend(quiet.calls)
         row = {"id": cq.get("id"), "question": cq["question"], "type": cq.get("type"), "agent": ag, "status": res.get("status"),

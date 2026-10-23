@@ -24,7 +24,7 @@ Six steps: 1 type & purpose → 2 flow → 3 GCP resources (real checks) → 4 l
   POST /api/eval              step 6 (NDJSON stream)           {config, recipe, lang}
   POST /api/mcp/execute       one domain MCP tool              {config, recipe, lang, tool_name, args}
   GET  /api/core-mcp/tools    Platform Core MCP tools/list
-  POST /api/core-mcp/call     Platform Core MCP tools/call (mcp_builder_* only)
+  POST /api/core-mcp/call     Platform Core MCP tools/call (aos_builder_* only)
   GET  /ucc · /ucc/brd · /ucc/sdd   UCC shared docs viewer (ucc.html) — GOAL-230
   GET  /api/ucc/docs · /api/ucc/doc?id= · /api/ucc/comments?doc=    see src/web/ucc_pages.py
   POST /api/ucc/comments      per-section comment → GCS (relayed to Jetski Chat by the Cloudtop relay)
@@ -251,9 +251,9 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
             return self._json({"status": "BAD_REQUEST", "message": f"unknown recipe: {recipe}"}, 400)
 
         if path == "/api/core-mcp/call":
-            name = data.get("name") or data.get("tool_name") or "mcp_builder_get_domain_spec_template"
-            if not str(name).startswith("mcp_builder_"):
-                return self._json({"status": "ERROR", "error": "only mcp_builder_* tools are proxied"}, 400)
+            name = data.get("name") or data.get("tool_name") or "aos_builder_get_domain_spec_template"
+            if not str(name).startswith("aos_builder_"):
+                return self._json({"status": "ERROR", "error": "only aos_builder_* tools are proxied"}, 400)
             return self._json(call_core_mcp("tools/call", {"name": name, "arguments": data.get("arguments") or {}}))
 
         try:

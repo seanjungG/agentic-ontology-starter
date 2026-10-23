@@ -69,7 +69,7 @@ def check_env(env: Dict[str, str], lang: str) -> Dict[str, Any]:
     s = time.perf_counter()
     tl = call_core_mcp("tools/list", timeout_s=30)
     names = [x.get("name") for x in ((tl.get("result") or {}).get("tools") or [])]
-    kh = [n for n in names if str(n).startswith("mcp_knowhow_")]
+    kh = [n for n in names if str(n).startswith("aos_core_")]
     add("core_mcp", "ok" if len(kh) >= 6 else ("warn" if names else "error"), t(lang, "Platform Core MCP 연결", "Platform Core MCP"),
         f"{len(names)} tools · know-how {len(kh)}" if names else str(tl.get("error"))[:200],
         "" if kh else t(lang, "Core MCP를 1.4.0 이상(노하우 도구 포함)으로 배포하세요", "Deploy Core MCP ≥ 1.4.0 (with know-how tools)"), round((time.perf_counter() - s) * 1000))
@@ -222,7 +222,7 @@ def save_wiki(ws: Dict[str, Any], pages: List[Dict[str, Any]]) -> Dict[str, Any]
     b, pf = ws["env"]["bucket"], prefix(ws["ws_id"])
     docs = get_json(log, b, pf + "parsed/docs.json", []) or []
     tables = get_json(log, b, pf + "parsed/tables.json", []) or []
-    r = log.call("mcp_knowhow_compile_wiki", {**_kh_common(ws), "mode": "validate", "pages": pages[:200],
+    r = log.call("aos_core_compile_wiki", {**_kh_common(ws), "mode": "validate", "pages": pages[:200],
                                               "docs": [{"doc_id": d["doc_id"], "title": d["title"], "text": d["text"]} for d in docs],
                                               "tables": [{"name": x["name"], "columns": x["columns"]} for x in tables]}, timeout_s=120)
     if r.get("status") != "SUCCESS":
@@ -312,7 +312,7 @@ STANDALONE = r'''#!/usr/bin/env python3
     export AOS_ACCESS_TOKEN=$(gcloud auth print-access-token)        # or --impersonate-service-account=SA
     python3 aos_agent_standalone.py "your question" [wiki|graph|hybrid]
 
-Method know-how (agent reasoning) = Core MCP `mcp_knowhow_agent_step`; data = Core MCP data-plane tools with YOUR token.
+Method know-how (agent reasoning) = Core MCP `aos_core_agent_step`; data = Core MCP data-plane tools with YOUR token.
 """
 import json, os, sys, urllib.request
 
@@ -345,7 +345,7 @@ def main():
            "graph": plan.get("schema"), "graph_ready": bool(plan.get("graph_ready")), "project": WS["project"], "dataset": WS["dataset"]}
     obs = []
     for step in range(6):
-        r = mcp("mcp_knowhow_agent_step", {"agent": agent, "question": question, "lang": WS["lang"], "context": ctx, "observations": obs,
+        r = mcp("aos_core_agent_step", {"agent": agent, "question": question, "lang": WS["lang"], "context": ctx, "observations": obs,
                                            "project": WS["project"], "model": WS["model"], "location": WS["vertex_location"]})
         if r.get("status") != "SUCCESS":
             sys.exit(f"agent_step failed: {r}")
@@ -397,7 +397,7 @@ def export_bundle(ws: Dict[str, Any], lang: str) -> bytes:
                      f'python3 -m src.cli ask --bucket {env["bucket"]} --ws {ws["ws_id"]} --agent "${{2:-hybrid}}"{imp} "$1"',
                      f'python3 -m src.cli eval --bucket {env["bucket"]} --ws {ws["ws_id"]}{imp}  # {t(lang, "전체 CQ 평가", "evaluate all CQs")}', ""])
     mcp_cfg = {"mcpServers": {"aos-core": {"httpUrl": core, "headers": {"X-AOS-Access-Token": "$AOS_ACCESS_TOKEN"}, "timeout": 600000,
-                                           "description": "Agentic Ontology Platform Core MCP — data-plane tools with your token + mcp_knowhow_* method tools"}}}
+                                           "description": "Agentic Ontology Platform Core MCP — data-plane tools with your token + aos_core_* method tools"}}}
     standalone = STANDALONE.replace("__CORE__", core).replace("__WS__", json.dumps(
         {"bucket": env["bucket"], "prefix": pf, "project": env["project"], "dataset": env["dataset"], "region": env["region"],
          "model": env["model"], "vertex_location": env["vertex_location"], "lang": ws.get("lang", "ko")}, ensure_ascii=False))
@@ -453,7 +453,7 @@ python3 aos_agent_standalone.py "질문" hybrid
 ```
 
 ## 노하우 경계
-- 방법론의 핵심(위키 컴파일 · 그래프 설계 · 에이전트 추론 · 채점)은 Platform Core MCP `{core}`의 `mcp_knowhow_*` 도구가 수행합니다. 이 번들과 깃헙 코드는 그 도구를 **어떤 순서로 · 어떤 파라미터로** 부르는지만 담습니다.
+- 방법론의 핵심(위키 컴파일 · 그래프 설계 · 에이전트 추론 · 채점)은 Platform Core MCP `{core}`의 `aos_core_*` 도구가 수행합니다. 이 번들과 깃헙 코드는 그 도구를 **어떤 순서로 · 어떤 파라미터로** 부르는지만 담습니다.
 - 모든 데이터 접근과 Gemini 호출은 **내 토큰 · 내 프로젝트**로 실행됩니다. Core MCP 서비스 계정에는 데이터 권한이 없습니다.
 - 이번 워크스페이스에서 쓴 도구: {tools}
 """
@@ -490,7 +490,7 @@ python3 aos_agent_standalone.py "question" hybrid
 ```
 
 ## Know-how boundary
-- The core of the method (wiki compile · graph design · agent reasoning · grading) runs in the `mcp_knowhow_*` tools of the Platform Core MCP `{core}`. This bundle and the GitHub code only hold **which tools are called in which order with which parameters**.
+- The core of the method (wiki compile · graph design · agent reasoning · grading) runs in the `aos_core_*` tools of the Platform Core MCP `{core}`. This bundle and the GitHub code only hold **which tools are called in which order with which parameters**.
 - Every data access and Gemini call runs with **your token in your project**. The Core MCP service account has no data permissions.
 - Tools used by this workspace: {tools}
 """
