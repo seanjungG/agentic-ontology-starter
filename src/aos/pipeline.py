@@ -18,6 +18,7 @@ Core MCP `aos_core_*` call. This module only decides the order and moves the res
 from __future__ import annotations
 
 import json
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Dict, List, Optional
@@ -318,25 +319,48 @@ def stage_wiki(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     if not p["docs"]:
         raise StageSkip(t(lang, "문서가 없어 위키 단계를 건너뜁니다 (P2)", "no documents — wiki stage skipped (P2)"))
     s = time.perf_counter()
-    _step(emit, "wiki", "running", t(lang, "OKF 위키 컴파일 · Gemini (약 2~4분)", "OKF wiki compile · Gemini (~2–4 min)"))
+    _step(emit, "wiki", "running", t(lang, "OKF 위키 컴파일 + 커버리지 보완 · Gemini (약 3~8분)", "OKF wiki compile + coverage repair · Gemini (~3–8 min)"))
     kh_docs = [wiki_doc(d) for d in p["docs"]]
     typed = [f"{d['doc_id']}={d['kind']}" for d in kh_docs if d.get("kind")]
     if typed:
         _step(emit, "wiki_types", "done", t(lang, "유형별 위키 지침", "type-specific wiki guides"), ", ".join(typed)[:200])
+    # GOAL-251: no body line cap — the Core MCP repairs coverage gaps (every source section/number in an entity/concept page)
+    rounds = int(os.environ.get("AOS_WIKI_REPAIR_ROUNDS", "2") or 0)
     r = log.call("aos_core_compile_wiki", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
-                                              "docs": kh_docs, "tables": _kh_tables(p["tables"], 5)}, timeout_s=600)
+                                              "docs": kh_docs, "tables": _kh_tables(p["tables"], 5),
+                                              "coverage_repair": rounds > 0, "repair_rounds": rounds}, timeout_s=880)
     if r.get("status") != "SUCCESS":
         raise RuntimeError("aos_core_compile_wiki: " + error_text(r))
     _step(emit, "wiki", "done", t(lang, "위키 컴파일", "wiki compiled"),
           f"{r.get('counts')} · gates {r.get('gates_passed')}/{r.get('gates_total')}", _ms(s))
+    cov = wiki_coverage_summary(r)
+    if cov:
+        _step(emit, "wiki_coverage", "done" if cov.get("complete") else "warn", t(lang, "원천 커버리지 (W8 · W9)", "source coverage (W8 · W9)"),
+              t(lang, f"섹션 {cov.get('section_pct')}% · 숫자 {cov.get('number_pct')}% · 보완 {cov.get('rounds', 0)}회",
+                f"sections {cov.get('section_pct')}% · numbers {cov.get('number_pct')}% · {cov.get('rounds', 0)} repair passes"))
     s = time.perf_counter()
     write_wiki(ws, log, r)
     _step(emit, "wiki_upload", "done", t(lang, "GCS 업로드", "upload to GCS"), f"gs://{env['bucket']}/{prefix(ws['ws_id'])}wiki/ · {len(r.get('files') or {})} files", _ms(s))
     ws.setdefault("summary", {})["wiki"] = {"pages": len(r.get("pages") or []), "counts": r.get("counts"),
-                                            "gates_passed": r.get("gates_passed"), "gates_total": r.get("gates_total")}
+                                            "gates_passed": r.get("gates_passed"), "gates_total": r.get("gates_total"),
+                                            **({"coverage": cov} if cov else {})}
     tel = r.get("telemetry") or {}
     return {"pages": len(r.get("pages") or []), "counts": r.get("counts"), "gates_passed": r.get("gates_passed"),
-            "gates_total": r.get("gates_total"), "llm_ms": tel.get("ms"), "tokens_out": tel.get("tokens_out"), "notes": (r.get("notes") or [])[:6]}
+            "gates_total": r.get("gates_total"), "llm_ms": tel.get("ms"), "tokens_out": tel.get("tokens_out"), "notes": (r.get("notes") or [])[:6],
+            **({"coverage": cov} if cov else {})}
+
+
+def wiki_coverage_summary(r: Dict[str, Any]) -> Dict[str, Any]:
+    """W8/W9 values from the compile result (gates) + the repair report (rounds) — empty for older Core MCPs."""
+    g = {x.get("id"): x for x in (r.get("gates") or []) if isinstance(x, dict)}
+    if "W8" not in g and "W9" not in g:
+        return {}
+    rep = r.get("coverage_repair") or {}
+    after = rep.get("after") or {}
+    return {"section_pct": after.get("section_pct", (g.get("W8") or {}).get("value")),
+            "number_pct": after.get("number_pct", (g.get("W9") or {}).get("value")),
+            "complete": bool((g.get("W8") or {}).get("ok")) and bool((g.get("W9") or {}).get("ok")),
+            "rounds": rep.get("rounds", 0), "before": rep.get("before") or {}}
 
 
 def write_wiki(ws: Dict[str, Any], log: McpLog, r: Dict[str, Any]) -> None:
