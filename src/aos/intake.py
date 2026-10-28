@@ -23,14 +23,15 @@ from typing import Any, Dict, List, Optional
 from src.aos import sources as S
 from src.aos.ws import McpLog, WsError, can_write, check_ws_id, clean_env, error_text, get_json, prefix, put_json, put_text, t
 
-BINARY_DOC_EXT = (".pdf", ".docx", ".pptx", ".xlsx", ".html", ".htm")
+BINARY_DOC_EXT = (".pdf", ".docx", ".pptx", ".xlsx", ".html", ".htm", ".mhtml", ".mht")  # GOAL-249: + web archives (Core MCP 1.8)
 TEXT_DOC_EXT = (".md", ".markdown", ".txt")
 ALL_UPLOAD_EXT = BINARY_DOC_EXT + TEXT_DOC_EXT + (".csv",)
 MAX_CONVERT_BYTES = 12 * 1024 * 1024
 _CT = {".pdf": "application/pdf", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".html": "text/html; charset=utf-8",
-       ".htm": "text/html; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".markdown": "text/markdown; charset=utf-8",
+       ".htm": "text/html; charset=utf-8", ".mhtml": "multipart/related", ".mht": "multipart/related",
+       ".md": "text/markdown; charset=utf-8", ".markdown": "text/markdown; charset=utf-8",
        ".txt": "text/plain; charset=utf-8", ".csv": "text/csv; charset=utf-8"}
 
 
@@ -90,7 +91,8 @@ def template(data: Dict[str, Any], lang: str) -> Dict[str, Any]:
     env = data.get("env") or {}
     args = {"lang": lang, "flow": data.get("flow"), "services": data.get("services") or [], "target": data.get("target") or "sandbox",
             "project": env.get("project", ""), "region": env.get("region", ""), "bucket": env.get("bucket", ""), "ws_id": data.get("ws_id", ""),
-            "model": env.get("model", ""), "sa_name": data.get("sa_name") or "aos-starter"}
+            "model": env.get("model", ""), "sa_name": data.get("sa_name") or "aos-starter",
+            "dataset": env.get("dataset", ""), "graph_name": env.get("graph_name", ""), "identity_mode": data.get("identity_mode") or ""}
     r = _call(McpLog("template", None), "aos_core_compose_template", args, timeout_s=30)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "message": error_text(r)}

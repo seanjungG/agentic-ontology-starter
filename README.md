@@ -35,7 +35,7 @@
 | S0 준비 | 버킷 권한 · 데이터셋 생성(데모 신원이면 테이블 7일 만료) · `workspace.json` | `iam_test_permissions` · `bigquery_get_dataset_info` · `bigquery_create_dataset` · `storage_upload_object` |
 | S1 수집 · 프로파일 | 문서 읽기 · CSV → BigQuery(병렬) · BigQuery 테이블 프로파일(복사 없음) · Gate 0 · PK/FK 스코핑 | `storage_read_object` · `bigquery_load_table` · `bigquery_get_table_info` · `bigquery_execute_sql` · `aos_builder_parse_documents_gate0` · **`aos_core_scope`** |
 | S2 CQ | 목적 기반 역량 질문 + 기준 답 + 핵심 사실 | **`aos_core_draft_cqs`** |
-| S3 OKF 위키 | 요약 · 엔티티 · 개념 + 정책 상수(단일 출처) + applies_to + 게이트 W1~W7 → GCS | **`aos_core_compile_wiki`** · `storage_upload_object` |
+| S3 OKF 위키 | 요약 · 엔티티 · 개념 + 정책 상수(단일 출처) + applies_to + 게이트 W1~W9(본문 줄 수 상한 없음 · W8 섹션 · W9 숫자 커버리지 + 보완 패스) → GCS | **`aos_core_compile_wiki`** · `storage_upload_object` |
 | S4 Property Graph | 설계 → 노드 · 엣지 테이블(SQL) → `CREATE PROPERTY GRAPH` → 검증 GQL | **`aos_core_design_graph`** · `bigquery_execute_sql` · `bigquery_load_table` |
 | S5 평가 | 모든 CQ를 담당 에이전트로 다시 묻고 채점 | **`aos_core_agent_step`** · 데이터 도구 · **`aos_core_judge`** |
 
