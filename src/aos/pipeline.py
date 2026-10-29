@@ -308,6 +308,8 @@ def wiki_doc(d: Dict[str, Any]) -> Dict[str, Any]:
     out = {"doc_id": d["doc_id"], "title": d["title"], "text": d["text"]}
     if d.get("kind") and d.get("strategy") != "direct":
         out["kind"] = d["kind"]
+    if d.get("kind"):  # GOAL-252: always tell the Core MCP the type — W8/W9 coverage skips spec / spreadsheet / dialogue
+        out["doc_type"] = d["kind"]
     if d.get("strategy"):
         out["strategy"] = d["strategy"]
     return out
