@@ -332,10 +332,21 @@
       ${c ? `<div class="sel-grid two mt8">${tg}</div>` : S.ui.catErr ? errNote(S.ui.catErr) : `<div class="empty">${T("common.loading")}</div>`}
       <div class="eyebrow mt16">${T("pick.source")}</div><div class="sel-grid five mt8">${sg}</div>
       <div class="meta mt8">${T("pick.sourceHint")}</div>
+      ${engineSel()}
       <div class="form-actions"><button class="btn primary" data-act="tpl-compose" ${!S.tpl.flow || S.busy.tpl ? "disabled" : ""}>${S.busy.tpl ? T("common.loading") : T("tpl.compose")}</button>
         ${t && t.flow ? `<span class="st">${statusDot("ok")}<b>${esc(T("tpl.ready", { f: t.flow.id, n: (t.stages || []).length }))}</b></span>` : !S.tpl.flow ? `<span class="meta">${T("tpl.needFlowHere")}</span>` : ""}</div>
       ${S.ui.tplErr ? errNote(S.ui.tplErr) : ""}
       ${prev ? `<details class="fold mt12" id="tpl-fold" ${S.ui.tplOpen === false ? "" : "open"}><summary>${T("pick.preview")}</summary><div class="inner">${prev}</div></details>` : ""}</div>`;
+  }
+  // GOAL-256: Semantic Graph engine — Spanner Graph by default; BigQuery Graph stays selectable (audit / action lineage, later)
+  const graphEngine = () => S.env.graph_engine || (((S.boot && S.boot.env_defaults) || {}).graph_engine) || "spanner";
+  function engineSel() {
+    const cur = graphEngine();
+    const b = (id) => `<button class="sel ${cur === id ? "on" : ""}" data-act="graph-engine" data-id="${id}"><span class="check"></span>
+      <div class="top"><span class="ttl">${esc(T("eng." + id))}</span>${id === "spanner" ? `<span class="tag mcp">${T("eng.default")}</span>` : `<span class="tag">${T("eng.later")}</span>`}</div>
+      <div class="desc">${esc(T("eng." + id + "D"))}</div></button>`;
+    return `<div class="eyebrow mt16">${T("eng.title")}</div><div class="sel-grid two mt8">${b("spanner")}${b("bigquery")}</div>
+      <div class="meta mt8">${T("eng.sub")}</div>`;
   }
   // diagram highlight = flow path ∪ services in effect ∪ picked data source (the source card also gets the black "current" border)
   function pickHighlight() {
@@ -419,9 +430,11 @@
       <div class="form-actions"><button class="btn" data-act="verify-id">${T("env.verifyId")}</button>
         ${info ? `<span class="st">${statusDot("ok")}<b>${esc(T("env.idOk", { p: info.principal || "-" }))}</b>${info.expires_in ? " · " + esc(T("env.idExpires", { m: Math.round(info.expires_in / 60) })) : ""}</span>` : ""}
         ${S.ui.idError ? `<span class="st">${statusDot("error")}${esc(S.ui.idError)}</span>` : ""}</div></div>
-    <div class="card"><div class="card-head"><h3>${T("env.resTitle")}</h3></div><div class="form">
+    <div class="card"><div class="card-head"><h3>${T("env.resTitle")}</h3><span class="right"><span class="tag ${graphEngine() === "spanner" ? "mcp" : ""}">${esc(T("eng.title"))}: ${esc(T("eng." + graphEngine()))}</span>
+      <a class="btn small" href="#/scenario">${T("env.tplEdit")}</a></span></div><div class="form">
       ${fld("project", "env.fProject")}${fld("region", "env.fRegion")}${fld("bucket", "env.fBucket")}${fld("dataset", "env.fDataset", "env.fDatasetHelp")}
-      ${fld("graph_name", "env.fGraph")}${fld("model", "env.fModel")}</div>
+      ${fld("graph_name", "env.fGraph")}${fld("model", "env.fModel")}
+      ${graphEngine() === "spanner" ? fld("spanner_instance", "env.fSpInstance") + fld("spanner_database", "env.fSpDatabase", "env.fSpHelp") : ""}</div>
       <div class="form-actions"><button class="btn primary" data-act="check" ${S.busy.check ? "disabled" : ""}>${S.busy.check ? T("env.checking") : T("env.check")}</button>
         <button class="btn" data-act="script">${T("env.script")}</button>
         ${chk ? `<span class="st">${statusDot(chk.status === "OK" ? "ok" : "error")}<b>${chk.status === "OK" ? T("env.checkOk") : T("env.checkFail", { n: chk.errors })}</b></span>` : ""}</div>
@@ -817,6 +830,116 @@
     const np = nodes.map((n) => { const p = pos[n.label]; return `<g class="gnode ${S.ui.grNode === n.label ? "on" : ""}" data-act="gr-node" data-label="${esc(n.label)}" transform="translate(${p[0]},${p[1]})"><rect width="${W}" height="${H}" rx="10"/><circle cx="14" cy="${H / 2}" r="5" fill="var(--c-${n.kind === "wiki" ? "wiki" : "semantic"})"/><text x="26" y="20">${esc(n.label)}</text><text class="sub" x="26" y="35">${esc(n.source_table || "wiki")} · ${n.properties.length}</text></g>`; }).join("");
     return `<svg width="${width}" height="${maxY}" viewBox="0 0 ${width} ${maxY}"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#9aa0ad"/></marker></defs>${ep}${np}</svg>`;
   }
+  // GOAL-258: data allocation — sources (document pages · tables · columns) → node rows · properties · edges
+  // (starter twin of the Notebook Lab n3 "wiki → graph integration units" panel + the table path)
+  const nf = (n) => (n == null || n === "" ? "-" : Number(n).toLocaleString());
+  const htbl = (heads, rows, cls) => `<div class="tbl-wrap"><table class="tbl ${cls || ""}"><thead><tr>${heads.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${
+    rows.map((r) => "<tr>" + r.map((c) => (Array.isArray(c) ? `<td class="${c[1]}">${c[0]}</td>` : `<td>${c}</td>`)).join("") + "</tr>").join("")}</tbody></table></div>`;
+  const GA_KIND_DOT = { fk: "table", wiki_relation: "wiki", wiki_bridge: "entity", provenance: "summary", lexical_hierarchy: "summary" };
+  const gaKind = (k) => `<span class="tag"><span class="ld ${GA_KIND_DOT[k] || "summary"}"></span>${esc(T("ga.k." + k) === "ga.k." + k ? k : T("ga.k." + k))}</span>`;
+  const gaFate = (f) => `<span class="tag"><span class="ld ${f === "node" ? "wiki" : f === "table_note" ? "table" : "summary"}"></span>${esc(T("ga.fate." + f))}</span>`;
+  const gaPage = (id) => `<button class="tag mono" data-act="wk-goto" data-id="${esc(id)}">${esc(id)}</button>`;
+  const gaCount = (e) => (e.count == null ? `<span class="meta">-</span>`
+    : `${e.count_basis === "sample" ? "≥ " : ""}${nf(e.count)}<div class="meta">${esc(T("ga.c." + (e.count_basis || "none")))}</div>`);
+  function gaBasis(e) {
+    const b = e.basis || {};
+    if (e.kind === "fk") return `<code>${esc(b.from_table)}.${esc(b.column)}</code> = <code>${esc(e.to)}.${esc(b.to_key)}</code>`;
+    if (e.kind === "wiki_relation") return (b.types || []).length ? `${esc(T("ga.b.types"))} ${b.types.map((x) => `<code>${esc(x)}</code>`).join(" ")}` : `<span class="meta">${esc(T("ga.b.anyType"))}</span>`;
+    if (e.kind === "wiki_bridge") {
+      const cs = b.conditions || [];
+      if (!cs.length) return `<span class="meta">${esc(T("ga.b.noCond"))}</span>`;
+      return cs.slice(0, 6).map((c) => `<div class="flex" style="gap:6px;margin:2px 0">${gaPage(c.page)}<code>${esc(c.text)}</code></div>`).join("")
+        + (cs.length > 6 ? `<div class="meta">+${cs.length - 6}</div>` : "");
+    }
+    return `<code>${esc(JSON.stringify(b))}</code>`;
+  }
+  function allocPanel(al) {
+    if (!al) return "";
+    if (al.error) return `<div class="card"><div class="note warn">${esc(T("ga.error", { e: al.error }))}</div></div>`;
+    const t = al.totals || {};
+    const box = (n, title, big, sub) => `<div class="kpi"><div class="k">${n} ${esc(title)}</div><div class="v">${big}</div><div class="s">${sub}</div></div>`;
+    const arr = `<div class="arr">→</div>`;
+    const kinds = t.edge_kinds || {};
+    const tables = al.tables || [], wn = al.wiki_nodes || [], edges = al.edges || [], pages = al.pages || [];
+    const notes = tables.reduce((a, x) => a + (x.business_notes || []).length, 0);
+    const tblStrip = `<div class="alloc-strip">
+      ${box("①", T("ga.t1"), nf(tables.length), esc(T("ga.t1d", { n: nf(tables.reduce((a, x) => a + (x.source_rows || 0), 0)) })))}${arr}
+      ${box("②", T("ga.t2"), nf(t.table_nodes), esc(T("ga.t2d", { n: nf(t.table_rows) })))}${arr}
+      ${box("③", T("ga.t3"), nf(t.table_props), esc(T("ga.t3d", { n: nf(t.dropped_columns) })))}${arr}
+      ${box("④", T("ga.t4"), nf(notes), esc(T("ga.t4d")))}${arr}
+      ${box("⑤", T("ga.t5"), nf((kinds.fk || 0) + (kinds.wiki_bridge || 0)), esc(T("ga.t5d", { fk: kinds.fk || 0, br: kinds.wiki_bridge || 0 })))}</div>`;
+    const docStrip = `<div class="alloc-strip">
+      ${box("①", T("ga.s1"), nf(t.sections), esc(T("ga.s1d")))}${arr}
+      ${box("②", T("ga.s2"), nf(t.pages), esc(T("ga.s2d", { n: nf(t.body_chars) })))}${arr}
+      ${box("③", T("ga.s3"), `${nf(t.node_rows)} / ${nf(t.table_notes)}`, esc(T("ga.s3d", { n: nf(t.excluded) })))}${arr}
+      ${box("④", T("ga.s4"), nf(t.constants), esc(T("ga.s4d")))}${arr}
+      ${box("⑤", T("ga.s5"), nf(t.edges), "wiki_relation · wiki_bridge")}</div>`;
+    const tblRows = tables.map((x) => [`<span class="flex" style="gap:6px"><span class="ld table"></span><code>${esc(x.source_table)}</code></span>`,
+      `<b>${esc(x.label)}</b><div class="meta mono">${esc(x.node_table)}</div>`, `<code>${esc(x.key)}</code>`,
+      [`${nf(x.rows)}<div class="meta">${esc(x.rows_basis ? T("ga.rows." + x.rows_basis) : "")}</div>`, "num"],
+      [`${nf((x.columns || []).length)}${(x.dropped || []).length ? `<div class="meta">${esc(T("ga.droppedN", { n: x.dropped.length }))}</div>` : ""}`, "num"],
+      (x.business_notes || []).map((p) => gaPage(p.id)).join(" ") || `<span class="meta">-</span>`]);
+    const colMaps = tables.map((x) => `<details class="fold mt8"><summary><span class="ld table"></span><code>${esc(x.source_table)}</code> → <b>${esc(x.label)}</b>
+        <span class="meta">· ${esc(T("ga.keyCol"))} ${esc(x.key)} · ${esc(T("ga.colsN", { n: (x.columns || []).length }))}${x.rows != null ? " · " + esc(T("ga.rowsN", { n: nf(x.rows) })) : ""}</span></summary><div class="inner">
+      ${x.description ? `<p class="meta">${esc(x.description)}</p>` : ""}
+      ${htbl([T("ga.h.column"), T("ga.h.property"), T("ga.h.type"), T("ga.h.desc")], (x.columns || []).map((c) => [`<code>${esc(c.column)}</code>`,
+        `<code>${esc(c.property)}</code>${c.key ? ` <span class="tag mcp">${esc(T("ga.keyTag"))}</span>` : ""}`,
+        `<span class="mono small">${esc(c.type)}${c.source_type && c.source_type !== c.type ? ` ← ${esc(c.source_type)}` : ""}</span>`, `<span class="meta">${esc(c.description || "")}</span>`]))}
+      ${(x.dropped || []).length ? `<div class="eyebrow mt12">${esc(T("ga.dropped"))}</div><div class="flex mt8">${x.dropped.map((c) => `<span class="tag mono">${esc(c)}</span>`).join("")}</div>` : ""}
+      ${(x.business_notes || []).length ? `<div class="eyebrow mt12">${esc(T("ga.notes"))}</div><div class="mt8">${x.business_notes.map((p) => `<div class="flex" style="gap:6px;margin:2px 0">${gaPage(p.id)}<span class="meta">${esc(p.title)}</span></div>`).join("")}</div>` : ""}
+      </div></details>`).join("");
+    const wikiTbl = htbl([T("ga.h.wlabel"), T("ga.h.layers"), T("ga.h.key"), T("ga.h.wrows"), T("ga.h.wprops")], wn.map((n) => [
+      `<span class="flex" style="gap:6px"><span class="ld wiki"></span><b>${esc(n.label)}</b></span><div class="meta mono">${esc(n.node_table)}</div>`,
+      `${(n.layers || []).map((l) => esc(T("wk.layer." + l))).join(", ")}${n.exclude_table_backed ? ` <span class="meta">${esc(T("ga.tbExcluded"))}</span>` : ""}`,
+      `<code>${esc(n.key)}</code>`, [nf(n.rows), "num"], (n.properties || []).map((p) => `<code>${esc(p)}</code>`).join(" ")]));
+    const edgeTbl = htbl([T("ga.h.elabel"), T("ga.h.kind"), T("ga.h.fromto"), T("ga.h.basis"), T("ga.h.count")], edges.map((e) => [
+      `<b class="mono">${esc(e.label)}</b>`, gaKind(e.kind),
+      `<span class="flex" style="gap:5px"><span class="ld ${e.from_kind === "wiki" ? "wiki" : "table"}"></span>${esc(e.from)} → <span class="ld ${e.to_kind === "wiki" ? "wiki" : "table"}"></span>${esc(e.to)}</span>`,
+      gaBasis(e), [gaCount(e), "num"]]));
+    const flow = (p) => {
+      const step = (n, title, body) => `<div class="stepcard"><div class="h">${n} ${esc(title)}</div><div>${body}</div></div>`;
+      const src = (p.sources || []).map((s) => `<div class="meta">· ${esc(s)}</div>`).join("") || `<span class="meta">-</span>`;
+      const page = `${gaPage(p.id)}<div class="meta">${esc(T("wk.layer." + p.layer))} · ${esc(T("ga.pageMeta", { lines: nf(p.lines), chars: nf(p.chars), c: nf(p.constants) }))}</div>`;
+      const unit = p.fate === "node" ? `<b>(${esc(p.node)})</b><div class="meta">${esc(T("ga.keyWiki"))} <code>wiki_id = ${esc(p.key)}</code></div>`
+        : p.fate === "table_note" ? `<b>(${esc(p.node)})</b><div class="meta">${esc(T("ga.asNotes"))}</div>`
+          : `<span class="meta">${esc(T("ga.notInGraph"))}</span>`;
+      const props = (p.properties || []).map((x) => `<div><code>${esc(x.name)}</code> <span class="meta">${esc(T("ga.chars", { n: nf(x.chars) }))}</span></div>`).join("") || `<span class="meta">-</span>`;
+      const ed = (p.edges || []).map((e) => `<div><code>${esc(e.label)}</code> → ${esc(e.to)} <span class="meta">×${e.sample ? "≥" : ""}${nf(e.count)} · ${esc(e.kind)}</span></div>`).join("") || `<span class="meta">${esc(T("ga.none"))}</span>`;
+      return `<div class="alloc-flow">${step("①", T("ga.f1"), src)}${step("②", T("ga.f2"), page)}${step("③", T("ga.f3"), unit)}${step("④", T("ga.f4"), props)}${step("⑤", T("ga.f5"), ed)}</div>`;
+    };
+    const pageRows = pages.map((p) => `<details class="fold mt8"><summary>${gaFate(p.fate)} <code>${esc(p.id)}</code> ${esc(p.title)} <span class="meta">· ${esc(T("wk.layer." + p.layer))} · ${esc(T("ga.lines", { n: nf(p.lines) }))} → ${esc(p.node || "-")} · ${esc(T("ga.edgesN", { n: nf((p.edges || []).reduce((a, e) => a + e.count, 0)) }))}</span></summary><div class="inner">${flow(p)}</div></details>`).join("");
+    return `<div class="card alloc" id="alloc"><div class="card-head"><h3>${esc(T("ga.title"))}</h3><span class="meta">${esc(T("ga.engineNeutral"))}</span></div>
+      <p class="meta">${esc(T("ga.lead"))}</p>
+      ${al.computed === "on_read" ? `<div class="note mt8">${esc(T("ga.onRead"))}</div>` : ""}
+      <div class="eyebrow mt16">${esc(T("ga.tblPath"))}</div><div class="mt8">${tblStrip}</div>
+      <div class="eyebrow mt12">${esc(T("ga.docPath"))}</div><div class="mt8">${docStrip}</div>
+      <div class="note mt12"><div>${esc(T("ga.ruleTbl"))}</div><div class="mt8">${esc(T("ga.rule"))}</div></div>
+      <div class="eyebrow mt16">${esc(T("ga.tables"))}</div><div class="mt8">${htbl([T("ga.h.source"), T("ga.h.node"), T("ga.h.key"), T("ga.h.rows"), T("ga.h.props"), T("ga.h.notes")], tblRows)}</div>
+      ${colMaps}
+      ${wn.length ? `<div class="eyebrow mt16">${esc(T("ga.wiki"))}</div><div class="mt8">${wikiTbl}</div>` : ""}
+      <div class="eyebrow mt16">${esc(T("ga.edges"))}</div><div class="mt8">${edgeTbl}</div><p class="meta mt8">${esc(T("ga.countNote"))}</p>
+      ${pages.length ? `<div class="eyebrow mt16">${esc(T("ga.pages"))}</div>${pageRows}` : ""}</div>`;
+  }
+  // node detail: where this node's rows / properties came from
+  function allocNodeCard(al, label) {
+    if (!al || al.error) return "";
+    const tb = (al.tables || []).find((x) => x.label === label), wn = (al.wiki_nodes || []).find((x) => x.label === label);
+    const ed = (al.edges || []).filter((e) => e.from === label || e.to === label);
+    const edHtml = ed.length ? `<div class="eyebrow mt12">${esc(T("ga.nc.edges"))}</div><div class="mt8">${ed.map((e) => `<div class="flex" style="gap:6px;margin:2px 0">${gaKind(e.kind)}<b class="mono small">${esc(e.label)}</b><span class="meta">${esc(e.from)} → ${esc(e.to)} · ${e.count == null ? "-" : (e.count_basis === "sample" ? "≥" : "") + nf(e.count)}</span></div>`).join("")}</div>` : "";
+    if (tb) {
+      return `<div class="eyebrow mt12">${esc(T("ga.nc.from"))}</div>
+        <div class="meta mt8">${esc(T("ga.nc.table", { t: tb.source_table, l: tb.label, k: tb.key, n: nf(tb.rows) }))}</div>
+        <div class="flex mt8">${(tb.columns || []).map((c) => `<span class="tag mono">${esc(c.column)} → ${esc(c.property)} <b>${esc(c.type)}</b></span>`).join("")}</div>
+        ${(tb.dropped || []).length ? `<div class="meta mt8">${esc(T("ga.dropped"))}: ${tb.dropped.map(esc).join(", ")}</div>` : ""}
+        ${(tb.business_notes || []).length ? `<div class="eyebrow mt12">${esc(T("ga.notes"))}</div><div class="flex mt8">${tb.business_notes.map((p) => gaPage(p.id)).join("")}</div>` : ""}${edHtml}`;
+    }
+    if (wn) {
+      return `<div class="eyebrow mt12">${esc(T("ga.nc.from"))}</div>
+        <div class="meta mt8">${esc(T("ga.nc.wiki", { l: wn.label, ly: (wn.layers || []).map((l) => T("wk.layer." + l)).join(", "), n: nf(wn.rows) }))}${wn.exclude_table_backed ? " " + esc(T("ga.tbExcluded")) : ""}</div>
+        <div class="eyebrow mt12">${esc(T("ga.nc.pages", { n: (wn.pages || []).length }))}</div><div class="flex mt8">${(wn.pages || []).map(gaPage).join("")}</div>${edHtml}`;
+    }
+    return edHtml;
+  }
   PAGES["studio/graph"] = () => studioPage(["graph"], () => {
     const plan = S.data.graph;
     if (!plan || !plan.schema) return head(T("rail.g.studio"), T("gr.title"), T("gr.lead")) + `<div class="card"><div class="empty">${T("gr.empty")}</div></div>`;
@@ -826,17 +949,24 @@
       ...(sch.nodes || []).map((n) => ({ t: `${T("gr.node")} · ${n.label}`, sql: `SELECT * FROM \`${n.table}\` LIMIT 50` }))];
     const q = S.ui.grSql != null ? S.ui.grSql : (presets[0] && presets[0].sql) || "";
     const r = S.ui.grRes;
-    return head(T("rail.g.studio"), T("gr.title"), T("gr.lead")) + `
+    const eng = plan.engine || "bigquery", sp = plan.spanner || {};
+    const engLine = `<div class="card"><div class="flex"><span class="tag ${eng === "spanner" ? "mcp" : ""}">${esc(T("gr.engine"))}: ${esc(T("eng." + eng))}</span>
+      ${eng === "spanner" && sp.graph ? `<span class="tag mono">${esc(T("gr.spanner", { g: sp.graph, d: sp.database || "" }))}</span>${sp.console ? `<a class="btn small" href="${esc(sp.console)}" target="_blank" rel="noopener">${T("gr.spConsole")}</a>` : ""}` : ""}
+      <span class="meta">${esc(T(eng === "spanner" ? "gr.engSpannerD" : "gr.engBigqueryD"))}</span></div>
+      ${plan.fallback && plan.fallback.reason ? `<div class="note warn mt8">${esc(T("gr.fallback", { e: plan.fallback.reason }))}</div>` : ""}</div>`;
+    return head(T("rail.g.studio"), T("gr.title"), T("gr.lead")) + engLine + `
     <div class="card"><div class="card-head"><h3>${T("gr.schema")}</h3>${plan.graph_ready ? `<span class="st">${statusDot("ok")}${esc(T("gr.ready", { g: sch.graph }))}</span>` : `<span class="st">${statusDot("warn")}${esc(T("gr.sqlMode", { e: (plan.graph_error || "").slice(0, 160) }))}</span>`}</div>
       <div class="graph-wrap">${graphSvg(sch)}</div>
       ${node ? `<div class="stepcard"><div class="h"><span class="ld ${node.kind === "wiki" ? "wiki" : "table"}"></span>${esc(node.label)} <span class="tag mono">${esc(node.table)}</span><span class="right"><button class="btn small" data-act="to-query" data-sql="${esc(`SELECT * FROM \`${node.table}\` LIMIT 50`)}">${T("gr.rows")}</button></span></div>
-        <div class="meta">${esc(node.description || "")}</div><div class="flex mt8">${node.properties.map((p) => `<span class="tag mono">${esc(p.name)} <b>${esc(p.type)}</b></span>`).join("")}</div></div>` : ""}</div>
+        <div class="meta">${esc(node.description || "")}</div><div class="flex mt8">${node.properties.map((p) => `<span class="tag mono">${esc(p.name)} <b>${esc(p.type)}</b></span>`).join("")}</div>${allocNodeCard(plan.allocation, node.label)}</div>` : ""}</div>
+    ${allocPanel(plan.allocation)}
     <div class="card console"><div class="card-head"><h3>${T("gr.console")}</h3><span class="right"><select id="gr-preset" style="height:30px;border:1px solid var(--line-2);border-radius:9px;max-width:420px"><option value="">${T("gr.presets")}</option>${presets.map((p, i) => `<option value="${i}">${esc(p.t)}</option>`).join("")}</select></span></div>
       <textarea class="ta" id="gr-sql" spellcheck="false">${esc(q)}</textarea>
       <div class="form-actions"><button class="btn primary" data-act="gr-run" ${S.busy.q ? "disabled" : ""}>${T("gr.run")}</button>
-      ${r ? (r.status === "SUCCESS" ? `<span class="st">${statusDot("ok")}${esc(T("gr.result", { n: r.row_count, ms: r.ms }))}</span>` : `<span class="st">${statusDot("error")}${esc((r.error || r.status).slice(0, 300))}</span>`) : ""}</div>
+      ${r ? (r.status === "SUCCESS" ? `<span class="st">${statusDot("ok")}${esc(T("gr.result", { n: r.row_count, ms: r.ms }))}${r.engine ? " · " + esc(T("eng." + r.engine)) : ""}</span>` : `<span class="st">${statusDot("error")}${esc((r.error || r.status).slice(0, 300))}</span>`) : ""}</div>
       ${r && r.status === "SUCCESS" ? `<div class="mt12">${table(r.rows, 200)}</div><details class="fold mt12"><summary>${T("gr.call")}</summary><div class="inner">${codeBlock(JSON.stringify(r.call, null, 1))}</div></details>` : ""}</div>
-    <div class="grid2"><details class="fold card tight"><summary>${T("gr.ddl")}</summary><div class="inner">${codeBlock([...(plan.statements || []), plan.graph_ddl || {}].filter((x) => x.sql).map((x) => "-- " + x.title + "\n" + x.sql + ";").join("\n\n"))}</div></details>
+    <div class="grid2"><details class="fold card tight"><summary>${T("gr.ddl")}</summary><div class="inner">${codeBlock([...(plan.statements || []), eng === "spanner" ? {} : (plan.graph_ddl || {})].filter((x) => x.sql).map((x) => "-- " + x.title + "\n" + x.sql + ";").join("\n\n")
+        + ((sp.statements || []).length ? "\n\n-- ===== Spanner Graph · " + (sp.database || "") + " =====\n\n" + sp.statements.map((x) => x + ";").join("\n\n") : ""))}</div></details>
       <details class="fold card tight"><summary>${T("gr.design")}</summary><div class="inner"><p class="meta">${T("gr.designD")}</p><textarea class="ta tall" id="gr-design" spellcheck="false">${esc(JSON.stringify(plan.design_raw || {}, null, 1))}</textarea>
       <div class="form-actions"><button class="btn" data-act="gr-rebuild" ${S.busy.build ? "disabled" : ""}>${T("gr.rebuild")}</button></div></div></details></div>`;
   });
@@ -1056,6 +1186,13 @@
       const f = ((S.catalog && S.catalog.flows) || []).find((x) => x.id === a.dataset.id);
       if (f) { S.scenario.question_type = f.question_type; S.tpl.services = S.tpl.services.filter((x) => (f.optional || []).includes(x)); }
       save(); rerender();
+    },
+    "graph-engine": (a) => {
+      S.env.graph_engine = a.dataset.id === "bigquery" ? "bigquery" : "spanner";
+      const i = S.tpl.services.indexOf("bq_graph");  // keep the catalog's optional BigQuery Graph service in step with the engine
+      if (S.env.graph_engine === "bigquery" && i < 0) S.tpl.services.push("bq_graph");
+      if (S.env.graph_engine === "spanner" && i >= 0) S.tpl.services.splice(i, 1);
+      S.check = null; S.template = null; save(); rerender();
     },
     "tpl-svc": (a) => {
       const id = a.dataset.id, i = S.tpl.services.indexOf(id);

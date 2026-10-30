@@ -1,6 +1,6 @@
 /* flows_v5.js — Starter v5 studio diagram spec for aolflow.js (GOAL-233).
  *
- * One canvas for the whole build: inputs → ingest/profile → OKF wiki → Property Graph → agents → evaluation,
+ * One canvas for the whole build: inputs → ingest/profile → OKF wiki → Semantic Graph (Spanner Graph by default, GOAL-256) → agents → evaluation,
  * in the studio grammar (layer columns × P1 / P3 / P2 lanes). `chips` = build stages S1–S5, `paths` = node sets
  * for the data type chosen in step 3 (P1 documents · P2 tables · P3 both).
  *
@@ -17,7 +17,7 @@
       { x: 105, layer: "source", t: ["입력", "Input"], s: ["내 문서 · 테이블", "Your docs · tables"] },
       { x: 300, layer: "source", t: ["S1 수집 · S2 CQ", "S1 ingest · S2 CQs"], s: ["파싱 · 적재 · 스코핑", "Parse · load · scope"] },
       { x: 495, layer: "wiki", t: ["S3 OKF 위키", "S3 OKF wiki"], s: ["GCS · 허브", "GCS · hub"] },
-      { x: 700, layer: "semantic", t: ["S4 Property Graph", "S4 Property Graph"], s: ["BigQuery", "BigQuery"] },
+      { x: 700, layer: "semantic", t: ["S4 시맨틱 그래프", "S4 Semantic Graph"], s: ["Spanner Graph (기본)", "Spanner Graph (default)"] },
       { x: 915, layer: "agent", t: ["에이전트", "Agents"], s: ["Core MCP 추론", "Core MCP reasoning"] },
       { x: 1135, layer: "mcp", t: ["S5 평가", "S5 Evaluate"], s: ["CQ 채점", "CQ scoring"] },
     ],
@@ -43,8 +43,8 @@
         tip: { d: ["aos_core_draft_cqs가 목적과 데이터로 에이전트가 답해야 할 질문과 기준 답을 만듭니다. 평가 탭에서 고치거나 추가합니다.",
                    "aos_core_draft_cqs writes the questions the agents must answer, with reference answers. Edit or add them in the Evaluate tab."] } },
       { id: "unified", x: 625, y: 208, w: 150, layer: "semantic", t: ["통합 그래프", "Unified graph"], s: [["위키 노드 + 테이블 노드", "Wiki + table nodes"], ["wiki_bridge · FK", "wiki_bridge · FK"]],
-        tip: { d: ["aos_core_design_graph가 설계 · 검증하고 BigQuery DDL을 만들면, 스타터가 Core MCP bigquery_execute_sql로 CREATE PROPERTY GRAPH를 실행합니다.",
-                   "aos_core_design_graph designs, validates and generates the BigQuery DDL; the starter runs CREATE PROPERTY GRAPH through Core MCP bigquery_execute_sql."] } },
+        tip: { d: ["aos_core_design_graph가 설계 · 검증하면, 스타터가 노드 · 엣지를 Spanner에 적재하고 Core MCP spanner_update_ddl로 CREATE PROPERTY GRAPH를 실행합니다(기본 Spanner Graph). BigQuery Graph는 Audit · 액션 리니지 수집용 옵션입니다.",
+                   "aos_core_design_graph designs and validates; the starter loads nodes and edges into Spanner and runs CREATE PROPERTY GRAPH through Core MCP spanner_update_ddl (Spanner Graph by default). BigQuery Graph is the option for audit and action-lineage capture."] } },
       { id: "hagent", x: 840, y: 208, w: 150, layer: "agent", t: "Hybrid", s: [["규칙 + 데이터 + 계산", "Rules + data + math"], ["판정 · 계산 (W3)", "Decide & calculate (W3)"]],
         tip: { d: ["위키의 규칙 · 상수와 그래프의 실제 값을 함께 조회하고, 계산은 Core MCP 안에서 처리해 판정까지 답합니다.",
                    "Reads wiki rules/constants and graph values together; calculations run inside the Core MCP, up to a decision."] } },
@@ -58,11 +58,11 @@
         tip: { d: ["aos_core_scope가 표본 행으로 기본 키와 FK 후보, 데이터 유형(P1/P2/P3)을 정합니다.",
                    "aos_core_scope infers primary keys, FK candidates and the data type (P1/P2/P3) from sample rows."] } },
       { id: "nodes", x: 625, y: 336, w: 150, layer: "semantic", t: ["노드 · 엣지 테이블", "Node · edge tables"], s: [["N_<Label> · E_<…>", "N_<Label> · E_<…>"], ["SQL로 생성", "Built with SQL"]],
-        tip: { d: ["테이블 노드와 FK · 브릿지 엣지는 원천 테이블에서 SQL로 만들어 데이터 크기와 상관없이 동작합니다. Enterprise 예약이 없으면 에이전트는 이 테이블에 SQL로 답합니다.",
-                   "Table nodes and FK/bridge edges are built with SQL from the source tables, so size does not matter. Without an Enterprise reservation the agents answer with SQL on these tables."] } },
+        tip: { d: ["테이블 노드와 FK · 브릿지 엣지는 원천 테이블에서 BigQuery SQL로 만든 뒤(스테이징) Spanner 테이블로 적재합니다. 그래프를 못 만들면 에이전트는 이 테이블에 SQL로 답합니다.",
+                   "Table nodes and FK/bridge edges are built with BigQuery SQL from the source tables (staging) and then loaded into Spanner tables. Without a graph the agents answer with SQL on these tables."] } },
       { id: "gagent", x: 840, y: 336, w: 150, layer: "agent", t: "Graph", s: [["GQL · SQL만 근거", "GQL · SQL only"], ["gql/sql → answer", "gql/sql → answer"]],
-        tip: { d: ["aos_core_agent_step이 GQL(GRAPH_TABLE) 또는 SQL을 쓰고, 스타터가 내 신원으로 실행해 결과를 돌려줍니다.",
-                   "aos_core_agent_step writes GQL (GRAPH_TABLE) or SQL; the starter runs it with your identity and returns the rows."] } },
+        tip: { d: ["aos_core_agent_step이 GQL(GRAPH_TABLE) 또는 SQL을 쓰고, 스타터가 Spanner 문법으로 바꿔 내 신원으로 Spanner Graph에서 실행해 결과를 돌려줍니다.",
+                   "aos_core_agent_step writes GQL (GRAPH_TABLE) or SQL; the starter rewrites it for Spanner, runs it on the Spanner Graph with your identity and returns the rows."] } },
     ],
     edges: [
       { id: "docs-gate0", from: "docs", to: "gate0", layer: "source" },
@@ -91,7 +91,7 @@
       { n: "S1", key: "ingest", t: ["수집 · 프로파일", "Ingest · profile"], nodes: ["docs", "gate0", "tables", "load"] },
       { n: "S2", key: "cqs", t: ["CQ 초안", "CQ draft"], nodes: ["cqs"] },
       { n: "S3", key: "wiki", t: ["OKF 위키", "OKF wiki"], nodes: ["wiki"] },
-      { n: "S4", key: "graph", t: ["Property Graph", "Property Graph"], nodes: ["nodes", "unified"] },
+      { n: "S4", key: "graph", t: ["시맨틱 그래프", "Semantic Graph"], nodes: ["nodes", "unified"] },
       { n: "S5", key: "eval", t: ["에이전트 · 평가", "Agents · evaluation"], nodes: ["wagent", "gagent", "hagent", "eval"] },
     ],
   };
@@ -147,7 +147,7 @@
       { id: "vertex", x: C[0], y: NY(2), w: 108, h: 54, layer: "gemini", t: "Vertex AI", s: [["Gemini", "Gemini"]],
         tip: { d: ["변환 · 위키 컴파일 · 에이전트 추론에 쓰는 모델입니다.", "The model behind conversion, wiki compile and agent reasoning."] } },
       { id: "wiki", x: C[1], y: NY(2), w: 226, h: 54, layer: "wiki", t: ["OKF 위키", "OKF wiki"], s: [["요약 · 엔티티 · 개념 · GCS", "Summary · entity · concept · GCS"]] },
-      { id: "graph", x: C[3], y: NY(2), w: 108, h: 54, layer: "semantic", t: ["그래프", "Graph"], s: [["Property Graph", "Property Graph"]] },
+      { id: "graph", x: C[3], y: NY(2), w: 108, h: 54, layer: "semantic", t: ["그래프", "Graph"], s: [["Spanner Graph", "Spanner Graph"]] },
       { id: "coremcp", x: C[0], y: NY(3), w: 108, h: 54, layer: "mcp", t: "Core MCP", s: [["노하우 · 도구", "Know-how · tools"]],
         tip: { d: ["모든 구축 노하우와 데이터 접근을 Core MCP 도구 호출로 처리합니다.", "All build know-how and data access go through Core MCP tool calls."] } },
       { id: "wagent", x: C[1], y: NY(3), w: 108, h: 54, layer: "agent", t: "Wiki", s: [["W1 규정 안내", "W1 guidance"]] },
@@ -180,7 +180,7 @@
   const tables = ["src_upload", "src_gcs", "src_bq", "load", "graph", "gagent", "vertex", "coremcp"];
   const flowNodes = { A: docs, B: tables, C: docs.concat(tables, ["hagent"]), D: docs.concat(["convert"]) };
   const serviceNodes = { gcs: ["src_gcs"], vertex_ai: ["vertex"], core_mcp: ["coremcp"], drive: ["src_drive", "convert"],
-    bigquery: ["src_bq", "load"], bq_graph: ["graph"], cloud_run: ["deploy"] };
+    bigquery: ["src_bq", "load"], bq_graph: ["graph"], spanner: ["graph"], spanner_graph: ["graph"], cloud_run: ["deploy"] };
   const sourceNodes = { upload: ["src_upload", "convert"], drive: ["src_drive", "convert"], gcs: ["src_gcs"], sample: ["src_gcs"], bigquery: ["src_bq", "load"] };
   root.STARTER_V6 = { pick, flowNodes, serviceNodes, sourceNodes };
 })(typeof window !== "undefined" ? window : this);

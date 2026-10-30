@@ -8,7 +8,8 @@
 The reasoning (prompts, next-action policy, calculation) lives in the Core MCP tool `aos_core_agent_step`.
 This loop only executes the actions with the caller's credentials and feeds the observations back:
 
-    agent_step → read_wiki (workspace pages) | gql / sql (Core MCP bigquery_execute_sql) → agent_step … → answer
+    agent_step → read_wiki (workspace pages) | gql / sql (Core MCP bigquery_execute_sql, or spanner_execute_sql for a
+    Spanner Graph workspace — the BigQuery-dialect query is rewritten by spanner_graph.to_spanner) → agent_step … → answer
 """
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ import re
 import time
 from typing import Any, Callable, Dict, List, Optional
 
+from src.aos import spanner_graph as SG
 from src.aos.ws import McpLog, error_text, get_json, prefix, t
 
 Emit = Callable[[Dict[str, Any]], None]
@@ -69,9 +71,11 @@ def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = No
     if agent in ("graph", "hybrid") and not schema:
         if agent == "graph" or not pages:
             return _fail(agent, "NOT_BUILT", t(lang, "그래프가 아직 없습니다 — 구축 S4(그래프)를 먼저 실행하세요.", "No graph yet — run build stage S4 (graph) first."), lang, t0)
+    spanner = bool(plan) and plan.get("engine") == "spanner" and bool(plan.get("spanner"))
     context = {"wiki_index": [{"id": p.get("id"), "layer": p.get("layer"), "title": p.get("title"), "summary": p.get("summary"),
                                "policy_text": _policy_text(p)} for p in pages],
-               "graph": schema, "graph_ready": graph_ready, "project": env["project"], "dataset": env["dataset"]}
+               "graph": schema, "graph_ready": graph_ready, "project": env["project"], "dataset": env["dataset"],
+               "engine": "spanner" if spanner else "bigquery"}
     observations: List[Dict[str, Any]] = []
     steps: List[Dict[str, Any]] = []
     tel = {"llm_ms": 0, "tokens_in": 0, "tokens_out": 0, "data_ms": 0, "steps": 0, "model": ""}
@@ -120,19 +124,23 @@ def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = No
             emit({"type": "step", "step": f"q-{i + 1}", "status": "error", "label": f"{action} · {res['query_error']}"})
             continue
         s0 = time.perf_counter()
-        r = log.call("bigquery_execute_sql", {"project": env["project"], "sql": q, "location": env["region"], "timeout_ms": 45000,
-                                              "labels": {"datacloud": "jetski", "app": "aos-starter"}}, timeout_s=70)
+        if spanner:  # GOAL-256: Spanner Graph workspace — BigQuery-dialect query rewritten + routed (graph → Spanner)
+            r = SG.run_query(log, q, plan, env, timeout_s=70)
+        else:
+            r = log.call("bigquery_execute_sql", {"project": env["project"], "sql": q, "location": env["region"], "timeout_ms": 45000,
+                                                  "labels": {"datacloud": "jetski", "app": "aos-starter"}}, timeout_s=70)
         ms = round((time.perf_counter() - s0) * 1000)
+        eng = {"engine": r.get("engine"), "executed": r.get("executed")} if spanner else {}
         tel["data_ms"] += ms
         if r.get("status") == "SUCCESS":
             rows = r.get("rows") or []
             observations.append({"action": action, "input": q, "result": {"rows": rows[:30]}})
-            steps.append({"action": action, "thought": thought, "query": q, "rows": rows[:50], "row_count": len(rows), "ms": ms})
-            emit({"type": "step", "step": f"q-{i + 1}", "status": "done", "ms": ms, "label": f"{action.upper()} · {len(rows)} rows"})
+            steps.append({"action": action, "thought": thought, "query": q, "rows": rows[:50], "row_count": len(rows), "ms": ms, **eng})
+            emit({"type": "step", "step": f"q-{i + 1}", "status": "done", "ms": ms, "label": f"{action.upper()}{' · ' + eng['engine'] if eng else ''} · {len(rows)} rows"})
         else:
             err = error_text(r)
             observations.append({"action": action, "input": q, "error": err[:800]})
-            steps.append({"action": action, "thought": thought, "query": q, "error": err[:800], "ms": ms})
+            steps.append({"action": action, "thought": thought, "query": q, "error": err[:800], "ms": ms, **eng})
             emit({"type": "step", "step": f"q-{i + 1}", "status": "error", "ms": ms, "label": f"{action.upper()} · {err[:160]}"})
     tel["steps"] = len(steps)
     if answer:
@@ -147,7 +155,7 @@ def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = No
     refs = [{"id": pid, "title": by_id[pid].get("title"), "layer": by_id[pid].get("layer"), "cited": pid in citations}
             for pid in dict.fromkeys(cited_pages)]
     return {"agent": agent, "status": status, "answer": answer, "citations": citations, "confidence": confidence, "lang": lang,
-            "question": question, "steps": steps, "refs": refs, "graph_ready": graph_ready,
+            "question": question, "steps": steps, "refs": refs, "graph_ready": graph_ready, "graph_engine": "spanner" if spanner else "bigquery",
             "telemetry": {**tel, "total_ms": round((time.perf_counter() - t0) * 1000)}}
 
 
