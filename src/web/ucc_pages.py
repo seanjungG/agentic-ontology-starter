@@ -36,6 +36,7 @@ LANGS = ("ko", "en")
 ADMIN_KEY = os.environ.get("UCC_ADMIN_KEY", "").strip()
 COMMENTS_PREFIX = os.environ.get("UCC_COMMENTS_PREFIX", "ucc/comments/").strip("/") + "/"
 DEMO_URL_DEFAULT = "https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/"
+NOTEBOOK_URL_DEFAULT = "https://agentic-ontology-starter-notebook-115847445822.asia-northeast3.run.app/"
 KST = dt.timezone(dt.timedelta(hours=9))
 
 MAX_TEXT = 2000
@@ -59,6 +60,8 @@ def manifest() -> Dict[str, Any]:
         data = {"docs": {}}
     data.setdefault("demo_url", DEMO_URL_DEFAULT)
     data["demo_url"] = os.environ.get("UCC_DEMO_URL") or data["demo_url"]
+    data.setdefault("notebook_url", NOTEBOOK_URL_DEFAULT)
+    data["notebook_url"] = os.environ.get("UCC_NOTEBOOK_URL") or data["notebook_url"]
     data.setdefault("docs", {})
     return data
 
@@ -148,7 +151,7 @@ def docs_payload() -> Dict[str, Any]:
             meta = _doc_meta(k, lang)
             if meta:
                 docs[k][lang] = {kk: vv for kk, vv in meta.items() if kk != "source"}
-    return {"docs": docs, "demo_url": m["demo_url"], "published_at": m.get("published_at", ""),
+    return {"docs": docs, "demo_url": m["demo_url"], "notebook_url": m["notebook_url"], "published_at": m.get("published_at", ""),
             "langs": [l for l in LANGS if any(l in v for v in docs.values())], "admin_enabled": bool(ADMIN_KEY)}
 
 

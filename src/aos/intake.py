@@ -96,7 +96,28 @@ def template(data: Dict[str, Any], lang: str) -> Dict[str, Any]:
     r = _call(McpLog("template", None), "aos_core_compose_template", args, timeout_s=30)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "message": error_text(r)}
-    return {"status": "OK", **{k: v for k, v in r.items() if k not in ("status", "tool", "version")}}
+    out = {k: v for k, v in r.items() if k not in ("status", "tool", "version")}
+    return {"status": "OK", **with_graph_engine(out, env, lang)}
+
+
+def with_graph_engine(tpl: Dict[str, Any], env: Dict[str, Any], lang: str) -> Dict[str, Any]:
+    """GOAL-256: the Core MCP catalog only knows the optional BigQuery Graph service; the starter's Semantic Graph default is
+    Spanner Graph, so a table flow (P2 · P3) gets the Spanner service, API and database roles added to the composed template."""
+    from src.aos.spanner_graph import DEFAULT_DATABASE, engine
+    flow = tpl.get("flow") if isinstance(tpl.get("flow"), dict) else {}
+    eng = engine({"graph_engine": env.get("graph_engine") or "spanner"})
+    tpl["graph_engine"] = eng
+    if eng != "spanner" or flow.get("data_type") not in ("P2", "P3"):
+        return tpl
+    db = env.get("spanner_database") or DEFAULT_DATABASE
+    inst = env.get("spanner_instance") or ""
+    svc = {"id": "spanner_graph", "name": "Spanner Graph", "required": True,
+           "role": t(lang, "Semantic Graph (기본) — 노드 · 엣지 테이블 + Property Graph", "Semantic Graph (default) — node · edge tables + Property Graph")}
+    tpl["services"] = [s for s in (tpl.get("services") or []) if not (isinstance(s, dict) and s.get("id") == "bq_graph")] + [svc]
+    tpl["apis"] = list(dict.fromkeys(list(tpl.get("apis") or []) + ["spanner.googleapis.com"]))
+    tpl["iam"] = list(dict.fromkeys(list(tpl.get("iam") or []) + [f"roles/spanner.databaseAdmin @ {inst}/{db}", f"roles/spanner.databaseUser @ {inst}/{db}",
+                                                                   f"roles/spanner.viewer @ {inst}"]))
+    return tpl
 
 
 # ------------------------------------------------------------------------------------------------ conversion

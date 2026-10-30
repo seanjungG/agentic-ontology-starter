@@ -1,6 +1,6 @@
 # Agentic Ontology Starter
 
-> **이 스튜디오 + 이 깃헙만 있으면** 내 데이터 · 내 GCP로 엔터프라이즈 온톨로지 에이전트(OKF 위키 · BigQuery Property Graph · Wiki/Graph/Hybrid 에이전트 · CQ 평가)를 만들고, 같은 결과를 다시 만드는 **CLI · MCP 호출 파라미터 · 코드 번들**로 가져가는 스타터 팩입니다.
+> **이 스튜디오 + 이 깃헙만 있으면** 내 데이터 · 내 GCP로 엔터프라이즈 온톨로지 에이전트(OKF 위키 · **Spanner Graph**(기본 Semantic Graph) · Wiki/Graph/Hybrid 에이전트 · CQ 평가)를 만들고, 같은 결과를 다시 만드는 **CLI · MCP 호출 파라미터 · 코드 번들**로 가져가는 스타터 팩입니다.
 > 방법론의 핵심 노하우(위키 컴파일 · 그래프 설계 · 에이전트 추론 · 채점)는 **Platform Core MCP 도구** 안에만 있고, 이 저장소는 그 도구를 **어떤 순서로 · 어떤 파라미터로** 부르는지를 담습니다. 서버는 Python 3.11 표준 라이브러리만 씁니다.
 
 | 구분 | 주소 | 설명 |
@@ -24,7 +24,7 @@
 ② GCP·권한   템플릿 대상(스타터 샌드박스 · 내 프로젝트) → 템플릿 미리보기(단계 · 서비스 · API · IAM · 스크립트) + 신원 · 리소스 실제 점검
 ③ 데이터     업로드(.md .txt .csv + .pdf .docx .pptx .xlsx .html, 12MB) · GCS · Google Drive · BigQuery · 샘플 — 변환 결과표(방식 · 변환율 · 페이지 · 미리보기 · PDF)
 ④ 문서 유형  자동 판별(규칙 + 선택 Gemini) · 확신 낮으면 질문 · 전략(direct · typed · reconvert) 저장 → S3에 유형별 지침 반영
-⑤ 구축       S0 준비 → S1 수집 · 프로파일 → S2 CQ → S3 OKF 위키 → S4 Property Graph → S5 평가 (단계별 재실행) → 에이전트 테스트 → 배포 단계
+⑤ 구축       S0 준비 → S1 수집 · 프로파일 → S2 CQ → S3 OKF 위키 → S4 Spanner Graph(기본) → S5 평가 (단계별 재실행) → 에이전트 테스트 → 배포 단계
 스튜디오     개요 · 자산 · 위키(보기 · 편집 · 게이트) · 그래프(스키마 · GQL/SQL 콘솔 · 설계 편집 → 재구축) · 검색 · 에이전트 실험 · 평가(CQ 편집)
 배포        준비도 점검(평가 기준 · CQ · 게이트 · 그래프 · 내 프로젝트 여부) · Cloud Run / MCP 클라이언트 단계별 명령 · Cloud Shell
 인계        CLI 재현 명령 · MCP 호출 로그(도구 + 파라미터, curl) · MCP 클라이언트 설정 · 단일 파일 에이전트 · 번들(zip)
@@ -32,14 +32,14 @@
 
 | 단계 | 하는 일 | Core MCP 호출 |
 | :---: | :--- | :--- |
-| S0 준비 | 버킷 권한 · 데이터셋 생성(데모 신원이면 테이블 7일 만료) · `workspace.json` | `iam_test_permissions` · `bigquery_get_dataset_info` · `bigquery_create_dataset` · `storage_upload_object` |
+| S0 준비 | 버킷 권한 · 데이터셋 생성(데모 신원이면 테이블 7일 만료) · Spanner Graph 대상 DB 점검 · `workspace.json` | `iam_test_permissions` · `bigquery_get_dataset_info` · `bigquery_create_dataset` · `spanner_get_instance` · `spanner_get_database` · `storage_upload_object` |
 | S1 수집 · 프로파일 | 문서 읽기 · CSV → BigQuery(병렬) · BigQuery 테이블 프로파일(복사 없음) · Gate 0 · PK/FK 스코핑 | `storage_read_object` · `bigquery_load_table` · `bigquery_get_table_info` · `bigquery_execute_sql` · `aos_builder_parse_documents_gate0` · **`aos_core_scope`** |
 | S2 CQ | 목적 기반 역량 질문 + 기준 답 + 핵심 사실 | **`aos_core_draft_cqs`** |
 | S3 OKF 위키 | 요약 · 엔티티 · 개념 + 정책 상수(단일 출처) + applies_to + 게이트 W1~W9(본문 줄 수 상한 없음 · W8 섹션 · W9 숫자 커버리지 + 보완 패스) → GCS | **`aos_core_compile_wiki`** · `storage_upload_object` |
-| S4 Property Graph | 설계 → 노드 · 엣지 테이블(SQL) → `CREATE PROPERTY GRAPH` → 검증 GQL | **`aos_core_design_graph`** · `bigquery_execute_sql` · `bigquery_load_table` |
+| S4 Semantic Graph | 설계 → 노드 · 엣지 테이블(BigQuery 스테이징) → **Spanner** 테이블 + `CREATE OR REPLACE PROPERTY GRAPH` → 행 복사 → 검증 GQL(Spanner 문법 자동 변환) · Spanner 불가 시 BigQuery Graph로 **화면에 표시되는** 폴백 | **`aos_core_design_graph`** · `bigquery_execute_sql` · `spanner_update_ddl` · `spanner_commit` · `spanner_execute_sql` |
 | S5 평가 | 모든 CQ를 담당 에이전트로 다시 묻고 채점 | **`aos_core_agent_step`** · 데이터 도구 · **`aos_core_judge`** |
 
-실측(2026-10-19, `gemini-4-argon` MEDIUM): 샘플 팩 KO 구축 약 7분 · 평가 **100 (8/8)** · 업로드한 보험 청구 심사 데이터(문서 1 + CSV 3) 구축 약 6.5분 · 평가 **100 (8/8)**, Property Graph 검증 GQL 전부 통과.
+실측(2026-10-19, `gemini-4-argon` MEDIUM): 샘플 팩 KO 구축 약 7분 · 평가 **100 (8/8)** · 업로드한 보험 청구 심사 데이터(문서 1 + CSV 3) 구축 약 6.5분 · 평가 **100 (8/8)**, Property Graph 검증 GQL 전부 통과. Spanner Graph 기본값(v6.5.0 이후) 실측은 아래 "그래프 엔진" 참고.
 
 ---
 
@@ -49,9 +49,9 @@
 브라우저 / CLI / 내 코드
   └─ 스타터 (이 저장소: 화면 · 순서 · CLI · 워크스페이스 형식)
        ├─ Platform Core MCP ─ 노하우 aos_core_* (무상태 · 프롬프트 · 규칙 · 게이트)  ← 보호
-       │                    └ 데이터 플레인 storage_* · bigquery_* · iam_* (호출자 토큰으로만 실행)
+       │                    └ 데이터 플레인 storage_* · bigquery_* · spanner_* · iam_* (호출자 토큰으로만 실행)
        └─ Vertex AI (상태 점검 · 기본 모델 gemini-4-argon)
-  모든 결과물 · Gemini 비용 = 내 GCP (GCS 워크스페이스 · BigQuery 데이터셋 · Property Graph)
+  모든 결과물 · Gemini 비용 = 내 GCP (GCS 워크스페이스 · BigQuery 데이터셋 · Spanner Graph)
 ```
 
 | 노하우 도구 | 입력 | 출력 |
@@ -104,6 +104,7 @@ python3 -m src.cli build --bucket MY_BUCKET --ws ws-… [--stages ingest,cqs,wik
 python3 -m src.cli ask   --bucket MY_BUCKET --ws ws-… --agent hybrid "질문"
 python3 -m src.cli eval  --bucket MY_BUCKET --ws ws-…
 python3 -m src.cli calls --bucket MY_BUCKET --ws ws-… --stage graph      # MCP 호출 (도구 · 인자 · 상태 · ms)
+python3 -m src.cli purge-spanner --project MY_PROJECT --dry-run          # 만료 워크스페이스 Spanner 객체 정리
 ```
 `spec.json` = `{"scenario": {"title", "objective", "question_type"}, "env": {"project", "bucket", "region"}, "sources": {"docs": [{"name", "origin": "gcs", "uri": "gs://…"}], "tables": [{"name", "origin": "gcs|bigquery", "uri"|"fq"}]}, "lang": "ko"}`
 
@@ -124,9 +125,17 @@ gs://<버킷>/aos/<ws_id>/
   wiki/{01_summary,02_entities,03_concepts}/*.md · wiki/{pages,index,gates}.json
   graph/plan.json · graph/statements.sql · runs/latest.json · mcp_calls.jsonl
 BigQuery <프로젝트>.<데이터셋 (기본 aos_<ws>)>
-  원천 테이블 · N_<Label> 노드 · E_<LABEL>_<From>_<To> 엣지 · <GRAPH> Property Graph
+  원천 테이블 · N_<Label> 노드 · E_<LABEL>_<From>_<To> 엣지 (SQL 분석 · 스테이징 층)
+Spanner <인스턴스>/<DB (기본 starter_graph_db, 워크스페이스 공유)>
+  ws<yyyymmdd>_<hex>_N_<Label> · ws<yyyymmdd>_<hex>_E_… 테이블 · <GRAPH>_<yyyymmdd>_<hex> Property Graph
 ```
-BigQuery Graph는 Enterprise 예약이 필요합니다. 예약이 없으면 그래프 DDL은 실패하지만 노드 · 엣지 테이블은 만들어지고 에이전트는 SQL로 답합니다.
+
+### 그래프 엔진 (v6.5.0~)
+- **기본 = Spanner Graph** (Semantic Graph · Knowledge Graph). ① 단계에서 엔진을 고를 수 있고, **BigQuery Graph**는 이후 Audit · 액션 리니지(Context Graph) 수집용 옵션입니다. v6.5.0 이전 워크스페이스는 BigQuery Graph로 그대로 열립니다.
+- Core MCP 설계는 엔진 중립이고, 에이전트 GQL은 Spanner 문법으로 자동 변환 · 라우팅됩니다(BigQuery 전용 테이블을 쓰는 질의만 BigQuery에서 실행).
+- Spanner를 쓸 수 없으면(권한 · 인스턴스 없음) BigQuery Graph로 폴백하고 그 사실을 화면에 표시합니다. BigQuery Graph는 Enterprise 예약이 필요하며, 예약이 없으면 그래프 DDL은 실패하지만 노드 · 엣지 테이블은 만들어지고 에이전트는 SQL로 답합니다.
+- 필요 권한: 런타임 SA에 대상 DB `roles/spanner.databaseAdmin` · `roles/spanner.databaseUser`.
+- **보관 기간(v6.7.0)**: 데모 신원의 공유 DB는 BigQuery 데모 데이터셋과 같은 **7일** 후 다음 구축 때 자동 정리(`AOS_SPANNER_TTL_DAYS`). 수동 정리: `python3 -m src.cli purge-spanner --project P [--days 7] [--dry-run]`.
 
 ## 6. 코드 · MCP 인계 번들
 
@@ -150,6 +159,8 @@ src/
 ├── aos/ws.py              워크스페이스 · GCS 영속화 · MCP 호출 로그
 ├── aos/sources.py         업로드 · GCS · BigQuery · 샘플 팩 · CSV 스키마 추론
 ├── aos/pipeline.py        구축 단계 S0~S5
+├── aos/spanner_graph.py   S4 Spanner Graph (DDL · 행 복사 · GQL 변환 · 라우팅 · 보관 기간 정리)
+├── aos/graph_allocation.py 그래프 탭 '데이터 할당' (테이블 · 컬럼 · 위키 → 노드 · 프로퍼티 · 엣지)
 ├── aos/agent.py           Wiki · Graph · Hybrid 에이전트 루프 (추론 = aos_core_agent_step)
 ├── aos/studio.py          프리셋 · 환경 점검 · 설정 스크립트 · 편집 · 쿼리 · 검색 · 번들
 ├── identity.py            요청 단위 신원 (runtime · token · impersonate)
@@ -167,6 +178,7 @@ data/ · config/ · notebooks/(Colab 12종) · tests/ · docs/
 | `CORE_MCP_URL` | Core MCP `/mcp` | Platform Core MCP (요청으로 바꿀 수 없음) |
 | `STARTER_WRITE_PROJECTS` | `GCP_PROJECT_ID` | 데모 신원이 쓸 수 있는 프로젝트 (`*` = 모두). 사용자 신원에는 적용 안 함 |
 | `STARTER_IMPERSONATE_ALLOW` | (비어 있음 = 끔) | 서버 측 SA 위임을 허용할 SA 패턴 (예: `*@my-project.iam.gserviceaccount.com`) |
+| `AOS_GRAPH_ENGINE` · `AOS_SPANNER_DATABASE` · `AOS_SPANNER_TTL_DAYS` | `spanner` · `starter_graph_db` · `7` | 새 워크스페이스 기본 그래프 엔진 · 공유 Spanner DB · 데모 신원 보관 기간(0 = 끔) |
 | `AOS_CORE_MCP_FALLBACK` | `strict` | `direct`면 Core MCP 장애 시 직접 API 우회 (개발용) |
 | `PORT` | `8080` | HTTP 포트 |
 
@@ -180,11 +192,12 @@ v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 �
 
 ## English summary
 
-**Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, BigQuery Property Graph, Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `aos_core_*` tools**; this repository holds which tools are called in which order with which parameters.
+**Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, **Spanner Graph** (default Semantic Graph), Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `aos_core_*` tools**; this repository holds which tools are called in which order with which parameters.
 
 - **Flow**: understand → situation & goal (presets or custom, W1/W2/W3) → GCP & permissions (demo identity, pasted token, or SA; live checks + a ready-to-run setup script) → data (upload .md/.txt/.csv, GCS paths, BigQuery tables, sample pack) → build S0–S5 (re-run any stage) → studio (assets, wiki edit + gates, graph schema + GQL/SQL console + design rebuild, search, agent experiments, CQ evaluation) → hand-off (CLI, MCP call log with curl, MCP client config, single-file agent, zip bundle).
 - **v6 intake** (GOAL-243): pick a flow and services from the Core MCP catalog and compose a template for the starter sandbox or your own project; bring data from local upload, GCS or Google Drive — PDF/DOCX/PPTX/XLSX/HTML are converted to Markdown with a fidelity score; Core MCP detects each document's type (and asks when unsure) and the chosen wiki strategy (direct · typed · re-convert) feeds the wiki compile; then test the agent and open the deployment page (readiness checks + commands). An older Core MCP shows `MCP_UPDATE_NEEDED` while the existing flow keeps working.
 - **Measured** (2026-10-19, `gemini-4-argon` MEDIUM): sample pack ~7 min build, eval **100 (8/8)**; an uploaded insurance-claims data set (1 doc + 3 CSVs) ~6.5 min, eval **100 (8/8)**.
+- **Graph engine** (v6.5.0+): the Semantic Graph defaults to **Spanner Graph** — S4 stages node/edge tables in BigQuery, copies them into Spanner tables and runs `CREATE OR REPLACE PROPERTY GRAPH`; agent GQL is rewritten to Spanner syntax automatically. **BigQuery Graph** stays selectable for audit / action-lineage (Context Graph) capture and is the visible fallback when Spanner is unavailable. Demo-identity Spanner objects expire after 7 days like the BigQuery demo datasets (`purge-spanner` CLI, v6.7.0). The graph tab shows how tables, columns and wiki pages are allocated to nodes, properties and edges (v6.6.0).
 - **Security**: the Core MCP is zero-privilege; data tools and Gemini run with the caller's token in the caller's project. Pasted tokens are never stored. Demo writes are limited to `STARTER_WRITE_PROJECTS`; server-side SA impersonation only for `STARTER_IMPERSONATE_ALLOW`.
 - **Quick start**: `python3 -m src.web.studio_server` (local) · `python3 -m src.cli build --bucket … --ws …` (CLI) · `gcloud run deploy … --source .` (your Cloud Run). The curated reference wizard stays at `/wizard`.
 

@@ -26,7 +26,7 @@
       needText: "내용을 입력해 주세요.", sent: "코멘트를 남겼습니다. 작성자의 Jetski Chat으로 전달됩니다.", sendFail: "전송 실패: ",
       del: "삭제", delConfirm: "이 코멘트를 삭제할까요?", deleted: "코멘트를 삭제했습니다.", delFail: "삭제 실패: ",
       adminTitle: "관리자 키 (모든 코멘트 삭제)", adminPrompt: "관리자 키를 입력하세요 (비우면 해제)", adminOn: "관리자 모드 켜짐", adminOff: "관리자 모드 해제",
-      refresh: "새로고침", panelToggle: "코멘트 패널 열기/닫기", demoSub: "Agentic Ontology Studio · LG U+", brdSub: "Discovery Doc", sddSub: "Solution Design",
+      refresh: "새로고침", panelToggle: "코멘트 패널 열기/닫기", demoSub: "Agentic Ontology Studio · LG U+", notebookSub: "실습 랩", brdSub: "Discovery Doc", sddSub: "Solution Design",
       docLabel: { brd: "BRD · Discovery Doc", sdd: "SDD · Solution Design" }, langOf: (l) => (l === "en" ? "EN" : "KO"),
     },
     en: {
@@ -41,7 +41,7 @@
       needText: "Please enter a comment.", sent: "Comment posted. It will be delivered to the author's Jetski Chat.", sendFail: "Failed to send: ",
       del: "Delete", delConfirm: "Delete this comment?", deleted: "Comment deleted.", delFail: "Delete failed: ",
       adminTitle: "Admin key (delete any comment)", adminPrompt: "Enter the admin key (leave empty to turn off)", adminOn: "Admin mode on", adminOff: "Admin mode off",
-      refresh: "Refresh", panelToggle: "Toggle comments panel", demoSub: "Agentic Ontology Studio · LG U+", brdSub: "Discovery Doc", sddSub: "Solution Design",
+      refresh: "Refresh", panelToggle: "Toggle comments panel", demoSub: "Agentic Ontology Studio · LG U+", notebookSub: "Hands-on Lab", brdSub: "Discovery Doc", sddSub: "Solution Design",
       docLabel: { brd: "BRD · Business Requirements", sdd: "SDD · Solution Design" }, langOf: (l) => (l === "en" ? "EN" : "KO"),
     },
   };
@@ -89,6 +89,7 @@
       a.href = urlFor(d, state.lang);
     });
     $("#ucc-demo small").textContent = t.demoSub;
+    $("#ucc-notebook") && ($("#ucc-notebook small").textContent = t.notebookSub);
     document.querySelectorAll("#lang-toggle button").forEach((b) => b.classList.toggle("active", b.dataset.lang === state.lang));
   }
 
@@ -297,6 +298,7 @@
       state.meta = await getJSON("/api/ucc/docs");
       state.demoUrl = state.meta.demo_url || "";
       $("#ucc-demo").href = state.demoUrl || "#"; // same tab, one-way: the demo app has no "back" control
+      if ($("#ucc-notebook")) $("#ucc-notebook").href = state.meta.notebook_url || "#"; // one-way like Demo
       if (!(state.meta.langs || []).includes("en")) $("#lang-toggle").hidden = true;
     } catch (e) { toast(T().listFail + e.message, true); }
     document.querySelectorAll(".ucc-tab[data-doc]").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); switchDoc(a.dataset.doc, true); }));

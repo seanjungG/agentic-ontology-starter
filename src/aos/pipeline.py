@@ -9,7 +9,9 @@
     ingest   documents → parsed/docs.json · CSV → BigQuery tables · BigQuery tables → profile · Gate 0 · scope
     cqs      Competency Questions (Core MCP aos_core_draft_cqs) → cqs.json
     wiki     OKF 3-layer wiki + gates (aos_core_compile_wiki) → wiki/*.md · pages.json · index.json
-    graph    design → node/edge tables → Property Graph → verification GQL (aos_core_design_graph + bigquery_*)
+    graph    design → node/edge tables (BigQuery staging) → Semantic Graph → verification GQL (aos_core_design_graph + bigquery_*)
+             Semantic Graph default = Spanner Graph (spanner_* · src/aos/spanner_graph.py, GOAL-256); BigQuery Property Graph
+             stays selectable (env.graph_engine=bigquery — audit / action-lineage capture later) and is the visible fallback.
     eval     every CQ through its agent (aos_core_agent_step) + scoring (aos_core_judge) → runs/
 
 All GCS / BigQuery work is a Core MCP data-plane call with the request identity's token; all method know-how is a
@@ -25,7 +27,9 @@ from typing import Any, Callable, Dict, List, Optional
 
 from src import identity
 from src.aos import agent as agent_mod
+from src.aos import graph_allocation as GA
 from src.aos import sources as S
+from src.aos import spanner_graph as SG
 from src.aos.ws import (McpLog, WsError, append_calls, can_write, error_text, get_json, now_iso, prefix, put_json, put_text,
                         save, t)
 
@@ -33,7 +37,7 @@ Emit = Callable[[Dict[str, Any]], None]
 STAGES = ("prepare", "ingest", "cqs", "wiki", "graph", "eval")
 STAGE_LABEL = {
     "prepare": ("S0 준비", "S0 Prepare"), "ingest": ("S1 수집 · 프로파일", "S1 Ingest & profile"), "cqs": ("S2 CQ 초안", "S2 CQ draft"),
-    "wiki": ("S3 OKF 위키", "S3 OKF wiki"), "graph": ("S4 Property Graph", "S4 Property Graph"), "eval": ("S5 평가", "S5 Evaluate"),
+    "wiki": ("S3 OKF 위키", "S3 OKF wiki"), "graph": ("S4 시맨틱 그래프", "S4 Semantic Graph"), "eval": ("S5 평가", "S5 Evaluate"),
 }
 
 
@@ -129,7 +133,20 @@ def stage_prepare(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]
                                               "sql": f"ALTER SCHEMA `{env['project']}.{env['dataset']}` SET OPTIONS (default_table_expiration_days = 7)"},
                      timeout_s=60, label="demo expiry 7d")
     _step(emit, "dataset", "done", t(lang, "BigQuery 데이터셋", "BigQuery dataset"), f"{env['project']}.{env['dataset']}" + (" (new)" if created else ""), _ms(s))
+    spanner_note: Dict[str, Any] = {}
+    if SG.engine(env) == "spanner":  # GOAL-256: Semantic Graph default = Spanner Graph — check the target early
+        s = time.perf_counter()
+        try:
+            pre = SG.preflight(log, env, lang, create=True)
+            spanner_note = {"ok": True, "database": SG.db_path(env), "created": pre.get("created", False)}
+            _step(emit, "spanner", "done", t(lang, "Spanner Graph 대상", "Spanner Graph target"),
+                  SG.db_path(env) + (" (new)" if pre.get("created") else "") + (f" · {pre.get('processing_units')} PU" if pre.get("processing_units") else ""), _ms(s))
+        except SG.SpannerUnavailable as e:
+            spanner_note = {"ok": False, "reason": str(e)[:400]}
+            _step(emit, "spanner", "warn", t(lang, "Spanner Graph 대상", "Spanner Graph target"),
+                  str(e)[:240] + t(lang, " — 이대로면 S4는 BigQuery Graph로 폴백합니다 (결과에 표시)", " — S4 will fall back to BigQuery Graph (shown in the results)"), _ms(s))
     return {"bucket": env["bucket"], "dataset": f"{env['project']}.{env['dataset']}", "dataset_created": created,
+            "graph_engine": SG.engine(env), **({"spanner": spanner_note} if spanner_note else {}),
             "workspace": f"gs://{env['bucket']}/{prefix(ws['ws_id'])}workspace.json"}
 
 
@@ -429,7 +446,25 @@ def stage_graph(ws: Dict[str, Any], log: McpLog, emit: Emit, design: Optional[Di
     failed = [x for x in results if not x["ok"]]
     graph_ready, graph_error = False, ""
     gd = r.get("graph_ddl") or {}
-    if not failed and gd.get("sql"):
+    want = SG.engine(env)
+    used = want
+    fallback: Dict[str, Any] = {}
+    sp_plan: Dict[str, Any] = {}
+    verify: List[Dict[str, Any]] = []
+    if not failed and want == "spanner":  # GOAL-256: Semantic Graph default = Spanner Graph
+        try:
+            sres = SG.build(log, env, ws["ws_id"], nd, r.get("verify") or [], lang, lambda *a: _step(emit, *a))
+            sp_plan, verify, graph_ready = sres["spanner"], sres["verify"], sres["graph_ready"]
+            for c in sres["failed"]:
+                results.append({"id": f"spanner:{c['table']}", "title": f"Spanner {c['table']}", "ok": False, "ms": c["ms"], "error": c["error"]})
+            failed = [x for x in results if not x["ok"]]
+            graph_error = "" if graph_ready else "; ".join(c["error"][:200] for c in sres["failed"][:3])
+        except SG.SpannerUnavailable as e:  # never silent: step warn + plan.fallback + summary.graph.fallback
+            used = "bigquery"
+            fallback = {"from": "spanner", "to": "bigquery", "reason": str(e)[:600], "at": now_iso()}
+            _step(emit, "fallback", "warn", t(lang, "Spanner Graph 사용 불가 → BigQuery Graph로 폴백", "Spanner Graph unavailable → falling back to BigQuery Graph"),
+                  str(e)[:300])
+    if not failed and used == "bigquery" and gd.get("sql"):
         s1 = time.perf_counter()
         rr = log.call("bigquery_execute_sql", {"project": env["project"], "sql": gd["sql"], "location": env["region"], "timeout_ms": 60000,
                                                "labels": {"datacloud": "jetski", "app": "aos-starter"}}, timeout_s=90, label="CREATE PROPERTY GRAPH")
@@ -441,35 +476,48 @@ def stage_graph(ws: Dict[str, Any], log: McpLog, emit: Emit, design: Optional[Di
                      " — BigQuery Graph needs an Enterprise reservation. Node/edge tables exist, so agents fall back to SQL.")
         results.append({"id": "graph", "title": gd.get("title", "graph"), "ok": graph_ready, "ms": _ms(s1), "error": graph_error})
         _step(emit, "graph", "done" if graph_ready else "warn", gd.get("title", "graph"), (graph_error[:200] + hint) if not graph_ready else env["graph_name"], _ms(s1))
-    verify: List[Dict[str, Any]] = []
-    if graph_ready:
-        for q in r.get("verify") or []:
-            s1 = time.perf_counter()
-            rr = log.call("bigquery_execute_sql", {"project": env["project"], "sql": q["sql"], "location": env["region"],
-                                                   "labels": {"datacloud": "jetski"}}, timeout_s=70, label=q["title"])
-            ok = rr.get("status") == "SUCCESS"
-            rows = rr.get("rows") or []
-            verify.append({**q, "ok": ok, "rows": rows[:8], "row_count": len(rows), "ms": _ms(s1), "error": "" if ok else error_text(rr)[:300]})
-        good = sum(1 for v in verify if v["ok"])
-        _step(emit, "verify", "done" if good == len(verify) else "warn", t(lang, "검증 GQL", "verification GQL"), f"{good}/{len(verify)}")
+        if graph_ready:
+            for q in r.get("verify") or []:
+                s1 = time.perf_counter()
+                rr = log.call("bigquery_execute_sql", {"project": env["project"], "sql": q["sql"], "location": env["region"],
+                                                       "labels": {"datacloud": "jetski"}}, timeout_s=70, label=q["title"])
+                ok = rr.get("status") == "SUCCESS"
+                rows = rr.get("rows") or []
+                verify.append({**q, "engine": "bigquery", "ok": ok, "rows": rows[:8], "row_count": len(rows), "ms": _ms(s1), "error": "" if ok else error_text(rr)[:300]})
+            good = sum(1 for v in verify if v["ok"])
+            _step(emit, "verify", "done" if good == len(verify) else "warn", t(lang, "검증 GQL", "verification GQL"), f"{good}/{len(verify)}")
     counts = {}
     for v in verify:
         if v.get("kind") == "count" and v.get("rows"):
             counts[v["title"].split("·")[-1].strip()] = v["rows"][0].get("cnt")
-    plan = {"design": nd, "design_raw": r.get("design_raw"), "schema": r.get("schema"), "statements": stmts, "graph_ddl": gd,
+    schema = r.get("schema") or {}
+    if used == "spanner" and sp_plan and schema:
+        schema = {**schema, "engine": "spanner", "spanner_graph": sp_plan.get("graph"), "spanner_database": sp_plan.get("database")}
+    plan = {"design": nd, "design_raw": r.get("design_raw"), "schema": schema, "statements": stmts, "graph_ddl": gd,
+            "engine": used, "engine_requested": want, "fallback": fallback, "spanner": sp_plan,
             "loads": [{k: v for k, v in x.items() if k != "rows"} | {"row_count": len(x.get("rows") or [])} for x in loads],
             "verify": verify, "results": results, "warnings": r.get("warnings") or [], "errors": r.get("errors") or [],
             "stats": r.get("stats"), "graph_ready": graph_ready, "graph_error": graph_error, "node_counts": counts, "at": now_iso()}
+    try:  # GOAL-258: data allocation map (source page / table / column → node · property · edge), shown in the graph tab
+        plan["allocation"] = GA.compute(plan, pages, p["tables"])
+    except Exception as e:  # display aid only — never fail the build over it
+        plan["allocation"] = {"v": GA.VERSION, "error": f"{type(e).__name__}: {e}"[:300]}
     put_json(log, b, pf + "graph/plan.json", plan)
-    put_text(log, b, pf + "graph/statements.sql", "\n\n".join(f"-- {x['title']}\n{x['sql']};" for x in stmts + ([gd] if gd else [])),
-             "text/plain; charset=utf-8")
-    ws.setdefault("summary", {})["graph"] = {"name": env["graph_name"], "fq": f"{env['project']}.{env['dataset']}.{env['graph_name']}",
+    sql_text = "\n\n".join(f"-- {x['title']}\n{x['sql']};" for x in stmts + ([gd] if gd and used == "bigquery" else []))
+    if sp_plan:
+        sql_text += "\n\n-- ===== Spanner Graph (" + sp_plan.get("database", "") + ") =====\n\n" + "\n\n".join(s_ + ";" for s_ in sp_plan.get("statements") or [])
+    put_text(log, b, pf + "graph/statements.sql", sql_text, "text/plain; charset=utf-8")
+    gfq = (f"{sp_plan.get('database')}/graphs/{sp_plan.get('graph')}" if used == "spanner" and sp_plan
+           else f"{env['project']}.{env['dataset']}.{env['graph_name']}")
+    ws.setdefault("summary", {})["graph"] = {"name": sp_plan.get("graph") if used == "spanner" and sp_plan else env["graph_name"], "fq": gfq,
+                                             "engine": used, "engine_requested": want, **({"fallback": fallback} if fallback else {}),
                                              "nodes": len(nd.get("nodes") or []), "edges": len(nd.get("edges") or []),
                                              "ready": graph_ready, "mode": "gql" if graph_ready else "sql", "failed": len(failed)}
     if failed:
         raise RuntimeError(t(lang, f"그래프 테이블 {len(failed)}개 실패: ", f"{len(failed)} graph tables failed: ") + "; ".join(f"{x['title']}: {x['error'][:160]}" for x in failed[:3]))
     tel = r.get("telemetry") or {}
     return {"nodes": len(nd.get("nodes") or []), "edges": len(nd.get("edges") or []), "graph_ready": graph_ready,
+            "engine": used, "engine_requested": want, **({"fallback": fallback} if fallback else {}),
             "graph_error": graph_error[:300], "verify_ok": sum(1 for v in verify if v["ok"]), "verify_total": len(verify),
             "warnings": (r.get("warnings") or [])[:6], "llm_ms": tel.get("ms")}
 

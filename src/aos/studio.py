@@ -15,6 +15,8 @@ from typing import Any, Dict, List, Optional
 
 from src import identity
 from src.aos import agent as agent_mod
+from src.aos import graph_allocation as GA
+from src.aos import spanner_graph as SG
 from src.aos.sources import parse_gs
 from src.aos.ws import (McpLog, WsError, error_text, get_json, now_iso, prefix, put_json, read_calls, save, t)
 from src.config import APP_VERSION, GITHUB_URL
@@ -110,14 +112,41 @@ def check_env(env: Dict[str, str], lang: str) -> Dict[str, Any]:
         add("dataset", "ok" if d.get("status") == "SUCCESS" else "warn", t(lang, "BigQuery 데이터셋", "BigQuery dataset"),
             f"{env['project']}.{env['dataset']} · " + (t(lang, "없음 → S0에서 생성", "not found → created in S0") if d.get("status") == "SUCCESS" else error_text(d)[:200]),
             "", round((time.perf_counter() - s) * 1000))
+    eng = SG.engine(env)
+    if eng == "spanner":  # GOAL-256: Semantic Graph default = Spanner Graph
+        s = time.perf_counter()
+        inst, db = SG.instance_path(env), SG.db_path(env)
+        gi = log.call("spanner_get_instance", {"instance": inst}, timeout_s=30) if env.get("spanner_instance") else {"status": "ERROR", "error": "no instance"}
+        gd = log.call("spanner_get_database", {"database": db}, timeout_s=30) if gi.get("status") == "SUCCESS" else {}
+        sfix = [f"gcloud spanner databases create {env.get('spanner_database')} --instance={env.get('spanner_instance')} --project={env['project']}",
+                f"gcloud spanner databases add-iam-policy-binding {env.get('spanner_database')} --instance={env.get('spanner_instance')} --project={env['project']} --member={member} --role=roles/spanner.databaseAdmin",
+                f"gcloud spanner databases add-iam-policy-binding {env.get('spanner_database')} --instance={env.get('spanner_instance')} --project={env['project']} --member={member} --role=roles/spanner.databaseUser"]
+        if gi.get("status") != "SUCCESS":
+            add("spanner", "warn", t(lang, "Spanner Graph (기본 Semantic Graph)", "Spanner Graph (default Semantic Graph)"),
+                f"{inst} · " + error_text(gi)[:160] + t(lang, " — S4는 BigQuery Graph로 폴백합니다 (결과에 표시)", " — S4 falls back to BigQuery Graph (shown in the results)"),
+                t(lang, "# Spanner 인스턴스가 없으면 (비용 발생 — 100 PU부터)\n", "# if you have no Spanner instance (billable — from 100 PU)\n")
+                + f"gcloud spanner instances create {env.get('spanner_instance') or 'aos-spanner'} --project={env['project']} --config=regional-{env['region']} --processing-units=100 --description=AOS\n"
+                + "\n".join(sfix), round((time.perf_counter() - s) * 1000))
+        else:
+            pu = (gi.get("instance") or {}).get("processingUnits")
+            exists = bool(gd.get("exists"))
+            add("spanner", "ok" if gd.get("status") == "SUCCESS" else "warn", t(lang, "Spanner Graph (기본 Semantic Graph)", "Spanner Graph (default Semantic Graph)"),
+                f"{db} · {pu} PU · " + (t(lang, "DB 있음", "database exists") if exists else t(lang, "DB 없음 → S0에서 생성", "no database → created in S0"))
+                if gd.get("status") == "SUCCESS" else f"{db} · " + error_text(gd)[:200],
+                "" if exists else "\n".join(sfix), round((time.perf_counter() - s) * 1000))
     s = time.perf_counter()
     rv = log.call("bigquery_check_reservation", {"project": env["project"], "location": env["region"]}, timeout_s=30)
     ent = bool(rv.get("has_enterprise"))
-    add("reservation", "ok" if ent else "warn", t(lang, "BigQuery Graph (Enterprise 예약)", "BigQuery Graph (Enterprise reservation)"),
-        ", ".join(rv.get("editions") or []) or (t(lang, "할당 없음 — 그래프 DDL은 412, 에이전트는 SQL로 동작", "no assignment — graph DDL returns 412, agents use SQL") if rv.get("status") == "SUCCESS" else error_text(rv)[:200]),
-        "" if ent else (f"bq mk --reservation --project_id={env['project']} --location={env['region']} --edition=ENTERPRISE --slots=0 --autoscale_max_slots=50 aos-graph\n"
-                        f"bq mk --reservation_assignment --reservation_id={env['project']}:{env['region']}.aos-graph --job_type=QUERY --assignee_type=PROJECT --assignee_id={env['project']}"),
-        round((time.perf_counter() - s) * 1000))
+    if eng == "spanner":
+        add("reservation", "ok", t(lang, "BigQuery Graph (선택 · Audit·액션 리니지용)", "BigQuery Graph (optional · audit / action lineage)"),
+            t(lang, "Spanner Graph 사용 — Enterprise 예약 불필요", "Spanner Graph in use — no Enterprise reservation needed")
+            + (" · " + ", ".join(rv.get("editions") or []) if rv.get("editions") else ""), "", round((time.perf_counter() - s) * 1000))
+    else:
+        add("reservation", "ok" if ent else "warn", t(lang, "BigQuery Graph (Enterprise 예약)", "BigQuery Graph (Enterprise reservation)"),
+            ", ".join(rv.get("editions") or []) or (t(lang, "할당 없음 — 그래프 DDL은 412, 에이전트는 SQL로 동작", "no assignment — graph DDL returns 412, agents use SQL") if rv.get("status") == "SUCCESS" else error_text(rv)[:200]),
+            "" if ent else (f"bq mk --reservation --project_id={env['project']} --location={env['region']} --edition=ENTERPRISE --slots=0 --autoscale_max_slots=50 aos-graph\n"
+                            f"bq mk --reservation_assignment --reservation_id={env['project']}:{env['region']}.aos-graph --job_type=QUERY --assignee_type=PROJECT --assignee_id={env['project']}"),
+            round((time.perf_counter() - s) * 1000))
     s = time.perf_counter()
     g = call_vertex_gemini("Reply with OK.", max_tokens=256, model_name=env["model"], project_id=env["project"], location=env["vertex_location"],
                            thinking_level="LOW", timeout_s=60)
@@ -147,7 +176,7 @@ def setup_script(env: Dict[str, str], lang: str, sa_name: str = "aos-starter") -
         'SA="${SA_NAME}@${PROJECT}.iam.gserviceaccount.com"', "",
         c("1) API 활성화", "1) enable APIs"),
         "gcloud services enable bigquery.googleapis.com storage.googleapis.com aiplatform.googleapis.com \\",
-        "  iamcredentials.googleapis.com bigqueryreservation.googleapis.com --project=\"$PROJECT\"", "",
+        "  iamcredentials.googleapis.com bigqueryreservation.googleapis.com spanner.googleapis.com --project=\"$PROJECT\"", "",
         c("2) 버킷 (이미 있으면 건너뜀)", "2) bucket (skipped if it exists)"),
         'gcloud storage buckets describe "gs://$BUCKET" >/dev/null 2>&1 || \\',
         '  gcloud storage buckets create "gs://$BUCKET" --project="$PROJECT" --location="$REGION" --uniform-bucket-level-access', "",
@@ -158,9 +187,22 @@ def setup_script(env: Dict[str, str], lang: str, sa_name: str = "aos-starter") -
         '  gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" --role="$ROLE" --condition=None >/dev/null',
         "done",
         'gcloud storage buckets add-iam-policy-binding "gs://$BUCKET" --member="serviceAccount:$SA" --role=roles/storage.objectAdmin >/dev/null', "",
-        c("4) BigQuery Graph용 Enterprise 예약 (없으면 그래프 DDL이 412, 에이전트는 SQL로 동작)", "4) Enterprise reservation for BigQuery Graph (without it graph DDL returns 412 and agents use SQL)"),
-        'bq mk --reservation --project_id="$PROJECT" --location="$REGION" --edition=ENTERPRISE --slots=0 --autoscale_max_slots=50 aos-graph || true',
-        'bq mk --reservation_assignment --reservation_id="$PROJECT:$REGION.aos-graph" --job_type=QUERY --assignee_type=PROJECT --assignee_id="$PROJECT" || true', "",
+        c("4) Semantic Graph = Spanner Graph (기본) — 인스턴스(없으면 생성 · 비용 발생) + 스타터 DB + DB 역할",
+          "4) Semantic Graph = Spanner Graph (default) — instance (created if missing · billable) + starter database + database roles"),
+        f"SPANNER_INSTANCE={env.get('spanner_instance') or 'aos-spanner'}", f"SPANNER_DB={env.get('spanner_database') or SG.DEFAULT_DATABASE}",
+        'gcloud services enable spanner.googleapis.com --project="$PROJECT"',
+        'gcloud spanner instances describe "$SPANNER_INSTANCE" --project="$PROJECT" >/dev/null 2>&1 || \\',
+        '  gcloud spanner instances create "$SPANNER_INSTANCE" --project="$PROJECT" --config="regional-$REGION" --processing-units=100 --description="AOS Semantic Graph"',
+        'gcloud spanner databases describe "$SPANNER_DB" --instance="$SPANNER_INSTANCE" --project="$PROJECT" >/dev/null 2>&1 || \\',
+        '  gcloud spanner databases create "$SPANNER_DB" --instance="$SPANNER_INSTANCE" --project="$PROJECT"',
+        "for ROLE in roles/spanner.databaseAdmin roles/spanner.databaseUser; do",
+        '  gcloud spanner databases add-iam-policy-binding "$SPANNER_DB" --instance="$SPANNER_INSTANCE" --project="$PROJECT" --member="serviceAccount:$SA" --role="$ROLE" >/dev/null',
+        "done",
+        'gcloud spanner instances add-iam-policy-binding "$SPANNER_INSTANCE" --project="$PROJECT" --member="serviceAccount:$SA" --role=roles/spanner.viewer >/dev/null', "",
+        c("4-B) (선택) BigQuery Graph — Audit·액션 리니지(Context Graph) 수집용, 이후 추가. Enterprise 예약 필요",
+          "4-B) (optional) BigQuery Graph — for audit / action-lineage (Context Graph) capture, added later. Needs an Enterprise reservation"),
+        '# bq mk --reservation --project_id="$PROJECT" --location="$REGION" --edition=ENTERPRISE --slots=0 --autoscale_max_slots=50 aos-graph',
+        '# bq mk --reservation_assignment --reservation_id="$PROJECT:$REGION.aos-graph" --job_type=QUERY --assignee_type=PROJECT --assignee_id="$PROJECT"', "",
         c("5-A) 공개 스타터에서 쓰기: 내가 SA 토큰을 발급해 3단계에 붙여 넣기 (1시간 유효)", "5-A) Using the public starter: mint an SA token yourself and paste it in step 3 (valid 1 h)"),
         'gcloud iam service-accounts add-iam-policy-binding "$SA" --member="user:$(gcloud config get-value account)" --role=roles/iam.serviceAccountTokenCreator >/dev/null',
         'gcloud auth print-access-token --impersonate-service-account="$SA"', "",
@@ -193,6 +235,9 @@ def studio_data(ws: Dict[str, Any], what: List[str]) -> Dict[str, Any]:
                 data = [{**d, "text": d.get("text", "")[:80000]} for d in data]
             if w == "tables" and isinstance(data, list):
                 data = [{**x, "rows": (x.get("rows") or [])[:30]} for x in data]
+            if w == "graph" and isinstance(data, dict):  # GOAL-258: allocation map for workspaces built before it existed
+                data = GA.ensure(data, lambda: get_json(None, b, pf + DATA_FILES["wiki"], []),
+                                 lambda: get_json(None, b, pf + DATA_FILES["tables"], []))
             out[w] = data
     return out
 
@@ -246,13 +291,25 @@ def run_query(ws: Dict[str, Any], sql: str) -> Dict[str, Any]:
         return {"status": "BAD_QUERY", "error": err}
     log = McpLog("query", None)
     t0 = time.perf_counter()
+    plan = get_json(log, env["bucket"], prefix(ws["ws_id"]) + "graph/plan.json", {}) or {}
+    if plan.get("engine") == "spanner" and plan.get("spanner"):  # GOAL-256: same rewrite/routing as the agents
+        r = SG.run_query(log, sql.strip().rstrip(";"), plan, env, timeout_s=70, label="console")
+        ms = round((time.perf_counter() - t0) * 1000)
+        if r.get("status") != "SUCCESS":
+            return {"status": "ERROR", "error": error_text(r), "ms": ms, "engine": r.get("engine"), "executed": r.get("executed")}
+        rows = r.get("rows") or []
+        tool = "spanner_execute_sql" if r.get("engine") == "spanner" else "bigquery_execute_sql"
+        args = {"database": plan["spanner"].get("database"), "sql": r.get("executed")} if tool == "spanner_execute_sql" else \
+            {"project": env["project"], "location": env["region"], "sql": sql.strip()}
+        return {"status": "SUCCESS", "rows": rows[:500], "row_count": len(rows), "ms": ms, "bytes": r.get("bytes_processed", 0),
+                "engine": r.get("engine"), "executed": r.get("executed"), "call": {"tool": tool, "args": args}}
     r = log.call("bigquery_execute_sql", {"project": env["project"], "sql": sql.strip().rstrip(";"), "location": env["region"], "timeout_ms": 45000,
                                           "labels": {"datacloud": "jetski", "app": "aos-starter"}}, timeout_s=70)
     ms = round((time.perf_counter() - t0) * 1000)
     if r.get("status") != "SUCCESS":
         return {"status": "ERROR", "error": error_text(r), "ms": ms}
     rows = r.get("rows") or []
-    return {"status": "SUCCESS", "rows": rows[:500], "row_count": len(rows), "ms": ms, "bytes": r.get("bytes_processed", 0),
+    return {"status": "SUCCESS", "rows": rows[:500], "row_count": len(rows), "ms": ms, "bytes": r.get("bytes_processed", 0), "engine": "bigquery",
             "call": {"tool": "bigquery_execute_sql", "args": {"project": env["project"], "location": env["region"], "sql": sql.strip()}}}
 
 

@@ -209,3 +209,11 @@ details.preset-fold > summary .meta { font-weight: 500; margin-left: auto; }
   .pick-right { position: static; }
   .sel-grid.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* GOAL-258 data allocation panel (graph tab) */
+.alloc-strip { display: flex; gap: 6px; align-items: stretch; flex-wrap: wrap; }
+.alloc-strip .kpi { flex: 1; min-width: 140px; }
+.alloc-strip .arr { align-self: center; color: var(--faint); font-size: 16px; }
+.alloc-flow { display: flex; gap: 6px; flex-wrap: wrap; }
+.alloc-flow .stepcard { flex: 1; min-width: 150px; margin-top: 0; }
+.alloc .tbl code, .alloc .stepcard code { font-family: var(--mono); font-size: 11px; overflow-wrap: anywhere; }
+.alloc details.fold summary { flex-wrap: wrap; }

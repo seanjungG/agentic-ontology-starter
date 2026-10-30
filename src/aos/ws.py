@@ -36,10 +36,15 @@ _RX = {
     "model": re.compile(r"^[a-z0-9][a-z0-9.\-]{1,62}$"),
     "vertex_location": re.compile(r"^(?:global|[a-z]+-[a-z]+[0-9]{1,2})$"),
     "ws_id": re.compile(r"^ws-[0-9]{8}-[a-z0-9]{6}$"),
+    "graph_engine": re.compile(r"^(?:spanner|bigquery)$"),
+    "spanner_instance": re.compile(r"^[a-z][a-z0-9-]{0,62}[a-z0-9]$"),
+    "spanner_database": re.compile(r"^[a-z][a-z0-9_-]{0,28}[a-z0-9]$"),
 }
 LABELS = {"project": ("프로젝트", "Project"), "region": ("리전", "Region"), "dataset": ("데이터셋", "Dataset"),
           "bucket": ("버킷", "Bucket"), "graph_name": ("그래프 이름", "Graph name"), "model": ("모델", "Model"),
-          "vertex_location": ("Vertex 위치", "Vertex location"), "ws_id": ("워크스페이스 ID", "Workspace ID")}
+          "vertex_location": ("Vertex 위치", "Vertex location"), "ws_id": ("워크스페이스 ID", "Workspace ID"),
+          "graph_engine": ("그래프 엔진", "Graph engine"), "spanner_instance": ("Spanner 인스턴스", "Spanner instance"),
+          "spanner_database": ("Spanner 데이터베이스", "Spanner database")}
 Emit = Callable[[Dict[str, Any]], None]
 
 
@@ -69,9 +74,13 @@ def default_dataset(ws_id: str) -> str:
 
 
 def env_defaults() -> Dict[str, str]:
+    """GOAL-256: Semantic Graph default = Spanner Graph (`AOS_GRAPH_ENGINE`, default spanner). BigQuery Graph stays
+    selectable (audit / action-lineage capture later). Spanner DB default `AOS_SPANNER_DATABASE` (starter_graph_db)."""
+    from src.aos.spanner_graph import DEFAULT_DATABASE, DEFAULT_ENGINE
     s = runtime_settings()
     return {"project": s["gcp_project_id"], "region": s["region"], "bucket": s["gcs_bucket"], "dataset": "",
-            "graph_name": "AOS_ONTOLOGY_GRAPH", "model": s["vertex_model"], "vertex_location": s["vertex_location"]}
+            "graph_name": "AOS_ONTOLOGY_GRAPH", "model": s["vertex_model"], "vertex_location": s["vertex_location"],
+            "graph_engine": DEFAULT_ENGINE, "spanner_instance": s.get("spanner_instance_id") or "", "spanner_database": DEFAULT_DATABASE}
 
 
 def clean_env(raw: Optional[Dict[str, Any]], ws_id: str = "") -> Dict[str, str]:

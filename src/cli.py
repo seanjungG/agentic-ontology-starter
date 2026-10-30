@@ -13,6 +13,8 @@
   python3 -m src.cli check --project P --bucket B [--region R] [--dataset D]
   python3 -m src.cli export-studio --bucket B --ws WS --project-id my_project [--out projects] [--upload]
                                     finished workspace → Agentic Ontology Studio project folder (Core MCP, GOAL-249)
+  python3 -m src.cli purge-spanner --project P [--instance I] [--database D] [--days 7] [--dry-run]
+                                    drop expired workspace graphs/tables from the shared Spanner database (GOAL-259)
 
 Identity: default = your gcloud login (runtime); --impersonate SA uses `gcloud auth print-access-token --impersonate-service-account`;
 --token-env NAME reads an access token from an environment variable.
@@ -99,6 +101,13 @@ def main(argv=None) -> int:
     p.add_argument("--studio-url", default="")
     p.add_argument("--upload", action="store_true", help="mirror the OKF wiki to gs://<bucket>/studio_projects/<project_id>/ for the Studio Wiki Agent")
     p.add_argument("--lang", default="ko")
+    p = sub.add_parser("purge-spanner")
+    common(p, ws=False)
+    p.add_argument("--project", required=True)
+    p.add_argument("--instance", default=os.environ.get("SPANNER_INSTANCE_ID", "starter-spanner"))
+    p.add_argument("--database", default="")
+    p.add_argument("--days", type=int, default=-1, help="TTL in days (default AOS_SPANNER_TTL_DAYS = 7)")
+    p.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
 
     with identity.use(_identity(a)):
@@ -127,6 +136,12 @@ def main(argv=None) -> int:
             for c in res["checks"]:
                 print(f"[{c['status']:5}] {c['label']}: {c['detail']}" + (f"\n        fix: {c['fix']}" if c["fix"] and c["status"] != "ok" else ""))
             return 0 if res["status"] == "OK" else 1
+        if a.cmd == "purge-spanner":
+            from src.aos import spanner_graph as SG
+            env = {"project": a.project, "spanner_instance": a.instance, "spanner_database": a.database or SG.DEFAULT_DATABASE}
+            res = SG.purge_expired(McpLog("purge", None), env, a.days if a.days >= 0 else SG.TTL_DAYS, dry_run=a.dry_run)
+            print(json.dumps(res, ensure_ascii=False, indent=1))
+            return 0
         ws = load(a.bucket, a.ws)
         if a.cmd == "build":
             rc = 0
