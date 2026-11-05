@@ -45,6 +45,26 @@ class StaticTests(unittest.TestCase):
         self.assertIsNone(HANGUL.search(_read("studio.js")))
         self.assertIsNone(HANGUL.search(_read("studio.html")))
 
+    def test_context_graph_ui_wiring(self):
+        """GOAL-285: CG tab route + rail entry, sentence feedback bar, unified modal shell, i18n placeholders."""
+        js = _read("studio.js")
+        d = json.loads(_read("studio_i18n.json"))
+        self.assertIn('"studio/cg"', js)
+        self.assertIn('["studio/cg", "rail.cg"]', js)
+        for act in ("fb-send", "fb-rate", "fb-reason", "cg-goto", "cg-demo", "cg-review", "cg-reask", "cg-ex2", "confirm-ok"):
+            self.assertIn(f'"{act}"', js, act)
+        for path in ("/api/v5/cg/feedback", "/api/v5/cg/graph", "/api/v5/cg/review"):
+            self.assertIn(path, js)
+        self.assertIn('fbWidget("ag", r)', js)
+        self.assertNotIn("confirm(T(", js)  # native confirm() replaced by the calm modal
+        self.assertTrue(d["ko"]["fb.ph"].startswith("이 답변에서 수정·추가할 도메인 규칙이나 피드백을 문장으로 입력해 주세요"))
+        self.assertTrue(d["en"]["fb.ph"].startswith("Type, in your own words, a domain rule to fix or add"))
+        self.assertIn("{r}", d["ko"]["fb.link"])
+        self.assertIn("{c}", d["en"]["fb.link"])
+        css = _read("studio.css")
+        for cls in (".modal-head", ".modal-x", ".modal-body", ".modal-foot", ".toast.on", ".fb-bar", ".cg-steps", ".layer4"):
+            self.assertIn(cls, css)
+
 
 class WorkspaceTests(unittest.TestCase):
     def test_env_and_ids(self):

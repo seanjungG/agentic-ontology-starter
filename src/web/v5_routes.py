@@ -25,7 +25,10 @@ workspace reference `ws: {bucket, ws_id}`; the server keeps no state (workspaces
   POST /api/v5/wiki/save · cqs/save   edits (wiki re-validated by Core MCP)
   POST /api/v5/graph/rebuild          S4 with an edited design (NDJSON)
   POST /api/v5/query · search         SQL/GQL console · search across wiki/docs/tables
-  POST /api/v5/agent · eval           NDJSON
+  POST /api/v5/agent · eval           NDJSON (agent `result` carries cg_run_id · agent_surface — GOAL-285)
+  POST /api/v5/cg/feedback            sentence and/or 👍/👎 feedback → L1 signal + L2 candidate (run synthesized if unknown)
+  POST /api/v5/cg/graph               Context Graph viewer data (stages · nodes/edges · L0/L1/L2 lists)
+  POST /api/v5/cg/review              SME approve/reject → ChangeSet + regression CQ `CG-<n>` (origin context_graph)
   POST /api/v5/export                 zip bundle
 """
 from __future__ import annotations
@@ -36,6 +39,7 @@ from typing import Any, Callable, Dict
 
 from src import identity
 from src.aos import agent as agent_mod
+from src.aos import context_graph as cg
 from src.aos import intake, pipeline, sources, studio
 from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, clean_template, default_dataset, env_defaults, error_text, load,
                         new_workspace, new_ws_id, now_iso, save)
@@ -83,8 +87,8 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
             try:
                 send_json(fn(), code_ok)
             except WsError as e:
-                send_json(e.to_dict(lang), 400 if e.code in ("CONFIG_ERROR", "BAD_REQUEST") else 404 if e.code == "WS_NOT_FOUND"
-                          else 501 if e.code == "MCP_UPDATE_NEEDED" else 403)
+                send_json(e.to_dict(lang), 400 if e.code in ("CONFIG_ERROR", "BAD_REQUEST") else 404 if e.code in ("WS_NOT_FOUND", "CG_NOT_FOUND")
+                          else 501 if e.code == "MCP_UPDATE_NEEDED" else 502 if e.code in ("CG_READ_ERROR", "CG_WRITE_ERROR") else 403)
             except ValueError as e:
                 send_json({"status": "BAD_REQUEST", "message": str(e)[:400]}, 400)
 
@@ -242,8 +246,19 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
                 emit({"type": "error", "message": "question is empty"})
                 return
             log = McpLog("agent", None)
-            res = agent_mod.run(ws, str(data.get("agent") or "hybrid"), q, emit, None, log)
+            agent_name = str(data.get("agent") or "hybrid")
+            rules = []
+            if data.get("apply_cg"):  # GOAL-285 REQ-9 L3: SME-approved Context Graph rules as 1-hop context (Before/After re-ask)
+                try:
+                    rules = cg.approved_rules(ws, agent_name)
+                except WsError as e:
+                    emit({"type": "step", "step": "cg-rules", "status": "error", "label": "Context Graph rules", "detail": e.en[:200]})
+                if rules:
+                    emit({"type": "step", "step": "cg-rules", "status": "done", "label": f"Context Graph · {len(rules)} approved rule(s) → {agent_mod.RULES_PAGE_ID}"})
+            res = agent_mod.run(ws, agent_name, q, emit, None, log, extra_rules=[r["statement"] for r in rules])
             res["mcp_calls"] = log.calls
+            res["cg_rules_applied"] = rules
+            res.update(cg.record_run(ws, res, compare_of=str(data.get("compare_of") or "")))  # GOAL-285: L1 Run + L0 events (best-effort)
             emit({"type": "result", **res})
         streamed(ask)
     elif path == "/api/v5/eval":
@@ -259,6 +274,18 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int],
                 rec = pipeline.run_stage(ws, "eval", emit)
                 emit({"type": "result", "record": rec, "ws": ws})
         streamed(ev)
+    elif path == "/api/v5/cg/feedback":
+        guarded(lambda: cg.record_feedback(_ws_ref(data), data, lang))
+    elif path == "/api/v5/cg/graph":
+        guarded(lambda: cg.graph_view(_ws_ref(data), lang))
+    elif path == "/api/v5/cg/review":
+        def cg_review() -> Dict[str, Any]:
+            ws = _ws_ref(data)
+            return cg.review(ws, str(data.get("candidate_id") or ""), str(data.get("decision") or ""), str(data.get("note") or ""),
+                             by=str(pub.get("principal") or pub.get("mode") or ""),
+                             read_cqs=lambda: studio.studio_data(ws, ["cqs"]).get("cqs") or [],
+                             save_cqs=lambda cqs: studio.save_cqs(ws, cqs))
+        guarded(cg_review)
     elif path == "/api/v5/export":
         with identity.bind(ident.get("token"), pub):
             try:

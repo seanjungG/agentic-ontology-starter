@@ -25,7 +25,7 @@
 ③ 데이터     업로드(.md .txt .csv + .pdf .docx .pptx .xlsx .html, 12MB) · GCS · Google Drive · BigQuery · 샘플 — 변환 결과표(방식 · 변환율 · 페이지 · 미리보기 · PDF)
 ④ 문서 유형  자동 판별(규칙 + 선택 Gemini) · 확신 낮으면 질문 · 전략(direct · typed · reconvert) 저장 → S3에 유형별 지침 반영
 ⑤ 구축       S0 준비 → S1 수집 · 프로파일 → S2 CQ → S3 OKF 위키 → S4 Spanner Graph(기본) → S5 평가 (단계별 재실행) → 에이전트 테스트 → 배포 단계
-스튜디오     개요 · 자산 · 위키(보기 · 편집 · 게이트) · 그래프(스키마 · GQL/SQL 콘솔 · 설계 편집 → 재구축) · 검색 · 에이전트 실험 · 평가(CQ 편집)
+스튜디오     개요 · 자산 · 위키(보기 · 편집 · 게이트) · 그래프(스키마 · GQL/SQL 콘솔 · 설계 편집 → 재구축) · 검색 · 에이전트 실험(+ 답변별 문장형 피드백) · 평가(CQ 편집) · Context Graph
 배포        준비도 점검(평가 기준 · CQ · 게이트 · 그래프 · 내 프로젝트 여부) · Cloud Run / MCP 클라이언트 단계별 명령 · Cloud Shell
 인계        CLI 재현 명령 · MCP 호출 로그(도구 + 파라미터, curl) · MCP 클라이언트 설정 · 단일 파일 에이전트 · 번들(zip)
 ```
@@ -40,6 +40,47 @@
 | S5 평가 | 모든 CQ를 담당 에이전트로 다시 묻고 채점 | **`aos_core_agent_step`** · 데이터 도구 · **`aos_core_judge`** |
 
 실측(2026-10-19, `gemini-4-argon` MEDIUM): 샘플 팩 KO 구축 약 7분 · 평가 **100 (8/8)** · 업로드한 보험 청구 심사 데이터(문서 1 + CSV 3) 구축 약 6.5분 · 평가 **100 (8/8)**, Property Graph 검증 GQL 전부 통과. Spanner Graph 기본값(v6.5.0 이후) 실측은 아래 "그래프 엔진" 참고.
+
+### 1.1 Context Graph · 문장형 피드백 (v6.8.0, GOAL-285)
+
+에이전트 탭의 **모든 답변 아래**(Wiki · Graph · Hybrid)에 차분한 문장 피드백 바가 있습니다. 텍스트 입력이 기본이고 👍/👎 · 사유 칩은 선택 태그입니다(문장만 · 버튼만 · 둘 다 가능). 보내면 결정적 파서 `src/aos/sentence_feedback.py`의 `parse_sentence_feedback_to_cg_signal()`가 극성 · 암묵지 유형(T1 실행 경계 · T2 산식/임계치 · T3 예외 정책 · T4 약어/동의어 · T5 골든 답변 프레임 · KC_META) · 사유 코드 · 엔티티 · 회귀 CQ로 구조화하고, 토스트의 **🔗 Context Graph에서 반영 흐름 보기 (Run #… → Candidate #…)** 링크로 새 탭 **스튜디오 › 컨텍스트 그래프**(`#/studio/cg`)로 바로 이동합니다.
+
+```mermaid
+flowchart LR
+  L0["L0 Raw Agent Telemetry<br/>질의 · 도구 호출 · 응답 · run_id"] --> L1["L1 Run · Feedback Signal<br/>👍/👎 칩 + 문장 → polarity · T1~T5/KC_META · 엔티티"]
+  L1 --> L2["L2 Candidate · ChangeSet<br/>패치 후보 + 회귀 CQ + SME 승인 게이트"]
+  L2 --> L3["L3 반영<br/>CQ 세트 CG-n · CG-RULES 컨텍스트 주입"]
+  L3 -. "다음 질의 1-Hop 컨텍스트 (폐루프)" .-> L0
+```
+
+| 단계 | 입력 → 출력 | 위치 |
+| :--- | :--- | :--- |
+| ① 질의/응답 | `{agent, question}` → NDJSON `result` 에 `cg_run_id` · `agent_surface` (`wiki_agent` · `bqg_agent` · `hybrid_agent`) + L0 이벤트 기록 | `POST /api/v5/agent` |
+| ② 피드백 | `{run_id?, agent, question, answer, sentence?, rating?, reason_code?}` (run_id 없거나 모르면 질의/응답 스냅샷으로 **Run 합성 — 유실 0%**) | `POST /api/v5/cg/feedback` |
+| ③ 구조화 | `{feedback_mode SENTENCE·THUMBS_CHIP·HYBRID, raw_sentence, parsed_intent{polarity, tacit_type, reason_code, extracted_entities, proposed_rule_statement, regression_cq}}` | `sentence_feedback.py` |
+| ④ 후보 | `{candidate_id, proposed_patch{op, target, statement}, regression_cq, status PENDING}` (단순 👍만이면 후보 없음) | `context_graph.py` |
+| ⑤ SME 승인 | `{candidate_id, decision approve·reject, note}` → `{approval, changeset{ops, cq_id, status APPLIED}}` · 승인 시 평가 CQ 세트에 `CG-<n>`(origin `context_graph`) 추가 | `POST /api/v5/cg/review` |
+| ⑥ 반영 · 비교 | `{agent, question, apply_cg: true}` → 승인 규칙을 합성 위키 페이지 `CG-RULES`로 주입해 재질의 → Before vs After | `POST /api/v5/agent` · 탭의 **재질의 비교** |
+
+- 저장: 워크스페이스마다 `gs://<bucket>/aos/<ws_id>/context_graph/graph.json` 한 파일(L0 events · L1 runs · feedback · L2 candidates · approvals · changesets, 목록별 상한). 서버는 상태가 없고 워크스페이스 단위 잠금으로 읽기-수정-쓰기합니다. 기록 실패는 답변을 막지 않고 `cg_error`로만 알려 줍니다(non-404 읽기 오류일 때는 덮어쓰지 않음).
+- 탭 구성: 4-Layer 도식 · **⚡ 3-에이전트 실시간 피드백 반영 시연**(첫 CQ를 3개 에이전트에 묻고 예시 문장 피드백 → Wiki 후보 SME 승인까지 7단계 강조) · 그래프 뷰어(Run → 💬/👍/👎 → 후보 → SME → ChangeSet) · L0/L1/L2 인스펙터 · SME 검토 · 문장 피드백 입력 · 데이터 흐름 ①~⑥ 입출력 JSON(실제 기록) · 실제 적재 데이터 표(L0 · L1 · L2 · ChangeSet · T1~T5 카탈로그 · JSON 원본) · 사용 예시 3종.
+- 사용 예시 — 문장만: *"공시지원금 위약금 계산 시 18개월 이상 유지 고객은 잔여 할부금 면제 예외 규칙(T3)을 먼저 확인해야 함"* → `RULE_ADDITION` · `T3 예외 정책` · `ADD_EXCEPTION_POLICY` 후보 + 회귀 CQ.
+
+```bash
+# REST (신원 · 워크스페이스 참조 포함)
+curl -s -X POST $STARTER/api/v5/cg/feedback -H 'Content-Type: application/json' -d '{"ws": {"bucket": "B", "ws_id": "WS"},
+  "identity": {"mode": "token", "token": "'"$(gcloud auth print-access-token)"'"}, "agent": "wiki", "question": "...", "answer": "...",
+  "sentence": "18개월 이상 유지 고객은 잔여 할부금 면제 예외 규칙을 먼저 확인해야 함"}'
+curl -s -X POST $STARTER/api/v5/cg/graph  -H 'Content-Type: application/json' -d '{"ws": {...}, "identity": {...}}' | jq .counts
+curl -s -X POST $STARTER/api/v5/cg/review -H 'Content-Type: application/json' -d '{"ws": {...}, "identity": {...}, "candidate_id": "cand-…", "decision": "approve"}'
+# CLI
+python3 -m src.cli cg --bucket B --ws WS feedback --agent wiki --question "..." --answer "..." --sentence "..."
+python3 -m src.cli cg --bucket B --ws WS graph | rules | review --candidate cand-… --decision approve
+python3 -m src.cli ask --bucket B --ws WS --agent wiki --apply-cg "..."    # 승인 규칙 주입 재질의
+```
+
+- Python: `src.aos.context_graph` 의 `record_run · record_feedback · review · approved_rules · graph_view` (표준 라이브러리만). MCP: Core MCP에는 아직 Context Graph 전용 도구가 없습니다(**GOAL-284 확장 예정**) — 지금은 `storage_read_object`로 `graph.json`을 읽고, `aos_core_agent_step` 컨텍스트의 `CG-RULES` 페이지로 승인 규칙을 전달합니다.
+- 화면 정돈(REQ-5/7): 개요 · 평가 화면 기준의 슬레이트/인디고 톤으로 상태 색 · 배지 · 제목 크기를 통일하고, 모든 대화상자를 같은 틀(56px 헤더 · 우상단 ✕ · 본문 스크롤 · 우측 정렬 하단 버튼 · Esc 닫기)로 맞췄습니다. 브라우저 기본 `confirm()`도 같은 확인 대화상자로 바꿨습니다.
 
 ---
 
@@ -161,7 +202,9 @@ src/
 ├── aos/pipeline.py        구축 단계 S0~S5
 ├── aos/spanner_graph.py   S4 Spanner Graph (DDL · 행 복사 · GQL 변환 · 라우팅 · 보관 기간 정리)
 ├── aos/graph_allocation.py 그래프 탭 '데이터 할당' (테이블 · 컬럼 · 위키 → 노드 · 프로퍼티 · 엣지)
-├── aos/agent.py           Wiki · Graph · Hybrid 에이전트 루프 (추론 = aos_core_agent_step)
+├── aos/agent.py           Wiki · Graph · Hybrid 에이전트 루프 (추론 = aos_core_agent_step, 승인 규칙 CG-RULES 주입)
+├── aos/context_graph.py   Context Graph 저장소 (L0 · L1 · L2 · SME · ChangeSet → graph.json, GOAL-285)
+├── aos/sentence_feedback.py 문장형 피드백 → Context Graph 신호 파서 (결정적, KO/EN)
 ├── aos/studio.py          프리셋 · 환경 점검 · 설정 스크립트 · 편집 · 쿼리 · 검색 · 번들
 ├── identity.py            요청 단위 신원 (runtime · token · impersonate)
 ├── cli.py                 CLI
@@ -186,7 +229,7 @@ data/ · config/ · notebooks/(Colab 12종) · tests/ · docs/
 ```bash
 python3 -m pip install pytest && python3 -m pytest tests -q
 ```
-v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 검증 · CSV 추론 · 쿼리 가드 · 신원 오류(네트워크 호출 전 401) + 레퍼런스 마법사 테스트. GCP 호출이 없는 테스트만 들어 있습니다.
+v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 검증 · CSV 추론 · 쿼리 가드 · 신원 오류(네트워크 호출 전 401) · 문장형 피드백 파서 · Context Graph 저장소/라우트(GCS 모의) + 레퍼런스 마법사 테스트. GCP 호출이 없는 테스트만 들어 있습니다(`python3 -m unittest discover -s tests`도 가능).
 
 ---
 
@@ -198,6 +241,7 @@ v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 �
 - **v6 intake** (GOAL-243): pick a flow and services from the Core MCP catalog and compose a template for the starter sandbox or your own project; bring data from local upload, GCS or Google Drive — PDF/DOCX/PPTX/XLSX/HTML are converted to Markdown with a fidelity score; Core MCP detects each document's type (and asks when unsure) and the chosen wiki strategy (direct · typed · re-convert) feeds the wiki compile; then test the agent and open the deployment page (readiness checks + commands). An older Core MCP shows `MCP_UPDATE_NEEDED` while the existing flow keeps working.
 - **Measured** (2026-10-19, `gemini-4-argon` MEDIUM): sample pack ~7 min build, eval **100 (8/8)**; an uploaded insurance-claims data set (1 doc + 3 CSVs) ~6.5 min, eval **100 (8/8)**.
 - **Graph engine** (v6.5.0+): the Semantic Graph defaults to **Spanner Graph** — S4 stages node/edge tables in BigQuery, copies them into Spanner tables and runs `CREATE OR REPLACE PROPERTY GRAPH`; agent GQL is rewritten to Spanner syntax automatically. **BigQuery Graph** stays selectable for audit / action-lineage (Context Graph) capture and is the visible fallback when Spanner is unavailable. Demo-identity Spanner objects expire after 7 days like the BigQuery demo datasets (`purge-spanner` CLI, v6.7.0). The graph tab shows how tables, columns and wiki pages are allocated to nodes, properties and edges (v6.6.0).
+- **Context Graph** (v6.8.0, GOAL-285): every agent answer has a calm free-text feedback bar (👍/👎 and reason chips are optional tags). The deterministic parser turns the sentence into polarity · tacit type (T1–T5 · KC_META) · reason · entities · regression CQ; the new **Context Graph** tab (`#/studio/cg`) shows the 4-layer architecture, a one-click 3-agent demo, a layered graph (Run → feedback → candidate → SME → ChangeSet), L0/L1/L2 inspector, SME review (approve → ChangeSet + regression CQ `CG-n` in Evaluation), per-step input/output JSON, the stored records and REST/Python/CLI/MCP recipes. Approved rules can be injected into the next question as the `CG-RULES` context (`apply_cg`, re-ask Before vs After). Routes: `POST /api/v5/cg/feedback · /cg/graph · /cg/review`; store: `gs://<bucket>/aos/<ws>/context_graph/graph.json`.
 - **Security**: the Core MCP is zero-privilege; data tools and Gemini run with the caller's token in the caller's project. Pasted tokens are never stored. Demo writes are limited to `STARTER_WRITE_PROJECTS`; server-side SA impersonation only for `STARTER_IMPERSONATE_ALLOW`.
 - **Quick start**: `python3 -m src.web.studio_server` (local) · `python3 -m src.cli build --bucket … --ws …` (CLI) · `gcloud run deploy … --source .` (your Cloud Run). The curated reference wizard stays at `/wizard`.
 

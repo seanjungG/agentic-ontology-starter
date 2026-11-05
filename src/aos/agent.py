@@ -52,8 +52,20 @@ def _policy_text(p: Dict[str, Any]) -> str:
     return "; ".join(f"{c.get('name')}={c.get('value')}{c.get('unit', '')}" for c in p.get("policy") or [])
 
 
+def rules_page(rules: List[str], lang: str) -> Dict[str, Any]:
+    """GOAL-285 (REQ-9 L3): SME-approved Context Graph rules as one synthetic wiki page. It shows up in the
+    wiki index every agent step sees (1-hop context) and can be read with read_wiki — no Core MCP change needed."""
+    body = "\n".join(f"- {r}" for r in rules)
+    return {"id": RULES_PAGE_ID, "layer": "concept", "title": t(lang, "승인된 피드백 규칙 (Context Graph)", "Approved feedback rules (Context Graph)"),
+            "summary": t(lang, "SME가 승인한 도메인 규칙 — 답변 시 반드시 반영: ", "SME-approved domain rules — must be applied: ") + " | ".join(rules)[:1500],
+            "body_md": body}
+
+
+RULES_PAGE_ID = "CG-RULES"
+
+
 def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = None, ctx: Optional[Dict[str, Any]] = None,
-        log: Optional[McpLog] = None, max_steps: int = MAX_STEPS) -> Dict[str, Any]:
+        log: Optional[McpLog] = None, max_steps: int = MAX_STEPS, extra_rules: Optional[List[str]] = None) -> Dict[str, Any]:
     emit = emit or (lambda ev: None)
     lang = ws.get("lang", "ko")
     env = ws["env"]
@@ -62,6 +74,9 @@ def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = No
     agent = agent if agent in AGENTS else "hybrid"
     ctx = ctx or load_context(ws, log)
     pages: List[Dict[str, Any]] = ctx.get("pages") or []
+    rules = [str(r).strip()[:600] for r in (extra_rules or []) if str(r).strip()][:12]
+    if rules:
+        pages = pages + [rules_page(rules, lang)]
     plan: Dict[str, Any] = ctx.get("plan") or {}
     schema = plan.get("schema") if plan else None
     graph_ready = bool(plan.get("graph_ready")) if plan else False

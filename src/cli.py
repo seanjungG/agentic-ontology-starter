@@ -7,7 +7,10 @@
 
   python3 -m src.cli new   --spec spec.json | --from workspace.json   [--bucket B] [--project P] ...   → prints the new ws id
   python3 -m src.cli build --bucket B --ws WS [--stages prepare,ingest,cqs,wiki,graph,eval]
-  python3 -m src.cli ask   --bucket B --ws WS [--agent wiki|graph|hybrid] "question"
+  python3 -m src.cli ask   --bucket B --ws WS [--agent wiki|graph|hybrid] [--apply-cg] "question"
+  python3 -m src.cli cg    --bucket B --ws WS feedback --agent wiki --question Q --answer A [--sentence S] [--rating up|down] [--reason CODE] [--run-id R]
+  python3 -m src.cli cg    --bucket B --ws WS graph | rules | review --candidate ID --decision approve|reject [--note N]
+                                    Context Graph (GOAL-285): sentence feedback → L1 signal → L2 candidate → SME → ChangeSet + CQ CG-n
   python3 -m src.cli eval  --bucket B --ws WS
   python3 -m src.cli calls --bucket B --ws WS [--stage graph]        MCP calls (tool · args · status · ms)
   python3 -m src.cli check --project P --bucket B [--region R] [--dataset D]
@@ -61,6 +64,30 @@ def _printer(ev: dict) -> None:
         print(f"   {ev.get('id')} [{ev.get('agent')}] {ev.get('verdict')} {ev.get('score')} — {ev.get('question')[:80]}", flush=True)
 
 
+def _cg(a: argparse.Namespace, ws: dict) -> int:
+    """Context Graph from the terminal (same store and parser as /api/v5/cg/*)."""
+    from src.aos import context_graph as cg
+    if a.action == "feedback":
+        r = cg.record_feedback(ws, {"agent": a.agent, "question": a.question, "answer": a.answer, "sentence": a.sentence,
+                                    "rating": a.rating, "reason_code": a.reason, "run_id": a.run_id}, a.lang)
+        print(json.dumps({k: r[k] for k in ("feedback_id", "run_id", "synthesized_run", "summary")}, ensure_ascii=False))
+        print(json.dumps({"parsed_intent": r["signal"]["parsed_intent"], "candidate": r["candidate"]}, ensure_ascii=False, indent=1))
+        return 0
+    if a.action == "graph":
+        v = cg.graph_view(ws, a.lang)
+        print(json.dumps({"object": v["object"], "counts": v["counts"], "pending": v["pending"]}, ensure_ascii=False))
+        for c in v["candidates"]:
+            print(f"  {c['candidate_id']}  {c.get('status'):8} {c.get('tacit_type'):7} {c.get('title')}")
+        return 0
+    if a.action == "rules":
+        print(json.dumps(cg.approved_rules(ws, a.agent), ensure_ascii=False, indent=1))
+        return 0
+    r = cg.review(ws, a.candidate, a.decision, a.note, by=str(identity.current().get("principal") or "cli"),
+                  read_cqs=lambda: studio.studio_data(ws, ["cqs"]).get("cqs") or [], save_cqs=lambda cqs: studio.save_cqs(ws, cqs))
+    print(json.dumps({"approval": r["approval"], "changeset": r["changeset"], "cq": r["cq"], "cq_error": r["cq_error"]}, ensure_ascii=False, indent=1))
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python3 -m src.cli", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -83,7 +110,15 @@ def main(argv=None) -> int:
     p = sub.add_parser("ask")
     common(p)
     p.add_argument("--agent", default="hybrid", choices=list(agent_mod.AGENTS))
+    p.add_argument("--apply-cg", action="store_true", help="inject SME-approved Context Graph rules (CG-RULES) into the run")
     p.add_argument("question")
+    p = sub.add_parser("cg")
+    common(p)
+    p.add_argument("action", choices=["feedback", "graph", "review", "rules"])
+    p.add_argument("--agent", default="hybrid", choices=list(agent_mod.AGENTS))
+    for k in ("question", "answer", "sentence", "rating", "reason", "run_id", "candidate", "decision", "note"):
+        p.add_argument(f"--{k.replace('_', '-')}", dest=k, default="")
+    p.add_argument("--lang", default="ko")
     p = sub.add_parser("eval")
     common(p)
     p = sub.add_parser("calls")
@@ -151,8 +186,17 @@ def main(argv=None) -> int:
                     rc = 1
                     break
             return rc
+        if a.cmd == "cg":
+            return _cg(a, ws)
         if a.cmd == "ask":
-            res = agent_mod.run(ws, a.agent, a.question, _printer)
+            from src.aos import context_graph as cg
+            rules = cg.approved_rules(ws, a.agent) if a.apply_cg else []
+            if rules:
+                print(f"   [cg] {len(rules)} approved rule(s) injected as {agent_mod.RULES_PAGE_ID}", flush=True)
+            res = agent_mod.run(ws, a.agent, a.question, _printer, extra_rules=[r["statement"] for r in rules])
+            res["cg_rules_applied"] = rules
+            rec = cg.record_run(ws, res)
+            print(f"   [cg] run {rec.get('cg_run_id')}" + (f" (not recorded: {rec['cg_error']})" if rec.get("cg_error") else ""), flush=True)
             print(f"\n[{res['status']}] {res['answer']}\n")
             if res.get("citations"):
                 print("citations:", ", ".join(res["citations"]))

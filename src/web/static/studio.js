@@ -1,6 +1,8 @@
 /* Agentic Ontology Starter v6 studio (GOAL-233 · v6 intake GOAL-243).
  * Vanilla JS, no build step. All visible text comes from studio_i18n.json (KO · EN) — keep this file free of UI prose.
- * Routes: #/start · #/scenario · #/env · #/data · #/types · #/build · #/studio/{overview,assets,wiki,graph,search,agents,eval} · #/deploy · #/handoff
+ * Routes: #/start · #/scenario · #/env · #/data · #/types · #/build · #/studio/{overview,assets,wiki,graph,search,agents,eval,cg} · #/deploy · #/handoff
+ * GOAL-285: sentence feedback under every agent answer (+ 👍/👎 · reason chips) → /api/v5/cg/feedback; Context Graph tab (studio/cg):
+ * 3-agent live demo · sentence feedback panel · layered graph viewer · L0/L1/L2 inspector · SME review → ChangeSet + regression CQ.
  * v6 (GOAL-243): flow & service catalog + template (Core MCP), local/GCS/Drive intake with PDF/Office → Markdown conversion and
  * fidelity, document types + wiki strategy, deployment plan. Every piece of know-how is a Core MCP call made by the server.
  * State: localStorage "aol.studio.v5" (no secrets) · the pasted token lives in sessionStorage only.
@@ -12,7 +14,7 @@
   const TOKEN_KEY = "aol.studio.v5.token";
   const STAGES = ["prepare", "ingest", "cqs", "wiki", "graph", "eval"];
   const ROUTES = ["start", "scenario", "env", "data", "types", "build", "studio/overview", "studio/assets", "studio/wiki", "studio/graph",
-    "studio/search", "studio/agents", "studio/eval", "deploy", "handoff"];
+    "studio/search", "studio/agents", "studio/eval", "studio/cg", "deploy", "handoff"];
   const STRATEGIES = ["direct", "typed", "reconvert"];
   const S = {
     lang: "ko", boot: null, i18n: {}, route: "start",
@@ -43,9 +45,17 @@
   function toast(msg, ms) {
     const el = $("#toast");
     el.textContent = msg;
+    el.classList.remove("has-link");
     el.classList.add("on");
     clearTimeout(toast._t);
     toast._t = setTimeout(() => el.classList.remove("on"), ms || 2600);
+  }
+  function toastLink(msg, label, run, cand) {  // GOAL-285: toast with a one-click deep link into the Context Graph tab
+    const el = $("#toast");
+    el.innerHTML = `<span>${esc(msg)}</span><a class="toast-link" href="#/studio/cg" data-act="cg-goto" data-run="${esc(run || "")}" data-cand="${esc(cand || "")}">${esc(label)}</a>`;
+    el.classList.add("on", "has-link");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove("on", "has-link"), 10000);
   }
   function save() {
     const keep = { lang: S.lang, scenario: S.scenario, env: S.env, identMode: S.identMode, sa: S.sa, draftId: S.draftId, wsId: S.wsId,
@@ -192,7 +202,7 @@
     const buildState = STAGES.every((k) => st(k) === "done" || st(k) === "skipped") ? "done" : STAGES.some((k) => st(k) === "error") ? "error" : S.busy.build ? "running" : "";
     const has = built();
     const studio = [["studio/overview", "rail.overview"], ["studio/assets", "rail.assets"], ["studio/wiki", "rail.wiki"], ["studio/graph", "rail.graph"],
-      ["studio/search", "rail.search"], ["studio/agents", "rail.agents"], ["studio/eval", "rail.eval"]];
+      ["studio/search", "rail.search"], ["studio/agents", "rail.agents"], ["studio/eval", "rail.eval"], ["studio/cg", "rail.cg"]];
     $("#rail").innerHTML = `
       <div class="rail-group"><div class="rail-label">${T("rail.g.understand")}</div>${railItem("start", "0", T("rail.start"), T("rail.start.s"), "")}</div>
       <div class="rail-group"><div class="rail-label">${T("rail.g.build")}</div>
@@ -1006,7 +1016,8 @@
       ${cqs.length ? `<div class="eyebrow mt12">${T("ag.presets")}</div><div class="presets mt8">${cqs.map((c) => `<button class="preset" data-act="ag-preset" data-q="${esc(c.question)}">${esc(c.question)}</button>`).join("")}</div>` : ""}</div>
       ${r ? `<div class="answer mt12"><div class="hd"><span class="st">${statusDot(r.status === "GROUNDED" ? "ok" : r.status === "UNGROUNDED" ? "warn" : "error")}<b>${esc(T("ag.status." + r.status) || r.status)}</b></span><span class="tag">${esc(T("ag." + r.agent))}</span>
         <span class="meta">${r.telemetry ? esc(T("ag.steps", { n: r.telemetry.steps || 0 })) + " · " + ((r.telemetry.total_ms || 0) / 1000).toFixed(1) + " s · " + esc(T("ag.tokens", { i: r.telemetry.tokens_in || 0, o: r.telemetry.tokens_out || 0 })) : ""}</span></div>
-        <div class="md">${md(r.answer)}</div>${(r.citations || []).length ? `<div class="flex mt8">${r.citations.map((c) => `<span class="tag mono">${esc(c)}</span>`).join("")}</div>` : ""}</div>` : ""}</div>
+        <div class="md">${md(r.answer)}</div>${(r.citations || []).length ? `<div class="flex mt8">${r.citations.map((c) => `<span class="tag mono">${esc(c)}</span>`).join("")}</div>` : ""}
+        ${r.status !== "ERROR" && r.status !== "NOT_BUILT" ? fbWidget("ag", r) : ""}</div>` : ""}</div>
     <div class="card"><div class="card-head"><h3>${T("ag.trace")}</h3></div><ul class="trace">${live.map((e) => `<li>${statusDot(e.status)}<span>${esc(e.label)}${e.detail ? " — " + esc(e.detail) : ""}</span><span class="ms">${e.ms != null ? e.ms + " ms" : ""}</span></li>`).join("")}</ul>
       ${r && r.steps ? `<div class="eyebrow mt16">${T("ag.evidence")}</div>${r.steps.filter((s) => s.action !== "answer").map(stepHtml).join("")}` : ""}</div></div>`;
   });
@@ -1039,6 +1050,374 @@
       c[el.dataset.f] = el.dataset.f === "key_facts" ? el.value.split(",").map((x) => x.trim()).filter(Boolean) : el.value;
     }));
   };
+
+  // ------------------------------------------------------------------ Context Graph (GOAL-285)
+  const AGENTS3 = ["wiki", "graph", "hybrid"];
+  const REASONS = ["MISSING_RULE", "WRONG_POLICY_VALUE", "UNKNOWN_TERM", "WRONG_ROUTE", "ANSWER_PHRASING", "STALE_WIKI", "TOOL_ERROR"];
+  const CG_COLS = ["run", "feedback", "candidate", "approval", "changeset"];
+  const shortId = (id) => String(id || "").replace(/^(run|cand|fb|cs|sme)-/, "").slice(0, 8);
+  function fbState(scope) { S.ui.fb = S.ui.fb || {}; return S.ui.fb[scope] || (S.ui.fb[scope] = {}); }
+  function fbParsed(sig) {
+    if (!sig) return "";
+    const pi = sig.parsed_intent || {}, lab = pi.labels || {}, rq = pi.regression_cq || {};
+    const row = (k, v) => (v ? `<div class="kvg-k">${esc(k)}</div><div class="kvg-v">${v}</div>` : "");
+    return `<div class="kvg">
+      ${row(T("fb.mode"), `<span class="badge">${esc(sig.feedback_mode)}</span>${sig.rating ? ` <span class="badge">${sig.rating === "up" ? "👍" : "👎"}</span>` : ""}`)}
+      ${row(T("fb.polarity"), `<span class="badge indigo">${esc(pi.polarity)}</span> <span class="meta">${esc(lab.polarity || "")}</span>`)}
+      ${row(T("fb.tacit"), `<span class="badge">${esc(pi.tacit_type)}</span> <span class="meta">${esc(lab.tacit_type || "")}</span>`)}
+      ${row(T("fb.reason"), pi.reason_code ? `<span class="badge">${esc(pi.reason_code)}</span> <span class="meta">${esc(lab.reason_code || "")}</span>` : "")}
+      ${row(T("fb.entities"), (pi.extracted_entities || []).map((e) => `<span class="tag mono">${esc(e)}</span>`).join(" "))}
+      ${row(T("fb.rule"), esc(pi.proposed_rule_statement || ""))}
+      ${row(T("fb.cq"), rq.question ? `${esc(rq.question)}${(rq.expected_facts || []).length ? ` <span class="meta">· ${rq.expected_facts.map(esc).join(", ")}</span>` : ""} <span class="badge">${esc(rq.kind || "")}</span>` : "")}
+      ${row(T("fb.confidence"), pi.confidence != null ? esc(pct(pi.confidence)) : "")}</div>`;
+  }
+  function cgLink(res) {
+    if (!res) return "";
+    const c = res.candidate && res.candidate.candidate_id;
+    return `<a class="cg-link" href="#/studio/cg" data-act="cg-goto" data-run="${esc(res.run_id)}" data-cand="${esc(c || "")}">${esc(c ? T("fb.link", { r: shortId(res.run_id), c: shortId(c) }) : T("fb.linkRun", { r: shortId(res.run_id) }))}</a>`;
+  }
+  // Inline sentence-feedback bar: the textarea is the primary control; 👍/👎 and reason chips are optional one-click tags.
+  function fbWidget(scope, r) {
+    const st = fbState(scope);
+    const run = r && r.cg_run_id;
+    return `<div class="fb-bar">
+      <div class="fb-head"><span class="fb-title">${T("fb.title")}</span>${run ? `<a class="tag mono" href="#/studio/cg" data-act="cg-goto" data-run="${esc(run)}">${T("fb.runId")} #${esc(shortId(run))}</a>` : ""}</div>
+      <textarea class="ta prose fb-text" data-fbtext="${scope}" rows="2" placeholder="${esc(T("fb.ph"))}">${esc(st.text || "")}</textarea>
+      <div class="fb-row"><span class="fb-thumbs">${["up", "down"].map((v) => `<button type="button" class="fb-thumb ${st.rating === v ? "on" : ""}" aria-pressed="${st.rating === v}" data-act="fb-rate" data-scope="${scope}" data-v="${v}">${v === "up" ? "👍" : "👎"} ${T("fb." + v)}</button>`).join("")}</span>
+        <span class="fb-chips"><span class="fb-lbl">${T("fb.reasons")}</span>${REASONS.map((x) => `<button type="button" class="fb-chip ${st.reason === x ? "on" : ""}" data-act="fb-reason" data-scope="${scope}" data-v="${x}">${T("fb.reason." + x)}</button>`).join("")}</span>
+        <span class="spacer"></span><button class="btn small primary" data-act="fb-send" data-scope="${scope}" ${st.busy ? "disabled" : ""}>${T("fb.submit")}</button></div>
+      ${st.res ? `<div class="fb-result"><div class="fb-result-h"><span class="dot ok"></span><b>${T("fb.parsed")}</b>${cgLink(st.res)}</div>${fbParsed(st.res.signal)}</div>` : ""}</div>`;
+  }
+  async function fbSend(scope) {
+    const st = fbState(scope);
+    const el = document.querySelector(`[data-fbtext="${scope}"]`);
+    if (el) st.text = el.value;
+    const sentence = (st.text || "").trim();
+    if (!sentence && !st.rating) { toast(T("fb.need")); return; }
+    let ctx;
+    if (scope === "ag") { const r = S.ui.agRes || {}; ctx = { run_id: r.cg_run_id || "", agent: r.agent || S.ui.agent || "hybrid", question: r.question || S.ui.agQ || "", answer: r.answer || "" }; }
+    else { const c = S.ui.cgIn || {}; ctx = { run_id: "", agent: c.agent || "hybrid", question: c.question || "", answer: c.answer || "" }; }
+    st.busy = true; rerender();
+    const j = await api("/api/v5/cg/feedback", Object.assign({ ws: wsRef(), sentence, rating: st.rating || "", reason_code: st.reason || "" }, ctx));
+    st.busy = false;
+    if (j.status === "OK") {
+      st.res = j; st.text = ""; st.rating = ""; st.reason = "";
+      if (scope === "ag" && S.ui.agRes) S.ui.agRes.cg_run_id = j.run_id;
+      S.cg = null;
+      const c = j.candidate && j.candidate.candidate_id;
+      toastLink(T("fb.sent"), c ? T("fb.link", { r: shortId(j.run_id), c: shortId(c) }) : T("fb.linkRun", { r: shortId(j.run_id) }), j.run_id, c);
+    } else errToast(j);
+    rerender();
+  }
+  async function ensureCg() {
+    const j = await api("/api/v5/cg/graph", { ws: wsRef() });
+    S.cg = j; S.cgFor = S.wsId;
+  }
+  function cgNodes(v) {
+    const kids = {};
+    (v.edges || []).forEach((e) => { (kids[e.from] = kids[e.from] || []).push(e.to); });
+    return kids;
+  }
+  function cgConnected(v, id) {
+    const out = new Set(id ? [id] : []);
+    if (!id) return out;
+    const fwd = {}, back = {};
+    (v.edges || []).forEach((e) => { (fwd[e.from] = fwd[e.from] || []).push(e.to); (back[e.to] = back[e.to] || []).push(e.from); });
+    const walk = (m, x) => (m[x] || []).forEach((y) => { if (!out.has(y)) { out.add(y); walk(m, y); } });
+    walk(fwd, id); walk(back, id);
+    return out;
+  }
+  function cgSvg(v, sel) {
+    const W = 178, H = 44, GX = 212, GY = 54, X0 = 14, Y0 = 40;
+    const byId = {};
+    (v.nodes || []).forEach((n) => { byId[n.id] = n; });
+    const kids = cgNodes(v);
+    const runs = (v.nodes || []).filter((n) => n.kind === "run").sort((a, b) => String(b.ts).localeCompare(String(a.ts))).slice(0, 14);
+    const cursor = CG_COLS.map(() => Y0), pos = {};
+    const place = (id, minY) => {
+      const n = byId[id]; if (!n || pos[id]) return;
+      const col = CG_COLS.indexOf(n.kind);
+      const y = Math.max(cursor[col], minY);
+      pos[id] = { x: X0 + col * GX, y };
+      cursor[col] = y + GY;
+      (kids[id] || []).forEach((k) => place(k, y));
+    };
+    runs.forEach((r) => place(r.id, Math.max(...cursor)));
+    const hi = cgConnected(v, sel);
+    const height = Math.max(...cursor) + 10, width = X0 * 2 + (CG_COLS.length - 1) * GX + W;
+    const heads = CG_COLS.map((c, i) => `<text class="cg-colh" x="${X0 + i * GX}" y="22">${esc(T("cg.col." + c))}</text>`).join("");
+    const edges = (v.edges || []).filter((e) => pos[e.from] && pos[e.to]).map((e) => {
+      const a = pos[e.from], b = pos[e.to], x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, mx = (x1 + x2) / 2;
+      return `<path class="cg-edge ${sel && hi.has(e.from) && hi.has(e.to) ? "on" : ""}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"><title>${esc(e.type)}</title></path>`;
+    }).join("");
+    const icon = (n) => (n.kind === "feedback" ? (n.icon === "sentence" ? "💬" : n.icon === "up" ? "👍" : "👎") : "");
+    const sub = (n) => (n.kind === "run" ? `${T("ag." + (n.agent || "hybrid"))}${n.synthesized ? " · synth" : ""}` : n.kind === "feedback" ? (n.polarity || n.feedback_mode || "")
+      : n.kind === "candidate" ? `${n.tacit_type || ""} · ${n.status || ""}` : n.kind === "approval" ? (n.label || "") : (n.status || ""));
+    const nodes = Object.entries(pos).map(([id, p]) => {
+      const n = byId[id];
+      const cls = ["cgn", n.kind, n.kind === "feedback" ? n.icon : "", n.kind === "candidate" ? String(n.status || "").toLowerCase() : "", n.kind === "approval" ? n.label : "",
+        sel === id ? "on" : "", sel && !hi.has(id) ? "dim" : ""].join(" ");
+      const label = `${icon(n)} ${n.kind === "approval" ? "SME" : n.kind === "changeset" ? (n.label || "ChangeSet") : (n.label || "")}`.trim();
+      return `<g class="${cls}" data-act="cg-node" data-id="${esc(id)}" transform="translate(${p.x},${p.y})"><rect width="${W}" height="${H}" rx="8"/>
+        <text x="10" y="18">${esc(label.length > 24 ? label.slice(0, 23) + "…" : label)}</text><text class="sub" x="10" y="34">#${esc(shortId(id))} · ${esc(String(sub(n)).slice(0, 22))}</text><title>${esc(n.label || id)}</title></g>`;
+    }).join("");
+    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Context Graph">${heads}${edges}${nodes}</svg>`;
+  }
+  function cgStepper(stages, reached, active) {
+    return `<ol class="cg-steps">${stages.map((s, i) => `<li class="${i < reached ? "done" : ""} ${i === active ? "active" : ""}"><span class="n">${i + 1}</span><span class="t">${esc(s.label)}</span></li>`).join("")}</ol>`;
+  }
+  function cgInspector(v, id) {
+    if (!id) return `<div class="empty">${T("cg.pick")}</div>`;
+    const find = (list, k) => (list || []).find((x) => x[k] === id);
+    const run = find(v.runs, "run_id"), fb = find(v.feedback, "feedback_id"), cand = find(v.candidates, "candidate_id"),
+      ap = find(v.approvals, "approval_id"), cs = find(v.changesets, "changeset_id");
+    if (run) {
+      const evs = (v.events || []).filter((e) => e.run_id === id);
+      return `<div class="insp-h"><span class="badge slate">L1 Run</span><span class="tag mono">${esc(id)}</span><span class="tag">${esc(T("ag." + (run.agent || "hybrid")))}</span><span class="tag mono">${esc(run.agent_surface)}</span></div>
+        ${run.synthesized ? `<div class="note">${T("cg.synth")}</div>` : ""}
+        <div class="kvg mt8"><div class="kvg-k">${T("cg.question")}</div><div class="kvg-v">${esc(run.question)}</div><div class="kvg-k">${T("cg.answer")}</div><div class="kvg-v"><div class="md small-md">${md(String(run.answer || "").slice(0, 1600))}</div></div>
+        <div class="kvg-k">${T("cg.updated")}</div><div class="kvg-v meta">${esc(run.ts)} ${run.status ? "· " + esc(run.status) : ""} ${run.telemetry && run.telemetry.total_ms ? "· " + (run.telemetry.total_ms / 1000).toFixed(1) + " s" : ""}</div></div>
+        <div class="eyebrow mt12">${T("cg.l0")} · ${evs.length}</div><ul class="trace mt8">${evs.map((e) => `<li>${statusDot(e.status === "error" ? "error" : "ok")}<span><b>${esc(e.kind)}</b>${e.action && e.action !== e.kind ? " · " + esc(e.action) : ""} ${esc(e.label || "")}${e.query ? `<code class="ev-q">${esc(e.query.slice(0, 160))}</code>` : ""}${e.pages ? " · " + e.pages.map(esc).join(", ") : ""}${e.error ? ` <span class="err-t">${esc(e.error)}</span>` : ""}</span><span class="ms">${e.ms != null ? e.ms + " ms" : e.row_count != null ? e.row_count + " rows" : ""}</span></li>`).join("")}</ul>`;
+    }
+    if (fb) return `<div class="insp-h"><span class="badge indigo">L1 FeedbackSignal</span><span class="tag mono">${esc(id)}</span><a class="tag mono" href="#" data-act="cg-node" data-id="${esc(fb.run_id)}">Run #${esc(shortId(fb.run_id))}</a></div>
+        ${fb.raw_sentence ? `<blockquote class="fb-quote">${esc(fb.raw_sentence)}</blockquote>` : ""}${fbParsed(fb)}`;
+    if (cand) return `<div class="insp-h"><span class="badge amber">L2 Candidate</span><span class="tag mono">${esc(id)}</span><span class="badge">${esc(cand.status)}</span></div>
+        <div class="kvg mt8"><div class="kvg-k">${T("fb.rule")}</div><div class="kvg-v">${esc((cand.proposed_patch || {}).statement || cand.title)}</div>
+        <div class="kvg-k">${T("fb.tacit")}</div><div class="kvg-v"><span class="badge">${esc(cand.tacit_type)}</span> <span class="badge indigo">${esc(cand.polarity || "")}</span></div>
+        <div class="kvg-k">${T("fb.cq")}</div><div class="kvg-v">${esc((cand.regression_cq || {}).question || "")}</div></div>
+        <div class="eyebrow mt12">${T("cg.patch")}</div>${codeBlock(JSON.stringify({ proposed_patch: cand.proposed_patch, regression_cq: cand.regression_cq }, null, 1))}
+        ${cand.status === "PENDING" ? cgReviewRow(cand) : ""}`;
+    if (ap) return `<div class="insp-h"><span class="badge slate">SME</span><span class="tag mono">${esc(id)}</span><span class="badge ${ap.decision === "approve" ? "green" : "rose"}">${esc(ap.decision)}</span></div>
+        <div class="kvg mt8"><div class="kvg-k">${T("cg.note")}</div><div class="kvg-v">${esc(ap.note || "-")}</div><div class="kvg-k">by</div><div class="kvg-v mono small">${esc(ap.by || "")}</div><div class="kvg-k">${T("cg.updated")}</div><div class="kvg-v meta">${esc(ap.ts)}</div></div>`;
+    if (cs) return `<div class="insp-h"><span class="badge indigo">ChangeSet</span><span class="tag mono">${esc(id)}</span><span class="badge green">${esc(cs.status)}</span>${cs.cq_id ? `<a class="btn small" href="#/studio/eval">${T("cg.toEval")} · ${esc(cs.cq_id)}</a>` : ""}</div>
+        ${cs.cq_error ? `<div class="note warn">${esc(cs.cq_error)}</div>` : ""}<div class="eyebrow mt12">ops</div>${codeBlock(JSON.stringify(cs.ops, null, 1))}
+        <div class="flex mt8"><button class="btn small primary" data-act="cg-reask" data-run="${esc(cs.run_id || "")}" ${S.busy.cmp ? "disabled" : ""}>${S.busy.cmp ? T("cg.reaskRunning") : T("cg.reask")}</button><span class="meta">${T("cg.reaskSub")}</span></div>${S.ui.cmp && S.ui.cmp.before && S.ui.cmp.before.run_id === cs.run_id ? cgCompare(S.ui.cmp) : ""}`;
+    return `<div class="empty">${T("cg.pick")}</div>`;
+  }
+  function cgReviewRow(c) {
+    return `<div class="review-row"><div class="grow"><div class="rv-t">${esc(c.title)}</div><div class="meta">${esc(c.tacit_type)} · ${esc(T("ag." + (c.agent || "hybrid")))} · #${esc(shortId(c.candidate_id))} · ${esc((c.regression_cq || {}).question || "").slice(0, 90)}</div>
+      <input class="rv-note" data-cgnote="${esc(c.candidate_id)}" placeholder="${esc(T("cg.note"))}"></div>
+      <div class="rv-acts"><button class="btn small" data-act="cg-review" data-id="${esc(c.candidate_id)}" data-d="reject" ${S.busy.cgRv ? "disabled" : ""}>${T("cg.reject")}</button><button class="btn small primary" data-act="cg-review" data-id="${esc(c.candidate_id)}" data-d="approve" ${S.busy.cgRv ? "disabled" : ""}>${T("cg.approve")}</button></div></div>`;
+  }
+  // ---- GOAL-285 REQ-9: architecture · data flow · stored records · usage examples · Before/After re-ask
+  function cgArch() {
+    return `<div class="card"><div class="card-head"><h3>${T("cg.archTitle")}</h3><span class="sub">${T("cg.archSub")}</span></div>
+      <div class="layer4">${["L0", "L1", "L2", "L3"].map((l) => `<div class="ly ${l.toLowerCase()}"><div class="lid">${l}</div><h4>${T("cg." + l + ".t")}</h4><p>${T("cg." + l + ".d")}</p></div>`).join("")}</div>
+      <div class="loop-note">${T("cg.loop")}</div></div>`;
+  }
+  const jsonPre = (o) => `<pre class="code">${esc(JSON.stringify(o, null, 1))}</pre>`;
+  function cgFlow(v) {
+    const fb = [...(v.feedback || [])].reverse().find((f) => (v.candidates || []).some((c) => c.feedback_id === f.feedback_id)) || (v.feedback || []).slice(-1)[0];
+    const cand = fb && (v.candidates || []).find((c) => c.feedback_id === fb.feedback_id);
+    const run = fb && (v.runs || []).find((r) => r.run_id === fb.run_id);
+    const ap = cand && (v.approvals || []).find((a) => a.candidate_id === cand.candidate_id);
+    const cs = cand && (v.changesets || []).find((c) => c.candidate_id === cand.candidate_id);
+    const live = !!fb;
+    const pi = (fb && fb.parsed_intent) || { polarity: "CORRECTION_REQUIRED", tacit_type: "T3", reason_code: "MISSING_RULE", extracted_entities: ["…"], target_rule_id: "", proposed_rule_statement: "…", regression_cq: { question: "…", expected_facts: [], must_reflect: "…", kind: "FIX" }, confidence: 0.8 };
+    const steps = [
+      ["cg.f1", { ws: { bucket: "…", ws_id: S.wsId }, agent: (run && run.agent) || "wiki", question: (run && run.question) || "…" },
+        { cg_run_id: (run && run.run_id) || "run-…", agent_surface: (run && run.agent_surface) || "wiki_agent", status: (run && run.status) || "GROUNDED", answer: String((run && run.answer) || "…").slice(0, 240), l0_events: (run && run.n_events) || 0 }],
+      ["cg.f2", { run_id: (fb && fb.run_id) || "run-…", agent: (fb && fb.agent) || "wiki", sentence: (fb && fb.raw_sentence) || "…", rating: (fb && fb.rating) || "", reason_code: pi.reason_code || "" },
+        { feedback_id: (fb && fb.feedback_id) || "fb-…", feedback_mode: (fb && fb.feedback_mode) || "SENTENCE" }],
+      ["cg.f3", { sentence: (fb && fb.raw_sentence) || "…", query: (run && run.question) || "…", answer: "…", agent_surface: (fb && fb.agent_surface) || "wiki_agent" },
+        { feedback_mode: (fb && fb.feedback_mode) || "SENTENCE", parsed_intent: pi }],
+      ["cg.f4", { signal: "parsed_intent ↑", feedback_id: (fb && fb.feedback_id) || "fb-…" },
+        cand ? { candidate_id: cand.candidate_id, status: cand.status, proposed_patch: cand.proposed_patch, regression_cq: cand.regression_cq } : { candidate_id: "cand-…", proposed_patch: { op: "ADD_EXCEPTION_POLICY", target: "…", statement: "…" }, regression_cq: pi.regression_cq }],
+      ["cg.f5", { candidate_id: (cand && cand.candidate_id) || "cand-…", decision: (ap && ap.decision) || "approve", note: (ap && ap.note) || "" },
+        cs ? { approval_id: cs.approval_id, changeset_id: cs.changeset_id, status: cs.status, ops: cs.ops } : { approval_id: "sme-…", changeset_id: "cs-…", status: "APPLIED", ops: [{ op: "…" }, { op: "ADD_REGRESSION_CQ", cq_id: "CG-1" }] }],
+      ["cg.f6", { agent: (run && run.agent) || "wiki", question: (run && run.question) || "…", apply_cg: true, compare_of: (run && run.run_id) || "run-…" },
+        { cq_id: (cs && cs.cq_id) || "CG-1", cg_rules_applied: [{ candidate_id: (cand && cand.candidate_id) || "cand-…", statement: ((cand && cand.proposed_patch) || {}).statement || "…" }], answer: "After …" }],
+    ];
+    const cmp = S.ui.cmp;
+    return `<div class="card"><div class="card-head"><h3>${T("cg.flowTitle")}</h3><span class="sub">${T(live ? "cg.flowLive" : "cg.flowSchema")}</span></div>
+      <div class="flow6">${steps.map(([k, i, o], n) => `<details class="fold" ${n === 2 || n === 5 ? "open" : ""}><summary><span class="fn">${n + 1}</span><b>${T(k)}</b></summary>
+        <div class="io"><div><div class="eyebrow">${T("cg.in")}</div>${jsonPre(i)}</div><div><div class="eyebrow">${T("cg.out")}</div>${jsonPre(o)}</div></div>
+        ${n === 5 ? `<div class="io" style="grid-template-columns:1fr"><div class="flex"><button class="btn small primary" data-act="cg-reask" data-run="${esc((run && run.run_id) || "")}" ${S.busy.cmp || !(cs || (v.approvals || []).some((a) => a.decision === "approve")) ? "disabled" : ""}>${S.busy.cmp ? T("cg.reaskRunning") : T("cg.reask")}</button><span class="meta">${T("cg.reaskSub")}</span></div>${cgCompare(cmp)}</div>` : ""}</details>`).join("")}</div></div>`;
+  }
+  function cgCompare(c) {
+    if (!c) return "";
+    if (c.error) return `<div class="note err">${esc(c.error)}</div>`;
+    return `<div class="cmp"><div class="side"><h5>${T("cg.before")} · #${esc(shortId(c.before.run_id))}</h5><div class="md small-md">${md(c.before.answer || "")}</div></div>
+      <div class="side after"><h5>${T("cg.after")}${c.after ? ` · #${esc(shortId(c.after.cg_run_id))}` : ""}</h5>${c.after ? `<div class="md small-md">${md(c.after.answer || "")}</div>
+      <div class="meta mt8">${esc(T("cg.rulesApplied", { n: (c.after.cg_rules_applied || []).length }))}: ${(c.after.cg_rules_applied || []).map((r) => `<span class="badge">${esc(r.tacit_type || "")}</span> ${esc(String(r.statement).slice(0, 90))}`).join(" · ")}</div>` : `<div class="meta">${T("cg.reaskRunning")}</div>`}</div></div>`;
+  }
+  async function cgReask(runId) {
+    const v = S.cg || {};
+    const run = (v.runs || []).find((r) => r.run_id === runId) || [...(v.runs || [])].reverse().find((r) => (v.changesets || []).some((c) => c.run_id === r.run_id));
+    if (!run) { toast(T("cg.noApproved")); return; }
+    S.busy.cmp = true; S.ui.cmp = { before: run, after: null }; rerender();
+    let res = null;
+    await stream("/api/v5/agent", { ws: wsRef(), agent: run.agent || "hybrid", question: run.question, apply_cg: true, compare_of: run.run_id }, (ev) => {
+      if (ev.type === "result") res = ev; else if (ev.type === "error") res = { error: ev.message || ev.status };
+    });
+    S.busy.cmp = false;
+    if (!res || res.error) S.ui.cmp = { before: run, error: (res && res.error) || "-" };
+    else { S.ui.cmp = { before: run, after: res }; S.cg = null; S.ui.cgFocus = res.cg_run_id || ""; }
+    rerender();
+  }
+  function cgData(v) {
+    const tab = S.ui.cgTab || "feedback";
+    const tabs = ["events", "runs", "feedback", "candidates", "changesets", "tacit", "json"];
+    let body = "";
+    const pick = (rows, cols) => rows.map((r) => Object.fromEntries(cols.map(([k, f]) => [k, f(r)])));
+    if (tab === "events") body = table(pick([...(v.events || [])].reverse(), [["event_id", (e) => e.event_id], ["kind", (e) => e.kind], ["action", (e) => e.action || ""], ["surface", (e) => e.agent_surface], ["status", (e) => e.status], ["label", (e) => e.label], ["query", (e) => e.query || ""], ["ms", (e) => e.ms ?? ""]]), 200);
+    else if (tab === "runs") body = table(pick([...(v.runs || [])].reverse(), [["run_id", (r) => r.run_id], ["agent", (r) => r.agent], ["surface", (r) => r.agent_surface], ["status", (r) => r.status], ["synth", (r) => (r.synthesized ? "Y" : "")], ["rules", (r) => (r.rules_applied || []).length || ""], ["question", (r) => r.question], ["ts", (r) => r.ts]]), 200);
+    else if (tab === "feedback") body = table(pick([...(v.feedback || [])].reverse(), [["feedback_id", (f) => f.feedback_id], ["run_id", (f) => f.run_id], ["mode", (f) => f.feedback_mode], ["rating", (f) => f.rating], ["polarity", (f) => (f.parsed_intent || {}).polarity], ["tacit", (f) => (f.parsed_intent || {}).tacit_type], ["reason", (f) => (f.parsed_intent || {}).reason_code], ["raw_sentence", (f) => f.raw_sentence], ["entities", (f) => ((f.parsed_intent || {}).extracted_entities || []).join(", ")]]), 200);
+    else if (tab === "candidates") body = table(pick([...(v.candidates || [])].reverse(), [["candidate_id", (c) => c.candidate_id], ["status", (c) => c.status], ["tacit", (c) => c.tacit_type], ["op", (c) => (c.proposed_patch || {}).op], ["statement", (c) => (c.proposed_patch || {}).statement], ["regression_cq", (c) => (c.regression_cq || {}).question], ["confidence", (c) => c.confidence]]), 200);
+    else if (tab === "changesets") body = table(pick([...(v.changesets || [])].reverse(), [["changeset_id", (c) => c.changeset_id], ["candidate_id", (c) => c.candidate_id], ["status", (c) => c.status], ["cq_id", (c) => c.cq_id], ["ops", (c) => (c.ops || []).map((o) => o.op).join(" + ")], ["ts", (c) => c.ts]]), 200);
+    else if (tab === "tacit") {
+      const by = {};
+      (v.feedback || []).forEach((f) => { const p = f.parsed_intent || {}; const k = p.tacit_type || "-"; (by[k] = by[k] || { label: (p.labels || {}).tacit_type || "", rows: [] }).rows.push(f); });
+      body = ["T1", "T2", "T3", "T4", "T5", "KC_META"].map((k) => { const g = by[k] || { label: "", rows: [] }; return `<details class="fold" ${g.rows.length ? "open" : ""}><summary><span class="badge indigo">${k}</span> ${esc(g.label)} <span class="meta">${esc(T("cg.tacitN", { n: g.rows.length }))}</span></summary>
+        <div class="inner">${g.rows.length ? table(g.rows.map((f) => ({ feedback_id: f.feedback_id, polarity: (f.parsed_intent || {}).polarity, rule: (f.parsed_intent || {}).proposed_rule_statement, regression_cq: ((f.parsed_intent || {}).regression_cq || {}).question })), 50) : `<div class="empty">${T("common.none")}</div>`}</div></details>`; }).join("");
+    } else body = codeBlock(JSON.stringify({ object: v.object, counts: v.counts, runs: v.runs, events: (v.events || []).slice(-80), feedback: v.feedback, candidates: v.candidates, approvals: v.approvals, changesets: v.changesets }, null, 1).slice(0, 120000));
+    return `<div class="card"><div class="card-head"><h3>${T("cg.dataTitle")}</h3><span class="sub">${T("cg.dataSub")}</span></div>
+      <div class="tabs">${tabs.map((x) => `<button class="${tab === x ? "on" : ""}" data-act="cg-tab" data-t="${x}">${T("cg.tab." + x)}${x !== "tacit" && x !== "json" ? ` <span class="meta">${(v[x] || []).length}</span>` : ""}</button>`).join("")}</div>${body}</div>`;
+  }
+  function cgRecipes() {
+    const tab = S.ui.cgRc || "rest";
+    const base = location.origin, b = (S.ws && S.ws.env && S.ws.env.bucket) || S.env.bucket || "<bucket>", w = S.wsId || "<ws_id>";
+    const ident = `"identity": {"mode": "token", "token": "'"$(gcloud auth print-access-token)"'"}`;
+    const ws = `"ws": {"bucket": "${b}", "ws_id": "${w}"}`;
+    const R = {
+      ui: null,
+      rest: `# 1) feedback (sentence and/or rating) -> L1 signal + L2 candidate (run synthesized when run_id is unknown)
+curl -s -X POST ${base}/api/v5/cg/feedback -H 'Content-Type: application/json' -d '{${ws}, ${ident},
+  "agent": "wiki", "question": "...", "answer": "...", "rating": "down",
+  "sentence": "${T("cg.ex2.s").replace(/'/g, "")}"}'
+# 2) graph (stages, nodes/edges, L0/L1/L2 lists)
+curl -s -X POST ${base}/api/v5/cg/graph -H 'Content-Type: application/json' -d '{${ws}, ${ident}}' | jq '.counts'
+# 3) SME review -> ChangeSet + regression CQ CG-n
+curl -s -X POST ${base}/api/v5/cg/review -H 'Content-Type: application/json' -d '{${ws}, ${ident}, "candidate_id": "cand-...", "decision": "approve", "note": "SME ok"}'
+# 4) re-ask with the approved rules injected (NDJSON, last line = result with cg_run_id · cg_rules_applied)
+curl -s -N -X POST ${base}/api/v5/agent -H 'Content-Type: application/json' -d '{${ws}, ${ident}, "agent": "wiki", "question": "...", "apply_cg": true}' | tail -1`,
+      python: `# standard library only — run from agentic-ontology-starter/
+from src import identity
+from src.aos import context_graph as cg, studio
+from src.aos.ws import load
+
+with identity.use({"mode": "runtime"}):            # or {"mode": "token", "token": "..."}
+    ws = load("${b}", "${w}")
+    fb = cg.record_feedback(ws, {"agent": "wiki", "question": "...", "answer": "...",
+                                 "sentence": "${T("cg.ex2.s").replace(/"/g, "")}"}, lang="${S.lang}")
+    print(fb["signal"]["parsed_intent"]["tacit_type"], fb["candidate"]["regression_cq"])
+    rv = cg.review(ws, fb["candidate"]["candidate_id"], "approve", "SME ok",
+                   read_cqs=lambda: studio.studio_data(ws, ["cqs"])["cqs"] or [], save_cqs=lambda c: studio.save_cqs(ws, c))
+    print(rv["changeset"]["changeset_id"], rv["cq"]["id"])
+    print(cg.graph_view(ws)["counts"])`,
+      cli: `python3 -m src.cli cg --bucket ${b} --ws ${w} feedback --agent wiki --question "..." --answer "..." \\
+    --sentence "${T("cg.ex2.s").replace(/"/g, "")}"
+python3 -m src.cli cg --bucket ${b} --ws ${w} graph            # counts + pending candidates
+python3 -m src.cli cg --bucket ${b} --ws ${w} review --candidate cand-... --decision approve --note "SME ok"
+python3 -m src.cli cg --bucket ${b} --ws ${w} rules            # approved rules injected as CG-RULES
+python3 -m src.cli ask --bucket ${b} --ws ${w} --agent wiki --apply-cg "..."   # re-ask with the approved rules`,
+      mcp: `# Core MCP (tools/call) — the same calls the starter makes with your token
+{"name": "storage_read_object", "arguments": {"bucket": "${b}", "name": "aos/${w}/context_graph/graph.json"}}
+{"name": "aos_core_agent_step", "arguments": {"agent": "wiki", "question": "...", "lang": "${S.lang}",
+  "context": {"wiki_index": [{"id": "CG-RULES", "title": "Approved feedback rules (Context Graph)", "summary": "<approved statements>"}, "..."]},
+  "observations": [], "project": "...", "model": "...", "location": "global"}}
+# Context Graph-specific MCP tools (feedback / review): GOAL-284`,
+    };
+    return `<div class="recipes"><div class="tabs">${["ui", "rest", "python", "cli", "mcp"].map((x) => `<button class="${tab === x ? "on" : ""}" data-act="cg-rc" data-t="${x}">${x === "ui" ? T("cg.rc.ui") : x === "rest" ? "REST (curl)" : x === "python" ? "Python" : x === "cli" ? "CLI" : "MCP"}</button>`).join("")}</div>
+      ${tab === "ui" ? `<p class="lead-s" style="margin:0">${T("cg.rc.uiText")}</p>` : codeBlock(R[tab])}${tab === "mcp" ? `<div class="note">${T("cg.mcpNote")}</div>` : ""}</div>`;
+  }
+  function cgExamples() {
+    const st = fbState("ex2");
+    return `<div class="card"><div class="card-head"><h3>${T("cg.exTitle")}</h3></div>
+      <div class="stepcard"><div class="h">${T("cg.ex1.t")}<span class="right"><button class="btn small" data-act="cg-demo" ${S.ui.demo && S.ui.demo.running ? "disabled" : ""}>${T("cg.ex1.go")}</button></span></div><div class="meta">${T("cg.ex1.d")}</div></div>
+      <div class="stepcard"><div class="h">${T("cg.ex2.t")}<span class="right"><button class="btn small primary" data-act="cg-ex2" ${st.busy ? "disabled" : ""}>${T("cg.ex2.go")}</button></span></div>
+        <blockquote class="fb-quote">${esc(T("cg.ex2.s"))}</blockquote>${st.res ? `<div class="fb-result"><div class="fb-result-h"><span class="dot ok"></span><b>${T("fb.parsed")}</b>${cgLink(st.res)}</div>${fbParsed(st.res.signal)}</div>` : ""}</div>
+      <div class="stepcard"><div class="h">${T("cg.ex3.t")}</div><div class="meta">${T("cg.ex3.d")}</div><div class="mt8">${cgRecipes()}</div></div></div>`;
+  }
+  async function cgEx2() {
+    const st = fbState("ex2");
+    const cq = (S.data.cqs || [])[0] || {};
+    st.busy = true; rerender();
+    const j = await api("/api/v5/cg/feedback", { ws: wsRef(), agent: "wiki", question: cq.question || T("cg.ex2.s"), answer: "", sentence: T("cg.ex2.s") });
+    st.busy = false;
+    if (j.status === "OK") {
+      st.res = j; S.cg = null;
+      const c = j.candidate && j.candidate.candidate_id;
+      S.ui.cgFocus = c || j.run_id;
+      toastLink(T("fb.sent"), c ? T("fb.link", { r: shortId(j.run_id), c: shortId(c) }) : T("fb.linkRun", { r: shortId(j.run_id) }), j.run_id, c);
+    } else errToast(j);
+    rerender();
+  }
+  PAGES["studio/cg"] = () => studioPage(["cqs"], () => {
+    const top = head(T("rail.g.studio"), T("cg.title"), T("cg.lead"), `<button class="btn small" data-act="cg-refresh">${T("common.refresh")}</button>`);
+    if (!S.cg || S.cgFor !== S.wsId) {
+      if (!S.busy.cgLoad) { S.busy.cgLoad = true; ensureCg().finally(() => { S.busy.cgLoad = false; if (S.route === "studio/cg") rerender(); }); }
+      return top + `<div class="card"><div class="empty">${T("common.loading")}</div></div>`;
+    }
+    const v = S.cg.status === "OK" ? S.cg : { stages: [], nodes: [], edges: [], counts: {}, runs: [], feedback: [], candidates: [], approvals: [], changesets: [], events: [] };
+    const err = S.cg.status !== "OK" ? errNote(S.cg) : "";
+    if (S.ui.cgFocus && v.nodes.some((n) => n.id === S.ui.cgFocus)) { S.ui.cgSel = S.ui.cgFocus; S.ui.cgFocus = ""; }
+    const sel = S.ui.cgSel || "";
+    const stages = v.stages.length ? v.stages : ["input", "l0", "l1", "l2", "sme", "changeset", "graph"].map((id) => ({ id, label: id }));
+    const D = S.ui.demo;
+    const reached = D ? Math.max(0, ...AGENTS3.map((a) => (D.rows[a] || {}).stage || 0)) : 0;
+    const demo = `<div class="card cg-demo"><div class="card-head"><h3>${T("cg.demoTitle")}</h3><span class="right"><button class="btn small primary" data-act="cg-demo" ${D && D.running ? "disabled" : ""}>${D && D.running ? T("cg.demoRunning") : T("cg.demoRun")}</button></span></div>
+      <p class="lead-s">${T("cg.demoLead")}</p>${cgStepper(stages, reached, D && D.running ? Math.min(reached, 6) : -1)}
+      ${D ? `<div class="meta mt8">${T("cg.demoQ")}: <b>${esc(D.q)}</b></div><div class="tbl-wrap mt8"><table class="tbl cg-demo-tbl"><thead><tr><th>${T("cg.agentCol")}</th><th>${T("cg.answerCol")}</th><th>${T("cg.feedbackCol")}</th><th>${T("cg.linkCol")}</th></tr></thead><tbody>
+        ${AGENTS3.map((a) => { const r = D.rows[a] || {}; return `<tr><td class="nowrap">${statusDot(r.status === "error" ? "error" : r.stage >= 4 ? "ok" : r.status === "done" ? "ok" : "running")} ${esc(T("ag." + a))}<div class="mini-steps">${stages.map((s, i) => `<i class="${i < (r.stage || 0) ? "on" : ""}" title="${esc(s.label)}"></i>`).join("")}</div></td>
+          <td>${r.answer ? esc(String(r.answer).slice(0, 160)) + (String(r.answer).length > 160 ? "…" : "") : `<span class="meta">${T("common.loading")}</span>`}</td><td>${r.sentence ? esc(r.sentence) : ""}${r.err ? `<div class="err-t">${esc(r.err)}</div>` : ""}</td>
+          <td class="nowrap">${r.run ? `<a class="tag mono" href="#" data-act="cg-node" data-id="${esc(r.run)}">Run #${esc(shortId(r.run))}</a>` : ""}${r.cand ? ` → <a class="tag mono" href="#" data-act="cg-node" data-id="${esc(r.cand)}">Cand #${esc(shortId(r.cand))}</a>` : ""}${r.cs ? ` → <a class="tag mono" href="#" data-act="cg-node" data-id="${esc(r.cs)}">CS · ${esc(r.cq || "")}</a>` : ""}</td></tr>`; }).join("")}</tbody></table></div>
+        ${D.done ? `<div class="note mt8">${T("cg.demoDone")}</div>` : ""}` : ""}</div>`;
+    const ci = S.ui.cgIn || (S.ui.cgIn = { agent: (S.ui.agRes && S.ui.agRes.agent) || "hybrid", question: (S.ui.agRes && S.ui.agRes.question) || "", answer: (S.ui.agRes && S.ui.agRes.answer) || "" });
+    const input = `<div class="card"><div class="card-head"><h3>${T("cg.inputTitle")}</h3></div><p class="lead-s">${T("cg.inputLead")}</p>
+      <div class="form cg-form"><div class="field"><label>${T("cg.agent")}</label><select data-cgf="agent">${AGENTS3.map((a) => `<option value="${a}" ${ci.agent === a ? "selected" : ""}>${esc(T("ag." + a))}</option>`).join("")}</select></div>
+      <div class="field"><label>${T("cg.question")}</label><input data-cgf="question" value="${esc(ci.question)}"></div>
+      <div class="field wide"><label>${T("cg.answer")}</label><textarea data-cgf="answer" rows="3">${esc(ci.answer)}</textarea></div></div>${fbWidget("cg")}</div>`;
+    const c = v.counts || {};
+    const kpi = (k, val) => `<div class="kpi"><div class="k">${k}</div><div class="v">${val ?? 0}</div></div>`;
+    const stats = `<div class="card"><div class="card-head"><h3>${T("cg.stats")}</h3></div><div class="kpis cg-kpis">${kpi(T("cg.runs"), c.runs)}${kpi(T("cg.events"), c.events)}${kpi(T("cg.feedback"), c.feedback)}${kpi(T("cg.candidates"), c.candidates)}${kpi(T("cg.pending"), v.pending)}${kpi(T("cg.changesets"), c.changesets)}</div>
+      ${v.object ? `<div class="meta mt12">${T("cg.object")}: <span class="mono small">${esc(v.object)}</span>${v.updated_at ? ` · ${T("cg.updated")} ${esc(v.updated_at)}` : ""}</div>` : ""}</div>`;
+    const pending = (v.candidates || []).filter((x) => x.status === "PENDING").slice(-10).reverse();
+    const recent = (v.approvals || []).slice(-5).reverse();
+    const review = `<div class="card"><div class="card-head"><h3>${T("cg.review")}</h3><span class="sub">${T("cg.reviewSub")}</span></div>
+      ${pending.length ? pending.map(cgReviewRow).join("") : `<div class="empty">${T("cg.noPending")}</div>`}
+      ${recent.length ? `<div class="eyebrow mt16">${T("cg.recent")}</div><ul class="trace mt8">${recent.map((a) => `<li>${statusDot(a.decision === "approve" ? "ok" : "idle")}<span><a href="#" data-act="cg-node" data-id="${esc(a.approval_id)}">${esc(a.decision)}</a> · #${esc(shortId(a.candidate_id))} ${a.note ? "· " + esc(a.note) : ""}</span><span class="ms">${esc(String(a.ts || "").slice(11, 16))}</span></li>`).join("")}</ul>` : ""}</div>`;
+    const viewer = `<div class="card"><div class="card-head"><h3>${T("cg.viewer")}</h3><span class="sub">${T("cg.viewerSub")}</span></div>
+      ${v.nodes.length ? `<div class="graph-wrap cg-wrap">${cgSvg(v, sel)}</div>` : `<div class="empty">${T("cg.empty")}</div>`}</div>`;
+    return top + err + cgArch() + demo + viewer + `<div class="grid2">${`<div class="card"><div class="card-head"><h3>${T("cg.inspector")}</h3></div>${cgInspector(v, sel)}</div>`}${review}</div><div class="grid2">${input}${stats}</div>` + cgFlow(v) + cgData(v) + cgExamples();
+  });
+  async function cgDemo() {
+    const cqs = S.data.cqs || [];
+    if (!cqs.length) { toast(T("cg.demoNoCq"), 5000); return; }
+    const q = cqs[0].question;
+    const D = S.ui.demo = { running: true, done: false, q, rows: {} };
+    AGENTS3.forEach((a) => { D.rows[a] = { stage: 0, status: "running" }; });
+    const paint = () => { if (S.route === "studio/cg") rerender(); };
+    paint();
+    const one = async (a) => {
+      const row = D.rows[a];
+      let res = null;
+      await stream("/api/v5/agent", { ws: wsRef(), agent: a, question: q }, (ev) => {
+        if (ev.type === "result") res = ev;
+        else if (ev.type === "error") res = { status: "ERROR", agent: a, question: q, answer: ev.message || ev.status };
+      });
+      res = res || { status: "ERROR", agent: a, question: q, answer: "-" };
+      row.answer = res.answer || ""; row.run = res.cg_run_id || ""; row.stage = row.run ? 2 : 1;
+      if (res.cg_error) row.err = res.cg_error;
+      paint();
+      row.sentence = T("cg.demoS." + a);
+      const j = await api("/api/v5/cg/feedback", { ws: wsRef(), run_id: row.run, agent: a, question: q, answer: row.answer, sentence: row.sentence, rating: a === "hybrid" ? "up" : "down" });
+      if (j.status === "OK") { row.run = j.run_id; row.cand = (j.candidate && j.candidate.candidate_id) || ""; row.stage = row.cand ? 4 : 3; row.status = "done"; }
+      else { row.status = "error"; row.err = j.message || j.status; }
+      paint();
+    };
+    await Promise.all(AGENTS3.map(one));
+    const w = D.rows.wiki;
+    if (w.cand) {
+      const r = await api("/api/v5/cg/review", { ws: wsRef(), candidate_id: w.cand, decision: "approve", note: "demo" });
+      if (r.status === "OK") { w.stage = 7; w.cs = (r.changeset && r.changeset.changeset_id) || ""; w.cq = (r.cq && r.cq.id) || ""; if (r.cqs) S.data.cqs = r.cqs; }
+      else { w.err = r.message || r.status; }
+    }
+    D.running = false; D.done = true;
+    S.ui.cgFocus = w.cs || w.cand || w.run || "";
+    S.cg = null;
+    paint();
+  }
 
   // hand-off
   PAGES.handoff = () => studioPage(["calls"], () => {
@@ -1113,13 +1492,13 @@
     go: (a) => { if (a.dataset.need === "objective" && !S.scenario.objective.trim()) { toast(T("scn.needObjective")); return; } go(a.dataset.route); },
     "copy-pre": (a) => copy(a.parentElement.querySelector("pre").textContent),
     copy: (a) => copy(a.dataset.text),
-    reset: () => {
-      if (!confirm(T("ws.resetConfirm"))) return;
+    reset: () => confirmModal(T("ws.resetConfirm"), () => {
       localStorage.removeItem(LS);
       sessionStorage.removeItem(TOKEN_KEY);
       location.hash = "#/start";
       location.reload();
-    },
+    }),
+    "confirm-ok": () => { const fn = confirmFn; closeModal(); if (fn) fn(); },
     "start-sample": async () => {
       applyPreset("telecom");
       S.identMode = "runtime";
@@ -1319,7 +1698,7 @@
           const i = S.ui.agLive.findIndex((x) => x.step === ev.step);
           if (i >= 0) S.ui.agLive[i] = ev; else S.ui.agLive.push(ev);
           const ul = $(".trace"); if (ul) ul.innerHTML = S.ui.agLive.map((e) => `<li>${statusDot(e.status)}<span>${esc(e.label)}${e.detail ? " — " + esc(e.detail) : ""}</span><span class="ms">${e.ms != null ? e.ms + " ms" : ""}</span></li>`).join("");
-        } else if (ev.type === "result") S.ui.agRes = ev;
+        } else if (ev.type === "result") { S.ui.agRes = ev; fbState("ag"); S.ui.fb.ag = {}; if (ev.cg_error) toast(T("cg.err", { e: ev.cg_error }), 6000); }
         else if (ev.type === "error") S.ui.agRes = { status: "ERROR", agent: S.ui.agent, answer: ev.message || ev.status };
       });
       S.busy.ag = false; rerender();
@@ -1367,6 +1746,36 @@
       openWs(j.ws); closeModal(); toast(T("ws.opened")); go("studio/overview");
     },
     "modal-close": () => closeModal(),
+    // GOAL-285 sentence feedback + Context Graph
+    "fb-rate": (a) => { const st = fbState(a.dataset.scope); st.rating = st.rating === a.dataset.v ? "" : a.dataset.v; rerender(); },
+    "fb-reason": (a) => { const st = fbState(a.dataset.scope); st.reason = st.reason === a.dataset.v ? "" : a.dataset.v; rerender(); },
+    "fb-send": (a) => fbSend(a.dataset.scope),
+    "cg-goto": (a) => {
+      $("#toast").classList.remove("on", "has-link");
+      S.ui.cgFocus = a.dataset.cand || a.dataset.run || ""; S.ui.cgSel = ""; S.cg = null;
+      if (S.route === "studio/cg") rerender(); else go("studio/cg");
+    },
+    "cg-node": (a) => { S.ui.cgSel = S.ui.cgSel === a.dataset.id ? "" : a.dataset.id; rerender(); },
+    "cg-refresh": () => { S.cg = null; rerender(); },
+    "cg-tab": (a) => { S.ui.cgTab = a.dataset.t; rerender(); },
+    "cg-rc": (a) => { S.ui.cgRc = a.dataset.t; rerender(); },
+    "cg-ex2": () => cgEx2(),
+    "cg-reask": (a) => { if (!S.busy.cmp) cgReask(a.dataset.run); },
+    "cg-demo": () => { if (!(S.ui.demo && S.ui.demo.running)) cgDemo(); },
+    "cg-review": async (a) => {
+      const id = a.dataset.id, d = a.dataset.d;
+      const note = (document.querySelector(`[data-cgnote="${id}"]`) || {}).value || "";
+      S.busy.cgRv = true; rerender();
+      const j = await api("/api/v5/cg/review", { ws: wsRef(), candidate_id: id, decision: d, note });
+      S.busy.cgRv = false;
+      if (j.status === "OK") {
+        if (j.cqs) S.data.cqs = j.cqs;
+        S.ui.cgFocus = (j.changeset && j.changeset.changeset_id) || id;
+        toast(d === "approve" ? T("cg.approved", { cs: shortId(j.changeset && j.changeset.changeset_id), cq: (j.cq && j.cq.id) || j.cq_error || "-" }) : T("cg.rejected"), 6000);
+        S.cg = null;
+      } else errToast(j);
+      rerender();
+    },
   };
   async function evalRun(ids) {
     if (S.ui.cqDraft && !(await ACTIONS["cq-save"]())) return;
@@ -1394,13 +1803,28 @@
     if (tp.flow) S.tpl = { flow: tp.flow, services: (tp.services || []).slice(), target: tp.target || "sandbox", source: tp.source || S.tpl.source || "" };
     save();
   }
-  function openModal() {
-    $("#modal-card").innerHTML = `<div class="card-head"><h2>${T("ws.openTitle")}</h2><span class="right"><button class="btn small" data-act="modal-close">${T("common.close")}</button></span></div>
-      <div class="form"><div class="field"><label>${T("ws.bucket")}</label><input id="m-bucket" value="${esc(S.env.bucket || "")}"></div><div class="field"><label>${T("ws.id")}</label><input id="m-id" placeholder="ws-YYYYMMDD-xxxxxx"></div></div>
-      <div class="form-actions"><button class="btn" data-act="ws-list">${T("ws.list")}</button><button class="btn primary" data-act="ws-open">${T("common.open")}</button></div><div class="srclist mt12" id="m-list"></div>`;
+  // GOAL-285 (REQ-7): every dialog uses the same shell — 56px header, ✕ top-right, scrollable body, right-aligned footer.
+  function modalShell(title, body, foot, size) {
+    const card = $("#modal-card");
+    card.className = "modal-card" + (size ? " " + size : "");
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.innerHTML = `<div class="modal-head"><h2>${esc(title)}</h2><button type="button" class="modal-x" data-act="modal-close" aria-label="${esc(T("common.close"))}">✕</button></div>
+      <div class="modal-body">${body}</div>${foot ? `<div class="modal-foot">${foot}</div>` : ""}`;
     $("#modal").hidden = false;
   }
-  function closeModal() { $("#modal").hidden = true; }
+  function openModal() {
+    modalShell(T("ws.openTitle"), `<div class="form"><div class="field"><label>${T("ws.bucket")}</label><input id="m-bucket" value="${esc(S.env.bucket || "")}"></div><div class="field"><label>${T("ws.id")}</label><input id="m-id" placeholder="ws-YYYYMMDD-xxxxxx"></div></div>
+      <div class="srclist mt12" id="m-list"></div>`,
+      `<button class="btn" data-act="modal-close">${T("common.cancel")}</button><button class="btn" data-act="ws-list">${T("ws.list")}</button><button class="btn primary" data-act="ws-open">${T("common.open")}</button>`);
+  }
+  let confirmFn = null;
+  function confirmModal(msg, fn) {
+    confirmFn = fn;
+    modalShell(T("common.confirm"), `<p>${esc(msg)}</p>`, `<button class="btn" data-act="modal-close">${T("common.cancel")}</button><button class="btn primary" data-act="confirm-ok">${T("common.confirm")}</button>`, "sm");
+  }
+  function closeModal() { $("#modal").hidden = true; confirmFn = null; }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#modal").hidden) closeModal(); });
 
   document.addEventListener("click", (e) => {
     const a = e.target.closest("[data-act]");
@@ -1410,6 +1834,8 @@
   });
   document.addEventListener("input", (e) => {
     const el = e.target;
+    if (el.dataset && el.dataset.fbtext) { fbState(el.dataset.fbtext).text = el.value; return; }
+    if (el.dataset && el.dataset.cgf) { (S.ui.cgIn = S.ui.cgIn || {})[el.dataset.cgf] = el.value; return; }
     if (el.id === "tok") { sessionStorage.setItem(TOKEN_KEY, el.value.trim()); S.identInfo = null; return; }
     const b = el.dataset && el.dataset.bind;
     if (!b) return;
