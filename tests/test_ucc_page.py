@@ -49,10 +49,10 @@ class SplitSections(unittest.TestCase):
         self.assertIn("```mermaid", secs[1]["markdown"])
 
     def test_published_docs_have_many_sections(self):
-        for d in ("brd", "sdd"):
+        for d in ("brd", "sdd", "onepager", "discovery"):
             doc = ucc_pages.load_doc(d)
             self.assertIsNotNone(doc, f"{d}.md must be published (ucc/scripts/publish_to_starter.py)")
-            self.assertGreaterEqual(doc["section_count"], 8)
+            self.assertGreaterEqual(doc["section_count"], 5 if d in ("onepager", "discovery") else 8)
             self.assertTrue(doc["version"].startswith("v"))
             # no internal IDs leak into the shared docs
             full = "\n".join(s["markdown"] for s in doc["sections"])
@@ -60,7 +60,7 @@ class SplitSections(unittest.TestCase):
                 self.assertNotIn(tag, full, f"{d}: internal id {tag} leaked")
 
     def test_english_edition_matches_korean_structure(self):
-        for d in ("brd", "sdd"):
+        for d in ("brd", "sdd", "onepager", "discovery"):
             ko, en = ucc_pages.load_doc(d, "ko"), ucc_pages.load_doc(d, "en")
             self.assertIsNotNone(en, f"{d}_en.md must be published")
             self.assertEqual(en["lang"], "en")
@@ -74,9 +74,11 @@ class SplitSections(unittest.TestCase):
     def test_manifest_demo_url(self):
         m = ucc_pages.docs_payload()
         self.assertTrue(m["demo_url"].startswith("https://"))
-        self.assertEqual(set(m["docs"]) & {"brd", "sdd"}, {"brd", "sdd"})
+        self.assertEqual(set(m["docs"]) & {"brd", "sdd", "onepager", "discovery"}, {"brd", "sdd", "onepager", "discovery"})
         self.assertEqual(m["langs"], ["ko", "en"])
         self.assertEqual(m["docs"]["brd"]["en"]["version"], m["docs"]["brd"]["ko"]["version"])
+        self.assertEqual(m["docs"]["onepager"]["en"]["version"], m["docs"]["onepager"]["ko"]["version"])
+        self.assertEqual(m["docs"]["discovery"]["en"]["version"], m["docs"]["discovery"]["ko"]["version"])
 
 
 class ValidateComment(unittest.TestCase):
@@ -132,7 +134,7 @@ class Routes(unittest.TestCase):
             return r.status, r.headers.get("Content-Type", ""), r.read()
 
     def test_pages_and_apis(self):
-        for p in ("/ucc", "/ucc/brd", "/ucc/sdd"):
+        for p in ("/ucc", "/ucc/brd", "/ucc/sdd", "/ucc/onepager", "/ucc/discovery"):
             st, ct, body = self.get(p)
             self.assertEqual(st, 200)
             self.assertIn("text/html", ct)
@@ -141,6 +143,18 @@ class Routes(unittest.TestCase):
         st, _, body = self.get("/api/ucc/doc?id=sdd")
         self.assertEqual(st, 200)
         self.assertEqual(json.loads(body)["id"], "sdd")
+        st, _, body = self.get("/api/ucc/doc?id=onepager")
+        self.assertEqual(st, 200)
+        self.assertEqual(json.loads(body)["id"], "onepager")
+        st, _, body = self.get("/api/ucc/doc?id=onepager&lang=en")
+        d_op = json.loads(body)
+        self.assertEqual((d_op["lang"], d_op["id"]), ("en", "onepager"))
+        st, _, body = self.get("/api/ucc/doc?id=discovery")
+        self.assertEqual(st, 200)
+        self.assertEqual(json.loads(body)["id"], "discovery")
+        st, _, body = self.get("/api/ucc/doc?id=discovery&lang=en")
+        d_dc = json.loads(body)
+        self.assertEqual((d_dc["lang"], d_dc["id"]), ("en", "discovery"))
         st, _, body = self.get("/api/ucc/doc?id=sdd&lang=en")
         d = json.loads(body)
         self.assertEqual((d["lang"], d["title"]), ("en", "SDD — Solution Design"))

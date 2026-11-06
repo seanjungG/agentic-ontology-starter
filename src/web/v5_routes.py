@@ -43,7 +43,7 @@ from src.aos import context_graph as cg
 from src.aos import intake, pipeline, sources, studio
 from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, clean_template, default_dataset, env_defaults, error_text, load,
                         new_workspace, new_ws_id, now_iso, save)
-from src.config import APP_VERSION, GITHUB_URL
+from src.config import APP_VERSION, DEMO_WS, GITHUB_URL, NOTEBOOK_URL
 from src.gcp_client import call_core_mcp_tool, runtime_settings
 
 UPLOAD_MAX = intake.MAX_CONVERT_BYTES  # GOAL-243: binary documents up to 12 MB (converted by Core MCP)
@@ -53,7 +53,7 @@ STREAM_PATHS = {"/api/v5/build", "/api/v5/agent", "/api/v5/eval", "/api/v5/graph
 def bootstrap(lang: str) -> Dict[str, Any]:
     s = runtime_settings()
     return {"version": APP_VERSION, "lang": lang, "presets": studio.presets(lang), "env_defaults": env_defaults(),
-            "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL,
+            "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL, "notebook_url": NOTEBOOK_URL, "demo_ws": DEMO_WS,
             "model": s["vertex_model"], "impersonation": bool(__import__("os").environ.get("STARTER_IMPERSONATE_ALLOW", "").strip()),
             "stages": list(pipeline.STAGES), "max_upload_bytes": UPLOAD_MAX, "upload_ext": list(intake.ALL_UPLOAD_EXT)}
 

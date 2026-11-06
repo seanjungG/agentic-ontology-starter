@@ -13,15 +13,24 @@
 <header class="ucc-top">
   <a class="ucc-brand" href="/" title="Agentic Ontology Starter"><svg class="glogo" viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg><span>Agentic Ontology Starter</span><span class="ucc-crumb">/ UCC</span></a>
   <nav class="ucc-tabs" id="ucc-tabs" aria-label="문서">
-    <a class="ucc-tab" data-doc="brd" href="/ucc/brd">BRD <small></small></a>
-    <a class="ucc-tab" data-doc="sdd" href="/ucc/sdd">SDD <small></small></a>
-    <a class="ucc-tab ucc-demo" id="ucc-demo" href="#" rel="noopener">Demo <small></small><span class="arrow">↗</span></a>
-    <a class="ucc-tab ucc-demo" id="ucc-notebook" href="#" rel="noopener">Notebook <small></small><span class="arrow">↗</span></a>
+    <!-- GOAL-270: 1-Pager · Discovery live under the BRD menu (BRD ▾). Subtitles moved to tooltips / menu items so the bar never wraps. -->
+    <div class="ucc-dd" id="ucc-brd-group">
+      <a class="ucc-tab ucc-tab-group" data-doc="brd" href="/ucc/brd">BRD<span class="ucc-tab-child" id="ucc-brd-child"></span></a>
+      <button type="button" class="ucc-dd-btn" id="ucc-brd-caret" aria-haspopup="true" aria-expanded="false" aria-controls="ucc-brd-menu">▾</button>
+      <div class="ucc-dd-menu" id="ucc-brd-menu" role="menu">
+        <a class="ucc-dd-item" role="menuitem" data-doc="brd" href="/ucc/brd"><b>BRD</b><small></small></a>
+        <a class="ucc-dd-item" role="menuitem" data-doc="onepager" href="/ucc/onepager"><b>1-Pager</b><small></small></a>
+        <a class="ucc-dd-item" role="menuitem" data-doc="discovery" href="/ucc/discovery"><b>Discovery</b><small></small></a>
+      </div>
+    </div>
+    <a class="ucc-tab" data-doc="sdd" href="/ucc/sdd">SDD</a>
+    <a class="ucc-tab ucc-demo" id="ucc-demo" href="#" rel="noopener">Demo<span class="arrow">↗</span></a>
+    <a class="ucc-tab ucc-demo" id="ucc-notebook" href="#" rel="noopener">Notebook<span class="arrow">↗</span></a>
   </nav>
   <span class="spacer"></span>
   <span class="ucc-meta" id="ucc-meta"></span>
   <span class="lang-toggle" id="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="ko">KO</button><button type="button" data-lang="en">EN</button></span>
-  <button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-toggle-panel" title="">💬 <span id="ucc-count">0</span></button>
+  <button type="button" class="ucc-btn ucc-panel-btn" id="ucc-toggle-panel" title="" aria-pressed="false">💬 <span id="ucc-panel-btn-label"></span> <span class="ucc-count" id="ucc-count">0</span></button>
 </header>
 
 <div class="ucc-layout">
@@ -35,7 +44,7 @@
     <p class="ucc-foot" id="ucc-foot"></p>
   </main>
   <aside class="ucc-panel" id="ucc-panel" aria-label="코멘트">
-    <div class="ucc-panel-head"><b id="ucc-panel-title"></b> <span class="ucc-dim" id="ucc-panel-sub"></span><span class="spacer"></span><button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-admin" title="">🔑</button><button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-refresh" title="">↻</button></div>
+    <div class="ucc-panel-head"><b id="ucc-panel-title"></b> <span class="ucc-dim" id="ucc-panel-sub"></span><span class="spacer"></span><button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-admin" title="">🔑</button><button type="button" class="ucc-btn ucc-btn-ghost" id="ucc-refresh" title="">↻</button><button type="button" class="ucc-x" id="ucc-panel-close" aria-label="닫기">×</button></div>
     <div class="ucc-panel-list" id="ucc-panel-list"></div>
   </aside>
 </div>

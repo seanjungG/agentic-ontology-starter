@@ -187,6 +187,8 @@
     $("#chip-id").innerHTML = `${statusDot(info ? "ok" : "idle")} ${esc(T("id." + S.identMode))}${info && info.principal ? ` <b class="mono">${esc(info.principal)}</b>` : ""}`;
     $("#chip-version").textContent = (S.boot && S.boot.version) || "";
     $("#chip-wizard").textContent = T("top.wizard");
+    const nb = $("#chip-notebook");
+    if (nb) { nb.textContent = T("top.notebook"); nb.href = ((S.boot && S.boot.notebook_url) || nb.href.replace(/\/$/, "")).replace(/\/$/, "") + "/#ov"; }
     document.querySelectorAll("#lang-toggle button").forEach((b) => b.classList.toggle("on", b.dataset.lang === S.lang));
     document.documentElement.lang = S.lang;
   }
@@ -242,11 +244,31 @@
   const PAGES = {};
   const AFTER = {};
 
-  PAGES.start = () => `
+  // GOAL-288 ("start easily, experience first"): one-click finished workspace + notebook Lab 1 · 2 · 3 + GitHub, above the hero
+  const nbUrl = (h) => `${((S.boot && S.boot.notebook_url) || "").replace(/\/$/, "")}/#${h}`;
+  const ghUrl = () => (S.boot && S.boot.github_url) || "https://github.com/seanjungG/agentic-ontology-starter";
+  function instantBar() {
+    const d = (S.boot && S.boot.demo_ws) || {};
+    const go = (route, key) => `<button class="btn ${route === "studio/agents" ? "primary" : ""}" data-act="open-demo" data-route="${route}">${T(key)}</button>`;
+    return `<div class="card instant"><div class="instant-head"><span class="instant-k">${T("start.instant.k")}</span>
+        <h2>${T("start.instant.t")}</h2><p>${T("start.instant.d", { ws: esc(d.ws_id || "") })}</p></div>
+      <div class="instant-acts">${go("studio/agents", "start.instant.agents")}${go("studio/cg", "start.instant.cg")}${go("studio/graph", "start.instant.graph")}${go("studio/wiki", "start.instant.wiki")}</div></div>`;
+  }
+  function pillars() {
+    const P = [["ov", "studio/graph", 1], ["w0", "studio/agents", 2], ["c0", "studio/cg", 3]];
+    return `<div class="card"><div class="card-head"><h2>${T("start.pill.title")}</h2><span class="sub">${T("start.pill.sub")}</span></div><div class="pillars">
+      ${P.map(([h, route, i]) => `<div class="pillar"><div class="pillar-k">Lab ${i} · <code>#${h}</code></div><h3>${T(`start.pill${i}.t`)}</h3><p>${T(`start.pill${i}.d`)}</p>
+        <div class="pillar-acts"><a class="btn small primary" href="${esc(nbUrl(h))}" target="_blank" rel="noopener">${T("start.pill.nb", { n: String(i) })}</a>
+        <button class="btn small" data-act="open-demo" data-route="${route}">${T(`start.pill${i}.studio`)}</button></div></div>`).join("")}
+      </div><div class="journey">${[1, 2, 3].map((i) => `<div class="jstep"><span class="jn">${i}</span><div><b>${T(`start.j${i}.t`)}</b><span>${T(`start.j${i}.d`)}</span></div></div>`).join("")}
+        <a class="btn small" href="${esc(ghUrl())}" target="_blank" rel="noopener">${T("start.github")}</a></div></div>`;
+  }
+  PAGES.start = () => instantBar() + `
     <div class="card hero"><div class="eyebrow">${T("start.eyebrow")}</div><h1>${T("start.title")}</h1><p>${T("start.lead")}</p>
       <div class="cta"><button class="btn big primary" data-act="start-sample">${T("start.ctaSample")}</button>
       <button class="btn big dark" data-act="start-own">${T("start.ctaOwn")}</button>
       <button class="btn big" data-act="ws-open-modal">${T("start.ctaOpen")}</button></div></div>
+    ${pillars()}
     <div class="card"><div class="card-head"><h2>${T("start.flowTitle")}</h2><span class="sub">${T("start.flowSub")}</span></div><div id="flow-host" class="flow-host"></div></div>
     <div class="card"><div class="card-head"><h2>${T("start.layersTitle")}</h2></div><div class="layers">
       ${[1, 2, 3].map((i) => `<div class="layer l${i}"><h3>${T(`start.l${i}.t`)}</h3><p>${T(`start.l${i}.d`)}</p><ul>${[1, 2, 3].map((j) => `<li>${esc(T(`start.l${i}.b${j}`))}</li>`).join("")}</ul></div>`).join("")}
@@ -1738,6 +1760,17 @@ python3 -m src.cli ask --bucket ${b} --ws ${w} --agent wiki --apply-cg "..."   #
       const host = $("#m-list");
       if (j.status !== "OK") { host.innerHTML = `<div class="note err">${esc(j.message || j.status)}</div>`; return; }
       host.innerHTML = j.workspaces.length ? j.workspaces.map((w) => `<div class="src"><span class="tag mono">${esc(w.ws_id)}</span><div class="nm">${esc(w.title || "")}<div class="uri">${esc(w.updated_at || "")} · ${esc(w.lang || "")}</div></div><span class="meta">${Object.values(w.stages || {}).filter((s) => s === "done").length}/6</span><button class="btn small primary" data-act="ws-open" data-b="${esc(j.bucket)}" data-id="${esc(w.ws_id)}">${T("common.open")}</button></div>`).join("") : `<div class="empty">${T("ws.listEmpty")}</div>`;
+    },
+    "open-demo": async (a) => {
+      const d = (S.boot && S.boot.demo_ws) || {};
+      if (!d.bucket || !d.ws_id) { toast(T("start.instant.none"), 4000); return; }
+      if (!(S.wsId === d.ws_id && S.wsCreated)) {
+        const j = await api("/api/v5/ws/open", { ws: { bucket: d.bucket, ws_id: d.ws_id } });
+        if (j.status !== "OK") { toast(j.message || j.status, 5000); return; }
+        openWs(j.ws);
+        history.replaceState(null, "", `?bucket=${encodeURIComponent(d.bucket)}&ws=${encodeURIComponent(d.ws_id)}${location.hash}`);
+      }
+      toast(T("start.instant.opened", { ws: d.ws_id })); go(a.dataset.route || "studio/overview");
     },
     "ws-open": async (a) => {
       const b = a.dataset.b || $("#m-bucket").value.trim(), id = a.dataset.id || $("#m-id").value.trim();
