@@ -3,12 +3,30 @@
 > **이 스튜디오 + 이 깃헙만 있으면** 내 데이터 · 내 GCP로 엔터프라이즈 온톨로지 에이전트(OKF 위키 · **Spanner Graph**(기본 Semantic Graph) · Wiki/Graph/Hybrid 에이전트 · CQ 평가)를 만들고, 같은 결과를 다시 만드는 **CLI · MCP 호출 파라미터 · 코드 번들**로 가져가는 스타터 팩입니다.
 > 방법론의 핵심 노하우(위키 컴파일 · 그래프 설계 · 에이전트 추론 · 채점)는 **Platform Core MCP 도구** 안에만 있고, 이 저장소는 그 도구를 **어떤 순서로 · 어떤 파라미터로** 부르는지를 담습니다. 서버는 Python 3.11 표준 라이브러리만 씁니다.
 
-| 구분 | 주소 | 설명 |
+> **스타터팩의 역할은 "쉽게 시작하고 직접 경험하는 것"입니다.** 설치 없이 완성된 워크스페이스를 1클릭으로 열어 보고 → 노트북으로 원리를 익히고 → 내 데이터 · 내 GCP로 만들어 코드로 가져가세요.
+
+## 🚀 30초 만에 시작하고 직접 경험하기 (Instant Live Experience — Zero Setup)
+
+| 구분 | 바로가기 | 무엇을 경험하나 |
 | :--- | :--- | :--- |
-| **스타터 스튜디오** | [agentic-ontology-starter ↗](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/) | 이해 → 상황 · 목적 → GCP · 권한 → 데이터 → 구축 → 스튜디오 → 코드 인계 |
-| **레퍼런스 마법사** | [`/wizard` ↗](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/wizard#step-1) | 큐레이션된 샘플 결과(Flow A/B/C, 기준 100점) — 비교용 |
-| **노트북 랩** | [agentic-ontology-starter-notebook ↗](https://agentic-ontology-starter-notebook-115847445822.asia-northeast3.run.app/) | 같은 방법론을 셀 단위로 배우는 실습 |
-| **Platform Core MCP** | `https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp` | 도구 44종 = 빌드 10 + 데이터 플레인 28 + **노하우 6** · JSON-RPC `tools/list` · `tools/call` |
+| 🏛️ **스타터 스튜디오** | [메인 스튜디오 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | `⓪ 이해` 전체 흐름 → **샘플로 바로 체험**(데모 신원 · 샘플 팩) → 내 데이터로 구축 → 코드 인계 |
+| ⚡ **완성 워크스페이스 1클릭** | [3-에이전트 질의 · 문장 피드백 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) | 구축 대기 0초 · 평가 **100점** 워크스페이스 `ws-20261105-5525c8`에서 Wiki · Graph · Hybrid 에이전트에 바로 질문하고 답변마다 문장 피드백 |
+| ⚡ **완성 워크스페이스 1클릭** | [4-Layer Context Graph · 3-에이전트 시연 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) | 피드백 → 암묵지 후보 → SME 승인 → ChangeSet 폐루프를 1클릭 시연 |
+| 🧭 **레퍼런스 마법사** | [`/wizard` ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/wizard#step-1) | 큐레이션된 샘플 결과(Flow A/B/C, 기준 100점) — 비교용 |
+| 📓 **노트북 Lab 1 · 온톨로지** | [`#ov` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) | CQ → OKF 위키 → Spanner Graph → Knowledge Catalog · GQL Agent → 두 에이전트 평가 (실습 `#n1`~`#n5`) |
+| 📓 **노트북 Lab 2 · 워크플로우** | [`#w0` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) | 룰 · 워크플로우 추출 → Spanner Graph 확장 → Workflow Agent → 평가 → 승인 기반 데이터 변경 (실습 `#w1`~`#w5`) |
+| 📓 **노트북 Lab 3 · Context Graph** | [`#c0` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) | 3-에이전트 답변 기록 → 감사 → 문장 · 👍/👎 피드백 → 암묵지 후보 → 승인 · KC 반영 → 재질의 (실습 `#c1`~`#c6`) |
+| 🔌 **Platform Core MCP** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | `1.11.0` · 도구 **57종** = 빌드 10 + 데이터 플레인 28 + 코어 · 인테이크 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) · JSON-RPC `tools/list` · `tools/call` |
+
+> 노트북 랩은 Google 계정 로그인 후 세션마다 내 GCS 버킷 · Spanner DB가 만들어지고(미사용 시 자동 삭제), 스튜디오의 완성 워크스페이스는 읽기 체험용 공유 샘플입니다.
+
+### 3단계 입문 여정 (Onboarding Journey)
+
+| 단계 | 시간 | 하는 일 | 바로가기 |
+| :---: | :---: | :--- | :--- |
+| **① 1분 체험** | 1분 | 설정 · 빌드 없이 완성 워크스페이스에서 3-에이전트 질의 → 문장 피드백 → Context Graph 반영을 바로 경험 | [에이전트](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) · [Context Graph](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) |
+| **② 원리 실습** | 30분~ | 노트북 Lab 1 · 2 · 3의 전체 도식과 셀 단위 실행으로 OKF 위키 · Spanner Graph · Workflow Agent · Context Graph의 작동 원리를 체득 | [Lab 1](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) · [Lab 2](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) · [Lab 3](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) |
+| **③ 내 데이터 구축 · 인계** | 10분~ | 스튜디오에서 내 문서(PDF · DOCX · CSV · BigQuery)로 구축하고 CLI · 단일 파일 에이전트(`aos_agent_standalone.py`) · MCP 번들로 내 프로젝트에 이식 | [스튜디오](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) · [§4 빠른 시작](#4-빠른-시작) · [§6 인계 번들](#6-코드--mcp-인계-번들) |
 
 설계 문서: [`docs/20261019_v1_starter_v5_redesign.md`](docs/20261019_v1_starter_v5_redesign.md)
 
@@ -79,7 +97,7 @@ python3 -m src.cli cg --bucket B --ws WS graph | rules | review --candidate cand
 python3 -m src.cli ask --bucket B --ws WS --agent wiki --apply-cg "..."    # 승인 규칙 주입 재질의
 ```
 
-- Python: `src.aos.context_graph` 의 `record_run · record_feedback · review · approved_rules · graph_view` (표준 라이브러리만). MCP: Core MCP에는 아직 Context Graph 전용 도구가 없습니다(**GOAL-284 확장 예정**) — 지금은 `storage_read_object`로 `graph.json`을 읽고, `aos_core_agent_step` 컨텍스트의 `CG-RULES` 페이지로 승인 규칙을 전달합니다.
+- Python: `src.aos.context_graph` 의 `record_run · record_feedback · review · approved_rules · graph_view` (표준 라이브러리만). MCP: Core MCP `1.11.0`(GOAL-284)에 Context Graph 도구 5종이 배포되어 있습니다 — `aos_core_cg_parse_feedback`(문장 → polarity · T1~T5/KC_META · 엔티티 · 회귀 CQ) · `aos_core_cg_submit_feedback`(👍/👎 · 사유 칩 · 문장 → L0/L1 기록 + L2 후보) · `aos_core_cg_feedback_flow`(Run → Feedback → Candidate 흐름 조회) · `aos_core_cg_review_candidate`(SME 승인 · 반려) · `aos_core_cg_changeset`(승인 ChangeSet 반영 · 회귀 CQ) — 총 57종. 승인 규칙은 `aos_core_agent_step` 컨텍스트의 `CG-RULES` 페이지로 다음 질의에 주입됩니다.
 - 화면 정돈(REQ-5/7): 개요 · 평가 화면 기준의 슬레이트/인디고 톤으로 상태 색 · 배지 · 제목 크기를 통일하고, 모든 대화상자를 같은 틀(56px 헤더 · 우상단 ✕ · 본문 스크롤 · 우측 정렬 하단 버튼 · Esc 닫기)로 맞췄습니다. 브라우저 기본 `confirm()`도 같은 확인 대화상자로 바꿨습니다.
 
 ---
@@ -124,7 +142,8 @@ python3 -m src.cli ask --bucket B --ws WS --agent wiki --apply-cg "..."    # 승
 ## 4. 빠른 시작
 
 ### 4.1 공개 스튜디오
-1. [스튜디오](https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/) → **샘플로 바로 체험** (데모 신원 · 샘플 팩) → **전체 실행**
+0. **가장 빠른 길**: [완성 워크스페이스 바로 열기](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/overview) — 구축 없이 위키 · 그래프 · 에이전트 · Context Graph 탭을 바로 둘러봅니다.
+1. [스튜디오](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) → **샘플로 바로 체험** (데모 신원 · 샘플 팩) → **전체 실행**
 2. 내 데이터: **내 데이터로 시작** → 목적 입력 → 신원에 토큰(또는 SA 토큰) → 버킷 · 프로젝트 → **환경 점검** → 데이터 업로드 → 구축
 3. 스튜디오에서 위키 · 그래프 · 에이전트를 실험하고 **코드 · MCP 인계**에서 번들을 내려받습니다. 워크스페이스는 `?bucket=<버킷>&ws=<ID>` 링크로 다시 열 수 있습니다.
 
@@ -153,7 +172,7 @@ python3 -m src.cli purge-spanner --project MY_PROJECT --dry-run          # 만�
 ```bash
 gcloud run deploy agentic-ontology-starter --source . --region asia-northeast3 \
   --service-account aos-starter@MY_PROJECT.iam.gserviceaccount.com --timeout 600 \
-  --set-env-vars GCP_PROJECT_ID=MY_PROJECT,BQ_LOCATION=asia-northeast3,GCS_WIKI_BUCKET=MY_BUCKET,STARTER_WRITE_PROJECTS=MY_PROJECT,CORE_MCP_URL=https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp
+  --set-env-vars GCP_PROJECT_ID=MY_PROJECT,BQ_LOCATION=asia-northeast3,GCS_WIKI_BUCKET=MY_BUCKET,STARTER_WRITE_PROJECTS=MY_PROJECT,CORE_MCP_URL=https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp
 ```
 
 ---
@@ -237,6 +256,19 @@ v5 셸 · KO/EN 문구 동등성(EN 한글 0) · 워크스페이스 · 환경 �
 
 **Agentic Ontology Starter** lets anyone with **this studio and this repository** build an enterprise ontology agent on **their own data and their own GCP** — OKF wiki, **Spanner Graph** (default Semantic Graph), Wiki / Graph / Hybrid agents and a CQ evaluation — and take the result away as a **CLI, MCP call parameters and a code bundle**. The core method know-how (wiki compile, graph design, agent reasoning, grading) lives only in the **Platform Core MCP `aos_core_*` tools**; this repository holds which tools are called in which order with which parameters.
 
+**Starting easily and experiencing it first-hand is the job of this starter pack.** No setup needed:
+
+| | Link | What you experience |
+| :--- | :--- | :--- |
+| 🏛️ Starter Studio | [https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | Whole flow (`⓪`) → **Try it with the sample** → build on your data → code hand-off |
+| ⚡ Finished workspace (1 click) | [3 agents + sentence feedback](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) · [4-layer Context Graph demo](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) | Zero build wait, evaluation **100** (`ws-20261105-5525c8`) |
+| 🧭 Reference wizard | [`/wizard`](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/wizard#step-1) | Curated Flow A/B/C results |
+| 📓 Notebook Lab 1 · Ontology | [`#ov`](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) | CQs → OKF wiki → Spanner Graph → Knowledge Catalog · GQL Agent → evaluation |
+| 📓 Notebook Lab 2 · Workflow | [`#w0`](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) | Rules & workflows → graph extension → Workflow Agent → evaluation → approval-gated change |
+| 📓 Notebook Lab 3 · Context Graph | [`#c0`](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) | Log answers → audit → sentence · 👍/👎 feedback → tacit candidates → approval → re-ask |
+| 🔌 Platform Core MCP | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | `1.11.0` · **57 tools** incl. 5 Context Graph tools (`aos_core_cg_*`) |
+
+- **3-step journey**: ① **1-minute try** — open the finished workspace and ask the 3 agents, leave sentence feedback and watch it land in the Context Graph · ② **30-minute hands-on** — follow the Lab 1 · 2 · 3 overviews and run the cells to learn how the OKF wiki, Spanner Graph, Workflow Agent and Context Graph work · ③ **your data & hand-off** — build on your own documents (PDF/DOCX/CSV/BigQuery) in the studio and take it away as CLI, single-file agent (`aos_agent_standalone.py`) and MCP bundle.
 - **Flow**: understand → situation & goal (presets or custom, W1/W2/W3) → GCP & permissions (demo identity, pasted token, or SA; live checks + a ready-to-run setup script) → data (upload .md/.txt/.csv, GCS paths, BigQuery tables, sample pack) → build S0–S5 (re-run any stage) → studio (assets, wiki edit + gates, graph schema + GQL/SQL console + design rebuild, search, agent experiments, CQ evaluation) → hand-off (CLI, MCP call log with curl, MCP client config, single-file agent, zip bundle).
 - **v6 intake** (GOAL-243): pick a flow and services from the Core MCP catalog and compose a template for the starter sandbox or your own project; bring data from local upload, GCS or Google Drive — PDF/DOCX/PPTX/XLSX/HTML are converted to Markdown with a fidelity score; Core MCP detects each document's type (and asks when unsure) and the chosen wiki strategy (direct · typed · re-convert) feeds the wiki compile; then test the agent and open the deployment page (readiness checks + commands). An older Core MCP shows `MCP_UPDATE_NEEDED` while the existing flow keeps working.
 - **Measured** (2026-10-19, `gemini-4-argon` MEDIUM): sample pack ~7 min build, eval **100 (8/8)**; an uploaded insurance-claims data set (1 doc + 3 CSVs) ~6.5 min, eval **100 (8/8)**.

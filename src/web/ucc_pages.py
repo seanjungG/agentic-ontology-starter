@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 UCC_DIR = os.environ.get("UCC_DOCS_DIR") or os.path.join(BASE_DIR, "ucc")
-DOC_IDS = ("brd", "sdd")
+DOC_IDS = ("brd", "sdd", "onepager", "discovery")
 LANGS = ("ko", "en")
 ADMIN_KEY = os.environ.get("UCC_ADMIN_KEY", "").strip()
 COMMENTS_PREFIX = os.environ.get("UCC_COMMENTS_PREFIX", "ucc/comments/").strip("/") + "/"

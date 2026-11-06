@@ -195,7 +195,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
                 return self._send(200, f.read(), hit[1])
         if path == "/api/v5/bootstrap":
             return self._json(v5_routes.bootstrap("en" if arg("lang") == "en" else "ko"))
-        if path in ("/ucc", "/ucc/", "/ucc/brd", "/ucc/sdd"):
+        if path in ("/ucc", "/ucc/", "/ucc/brd", "/ucc/sdd", "/ucc/onepager", "/ucc/discovery"):
             hit = resolve_static("ucc.html")
             with open(hit[0], "rb") as f:
                 return self._send(200, f.read(), hit[1])

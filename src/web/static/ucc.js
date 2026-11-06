@@ -26,8 +26,8 @@
       needText: "내용을 입력해 주세요.", sent: "코멘트를 남겼습니다. 작성자의 Jetski Chat으로 전달됩니다.", sendFail: "전송 실패: ",
       del: "삭제", delConfirm: "이 코멘트를 삭제할까요?", deleted: "코멘트를 삭제했습니다.", delFail: "삭제 실패: ",
       adminTitle: "관리자 키 (모든 코멘트 삭제)", adminPrompt: "관리자 키를 입력하세요 (비우면 해제)", adminOn: "관리자 모드 켜짐", adminOff: "관리자 모드 해제",
-      refresh: "새로고침", panelToggle: "코멘트 패널 열기/닫기", demoSub: "Agentic Ontology Studio · LG U+", notebookSub: "실습 랩", brdSub: "Discovery Doc", sddSub: "Solution Design",
-      docLabel: { brd: "BRD · Discovery Doc", sdd: "SDD · Solution Design" }, langOf: (l) => (l === "en" ? "EN" : "KO"),
+      refresh: "새로고침", panelToggle: "코멘트 보기/숨기기", panelBtn: "코멘트", close: "닫기", brdMenu: "BRD 하위 문서", demoSub: "Agentic Ontology Studio · LG U+", notebookSub: "실습 랩", onepagerSub: "C-Level·세일즈 제안 슬라이드", discoverySub: "인풋·아웃풋 계량 슬라이드", brdSub: "비즈니스 요구사항 문서", sddSub: "Solution Design",
+      docLabel: { onepager: "1-Pager · C-Level & Tech Sales Proposal Slide", discovery: "Discovery · 개선 효과 & 인풋·아웃풋 계량 슬라이드", brd: "BRD · Discovery Doc", sdd: "SDD · Solution Design" }, langOf: (l) => (l === "en" ? "EN" : "KO"),
     },
     en: {
       title: (d, v) => `UCC · ${d} ${v}`, docHead: (t) => `UCC 2027 · Enterprise Agentic Ontology — ${t}`, ver: (v) => `Version ${v}`,
@@ -41,18 +41,20 @@
       needText: "Please enter a comment.", sent: "Comment posted. It will be delivered to the author's Jetski Chat.", sendFail: "Failed to send: ",
       del: "Delete", delConfirm: "Delete this comment?", deleted: "Comment deleted.", delFail: "Delete failed: ",
       adminTitle: "Admin key (delete any comment)", adminPrompt: "Enter the admin key (leave empty to turn off)", adminOn: "Admin mode on", adminOff: "Admin mode off",
-      refresh: "Refresh", panelToggle: "Toggle comments panel", demoSub: "Agentic Ontology Studio · LG U+", notebookSub: "Hands-on Lab", brdSub: "Discovery Doc", sddSub: "Solution Design",
-      docLabel: { brd: "BRD · Business Requirements", sdd: "SDD · Solution Design" }, langOf: (l) => (l === "en" ? "EN" : "KO"),
+      refresh: "Refresh", panelToggle: "Show/hide comments", panelBtn: "Comments", close: "Close", brdMenu: "BRD documents", demoSub: "Agentic Ontology Studio · LG U+", notebookSub: "Hands-on Lab", onepagerSub: "C-Level & Sales Slide", discoverySub: "Input-Output Sizing Slide", brdSub: "Business Requirements", sddSub: "Solution Design",
+      docLabel: { onepager: "1-Pager · C-Level & Tech Sales Proposal Slide", discovery: "Discovery · Improvement & Input-Output Sizing Slide", brd: "BRD · Business Requirements", sdd: "SDD · Solution Design" }, langOf: (l) => (l === "en" ? "EN" : "KO"),
     },
   };
 
-  const state = { docId: null, lang: "ko", doc: null, meta: null, comments: [], demoUrl: "", composerFor: null, panelOpen: window.innerWidth > 1100 };
+  const state = { docId: null, lang: "ko", doc: null, meta: null, comments: [], demoUrl: "", composerFor: null, panelOpen: false }; // GOAL-270: comments drawer hidden until asked for
+  const SLIDE_DOCS = { onepager: 1, discovery: 1 }; // rendered as a slide canvas, no header table / TOC
+  const BRD_GROUP = { brd: 1, onepager: 1, discovery: 1 }; // 1-Pager · Discovery live under the BRD menu
   const T = () => I18N[state.lang] || I18N.ko;
   const tokens = () => { try { return JSON.parse(localStorage.getItem("ucc.tokens") || "{}"); } catch (_) { return {}; } };
   const saveToken = (id, tok) => { const t = tokens(); t[id] = tok; localStorage.setItem("ucc.tokens", JSON.stringify(t)); };
   const adminKey = () => localStorage.getItem("ucc.adminKey") || "";
 
-  function docFromPath() { const m = location.pathname.match(/\/ucc\/(brd|sdd)\b/); return m ? m[1] : (new URLSearchParams(location.search).get("doc") || "brd"); }
+  function docFromPath() { const m = location.pathname.match(/\/ucc\/(brd|sdd|onepager|discovery)\b/); return m ? m[1] : (new URLSearchParams(location.search).get("doc") || "brd"); }
   function langFromUrl() {
     const q = new URLSearchParams(location.search).get("lang");
     if (q === "en" || q === "ko") return q;
@@ -83,13 +85,19 @@
     $("#ucc-composer-hint").textContent = t.hint; $("#ucc-cancel").textContent = t.cancel; $("#ucc-send").textContent = t.send;
     $("#ucc-refresh").title = t.refresh; $("#ucc-toggle-panel").title = t.panelToggle; $("#ucc-admin").title = t.adminTitle;
     $("#ucc-admin").classList.toggle("on", !!adminKey());
-    document.querySelectorAll(".ucc-tab[data-doc]").forEach((a) => {
-      const d = a.dataset.doc; const meta = state.meta && state.meta.docs && state.meta.docs[d]; const m = meta && (meta[state.lang] || meta.ko);
-      a.querySelector("small").textContent = (d === "brd" ? t.brdSub : t.sddSub) + (m && m.version ? ` · ${m.version}` : "");
+    const subOf = (d) => (d === "onepager" ? t.onepagerSub : (d === "discovery" ? t.discoverySub : (d === "brd" ? t.brdSub : t.sddSub)));
+    const verOf = (d) => { const meta = state.meta && state.meta.docs && state.meta.docs[d]; const m = meta && (meta[state.lang] || meta.ko); return (m && m.version) || ""; };
+    document.querySelectorAll(".ucc-tab[data-doc], .ucc-dd-item[data-doc]").forEach((a) => {
+      const d = a.dataset.doc, v = verOf(d);
+      a.title = subOf(d) + (v ? ` · ${v}` : "");
+      const sm = a.querySelector("small"); if (sm) sm.textContent = subOf(d) + (v ? ` · ${v}` : "");
       a.href = urlFor(d, state.lang);
     });
-    $("#ucc-demo small").textContent = t.demoSub;
-    $("#ucc-notebook") && ($("#ucc-notebook small").textContent = t.notebookSub);
+    $("#ucc-brd-caret").title = t.brdMenu; $("#ucc-brd-caret").setAttribute("aria-label", t.brdMenu);
+    $("#ucc-demo").title = t.demoSub;
+    $("#ucc-notebook") && ($("#ucc-notebook").title = t.notebookSub);
+    $("#ucc-panel-btn-label").textContent = t.panelBtn;
+    $("#ucc-panel-close").title = t.close; $("#ucc-panel-close").setAttribute("aria-label", t.close);
     document.querySelectorAll("#lang-toggle button").forEach((b) => b.classList.toggle("active", b.dataset.lang === state.lang));
   }
 
@@ -120,16 +128,25 @@
     $("#ucc-doc-title").textContent = t.docHead(doc.title);
     $("#ucc-doc-sub").textContent = [doc.version && t.ver(doc.version), doc.date, doc.sha256_12 && `#${doc.sha256_12}`].filter(Boolean).join(" · ");
     $("#ucc-meta").textContent = `${doc.id.toUpperCase()} ${doc.version || ""} · ${t.langOf(doc.lang)} · ${doc.date || ""}`;
-    document.querySelectorAll(".ucc-tab[data-doc]").forEach((a) => a.classList.toggle("active", a.dataset.doc === doc.id));
+    document.body.dataset.doc = doc.id; // GOAL-270: was never set, so the slide-canvas CSS for onepager/discovery never applied
+    const inBrd = !!BRD_GROUP[doc.id];
+    document.querySelectorAll(".ucc-tab[data-doc]").forEach((a) => a.classList.toggle("active", a.dataset.doc === doc.id || (inBrd && a.dataset.doc === "brd")));
+    document.querySelectorAll(".ucc-dd-item[data-doc]").forEach((a) => a.classList.toggle("active", a.dataset.doc === doc.id));
+    $("#ucc-brd-child").textContent = inBrd && doc.id !== "brd" ? (doc.id === "onepager" ? "1-Pager" : "Discovery") : "";
 
     const art = $("#ucc-doc"); art.innerHTML = "";
     const toc = $("#ucc-toc"); toc.innerHTML = "";
     const tocTitle = el("div", "ucc-dim", t.toc); tocTitle.id = "ucc-toc-title"; tocTitle.style.padding = "0 8px 6px"; toc.appendChild(tocTitle);
 
-    doc.sections.forEach((s) => {
+    const isSlide = !!SLIDE_DOCS[doc.id];
+    doc.sections.forEach((s, i) => {
       const sec = el("section", "ucc-sec"); sec.id = s.id; sec.dataset.title = s.title;
       const { html, diagrams } = renderMarkdown(s.markdown);
       const body = el("div", "ucc-sec-body"); body.innerHTML = html; sec.appendChild(body);
+      if (isSlide && i === 0) { // GOAL-270: slide docs open straight on the canvas — drop the H1 + document-info table
+        body.querySelectorAll(":scope > h1, :scope > table").forEach((n) => n.remove());
+        sec.classList.add("ucc-sec-lead");
+      }
       body.querySelectorAll("a[href^='http']").forEach((a) => { a.target = "_blank"; a.rel = "noopener"; });
       const btn = el("button", "ucc-cbtn"); btn.type = "button"; btn.title = t.commentBtnTitle;
       btn.innerHTML = `💬 <span>${esc(t.comment)}</span><span class="n"></span>`;
@@ -274,7 +291,13 @@
     } catch (e) { toast(t.sendFail + e.message, true); }
     finally { btn.disabled = false; btn.textContent = t.send; }
   }
-  function togglePanel(force) { state.panelOpen = typeof force === "boolean" ? force : !state.panelOpen; $("#ucc-panel").classList.toggle("hidden", !state.panelOpen); }
+  function togglePanel(force) {
+    state.panelOpen = typeof force === "boolean" ? force : !state.panelOpen;
+    $("#ucc-panel").classList.toggle("hidden", !state.panelOpen);
+    document.body.classList.toggle("panel-open", state.panelOpen);
+    $("#ucc-toggle-panel").classList.toggle("on", state.panelOpen); $("#ucc-toggle-panel").setAttribute("aria-pressed", String(state.panelOpen));
+  }
+  function setMenu(open) { const g = $("#ucc-brd-group"); g.classList.toggle("open", open); $("#ucc-brd-caret").setAttribute("aria-expanded", String(open)); }
 
   // ------------------------------------------------------------------ boot
   async function switchDoc(id, push) {
@@ -301,7 +324,13 @@
       if ($("#ucc-notebook")) $("#ucc-notebook").href = state.meta.notebook_url || "#"; // one-way like Demo
       if (!(state.meta.langs || []).includes("en")) $("#lang-toggle").hidden = true;
     } catch (e) { toast(T().listFail + e.message, true); }
-    document.querySelectorAll(".ucc-tab[data-doc]").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); switchDoc(a.dataset.doc, true); }));
+    document.querySelectorAll(".ucc-tab[data-doc], .ucc-dd-item[data-doc]").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); setMenu(false); a.blur(); switchDoc(a.dataset.doc, true); window.scrollTo(0, 0); }));
+    $("#ucc-brd-group").addEventListener("mouseleave", () => setMenu(false)); // GOAL-272: never leave the menu covering the page
+    window.addEventListener("scroll", () => setMenu(false), { passive: true });
+    $("#ucc-brd-caret").addEventListener("click", (ev) => { ev.stopPropagation(); setMenu(!$("#ucc-brd-group").classList.contains("open")); });
+    document.addEventListener("click", (ev) => { if (!ev.target.closest("#ucc-brd-group")) setMenu(false); });
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { setMenu(false); if (state.panelOpen && $("#ucc-composer").hidden) togglePanel(false); } });
+    $("#ucc-panel-close").addEventListener("click", () => togglePanel(false));
     document.querySelectorAll("#lang-toggle button").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
     window.addEventListener("popstate", () => { state.lang = langFromUrl(); switchDoc(docFromPath(), false); });
     $("#ucc-composer-close").addEventListener("click", closeComposer);
