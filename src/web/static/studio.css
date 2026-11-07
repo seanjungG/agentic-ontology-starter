@@ -431,3 +431,5 @@ details.preset-fold > summary .meta { font-weight: 500; margin-left: auto; }
 .apply-map .learn { margin-top: 12px; padding: 10px 14px; border: 1px solid rgba(0,0,0,.08); border-radius: 10px; background: #f8fafc; font-size: 13px; }
 .apply-map .learn ul { margin: 6px 0 0; padding-left: 18px; }
 .apply-map .learn li { margin: 2px 0; }
+.apply-map .tbl td:last-child { min-width: 190px; word-break: keep-all; overflow-wrap: anywhere; }
+.apply-map .tbl td:first-child { min-width: 92px; }
