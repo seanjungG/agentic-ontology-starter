@@ -260,8 +260,17 @@
       ${P.map(([h, route, i]) => `<div class="pillar"><div class="pillar-k">Lab ${i} · <code>#${h}</code></div><h3>${T(`start.pill${i}.t`)}</h3><p>${T(`start.pill${i}.d`)}</p>
         <div class="pillar-acts"><a class="btn small primary" href="${esc(nbUrl(h))}" target="_blank" rel="noopener">${T("start.pill.nb", { n: String(i) })}</a>
         <button class="btn small" data-act="open-demo" data-route="${route}">${T(`start.pill${i}.studio`)}</button></div></div>`).join("")}
-      </div><div class="journey">${[1, 2, 3].map((i) => `<div class="jstep"><span class="jn">${i}</span><div><b>${T(`start.j${i}.t`)}</b><span>${T(`start.j${i}.d`)}</span></div></div>`).join("")}
+      </div><p class="pillar-tip">${esc(T("start.pill.tip"))}</p><div class="journey">${[1, 2, 3].map((i) => `<div class="jstep"><span class="jn">${i}</span><div><b>${T(`start.j${i}.t`)}</b><span>${T(`start.j${i}.d`)}</span></div></div>`).join("")}
         <a class="btn small" href="${esc(ghUrl())}" target="_blank" rel="noopener">${T("start.github")}</a></div></div>`;
+  }
+  // GOAL-291: ③ Apply — one row per stage: notebook cell ↔ studio screen ↔ Core MCP tool ↔ result in my GCP (+ principles)
+  function applyMap() {
+    const code = (v) => esc(v).split(" · ").map((x) => `<code>${x}</code>`).join(" ");
+    const rows = [1, 2, 3, 4, 5, 6].map((i) => `<tr><td><b>${esc(T(`start.map.r${i}.k`))}</b></td><td>${esc(T(`start.map.r${i}.nb`))}</td>
+      <td>${esc(T(`start.map.r${i}.st`))}</td><td class="map-mcp">${i === 5 ? esc(T(`start.map.r${i}.mcp`)) : code(T(`start.map.r${i}.mcp`))}</td><td>${esc(T(`start.map.r${i}.out`))}</td></tr>`).join("");
+    return `<div class="card apply-map"><div class="card-head"><h2>${T("start.map.title")}</h2><span class="sub">${T("start.map.sub")}</span></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr>${[1, 2, 3, 4, 5].map((i) => `<th>${T(`start.map.h${i}`)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="learn"><b>${T("start.learn.title")}</b><ul>${[1, 2, 3, 4, 5].map((i) => `<li>${esc(T(`start.learn${i}`))}</li>`).join("")}</ul></div></div>`;
   }
   PAGES.start = () => instantBar() + `
     <div class="card hero"><div class="eyebrow">${T("start.eyebrow")}</div><h1>${T("start.title")}</h1><p>${T("start.lead")}</p>
@@ -269,6 +278,7 @@
       <button class="btn big dark" data-act="start-own">${T("start.ctaOwn")}</button>
       <button class="btn big" data-act="ws-open-modal">${T("start.ctaOpen")}</button></div></div>
     ${pillars()}
+    ${applyMap()}
     <div class="card"><div class="card-head"><h2>${T("start.flowTitle")}</h2><span class="sub">${T("start.flowSub")}</span></div><div id="flow-host" class="flow-host"></div></div>
     <div class="card"><div class="card-head"><h2>${T("start.layersTitle")}</h2></div><div class="layers">
       ${[1, 2, 3].map((i) => `<div class="layer l${i}"><h3>${T(`start.l${i}.t`)}</h3><p>${T(`start.l${i}.d`)}</p><ul>${[1, 2, 3].map((j) => `<li>${esc(T(`start.l${i}.b${j}`))}</li>`).join("")}</ul></div>`).join("")}
