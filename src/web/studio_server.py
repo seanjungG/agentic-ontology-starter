@@ -51,6 +51,7 @@ from src.evaluation import run_eval  # noqa: E402
 from src.gcp_client import call_core_mcp, runtime_settings  # noqa: E402
 from src.loader import graph_check_sql, run_load, verify  # noqa: E402
 from src.resource_connector import STARTER_PUBLIC_URL  # noqa: E402
+from src.web import admin_metering  # noqa: E402
 from src.web import ucc_pages  # noqa: E402
 from src.web import v5_routes  # noqa: E402
 
@@ -109,7 +110,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", cache)
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Referrer-Policy", "same-origin")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
@@ -118,9 +119,11 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        hdrs = dict(headers or {})
+        if not any(k.lower() == "cache-control" for k in hdrs):
+            self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        for k, v in (headers or {}).items():
+        for k, v in hdrs.items():
             self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
@@ -185,16 +188,20 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path, qs = parsed.path, parse_qs(parsed.query)
         arg = lambda k, d="": (qs.get(k) or [d])[0]  # noqa: E731
-        if path in ("/", "/index.html", "/studio"):
+        if path in ("/", "/index.html", "/studio", "/admin", "/admin/"):
             hit = resolve_static("studio.html")
             with open(hit[0], "rb") as f:
                 return self._send(200, f.read(), hit[1])
+        if path == "/api/v5/admin/status":
+            st = admin_metering.admin_config_status(headers=dict(self.headers))
+            return self._send(200, json.dumps(st, ensure_ascii=False, default=str).encode("utf-8"),
+                              "application/json; charset=utf-8", cache="no-store")
         if path in ("/wizard", "/wizard/"):  # GOAL-233: the classic 6-step wizard (curated sample, Flow A/B/C)
             hit = resolve_static("index.html")
             with open(hit[0], "rb") as f:
                 return self._send(200, f.read(), hit[1])
         if path == "/api/v5/bootstrap":
-            return self._json(v5_routes.bootstrap("en" if arg("lang") == "en" else "ko"))
+            return self._json(v5_routes.bootstrap("ko" if arg("lang", "en") == "ko" else "en"))
         if path in ("/ucc", "/ucc/", "/ucc/brd", "/ucc/sdd", "/ucc/onepager", "/ucc/discovery"):
             hit = resolve_static("ucc.html")
             with open(hit[0], "rb") as f:
@@ -220,7 +227,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/settings":
             return self._json(settings_payload())
         if path == "/api/catalog":
-            return self._json(catalog_payload(arg("lang", "ko")))
+            return self._json(catalog_payload("ko" if arg("lang", "en") == "ko" else "en"))
         if path == "/api/core-mcp/tools":
             res = call_core_mcp("tools/list")
             tools = (res.get("result") or {}).get("tools") or []
@@ -236,7 +243,8 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as e:
             return self._json({"status": "BAD_REQUEST", "message": str(e)}, 400)
         if v5_routes.handle_post(path, data, lambda obj, code=200: self._json(obj, code), self._stream,
-                                 lambda code, body, ctype, headers: self._send_bytes(code, body, ctype, headers)):
+                                 lambda code, body, ctype, headers: self._send_bytes(code, body, ctype, headers),
+                                 headers=dict(self.headers)):
             return None
         if path == "/api/ucc/comments":
             remote = (self.headers.get("X-Forwarded-For") or "").split(",")[0].strip() or self.client_address[0]
@@ -245,7 +253,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/ucc/comments/delete":
             code, payload = ucc_pages.delete_comment(data)
             return self._json(payload, code)
-        lang = "en" if data.get("lang") == "en" else "ko"
+        lang = "ko" if data.get("lang") == "ko" else "en"
         recipe = str(data.get("recipe") or "C").upper()
         if recipe not in recipes.RECIPES:
             return self._json({"status": "BAD_REQUEST", "message": f"unknown recipe: {recipe}"}, 400)

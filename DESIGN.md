@@ -1,79 +1,53 @@
-# 디자인 시스템 (`DESIGN.md`) — Agentic Ontology Starter
+# Design System (`DESIGN.md`) — Agentic Ontology Starter
 
-- **적용 대상**: 스타터 데모 화면 `src/web/static/` — `index.html`(셸) · `app.css` · `app.js`(6단계 마법사) · `i18n.json`(KO · EN 문구) · 흐름도 `aolflow.js` / `aolflow.css`(공용 렌더러) + `flows.js`(스타터 흐름도 사양), README 그림(`docs/images/`).
-- **기준 화면**: `agentic-ontology-studio-lguplus`의 **0. Overview** 흐름도와 Agentic Ontology Notebook Lab — 세 화면이 같은 시각 문법(이하 Studio v6 문법)을 씁니다.
-- **원칙**: 라이트 테마 하나만 씁니다. 화면은 "흰 카드 + 얇은 경계 + 검정 강조"로 조용하게, 정보는 흐름도 · 표 · 실행 기록으로 정확하게 보여 줍니다.
+- **Scope**: All web surfaces in `src/web/static/` — Starter Studio `v6.14.0` (`studio.html`, `studio.js`, `studio.css`, `studio_i18n.json`, `flows_v5.js`), Reference Wizard `/wizard` (`index.html`, `app.js`, `app.css`, `i18n.json`, `flows.js`), and the shared flow renderer `aolflow.js` / `aolflow.css`.
+- **Visual alignment**: Shares the unified **Studio v6** light visual grammar across the **Starter Notebook Lab**, **Starter Studio**, and the **Production Reference Studio** (`0. Overview`).
+- **Core principle**: Single light theme — crisp white cards, hairline borders, high-contrast charcoal/slate typography, and accurate information rendered through layered diagrams, tables, and live execution logs.
+- **Default locale**: **English (`en`) by default** on all routes (`/`, `/wizard`, `/admin`) with instant client-side **`EN | KO`** toggle and 100% key parity.
 
 ---
 
-## 1. 토큰 (새 색 추가 금지)
+## 1. Design Tokens
 
-| 구분 | 값 |
+| Category | Values |
 | :--- | :--- |
-| 글꼴 | `"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif` · 코드 / ID `ui-monospace, SFMono-Regular, Menlo, monospace` |
-| 텍스트 | 본문 `#1d1d1f` · 보조 `#6e6e73` · 흐림 `#86868b` |
-| 배경 · 카드 | 페이지 `#f5f5f7` · 카드 `#fff` · 경계 `#e3e3e8` / `#d2d2d7` · 레인 `#f7f7f9` + `#eeeef2` |
-| 그림자 | `--shadow-1: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.04)` · `--shadow-2: 0 2px 4px rgba(0,0,0,.05), 0 14px 30px rgba(0,0,0,.08)` |
-| 레이어 색 | 원천 `#94a3b8` · 위키 `#0ea5e9` · 시맨틱 `#8b5cf6` · 워크플로우 `#f59e0b` · MCP `#10b981` · 에이전트 `#ef4444` · 평가 = 워크플로우 주황 · Gemini `#4285f4` · 시스템 `#64748b` |
-| 강조 | 활성 · 선택 = 검정 `#1d1d1f`(알약 · 세그먼트 · 카드 테두리 1.4px). 파랑 `#0071e3`은 링크와 주 동작 버튼에만 |
-| 크기 | h1 26px / 750 · 섹션 h2 19px / 720 · 카드 제목 14.5px / 700 · 본문 13px · 보조 12.5px · 메타 11.5px |
-| 모서리 | 카드 16~18px · 흐름도 노드 12px · 알약 999px |
+| Typography | `"Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif` · Monospace `ui-monospace, SFMono-Regular, Menlo, monospace` |
+| Text | Primary `#1d1d1f` · Secondary `#6e6e73` · Muted `#86868b` |
+| Surfaces & Borders | Page `#f5f5f7` · Card `#ffffff` · Borders `#e3e3e8` / `#d2d2d7` · Lane `#f7f7f9` + `#eeeef2` |
+| Elevation | `--shadow-1: 0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.04)` · `--shadow-2: 0 2px 4px rgba(0,0,0,.05), 0 14px 30px rgba(0,0,0,.08)` |
+| Layer Accents | Source `#94a3b8` · Wiki `#0ea5e9` · Semantic `#8b5cf6` · Workflow `#f59e0b` · MCP `#10b981` · Agent `#ef4444` · Gemini `#4285f4` · System `#64748b` |
+| Studio v6 Palette (`studio.css`) | Calm Slate (`#f8fafc`–`#334155`) + Indigo (`#eef2ff`, `#4f46e5`, `#4338ca`) · Semantic status muted (`#2f855a` ok · `#b7791f` warn · `#c53030` error) |
+| Type Scale | Hero / h1 `26px / 750` · Stage header `24px` · Card h2 `17–19px / 720` · h3 `14px / 700` · Body `13px` · Secondary `12.5px` · Meta `11.5px` |
+| Radii | Cards `16–18px` · Flow nodes `12px` · Badges `6px` · Pills `999px` |
 
-CSS 변수는 `src/web/static/app.css`의 `:root`에 있습니다(`--text`, `--muted`, `--faint`, `--page`, `--card`, `--line`, `--line-2`, `--lane`, `--c-source` … `--c-agent`, `--black`, `--blue`).
+---
 
-## 2. 레이아웃
+## 2. Layout & Navigation
 
-| 영역 | 규격 |
-| :--- | :--- |
-| 상단 바 | 고정 56px, 반투명 흰색 + blur, 하단 1px 경계. 왼쪽: Google G 로고 + `Agentic Ontology Starter` + 보조 문구. 오른쪽: 버전 칩 · 프로젝트 칩 · Core MCP 칩(상태 점 + 도구 수) · GitHub 링크 · `KO | EN` 토글(활성 = 검정 알약) |
-| 왼쪽 단계 레일 | 264px. 진행 막대(검정) → 단계 6개(번호 상자 24px: 현재 = 검정 채움, 완료 = 초록 링) → "현재 구성" 상자(구성 · 프로젝트 · 데이터셋 · 버킷 · 그래프 · 데이터 언어) |
-| 본문 | `#f5f5f7` 위 흰 카드, 최대 폭 1160px, 카드 간격 16px. 단계마다 **머리 카드**(eyebrow · h1 · 설명) → **작업 카드** → **이전 / 다음 단계** 버튼 |
-| 반응형 | 1180px 이하: 에이전트 근거 패널이 대화 아래로. 980px 이하: 레일 숨김, 모든 격자 1열 |
-| 주소 | 단계 = `#step-1` … `#step-6`. 선택 · 입력값 · 결과는 브라우저 `localStorage`에만 저장 |
+- **Top bar** (56 px fixed, translucent white + backdrop blur): Google G badge + `Agentic Ontology Starter` + version pill, quick links (`Reference wizard`, `Notebook lab`, `Admin · MCP Portal`), workspace chip, and `EN | KO` toggle.
+- **Left rail**: Grouped sections (`Understand` · `Set up · build` · `Studio` · `Hand-off` · `Ops · governance`) with instant hash navigation (`#/start`, `#/studio/agents`, `#/studio/cg`, `#/admin`, etc.).
+- **Unified dialogs**: All modals share `modalShell()` (56 px header · close `✕` · scrollable body · right-aligned footer · backdrop / `Esc` close). Native `confirm()` is replaced by `confirmModal()`.
+- **Responsive**: Below `1180px`, evidence panels stack under conversations; below `980px`, the rail collapses and grids switch to single column.
 
-## 3. 컴포넌트
+---
 
-- **선택 카드**(1단계): 흰 바탕 1px 경계. 선택되면 검정 1.4px(1px 경계 + 0.4px 링)와 오른쪽 위 검정 체크 원. 경로는 검정 레인 알약(`P1`), 목적은 주황 원 배지(`W1`) — 흐름도와 같은 기호.
-- **버튼**: 주 동작(리소스 확인 · 적재 실행 · 보내기 · 평가 실행) = 파랑 채움. **다음 단계** = 외곽선, 그 단계의 일이 끝나면 검정 채움으로 바뀌어 진행 순서를 알려 줍니다. 보조 = 흰 외곽선.
-- **상태 표시**: 8px 점 + 글자. 초록 정상 · 완료 / 주황 경고 / 빨강 오류 / 하늘색 링 실행 중 / 회색 대기 · 건너뜀. 큰 색 덩어리나 배너 대신 점과 짧은 문장을 씁니다.
-- **태그**: 흰 바탕 1px 경계 22px 알약. Core MCP 도구 이름은 모노 10.5px 초록 글자(`#047857`) 한 줄로 표시합니다.
-- **메모(note)**: 레인 배경 회색 상자. 경고는 주황 경계, 오류는 빨강 경계만 바꿉니다. 해결 명령은 모노 코드 + 복사 버튼.
-- **표**: 11~12px, 머리글 `#fbfbfd`, 행 구분선 `#f0f0f3`, 숫자 오른쪽 정렬(tabular-nums). 실행 기록 = 단계 · Core MCP 도구 · 대상 · 건수 · ms · 상태.
-- **지표 상자**: 4칸 격자, 제목 11px 대문자(영문) · 값 24px / 750. 구성에 없는 값(예: Flow A의 테이블 수)은 상자를 만들지 않습니다.
-- **대화**: 질문 = 오른쪽 회색 말풍선, 답변 = 흰 카드(선택 시 검정 테두리). 실행 중에는 단계 목록, 끝나면 Markdown 답변. 위키 인용 `[rules]`은 모노 칩. 오른쪽 **근거 패널**은 sticky — 판정 · 워크플로우 단계 · G2-W 표 · 참조 · 쿼리(SQL/GQL + 결과 행) · 도구 호출 · 실행 단계 · 시간 · 토큰.
+## 3. Shared Flow Renderer (`aolflow.js` / `aolflow.css`)
 
-## 4. 흐름도 — `aolflow.js` / `aolflow.css`
+- Kept **byte-identical** with the Notebook Lab renderer (`tests/test_wizard.py` enforces equality). Never edit `aolflow.js` or `aolflow.css` directly in isolation; keep starter-specific specs inside `flows_v5.js` and `flows.js`.
+- All labels inside flow specs use `[ko, en]` tuples via `AOLFlow.T`.
 
-- 노트북 랩(`ontology_lab/web/`)과 **바이트 동일 사본**입니다. 스타터에서 직접 고치지 않습니다(테스트가 두 사본을 비교). 스타터 고유 내용은 `flows.js`(`STARTER_FLOWS.dataflow` · `resources` · `recipes`)에만 둡니다.
-- 문법: 레이어 **열**(24×4 색 막대 + 제목 + 보조) × 경로 **레인**(P1 문서 · P3 통합 · P2 정형, 회색 밴드 + 검정 알약) · 흰 카드(레이어 점 + 제목 13.5px + 보조 11.5px) · 연결선 = 옅은 기준선 + 도착 레이어 색 점선 흐름 · W1~W3 주황 배지 · G2-W 역방향 점선 · 아래 범례와 칩.
-- 좌표는 손으로 배치합니다. 선은 카드 · 레인 글자를 가로지르지 않고, 같은 카드로 들어오는 두 선은 다른 포트를 씁니다. 글자가 넘치면 렌더러가 84%까지 줄인 뒤 말줄임 + 툴팁.
-- 상태: `highlight` + `focusStyle: "dim"`(구성 밖 요소 16% 투명) · `states`(`done` 초록 체크 · `running` 하늘색 링 · `error` 빨강 · `current` 검정 테두리). 애니메이션은 `prefers-reduced-motion`을 따릅니다. 줌 · 팬 없음.
-- 사용처: 2단계 = 데이터 흐름도(구성 강조, 칩으로 Flow A/B/C 전환, 상자 클릭 → 해당 단계) · 3단계 = 적재 위치도(확인 결과 상태) · 4단계 = 적재 위치도(실행 중 · 완료 · 오류 상태).
+---
 
-## 5. KO / EN 2벌
+## 4. Bilingual (`EN | KO`) & Quality Invariants
 
-1. 화면 문구는 모두 `src/web/static/i18n.json`의 `ko` · `en` 두 세트(같은 키 · 같은 자리표시자)에서 옵니다. `app.js`와 `index.html`에는 한글을 직접 쓰지 않습니다.
-2. EN 화면은 **영문 데이터 세트**(`data/input/**/en`)로 적재 · 질의 · 채점합니다. ID · 키 · 숫자는 KO와 같습니다(같은 질문 = 같은 숫자 정답).
-3. 결과(확인 · 적재 · 대화 · 평가)는 **구성 + 언어별로 따로** 저장합니다. 언어를 바꾸면 그 언어로 실행한 결과만 보입니다.
-4. 흐름도 사양의 글자는 `[ko, en]` 쌍입니다(`AOLFlow.T`).
+1. Every UI string lives in `studio_i18n.json` (Studio) or `i18n.json` (`/wizard`) with **100% identical key sets and `{placeholder}` parity** between `en` and `ko`.
+2. Zero hardcoded Hangul is allowed in `studio.html`, `studio.js`, `index.html`, `app.js`, or any `en` i18n entry (`tests/test_v5.py` and `tests/test_admin_metering.py` enforce this automatically).
+3. All interactive flows (`/`, `/wizard`, `#/studio/cg`, `/admin`) are verified at `1440px` desktop viewport with zero horizontal overflow and zero console/JS errors.
 
-## 6. 금지
+---
 
-- 내비게이션 · 탭 · 제목의 이모지, 채도 높은 채움 알약(파랑 · 보라 · 초록 덩어리), 그라데이션 머리글, 3px 이상 두꺼운 색 테두리, 회전 · 바운스 애니메이션, 다크 테마, 표 1~4절에 없는 새 색.
+## 5. Studio v6 Components (Context Graph & Admin Portal)
 
-## 7. 검수 체크리스트
-
-- [ ] KO · EN 각 단계 캡처(1440px): 겹침 0 · 넘침 0 · 토큰 일치
-- [ ] EN DOM 한글 스캔(`/[\u3131-\uD79D]/`, 텍스트 + `title` · `placeholder` · `aria-label` 속성) 0건 — 초기 화면, 적재 후, 에이전트 대화 후, 평가 후
-- [ ] `python -m pytest tests -q` 통과(정적 파일 · i18n 동등성 · 데이터 동등성 · 렌더러 사본 동일)
-
-## 8. v6 스튜디오 정돈 (GOAL-285 · `studio.css` 끝 블록)
-
-- **기준**: 스튜디오 **개요**와 **평가** 화면의 차분함. 스튜디오(`studio.html`)에만 적용되는 덧씌움이며 레퍼런스 마법사(`/wizard`)는 그대로입니다.
-- **팔레트**: 슬레이트(`#f8fafc` · `#f1f5f9` · `#e2e8f0` · `#cbd5e1` · `#94a3b8` · `#64748b` · `#475569` · `#334155`) + 인디고(`#eef2ff` · `#e0e7ff` · `#a5b4fc` · `#6366f1` · `#4f46e5` · `#4338ca`). 주 동작 버튼 · 링크 = 인디고 600, 선택 · 활성 = 인디고 테두리 / 슬레이트 700 채움. 상태 색은 채도를 낮춘 정상 `#2f855a` · 경고 `#b7791f` · 오류 `#c53030`(점 · 판정 · 메모 테두리 공통).
-- **제목**: hero 26px · 단계 머리 24px · 카드 h2 17px · h3 14px / 700. 배지는 6px 모서리 20px 높이 모노 10.5px(`.badge` + `indigo · slate · amber · green · rose`), 큰 색 덩어리 금지.
-- **대화상자**: 모든 팝업은 `modalShell()` 한 틀 — 56px 머리(제목 15.5px) · 우상단 ✕(32px) · 본문 스크롤 · 하단 우측 정렬 버튼(취소 → 보조 → 주 동작) · 바깥 클릭 / Esc 닫기. 브라우저 `confirm()` 대신 `confirmModal()`(작은 폭 460px).
-- **토스트**: 슬레이트 900 반투명 · 10px 모서리 · 딥링크가 있으면 인디고 100 글자 링크(`🔗 Context Graph에서 반영 흐름 보기 (Run #… → Candidate #…)`)를 함께 표시하고 10초 유지.
-- **문장 피드백 바**(`.fb-bar`): 슬레이트 50 바탕 1px 경계, 텍스트 입력이 주 컨트롤 · 👍/👎(6px 모서리 토글) · 사유 칩(알약 22px)은 보조, 결과는 키-값 격자(`.kvg`).
-- **Context Graph 탭**: 4-Layer 카드(L3만 인디고 50) · 7단계 스테퍼(완료 = 슬레이트 700, 진행 = 인디고) · 계층형 SVG(열: Run · 피드백 · 후보 · SME · ChangeSet, 선택 시 연결 경로만 인디고, 나머지 35% 흐림). 시연 패널 제목의 ⚡ 한 개는 기획서 문구를 그대로 쓴 예외입니다.
-
+- **Inline sentence feedback bar (`.fb-bar`)**: Appears calmly below every Wiki / Graph / Hybrid answer card; free-text input is primary with optional 👍/👎 and reason chips.
+- **Context Graph tab (`#/studio/cg`)**: 4-Layer architecture strip, 1-click 3-agent demo stepper, layered SVG inspector (`Run → Feedback → Candidate → SME → ChangeSet`), and Before vs. After re-ask comparison.
+- **Unified Admin Portal (`/admin`)**: Google Sign-In card (fail-closed RS256 ID token check + 12 h `HttpOnly` cookie), 57-tool Core MCP catalog with search and schema viewer, interactive flow with live BigQuery call counts, and PII-minimized account metering tables.

@@ -37,7 +37,7 @@ from src.gcp_client import (
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 STARTER_PUBLIC_URL = os.environ.get(
-    "STARTER_PUBLIC_URL", "https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/"
+    "STARTER_PUBLIC_URL", "https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/"
 )
 
 REFERENCE_STUDIOS = {
@@ -52,30 +52,30 @@ REFERENCE_STUDIOS = {
     },
     "lguplus_reference_studio": {
         "id": "uplus_ontology",
-        "name_ko": "기준 스튜디오 #1 · LG U+ 엔터프라이즈 스튜디오 (12-Tab Full Standard)",
-        "name_en": "Reference Standard #1 · LG U+ Enterprise Studio (12-Tab Full Standard)",
-        "url": "https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/",
+        "name_ko": "기준 스튜디오 #1 · LG U+ 엔터프라이즈 스튜디오 (13-Tab Full Standard)",
+        "name_en": "Reference Standard #1 · LG U+ Enterprise Studio (13-Tab Full Standard)",
+        "url": "https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/",
         "domain": "LG U+ Mobile Subsidy, Penalty & Retention Consultation",
-        "tabs": "12-Tab Full Standard (0. Overview ~ 11. Evaluation · 6-Layer × P1/P2/P3 × Gate G2-W)",
+        "tabs": "13-Tab Full Standard (0. Overview ~ 12. Context Graph · 6-Layer × P1/P2/P3 × Gate G2-W)",
         "resources": "177 Anchors · 141 Wiki Nodes · 39 Rules · 10 Workflows (W1:1/W2:2/W3:7) · 14/14 WCQ · 4 Graphs",
     },
-    "hnh_reference_studio": {
-        "id": "hnh_ontology",
-        "name_ko": "기준 스튜디오 #2 · LG생활건강(H&H) 엔터프라이즈 스튜디오 (12-Tab Full Standard)",
-        "name_en": "Reference Standard #2 · LG H&H Cosmetics Compliance Studio",
-        "url": "https://hnh-agentic-ontology-studio-384182013777.asia-northeast3.run.app/",
-        "domain": "LG H&H Cosmetics Labeling & Advertising Compliance",
-        "tabs": "12-Tab Full Standard (0. Overview ~ 11. Evaluation · 6-Layer × P1/P2/P3 × Gate G2-W)",
-        "resources": "49 Docs · 341 Wiki Nodes · 24 Rules · 10 Workflows · 20/20 WCQ · 43 BQ Tables",
+    "notebook_lab": {
+        "id": "notebook_lab",
+        "name_ko": "스타터 노트북 3-Lab · 인터랙티브 핸즈온 랩 (Spanner Graph · Workflow · Context Graph)",
+        "name_en": "Starter Notebook 3-Lab · Interactive Hands-on Lab (Spanner Graph · Workflow · Context Graph)",
+        "url": "https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/",
+        "domain": "Instant Guest Hands-on Labs (#ov Lab 1 · #w0 Lab 2 · #c0 Lab 3)",
+        "tabs": "Lab 1 Ontology & Spanner Graph · Lab 2 Workflows & Approvals · Lab 3 BigQuery Context Graph",
+        "resources": "Per-session isolated GCS bucket + Spanner DB + BigQuery ContextGraph (auto-cleanup after 3h)",
     },
     "builder_core_mcp_server": {
         "id": "aos_builder_core_mcp",
-        "name_ko": "코어 빌더 MCP 서버 (`aos-builder-core-mcp` · 8 Tools)",
-        "name_en": "Builder Core MCP Server (`aos-builder-core-mcp` · 8 Tools)",
+        "name_ko": "코어 빌더 MCP 서버 (`aos-builder-core-mcp` · 57 Tools)",
+        "name_en": "Builder Core MCP Server (`aos-builder-core-mcp` · 57 Tools)",
         "url": DEFAULT_CORE_MCP_URL,
-        "domain": "6-Stage Automated Ontology & Studio Compiler MCP",
-        "tabs": "JSON-RPC 2.0 MCP Endpoint (`/mcp`, alias `/mcp/builder`) · Starter proxy (`GET /api/core-mcp/tools`, `POST /api/core-mcp/call`)",
-        "resources": "Stage 1 Scope ➔ Gate 0 Parse ➔ Stage 2 Wiki ➔ Stage 3 Rules/WF ➔ Stage 4 BQG ➔ Stage 5 CQ Eval ➔ Stage 6 Provision",
+        "domain": "Zero-Privilege Automated Ontology & Studio Compiler MCP (v1.12.0)",
+        "tabs": "JSON-RPC 2.0 MCP Endpoint (`/mcp`) · Starter Admin Portal (`/admin`) · Proxy (`GET /api/core-mcp/tools`)",
+        "resources": "AOS Builder Stage 0–6 (10) · AOS Core Engine & Intake (12) · Context Graph (5) · Data Plane & Drive (30)",
     },
 }
 
@@ -126,8 +126,8 @@ SELECTIVE_FLOW_PRESETS: Dict[str, Dict[str, Any]] = {
         "badge": "Flow C · Full v1-MCP Hybrid (P1 + P2 + P3 × W1 + W2 + W3 + Gate G2-W)",
         "title_ko": "v1-MCP 엔터프라이즈 풀 하이브리드 표준 (P1·P2·P3 × W1·W2·W3)",
         "title_en": "Full v1-MCP Enterprise Hybrid Standard (P1·P2·P3 × W1·W2·W3)",
-        "desc_ko": "LG U+ 및 LG생활건강(H&H) v1-MCP 프로덕션 표준과 동일한 전체 플로우입니다. 비정형 규정 위키(P1)와 정형 DW 원장 그래프(P2)를 브릿지 엣지(P3) 및 Gate G2-W 단일 출처 원칙으로 통합하고 3종 도메인 MCP 도구와 AI FDE를 구동합니다.",
-        "desc_en": "The complete production architecture used in LG U+ and LG H&H v1-MCP studios. Unifies OKF Wiki (P1) and DW Property Graph (P2) via Concept-to-DW Bridge Edges (P3), Gate G2-W single-source constants, 3 Domain MCP tools, and AI FDE.",
+        "desc_ko": "엔터프라이즈 v1-MCP 프로덕션 표준과 동일한 전체 플로우입니다. 비정형 규정 위키(P1)와 정형 DW 원장 그래프(P2)를 브릿지 엣지(P3) 및 Gate G2-W 단일 출처 원칙으로 통합하고 3종 도메인 MCP 도구와 AI FDE를 구동합니다.",
+        "desc_en": "The complete production architecture used in enterprise v1-MCP studios. Unifies OKF Wiki (P1) and DW Property Graph (P2) via Concept-to-DW Bridge Edges (P3), Gate G2-W single-source constants, 3 Domain MCP tools, and AI FDE.",
         "paths": ["P1", "P2", "P3"],
         "workflows": ["W1", "W2", "W3"],
         "gate_g2w": True,
@@ -267,7 +267,7 @@ MCP_ARCHITECTURE_GUIDE: Dict[str, Any] = {
                 "flows": ["P1", "P2", "P3"],
                 "role_ko": "신규 프로젝트 온보딩을 위한 선언형 `build_spec` JSON 스키마 및 도메인 프로필 템플릿 반환",
                 "role_en": "Returns the declarative `build_spec` JSON schema and starter templates for new domain onboarding",
-                "key_args": "domain_profile ('lguplus_subsidy' | 'hnh_compliance' | 'custom_starter')",
+                "key_args": "domain_profile ('telecom_subsidy' | 'retail_compliance' | 'custom_starter')",
                 "outputs": "build_spec template (source_config, wiki_spec, workflow_spec, graph_spec)",
             },
             {

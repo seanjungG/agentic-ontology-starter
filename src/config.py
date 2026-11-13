@@ -16,10 +16,11 @@ from typing import Any, Dict, List, Optional
 
 from src.gcp_client import runtime_settings
 
-APP_VERSION = "v6.11.0-GOAL-291"
+APP_VERSION = "v6.14.0"
 GITHUB_URL = os.environ.get("STARTER_GITHUB_URL", "https://github.com/seanjungG/agentic-ontology-starter")
 # GOAL-288: "start easily, experience first" — the hands-on notebook lab and a finished demo workspace opened in one click
 NOTEBOOK_URL = os.environ.get("STARTER_NOTEBOOK_URL", "https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app")
+SHOWCASE_URL = os.environ.get("STARTER_SHOWCASE_URL", NOTEBOOK_URL.rstrip("/") + "/showcase")
 DEMO_WS = {"bucket": os.environ.get("STARTER_DEMO_BUCKET", "seanjung-agentic-starter-ontology"),
            "ws_id": os.environ.get("STARTER_DEMO_WS", "ws-20261105-5525c8")}
 

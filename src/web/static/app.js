@@ -27,7 +27,7 @@
 
   // ------------------------------------------------------------------ state
   function blank() {
-    return { v: 1, lang: "ko", step: 1, type: null, purpose: null, config: {}, graphCustom: false, spanner: false, seen: {},
+    return { v: 1, lang: "en", step: 1, type: null, purpose: null, config: {}, graphCustom: false, spanner: false, seen: {},
       verify: {}, load: {}, chats: {}, agent: {}, sel: {}, evals: {} };
   }
   function restore() {
@@ -929,7 +929,7 @@
     try {
       const got = await Promise.all([getJSON("/static/i18n.json"), getJSON("/api/settings")]);
       R.i18n = got[0]; R.settings = got[1];
-      if (!R.i18n[S.lang]) S.lang = "ko";
+      if (!R.i18n[S.lang]) S.lang = "en";
       await ensureCat(S.lang);
       const rq = (q.get("recipe") || "").toUpperCase();
       if (CANON[rq]) { S.type = CANON[rq][0]; S.purpose = CANON[rq][1]; }
