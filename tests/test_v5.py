@@ -45,6 +45,18 @@ class StaticTests(unittest.TestCase):
         self.assertIsNone(HANGUL.search(_read("studio.js")))
         self.assertIsNone(HANGUL.search(_read("studio.html")))
 
+    def test_english_default_and_public_safety(self):
+        self.assertIn('<html lang="en">', _read("studio.html"))
+        self.assertIn('<html lang="en">', _read("index.html"))
+        self.assertIn('lang: "en"', _read("studio.js"))
+        self.assertIn('lang: "en"', _read("app.js"))
+        for root, _, files in os.walk(os.path.join(BASE, "src")):
+            for fn in files:
+                if fn.endswith((".py", ".js", ".html", ".css", ".json")):
+                    txt = open(os.path.join(root, fn), encoding="utf-8", errors="ignore").read()
+                    self.assertNotIn("altostrat.com", txt, fn)
+                    self.assertNotIn("seanjung-poc", txt, fn)
+
     def test_context_graph_ui_wiring(self):
         """GOAL-285: CG tab route + rail entry, sentence feedback bar, unified modal shell, i18n placeholders."""
         js = _read("studio.js")
@@ -124,6 +136,9 @@ class ApiTests(unittest.TestCase):
     def test_shell_and_bootstrap(self):
         with urllib.request.urlopen(self.base + "/", timeout=20) as r:
             self.assertIn(b"studio.js", r.read())
+        with urllib.request.urlopen(self.base + "/api/v5/bootstrap", timeout=20) as r:
+            b_def = json.loads(r.read())
+        self.assertTrue(b_def.get("showcase_url", "").endswith("/showcase"))
         with urllib.request.urlopen(self.base + "/api/v5/bootstrap?lang=en", timeout=20) as r:
             b = json.loads(r.read())
         self.assertEqual([p["id"] for p in b["presets"]][-1], "custom")

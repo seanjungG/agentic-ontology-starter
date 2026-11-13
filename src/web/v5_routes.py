@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 from src import identity
 from src.aos import agent as agent_mod
@@ -43,8 +43,9 @@ from src.aos import context_graph as cg
 from src.aos import intake, pipeline, sources, studio
 from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, clean_template, default_dataset, env_defaults, error_text, load,
                         new_workspace, new_ws_id, now_iso, save)
-from src.config import APP_VERSION, DEMO_WS, GITHUB_URL, NOTEBOOK_URL
+from src.config import APP_VERSION, DEMO_WS, GITHUB_URL, NOTEBOOK_URL, SHOWCASE_URL
 from src.gcp_client import call_core_mcp_tool, runtime_settings
+from src.web import admin_metering
 
 UPLOAD_MAX = intake.MAX_CONVERT_BYTES  # GOAL-243: binary documents up to 12 MB (converted by Core MCP)
 STREAM_PATHS = {"/api/v5/build", "/api/v5/agent", "/api/v5/eval", "/api/v5/graph/rebuild"}
@@ -53,7 +54,7 @@ STREAM_PATHS = {"/api/v5/build", "/api/v5/agent", "/api/v5/eval", "/api/v5/graph
 def bootstrap(lang: str) -> Dict[str, Any]:
     s = runtime_settings()
     return {"version": APP_VERSION, "lang": lang, "presets": studio.presets(lang), "env_defaults": env_defaults(),
-            "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL, "notebook_url": NOTEBOOK_URL, "demo_ws": DEMO_WS,
+            "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL, "notebook_url": NOTEBOOK_URL, "showcase_url": SHOWCASE_URL, "demo_ws": DEMO_WS,
             "model": s["vertex_model"], "impersonation": bool(__import__("os").environ.get("STARTER_IMPERSONATE_ALLOW", "").strip()),
             "stages": list(pipeline.STAGES), "max_upload_bytes": UPLOAD_MAX, "upload_ext": list(intake.ALL_UPLOAD_EXT)}
 
@@ -65,12 +66,52 @@ def _ws_ref(data: Dict[str, Any]) -> Dict[str, Any]:
 IDENTITY_FREE_PATHS = frozenset({"/api/v5/catalog", "/api/v5/ws/draft"})  # metadata only — never need the caller's GCP identity
 
 
-def handle_post(path: str, data: Dict[str, Any], send_json: Callable[[Any, int], None], stream: Callable[[Callable], None],
-                send_bytes: Callable[[int, bytes, str, Dict[str, str]], None]) -> bool:
+def handle_post(path: str, data: Dict[str, Any], send_json: Callable[..., None], stream: Callable[[Callable], None],
+                send_bytes: Callable[[int, bytes, str, Dict[str, str]], None],
+                headers: Optional[Dict[str, str]] = None) -> bool:
     """Returns True when the path was handled."""
     if not path.startswith("/api/v5/"):
         return False
-    lang = "en" if data.get("lang") == "en" else "ko"
+    # GOAL-294 · GOAL-295: Admin guard routes (Google Sign-In SSO + HttpOnly cookie + Core MCP portal proxy).
+    if path == "/api/v5/admin/auth":
+        code, payload, extra = admin_metering.handle_auth(data, headers)
+        send_bytes(code, json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8"),
+                   "application/json; charset=utf-8", extra)
+        return True
+    if path == "/api/v5/admin/logout":
+        code, payload, extra = admin_metering.handle_logout(headers)
+        send_bytes(code, json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8"),
+                   "application/json; charset=utf-8", extra)
+        return True
+    if path in ("/api/v5/admin/metering/overview", "/api/v5/admin/metering/export",
+                "/api/v5/admin/portal/catalog", "/api/v5/admin/portal/live-usage"):
+        acode, ainfo = admin_metering.authorize_admin(data, headers)
+        if acode != 200:
+            send_bytes(acode, json.dumps(ainfo, ensure_ascii=False, default=str).encode("utf-8"),
+                       "application/json; charset=utf-8", {"Cache-Control": "no-store"})
+            return True
+        extra: Dict[str, str] = {"Cache-Control": "no-store"}
+        renew = admin_metering.maybe_renew_cookie(ainfo, headers)
+        if renew:
+            extra["Set-Cookie"] = renew
+        if path == "/api/v5/admin/metering/export":
+            code, body, ctype, fname = admin_metering.export_metering_bytes(data)
+            extra["Content-Disposition"] = f'attachment; filename="{fname}"'
+            send_bytes(code, body, ctype, extra)
+            return True
+        if path == "/api/v5/admin/portal/catalog":
+            code, payload = admin_metering.fetch_core_mcp_catalog(force=bool(data.get("force_refresh")))
+        elif path == "/api/v5/admin/portal/live-usage":
+            code, payload = admin_metering.fetch_core_mcp_live_usage(data)
+        else:
+            code, payload = admin_metering.query_metering_overview(data)
+        if code == 200:
+            payload["admin"] = admin_metering.admin_identity_summary(ainfo)
+        send_bytes(code, json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8"),
+                   "application/json; charset=utf-8", extra)
+        return True
+
+    lang = "ko" if data.get("lang") == "ko" else "en"
     try:
         ident = identity.resolve(data.get("identity"), lang)
     except identity.IdentityError as e:

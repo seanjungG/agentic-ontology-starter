@@ -35,8 +35,8 @@ DOC_IDS = ("brd", "sdd", "onepager", "discovery")
 LANGS = ("ko", "en")
 ADMIN_KEY = os.environ.get("UCC_ADMIN_KEY", "").strip()
 COMMENTS_PREFIX = os.environ.get("UCC_COMMENTS_PREFIX", "ucc/comments/").strip("/") + "/"
-DEMO_URL_DEFAULT = "https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/"
-NOTEBOOK_URL_DEFAULT = "https://agentic-ontology-starter-notebook-115847445822.asia-northeast3.run.app/"
+DEMO_URL_DEFAULT = "https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/"
+NOTEBOOK_URL_DEFAULT = "https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/"
 KST = dt.timezone(dt.timedelta(hours=9))
 
 MAX_TEXT = 2000

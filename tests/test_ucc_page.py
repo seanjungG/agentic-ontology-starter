@@ -14,6 +14,8 @@ sys.path.insert(0, BASE)
 from src.web import ucc_pages  # noqa: E402
 from src.web.studio_server import StudioHandler  # noqa: E402
 
+UCC_PUBLISHED = os.path.isfile(os.path.join(BASE, "ucc", "manifest.json"))
+
 SAMPLE = """# Title
 
 | 항목 | 내용 |
@@ -48,6 +50,7 @@ class SplitSections(unittest.TestCase):
         self.assertIn("## not a heading", secs[2]["markdown"])
         self.assertIn("```mermaid", secs[1]["markdown"])
 
+    @unittest.skipUnless(UCC_PUBLISHED, "UCC docs are not bundled in standalone public checkout")
     def test_published_docs_have_many_sections(self):
         for d in ("brd", "sdd", "onepager", "discovery"):
             doc = ucc_pages.load_doc(d)
@@ -59,6 +62,7 @@ class SplitSections(unittest.TestCase):
             for tag in ("GOAL-", "TASK-", "BACKLOG-"):
                 self.assertNotIn(tag, full, f"{d}: internal id {tag} leaked")
 
+    @unittest.skipUnless(UCC_PUBLISHED, "UCC docs are not bundled in standalone public checkout")
     def test_english_edition_matches_korean_structure(self):
         for d in ("brd", "sdd", "onepager", "discovery"):
             ko, en = ucc_pages.load_doc(d, "ko"), ucc_pages.load_doc(d, "en")
@@ -71,6 +75,7 @@ class SplitSections(unittest.TestCase):
             self.assertEqual(en["langs"], ["ko", "en"])
         self.assertEqual(ucc_pages.load_doc("brd", "xx")["lang"], "ko")  # unknown lang falls back to ko
 
+    @unittest.skipUnless(UCC_PUBLISHED, "UCC docs are not bundled in standalone public checkout")
     def test_manifest_demo_url(self):
         m = ucc_pages.docs_payload()
         self.assertTrue(m["demo_url"].startswith("https://"))
@@ -83,7 +88,7 @@ class SplitSections(unittest.TestCase):
 
 class ValidateComment(unittest.TestCase):
     def setUp(self):
-        self.doc = ucc_pages.load_doc("brd")
+        self.doc = ucc_pages.load_doc("brd") or {"id": "brd", "sections": ucc_pages.split_sections(SAMPLE)}
 
     def test_rejects_bad_doc_and_section(self):
         self.assertEqual(ucc_pages.validate_comment({"doc": "x", "section_id": "s01", "text": "a"}, None)[0], "doc must be 'brd' or 'sdd'")
@@ -95,9 +100,9 @@ class ValidateComment(unittest.TestCase):
         self.assertIn("longer", ucc_pages.validate_comment({"doc": "brd", "section_id": "s01", "text": "x" * 2001}, self.doc)[0])
 
     def test_normalizes(self):
-        err, f = ucc_pages.validate_comment({"doc": "BRD", "section_id": "s01", "text": " hi ", "author": "  Cholho   Kim ", "quote": "q" * 500}, self.doc)
+        err, f = ucc_pages.validate_comment({"doc": "BRD", "section_id": "s01", "text": " hi ", "author": "  Alex   Kim ", "quote": "q" * 500}, self.doc)
         self.assertIsNone(err)
-        self.assertEqual(f["author"], "Cholho Kim")
+        self.assertEqual(f["author"], "Alex Kim")
         self.assertEqual(len(f["quote"]), 300)
         self.assertEqual(f["section_title"], self.doc["sections"][1]["title"])
         err, f = ucc_pages.validate_comment({"doc": "brd", "section_id": "s01", "text": "a"}, self.doc)
@@ -133,6 +138,7 @@ class Routes(unittest.TestCase):
         with urllib.request.urlopen(f"http://127.0.0.1:{self.port}{path}", timeout=5) as r:
             return r.status, r.headers.get("Content-Type", ""), r.read()
 
+    @unittest.skipUnless(UCC_PUBLISHED, "UCC docs are not bundled in standalone public checkout")
     def test_pages_and_apis(self):
         for p in ("/ucc", "/ucc/brd", "/ucc/sdd", "/ucc/onepager", "/ucc/discovery"):
             st, ct, body = self.get(p)
@@ -164,6 +170,7 @@ class Routes(unittest.TestCase):
         st, _, body = self.get("/api/ucc/docs")
         self.assertIn("demo_url", json.loads(body))
 
+    @unittest.skipUnless(UCC_PUBLISHED, "UCC docs are not bundled in standalone public checkout")
     def test_post_validation_before_network(self):
         req = urllib.request.Request(f"http://127.0.0.1:{self.port}/api/ucc/comments", method="POST",
                                      data=json.dumps({"doc": "brd", "section_id": "nope", "text": "x"}).encode(), headers={"Content-Type": "application/json"})

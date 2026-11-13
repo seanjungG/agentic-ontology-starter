@@ -45,7 +45,7 @@ DEFAULT_BQ_SPANNER_CONN = os.environ.get("BQ_SPANNER_CONNECTION_ID", "spanner_fa
 DEFAULT_CORE_MCP_URL = (
     os.environ.get("CORE_MCP_URL")
     or os.environ.get("AOS_CORE_MCP_URL")
-    or "https://aos-builder-core-mcp-115847445822.asia-northeast3.run.app/mcp"
+    or "https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp"
 )
 
 
@@ -141,11 +141,15 @@ def get_gcp_token() -> str:
         if os.path.isdir(sdk_bin) and sdk_bin not in env.get("PATH", ""):
             env["PATH"] = f"{sdk_bin}:{env.get('PATH', '')}"
         env["CLOUDSDK_METRICS_ENVIRONMENT"] = "datacloud.jetski"
-        for cmd in (
-            ["gcloud", "auth", "print-access-token", "admin@seanjung.altostrat.com"],
+        acct = (os.environ.get("GCP_GCLOUD_ACCOUNT") or "").strip()
+        cmds = []
+        if acct:
+            cmds.append(["gcloud", "auth", "print-access-token", acct])
+        cmds.extend([
             ["gcloud", "auth", "print-access-token"],
             ["gcloud", "auth", "application-default", "print-access-token"],
-        ):
+        ])
+        for cmd in cmds:
             try:
                 r = subprocess.run(cmd, capture_output=True, text=True, timeout=8, env=env)
                 if r.returncode == 0 and r.stdout.strip().startswith("ya29."):
@@ -154,7 +158,7 @@ def get_gcp_token() -> str:
                 pass
         return ""
 
-    # On Cloud Run (K_SERVICE set), use Metadata Server first; on local/Cloudtop, use gcloud first to avoid Cloudtop VM SA.
+    # On Cloud Run (K_SERVICE set), use Metadata Server first; on local/Cloudtop, use gcloud first to avoid VM default SA mismatches.
     providers = (_from_metadata, _from_gcloud) if os.environ.get("K_SERVICE") else (_from_gcloud, _from_metadata)
     for fn in providers:
         tok = fn()
@@ -164,7 +168,7 @@ def get_gcp_token() -> str:
             return _CACHED_TOKEN
 
     raise RuntimeError(
-        "GCP Authentication token unavailable. Please run `gcloud auth login` (admin@seanjung.altostrat.com)."
+        "GCP Authentication token unavailable. Please run `gcloud auth login` or set GCP_ACCESS_TOKEN."
     )
 
 
@@ -506,7 +510,15 @@ def call_core_mcp(
             tok = get_gcp_token()
         except Exception:
             tok = ""
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    try:
+        from src.config import APP_VERSION as _APP_VER
+    except Exception:
+        _APP_VER = "starter"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-AOS-Client": f"agentic-ontology-starter/{_APP_VER}",
+    }
     if tok:
         headers["X-AOS-Access-Token"] = tok
     payload = {"jsonrpc": "2.0", "id": int(time.time() * 1000) % 100000, "method": method, "params": params or {}}

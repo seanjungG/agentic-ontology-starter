@@ -12,16 +12,20 @@
   "use strict";
   const LS = "aol.studio.v5";
   const TOKEN_KEY = "aol.studio.v5.token";
+  const ADMIN_SESS_KEY = "aol.studio.v5.admin";
   const STAGES = ["prepare", "ingest", "cqs", "wiki", "graph", "eval"];
   const ROUTES = ["start", "scenario", "env", "data", "types", "build", "studio/overview", "studio/assets", "studio/wiki", "studio/graph",
-    "studio/search", "studio/agents", "studio/eval", "studio/cg", "deploy", "handoff"];
+    "studio/search", "studio/agents", "studio/eval", "studio/cg", "deploy", "handoff", "admin"];
   const STRATEGIES = ["direct", "typed", "reconvert"];
   const S = {
-    lang: "ko", boot: null, i18n: {}, route: "start",
+    lang: "en", boot: null, i18n: {}, route: "start",
     scenario: { preset: "", title: "", customer: "", objective: "", question_type: "W3" },
     env: {}, identMode: "runtime", sa: "", identInfo: null, draftId: "", wsId: "", wsCreated: false, ws: null,
     sources: { docs: [], tables: [] }, check: null, data: {}, dataFor: "", busy: {}, log: [], ui: {},
     tpl: { flow: "", services: [], target: "sandbox", source: "" }, catalog: null, template: null, types: null, deploy: null, previews: {},
+    admin: { authed: false, session: "", principal: "", name: "", picture: "", method: "", cfg: null, data: null,
+      portal: null, portalErr: null, live: null, liveErr: null, liveHours: 24, err: null,
+      days: 14, ptype: "", pstatus: "", phash: "", plabel: "", tool: "", tab: "overview", actSub: "daily", cat: "all", toolQ: "", openTools: {} },
   };
   // step-1 data source (catalog `sources`) → step-3 tab
   const SRC_TAB = { upload: "upload", gcs: "gcs", drive: "drive", bigquery: "bq", sample: "sample" };
@@ -32,7 +36,7 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function T(k, v) {
     let s = (S.i18n[S.lang] || {})[k];
-    if (s == null) s = (S.i18n.ko || {})[k] != null ? S.i18n.ko[k] : k;
+    if (s == null) s = (S.i18n.en || {})[k] != null ? S.i18n.en[k] : k;
     if (v) for (const [a, b] of Object.entries(v)) s = s.split("{" + a + "}").join(String(b));
     return s;
   }
@@ -186,6 +190,8 @@
     const info = S.identInfo;
     $("#chip-id").innerHTML = `${statusDot(info ? "ok" : "idle")} ${esc(T("id." + S.identMode))}${info && info.principal ? ` <b class="mono">${esc(info.principal)}</b>` : ""}`;
     $("#chip-version").textContent = (S.boot && S.boot.version) || "";
+    const adm = $("#chip-admin");
+    if (adm) { adm.textContent = T("top.admin"); adm.classList.toggle("on", S.route === "admin"); }
     $("#chip-wizard").textContent = T("top.wizard");
     const nb = $("#chip-notebook");
     if (nb) { nb.textContent = T("top.notebook"); nb.href = ((S.boot && S.boot.notebook_url) || nb.href.replace(/\/$/, "")).replace(/\/$/, "") + "/#ov"; }
@@ -217,6 +223,7 @@
         ${studio.map(([r, k], i) => railItem(r, String.fromCharCode(65 + i), T(k), "", "", has)).join("")}</div>
       <div class="rail-group"><div class="rail-label">${T("rail.g.handoff")}</div>${railItem("deploy", "↗", T("rail.deploy"), T("rail.deploy.s"), S.deploy && S.deploy.verdict === "ready" ? "done" : "", has)}
         ${railItem("handoff", "→", T("rail.handoff"), T("rail.handoff.s"), "", has)}</div>
+      <div class="rail-group"><div class="rail-label">${T("rail.g.ops")}</div>${railItem("admin", "⚙", T("rail.admin"), T("rail.admin.s"), S.admin.session ? "done" : "")}</div>
       <div class="rail-actions"><button class="btn small" data-act="ws-open-modal">${T("rail.open")}</button><button class="btn small" data-act="reset">${T("rail.new")}</button></div>`;
   }
   function go(route) { location.hash = "#/" + route; }
@@ -247,6 +254,7 @@
   // GOAL-288 ("start easily, experience first"): one-click finished workspace + notebook Lab 1 · 2 · 3 + GitHub, above the hero
   const nbUrl = (h) => `${((S.boot && S.boot.notebook_url) || "").replace(/\/$/, "")}/#${h}`;
   const ghUrl = () => (S.boot && S.boot.github_url) || "https://github.com/seanjungG/agentic-ontology-starter";
+  const scUrl = () => (S.boot && S.boot.showcase_url) || `${((S.boot && S.boot.notebook_url) || "https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app").replace(/\/$/, "")}/showcase`;
   function instantBar() {
     const d = (S.boot && S.boot.demo_ws) || {};
     const go = (route, key) => `<button class="btn ${route === "studio/agents" ? "primary" : ""}" data-act="open-demo" data-route="${route}">${T(key)}</button>`;
@@ -261,7 +269,7 @@
         <div class="pillar-acts"><a class="btn small primary" href="${esc(nbUrl(h))}" target="_blank" rel="noopener">${T("start.pill.nb", { n: String(i) })}</a>
         <button class="btn small" data-act="open-demo" data-route="${route}">${T(`start.pill${i}.studio`)}</button></div></div>`).join("")}
       </div><p class="pillar-tip">${esc(T("start.pill.tip"))}</p><div class="journey">${[1, 2, 3].map((i) => `<div class="jstep"><span class="jn">${i}</span><div><b>${T(`start.j${i}.t`)}</b><span>${T(`start.j${i}.d`)}</span></div></div>`).join("")}
-        <a class="btn small" href="${esc(ghUrl())}" target="_blank" rel="noopener">${T("start.github")}</a></div></div>`;
+        <a class="btn small" href="${esc(scUrl())}" target="_blank" rel="noopener">${T("start.showcase")}</a><a class="btn small" href="${esc(ghUrl())}" target="_blank" rel="noopener">${T("start.github")}</a></div></div>`;
   }
   // GOAL-291: ③ Apply — one row per stage: notebook cell ↔ studio screen ↔ Core MCP tool ↔ result in my GCP (+ principles)
   function applyMap() {
@@ -1519,6 +1527,694 @@ python3 -m src.cli ask --bucket ${b} --ws ${w} --agent wiki --apply-cg "..."   #
     if (S.route === "deploy") rerender(); else rail();
   }
 
+  // GOAL-294 · GOAL-295: Starter Admin — Google Sign-In + Unified Core MCP Portal & Account Metering
+  const FIREBASE_SDK_BASE = "https://www.gstatic.com/firebasejs/10.14.1";
+  let firebaseLoadPromise = null;
+  function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      if (existing) {
+        if (existing.dataset.loaded === "1") { resolve(); return; }
+        existing.addEventListener("load", () => resolve(), { once: true });
+        existing.addEventListener("error", () => reject(new Error("Script failed: " + src)), { once: true });
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = src; s.async = true;
+      s.addEventListener("load", () => { s.dataset.loaded = "1"; resolve(); }, { once: true });
+      s.addEventListener("error", () => reject(new Error("Script failed: " + src)), { once: true });
+      document.head.appendChild(s);
+    });
+  }
+  async function ensureFirebaseAuth(gcfg) {
+    if (!firebaseLoadPromise) {
+      firebaseLoadPromise = loadScriptOnce(FIREBASE_SDK_BASE + "/firebase-app-compat.js")
+        .then(() => loadScriptOnce(FIREBASE_SDK_BASE + "/firebase-auth-compat.js"))
+        .catch((e) => { firebaseLoadPromise = null; throw e; });
+    }
+    await firebaseLoadPromise;
+    if (!window.firebase || !window.firebase.auth) throw new Error("Firebase Auth SDK unavailable");
+    const appName = "aos-starter-admin";
+    let app = (window.firebase.apps || []).find((x) => x.name === appName);
+    if (!app) {
+      app = window.firebase.initializeApp({
+        apiKey: gcfg.apiKey,
+        authDomain: gcfg.authDomain || (gcfg.projectId + ".firebaseapp.com"),
+        projectId: gcfg.projectId,
+      }, appName);
+    }
+    return app.auth();
+  }
+  const fmtNum = (n) => Number(n || 0).toLocaleString("en-US");
+  const fmtMu = (n) => Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+  function fmtBytes(n) {
+    const v = Number(n || 0);
+    if (v >= 1e9) return (v / 1e9).toFixed(2) + " GB";
+    if (v >= 1e6) return (v / 1e6).toFixed(2) + " MB";
+    if (v >= 1e3) return (v / 1e3).toFixed(1) + " KB";
+    return v + " B";
+  }
+  const loc = (o, pref) => {
+    if (!o) return "";
+    const p = pref || "";
+    return S.lang === "en" ? (o[p + "en"] || o.en || o[p + "ko"] || o.ko || "") : (o[p + "ko"] || o.ko || o[p + "en"] || o.en || "");
+  };
+  function adminHeaders() {
+    const h = { "Content-Type": "application/json" };
+    if (S.admin.session) h["X-AOS-Admin-Session"] = S.admin.session;
+    return h;
+  }
+  function loadAdminSession() {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem(ADMIN_SESS_KEY) || "null");
+      if (raw && raw.session) {
+        S.admin.session = raw.session; S.admin.principal = raw.principal || ""; S.admin.method = raw.method || "";
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function saveAdminSession(session, principal, method) {
+    S.admin.session = session || ""; S.admin.principal = principal || ""; S.admin.method = method || "";
+    if (session) sessionStorage.setItem(ADMIN_SESS_KEY, JSON.stringify({ session, principal, method }));
+    else sessionStorage.removeItem(ADMIN_SESS_KEY);
+  }
+  function clearAdminState() {
+    saveAdminSession("", "", "");
+    S.admin.authed = false; S.admin.name = ""; S.admin.picture = "";
+    S.admin.data = null; S.admin.portal = null; S.admin.live = null; S.admin.portalErr = null; S.admin.liveErr = null;
+  }
+  async function loadAdminStatus() {
+    S.busy.admStatus = true;
+    try {
+      const r = await fetch("/api/v5/admin/status", { credentials: "same-origin", cache: "no-store" });
+      const cfg = await r.json();
+      S.admin.cfg = cfg;
+      if (cfg && cfg.authenticated && cfg.user) {
+        S.admin.authed = true;
+        S.admin.principal = cfg.user.email || "";
+        S.admin.name = cfg.user.name || "";
+        S.admin.picture = cfg.user.picture || "";
+        S.admin.method = cfg.user.auth_method || "google_signin";
+      } else if (cfg && cfg.auth_mode === "legacy" && S.admin.session) {
+        S.admin.authed = true;
+      } else if (cfg && cfg.auth_mode === "google") {
+        S.admin.authed = false;
+        saveAdminSession("", "", "");
+      }
+    } catch (e) { S.admin.cfg = { configured: false, auth_mode: "google", auth_modes: [], google_auth: { enabled: false } }; }
+    S.busy.admStatus = false;
+    if (S.admin.authed) {
+      await loadAdminAll(false);
+    } else if (S.route === "admin") {
+      rerender();
+    }
+  }
+  async function loadAdminAll(forceRefresh) {
+    if (!S.admin.authed) return;
+    await Promise.all([loadAdminMetering(forceRefresh), loadAdminCatalog(forceRefresh)]);
+    if (S.admin.tab === "activity" && S.admin.actSub === "live") await loadAdminLiveUsage();
+  }
+  async function loadAdminMetering(forceRefresh) {
+    const a = S.admin;
+    if (!a.authed) return;
+    S.busy.adm = true; a.err = null;
+    if (S.route === "admin") rerender();
+    try {
+      const r = await fetch("/api/v5/admin/metering/overview", {
+        method: "POST", credentials: "same-origin", headers: adminHeaders(),
+        body: JSON.stringify({
+          days: a.days, principal_type: a.ptype, status: a.pstatus,
+          principal_hash: a.phash, tool_name: a.tool, force_refresh: !!forceRefresh,
+        }),
+      });
+      const j = await r.json().catch(() => ({ status: "ERROR", message: "HTTP " + r.status }));
+      if (r.status === 401 || r.status === 403) {
+        clearAdminState();
+        a.err = j;
+      } else if (j.status === "OK") {
+        a.data = j;
+        if (j.admin) {
+          a.principal = j.admin.principal || a.principal;
+          a.name = j.admin.name || a.name;
+          a.picture = j.admin.picture || a.picture;
+          a.method = j.admin.auth_method || a.method;
+        }
+      } else {
+        a.err = j;
+      }
+    } catch (e) { a.err = { status: "ERROR", message: T("err.network", { e: e.message }) }; }
+    S.busy.adm = false;
+    if (S.route === "admin") rerender();
+  }
+  async function loadAdminCatalog(forceRefresh) {
+    const a = S.admin;
+    if (!a.authed) return;
+    if (!forceRefresh && a.portal && a.portal.catalog) return;
+    S.busy.admCat = true; a.portalErr = null;
+    try {
+      const r = await fetch("/api/v5/admin/portal/catalog", {
+        method: "POST", credentials: "same-origin", headers: adminHeaders(),
+        body: JSON.stringify({ force_refresh: !!forceRefresh }),
+      });
+      const j = await r.json().catch(() => ({ status: "ERROR", message: "HTTP " + r.status }));
+      if (r.status === 401 || r.status === 403) {
+        clearAdminState(); a.err = j;
+      } else if (j.status === "OK" && j.catalog) {
+        a.portal = j;
+      } else {
+        a.portalErr = j.message || j.status || ("HTTP " + r.status);
+      }
+    } catch (e) { a.portalErr = e.message; }
+    S.busy.admCat = false;
+    if (S.route === "admin") rerender();
+  }
+  async function loadAdminLiveUsage() {
+    const a = S.admin;
+    if (!a.authed) return;
+    S.busy.admLive = true; a.liveErr = null;
+    if (S.route === "admin") rerender();
+    try {
+      const tz = -new Date().getTimezoneOffset();
+      const r = await fetch("/api/v5/admin/portal/live-usage", {
+        method: "POST", credentials: "same-origin", headers: adminHeaders(),
+        body: JSON.stringify({ hours: a.liveHours || 24, tz_offset: tz }),
+      });
+      const j = await r.json().catch(() => ({ status: "ERROR", message: "HTTP " + r.status }));
+      if (r.status === 401 || r.status === 403) {
+        clearAdminState(); a.err = j;
+      } else if (j.status === "OK" && j.usage) {
+        a.live = j.usage;
+      } else {
+        a.liveErr = j.message || j.status || ("HTTP " + r.status);
+      }
+    } catch (e) { a.liveErr = e.message; }
+    S.busy.admLive = false;
+    if (S.route === "admin") rerender();
+  }
+  function renderDailyChart(rows) {
+    if (!rows || !rows.length) return `<div class="empty">${T("adm.chart.empty")}</div>`;
+    const W = Math.max(640, rows.length * 46 + 60), H = 190, padL = 40, padB = 28, padT = 16, padR = 16;
+    const cw = W - padL - padR, ch = H - padT - padB;
+    const maxCalls = Math.max(1, ...rows.map((r) => Number(r.calls || 0)));
+    const bw = Math.max(10, Math.min(28, Math.floor((cw / rows.length) * 0.62)));
+    const step = cw / rows.length;
+    const grid = [0, 0.5, 1].map((f) => {
+      const y = (padT + ch * (1 - f)).toFixed(1);
+      const lbl = Math.round(maxCalls * f);
+      return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#e2e8f0" stroke-width="1"/>
+        <text x="${padL - 6}" y="${Number(y) + 3}" text-anchor="end" font-size="10" fill="#64748b" font-family="var(--mono)">${lbl}</text>`;
+    }).join("");
+    const bars = rows.map((r, i) => {
+      const calls = Number(r.calls || 0), errs = Number(r.errors || 0);
+      const hTot = (calls / maxCalls) * ch, hErr = (errs / maxCalls) * ch, hOk = Math.max(0, hTot - hErr);
+      const x = padL + i * step + (step - bw) / 2;
+      const yOk = padT + ch - hOk, yErr = yOk - hErr;
+      const dayLbl = String(r.day || "").slice(5);
+      const tip = `${r.day}: ${calls} calls (${errs} err) · ${fmtMu(r.metering_units)} MU · ${fmtNum(r.tokens_total)} tok`;
+      return `<g><title>${esc(tip)}</title>
+        ${hOk > 0 ? `<rect x="${x.toFixed(1)}" y="${yOk.toFixed(1)}" width="${bw}" height="${hOk.toFixed(1)}" rx="3" fill="#1e293b"/>` : ""}
+        ${hErr > 0 ? `<rect x="${x.toFixed(1)}" y="${yErr.toFixed(1)}" width="${bw}" height="${hErr.toFixed(1)}" rx="2" fill="#dc2626"/>` : ""}
+        <text x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="#64748b" font-family="var(--mono)">${esc(dayLbl)}</text></g>`;
+    }).join("");
+    return `<div class="adm-chart-wrap"><div class="adm-chart-legend">
+      <span><i class="adm-dot ok"></i>${T("adm.chart.ok")}</span>
+      <span><i class="adm-dot err"></i>${T("adm.chart.err")}</span>
+      <span class="meta">${T("adm.chart.sub")}</span></div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${esc(T("adm.chart.title"))}">${grid}${bars}</svg></div>`;
+  }
+  function bqToolStatsMap(d) {
+    const m = {};
+    ((d && d.by_tool) || []).forEach((r) => { m[r.tool_name] = r; });
+    return m;
+  }
+  function renderPortalOverview(d) {
+    const a = S.admin;
+    const p = a.portal;
+    const daily = (d && d.by_day) || [];
+    const chartHtml = `<div class="card-head"><h3>${T("adm.chart.title")}</h3><span class="sub">${T("adm.chart.sub")}</span></div>${renderDailyChart(daily)}`;
+    if (!p || !p.catalog) {
+      return chartHtml + (a.portalErr
+        ? `<div class="note err mt12">${esc(T("adm.catalogErr", { e: a.portalErr }))}</div>`
+        : `<div class="empty mt12">${T("adm.catalogLoading")}</div>`);
+    }
+    const c = p.catalog;
+    const sv = c.service || {};
+    const cats = (c.categories || []).filter((x) => x.tools);
+    const catById = Object.fromEntries(cats.map((x) => [x.id, x]));
+    const toolStats = bqToolStatsMap(d);
+    const catCalls = {};
+    ((d && d.by_tool) || []).forEach((r) => { if (r.tool_category) catCalls[r.tool_category] = (catCalls[r.tool_category] || 0) + Number(r.calls || 0); });
+    const shortName = (n) => String(n || "").replace(/^aos_(core|builder)_/, "");
+    const stepHtml = (st) => {
+      const cat = st.category || "";
+      const cnt = cat ? (catCalls[cat] || 0) : ((toolStats[st.tool] && toolStats[st.tool].calls) || 0);
+      const alt = (st.alt || []).map((x) => `<code>+ ${esc(shortName(x))}</code>`).join(" ");
+      return `<div class="adm-step" data-act="${cat ? "adm-goto-cat" : "adm-goto-tool"}" data-cat="${esc(cat)}" data-t="${esc(st.tool || "")}">
+        ${cnt ? `<span class="cnt">${fmtNum(cnt)}</span>` : ""}<b>${esc(loc(st, ""))}</b>
+        <code>${esc(cat ? ((catById[cat] || {}).tools || 0) + " " + T("adm.ov.toolsUnit") : shortName(st.tool))}</code>${alt ? "<br>" + alt : ""}</div>`;
+    };
+    const callers = ((c.flow && c.flow.callers) || []).map((x) => `<div class="adm-arch-item">${esc(loc(x, ""))}</div>`).join("");
+    const lanes = ((c.flow && c.flow.lanes) || []).map((ln) => `<div class="adm-lane">
+      <div class="adm-lane-h"><span>${esc(loc(ln, ""))}</span>${ln.orchestrator
+        ? `<span class="adm-badge acc" style="cursor:pointer" data-act="adm-goto-tool" data-t="${esc(ln.orchestrator)}">${esc(T("adm.ov.flowOrch"))}: ${esc(ln.orchestrator)}</span>` : ""}</div>
+      <div class="adm-steps">${(ln.steps || []).map(stepHtml).join('<span class="adm-chev">›</span>')}</div></div>`).join("");
+    return `${chartHtml}
+      <div class="adm-sec-h mt16">${T("adm.ov.title")}</div>
+      <p class="muted" style="margin:0 0 12px">${T("adm.ov.lead")}</p>
+      <div class="adm-kpis">
+        <div class="kpi"><div class="k">${T("adm.ov.kpiTools")}</div><div class="v">${fmtNum(c.tools_count)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.ov.kpiCats")}</div><div class="v">${fmtNum(cats.length)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.ov.kpiVer")}</div><div class="v" style="font-size:16px">${esc(sv.version || "-")}</div></div>
+        <div class="kpi"><div class="k">${T("adm.ov.kpiProto")}</div><div class="v" style="font-size:15px">${esc(sv.protocol || "-")}</div></div>
+        <div class="kpi"><div class="k">${T("adm.ov.kpiZero")}</div><div class="v" style="font-size:16px">${c.security && c.security.zero_privilege_mode ? T("adm.ov.on") : T("adm.ov.off")}</div></div>
+        <div class="kpi"><div class="k">${T("adm.ov.kpiAuth")}</div><div class="v" style="font-size:14px">${esc(T("adm.authBadge"))}</div></div>
+      </div>
+      <div class="adm-sec-h">${T("adm.ov.rolesTitle")}</div>
+      <div class="adm-tier-grid">
+        <div class="adm-tier primary"><span class="adm-badge acc tag-tr">Tier 1</span>
+          <h4>${T("adm.ov.tier1Title")}</h4><p>${T("adm.ov.tier1Desc")}</p>
+          <ul><li>${T("adm.ov.tier1B1")}</li><li>${T("adm.ov.tier1B2")}</li><li>${T("adm.ov.tier1B3")}</li></ul></div>
+        <div class="adm-tier"><span class="adm-badge tag-tr">Tier 2</span>
+          <h4>${T("adm.ov.tier2Title")}</h4><p>${T("adm.ov.tier2Desc")}</p>
+          <ul><li>${T("adm.ov.tier2B1")}</li><li>${T("adm.ov.tier2B2")}</li><li>${T("adm.ov.tier2B3")}</li></ul></div>
+      </div>
+      <div class="adm-sec-h">${T("adm.ov.whoTitle")}</div>
+      <div class="adm-arch">
+        <div class="adm-arch-col"><h4>${T("adm.ov.callers")}</h4>${callers}</div>
+        <div class="adm-arch-arr">→</div>
+        <div class="adm-arch-col core"><h4>${T("adm.ov.core")} · <code>aos-builder-core-mcp</code></h4>
+          <div class="adm-arch-item">${T("adm.ov.coreI1")}</div>
+          <div class="adm-arch-item">${T("adm.ov.coreI2")}</div>
+          <div class="adm-arch-item">${T("adm.ov.coreI3")}</div>
+          <div class="adm-arch-item"><code>X-AOS-Access-Token</code></div></div>
+        <div class="adm-arch-arr">→</div>
+        <div class="adm-arch-col"><h4>${T("adm.ov.gcp")}</h4>
+          <div class="adm-arch-item">${T("adm.ov.gcpI1")}</div>
+          <div class="adm-arch-item">${T("adm.ov.gcpI2")}</div>
+          <div class="adm-arch-item">${T("adm.ov.gcpI3")}</div></div>
+      </div>
+      <div class="adm-sec-h">${T("adm.ov.secTitle")}</div>
+      <div class="adm-sec-grid">
+        <div class="adm-sec-card"><h4>${T("adm.ov.sec1T")}</h4><p>${T("adm.ov.sec1D")}</p></div>
+        <div class="adm-sec-card"><h4>${T("adm.ov.sec2T")}</h4><p>${T("adm.ov.sec2D")}</p></div>
+        <div class="adm-sec-card"><h4>${T("adm.ov.sec3T")}</h4><p>${T("adm.ov.sec3D")}</p></div>
+      </div>
+      <div class="adm-sec-h">${T("adm.ov.flowTitle")}</div>
+      <p class="meta" style="margin:0 0 10px">${T("adm.ov.flowLead")}</p>
+      ${lanes}
+      <div class="meta mt8">${T("adm.ov.flowLoop")}</div>
+      <div class="adm-sec-h">${esc(T("adm.ov.catTitle", { n: cats.length }))}</div>
+      <div class="adm-cat-grid">${cats.map((x) => `<div class="adm-cat-card" data-act="adm-goto-cat" data-cat="${esc(x.id)}">
+        <div class="adm-cat-card-h"><h4>${esc(loc(x, ""))}</h4><span class="adm-badge acc">${fmtNum(x.tools)} ${esc(T("adm.ov.toolsUnit"))}</span></div>
+        <p>${esc(loc(x, "desc_"))}</p></div>`).join("")}</div>`;
+  }
+  function renderToolCard(x, stat) {
+    const a = S.admin;
+    const m = x.meta || {};
+    const open = !!a.openTools[x.name];
+    const desc = S.lang === "en" ? (x.description_en || x.description) : (x.description || x.description_en);
+    const params = x.params || [];
+    const paramsHtml = params.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+      <th>${T("adm.cat.pName")}</th><th>${T("adm.cat.pType")}</th><th>${T("adm.cat.pReq")}</th><th>${T("adm.cat.pDesc")}</th>
+      </tr></thead><tbody>${params.map((p) => {
+        const pd = S.lang === "en" ? (p.description_en || p.description) : (p.description || p.description_en);
+        return `<tr><td><code>${esc(p.name)}</code></td>
+          <td><code>${esc(p.type)}</code>${p.enum ? `<div class="adm-chips mt4">${p.enum.map((e) => `<span class="adm-chip">${esc(e)}</span>`).join("")}</div>` : ""}</td>
+          <td>${p.required ? `<b style="color:#ea580c">${T("adm.cat.yes")}</b>` : `<span class="meta">-</span>`}</td>
+          <td>${pd ? esc(pd) : `<span class="meta">-</span>`}</td></tr>`;
+      }).join("")}</tbody></table></div>` : `<div class="meta">${T("adm.cat.noParams")}</div>`;
+    const errEx = m.auth_error_example || m.error_example;
+    const tokCls = m.needs_token === "required" ? "warn" : "";
+    return `<div class="adm-tool ${open ? "open" : ""}" data-tool="${esc(x.name)}">
+      <div class="adm-th" data-act="adm-tool-toggle" data-t="${esc(x.name)}">
+        <span class="nm">${esc(x.name)}</span>
+        <span class="rl">${esc(loc(m, "role_"))}</span>
+        <span class="bd">
+          ${stat ? `<span class="adm-badge s-ok">${esc(T("adm.cat.bqBadge", { calls: fmtNum(stat.calls), mu: fmtMu(stat.metering_units) }))}</span>` : ""}
+          <span class="adm-badge ${tokCls}">${esc(T("adm.cat.tok." + (m.needs_token || "none")))}</span>
+          ${m.gemini && m.gemini !== "no" ? `<span class="adm-badge acc">${esc(T("adm.cat.gem." + m.gemini))}</span>` : ""}
+        </span>
+      </div>
+      ${open ? `<div class="adm-tb">
+        <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+          ${desc ? `<div class="meta" style="flex:1;min-width:200px">${esc(desc)}</div>` : "<span></span>"}
+          <button type="button" class="btn small" data-act="adm-filter-from-cat" data-t="${esc(x.name)}">${T("adm.cat.filterMetering")}</button>
+        </div>
+        <h5>${T("adm.cat.input")}</h5>${paramsHtml}
+        <h5>${T("adm.cat.output")}</h5>
+        <div class="meta mb8">${esc(loc(m, "output_"))}</div>
+        ${(m.output_fields || []).length ? `<div class="adm-chips mb8">${m.output_fields.map((f) => `<span class="adm-chip">${esc(f)}</span>`).join("")}</div>` : ""}
+        <div class="adm-json-grid">
+          <div><h5>${T("adm.cat.outExample")}</h5><pre class="adm-json">${esc(JSON.stringify(m.output_example || {}, null, 2))}</pre></div>
+          <div><h5>${T("adm.cat.errExample")}</h5><pre class="adm-json">${esc(JSON.stringify(errEx || {}, null, 2))}</pre></div>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }
+  function renderCatalogBody(d) {
+    const a = S.admin;
+    const c = a.portal && a.portal.catalog;
+    if (!c) return { html: a.portalErr ? `<div class="note err">${esc(T("adm.catalogErr", { e: a.portalErr }))}</div>` : `<div class="empty">${T("adm.catalogLoading")}</div>`, shown: 0, total: 0 };
+    const cats = (c.categories || []).filter((x) => x.tools);
+    const q = (a.toolQ || "").trim().toLowerCase();
+    const stats = bqToolStatsMap(d);
+    const match = (x) => (a.cat === "all" || (x.meta && x.meta.category === a.cat)) && (!q || [
+      x.name, x.meta && x.meta.role_ko, x.meta && x.meta.role_en, x.description, x.description_en,
+      (x.params || []).map((p) => p.name).join(" "),
+    ].join(" ").toLowerCase().includes(q));
+    let shown = 0;
+    const sections = cats.map((cat) => {
+      const items = (c.tools || []).filter((x) => x.meta && x.meta.category === cat.id && match(x));
+      shown += items.length;
+      if (!items.length) return "";
+      return `<div class="adm-cat-h"><h4>${esc(loc(cat, ""))}</h4><span>${esc(loc(cat, "desc_"))}</span></div>`
+        + items.map((x) => renderToolCard(x, stats[x.name])).join("");
+    }).join("");
+    return { html: sections || `<div class="empty">${T("adm.cat.noMatch")}</div>`, shown, total: c.tools_count || (c.tools || []).length };
+  }
+  function renderCatalogTab(d) {
+    const a = S.admin;
+    const c = a.portal && a.portal.catalog;
+    const cats = c ? (c.categories || []).filter((x) => x.tools) : [];
+    const body = renderCatalogBody(d);
+    return `
+      <div class="adm-cat-bar">
+        <input id="adm-tool-q" class="adm-search" type="search" value="${esc(a.toolQ || "")}" placeholder="${esc(T("adm.cat.searchPh"))}">
+        <button type="button" class="btn small" data-act="adm-cat-expand">${T("adm.cat.expandAll")}</button>
+        <button type="button" class="btn small" data-act="adm-cat-collapse">${T("adm.cat.collapseAll")}</button>
+        <span class="meta mono" id="adm-cat-cnt">${esc(T("adm.cat.count", { shown: fmtNum(body.shown), total: fmtNum(body.total) }))}</span>
+      </div>
+      ${c ? `<div class="adm-cat-pills">
+        <button type="button" class="adm-cpill ${a.cat === "all" ? "on" : ""}" data-act="adm-cat-pill" data-cat="all">${T("adm.all")} · ${fmtNum(body.total)}</button>
+        ${cats.map((x) => `<button type="button" class="adm-cpill ${a.cat === x.id ? "on" : ""}" data-act="adm-cat-pill" data-cat="${esc(x.id)}">${esc(loc(x, ""))} · ${fmtNum(x.tools)}</button>`).join("")}
+      </div>` : ""}
+      <div id="adm-cat-body">${body.html}</div>`;
+  }
+  function renderLiveInstanceSub() {
+    const a = S.admin;
+    const u = a.live;
+    const hours = Number(a.liveHours || 24);
+    const bar = `<div class="adm-bar mb8">
+      <div class="adm-filters">
+        <span class="meta">${T("adm.act.liveHours")}:</span>
+        <div class="adm-seg">${[[1, "h1"], [6, "h6"], [24, "h24"], [72, "h72"], [168, "h168"]].map(([h, k]) =>
+          `<button type="button" class="${hours === h ? "on" : ""}" data-act="adm-live-hrs" data-h="${h}">${T("adm.act." + k)}</button>`).join("")}</div>
+        <button type="button" class="btn small" data-act="adm-live-refresh" ${S.busy.admLive ? "disabled" : ""}>${S.busy.admLive ? T("common.loading") : T("adm.refresh")}</button>
+      </div>
+      ${u && u.instance ? `<span class="meta mono">${esc(T("adm.act.liveMeta", {
+        id: u.instance.id || "-", up: fmtNum(Math.round((u.instance.uptime_s || 0) / 60)),
+        buf: fmtNum(u.instance.buffer_size), max: fmtNum(u.instance.buffer_max), life: fmtNum(u.instance.lifetime_calls),
+      }))}</span>` : ""}
+    </div><div class="meta mb8">${T("adm.act.liveNote")}</div>`;
+    if (a.liveErr) return bar + `<div class="note err">${esc(a.liveErr)}</div>`;
+    if (!u) return bar + `<div class="empty">${T("common.loading")}</div>`;
+    const tot = u.totals || {};
+    const hrs = u.by_hour || [];
+    let chart = `<div class="empty">${T("adm.chart.empty")}</div>`;
+    if (hrs.length) {
+      const hmap = Object.fromEntries(hrs.map((x) => [x.hour, x]));
+      const n = Math.min(72, Math.max(1, Math.ceil(hours)));
+      const tzMin = (u.window && u.window.tz_offset_min) || 540;
+      const end = Date.now(), keys = [];
+      for (let i = n - 1; i >= 0; i--) {
+        const dt = new Date(end - i * 3600e3 + tzMin * 60e3);
+        keys.push(dt.toISOString().slice(0, 13) + ":00");
+      }
+      const mx = Math.max(1, ...keys.map((k) => (hmap[k] ? hmap[k].calls : 0)));
+      chart = `<div class="adm-chart-wrap"><div class="meta mb4">${T("adm.act.hourlyTitle")}</div>
+        <div class="adm-hbar-chart">${keys.map((k) => {
+          const item = hmap[k]; const c = item ? item.calls : 0; const e = item ? item.errors : 0;
+          return `<div class="adm-hbar ${c ? "has" : ""}" title="${esc(k)} · ${c} calls / ${e} err" style="height:${Math.max(2, (c / mx) * 100)}%">${e ? `<i style="height:${(e / Math.max(1, c)) * 100}%"></i>` : ""}</div>`;
+        }).join("")}</div>
+        <div class="adm-haxis"><span>${esc(keys[0].replace("T", " "))}</span><span>max ${fmtNum(mx)}</span><span>${esc(keys[keys.length - 1].replace("T", " "))}</span></div></div>`;
+    }
+    const recent = u.recent || [];
+    return `${bar}
+      <div class="adm-kpis mb12">
+        <div class="kpi"><div class="k">${T("adm.kpi.calls")}</div><div class="v">${fmtNum(tot.calls)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.col.errors")}</div><div class="v">${fmtNum(tot.errors)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.col.errRate")}</div><div class="v">${pct(tot.error_rate)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.col.p50")}</div><div class="v">${fmtNum(tot.p50_ms)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.col.p95")}</div><div class="v">${fmtNum(tot.p95_ms)}</div></div>
+        <div class="kpi"><div class="k">${T("adm.col.accounts")}</div><div class="v">${fmtNum(tot.principals)}</div></div>
+      </div>
+      ${chart}
+      ${recent.length ? `<div class="tbl-wrap mt12"><table class="tbl"><thead><tr>
+        <th>${T("adm.col.ts")}</th><th>${T("adm.col.tool")}</th><th>${T("adm.col.status")}</th><th class="num">${T("adm.col.ms")}</th>
+        <th>${T("adm.col.account")}</th><th>${T("adm.col.client")}</th></tr></thead><tbody>
+        ${recent.map((r) => `<tr><td class="mono small">${esc(String(r.ts || "").replace("T", " ").slice(0, 19))}</td>
+          <td class="mono small">${esc(r.tool)}</td>
+          <td><span class="adm-badge s-${r.status === "ok" ? "ok" : "error"}">${esc(r.status)}</span></td>
+          <td class="num">${fmtNum(r.ms)}</td><td class="mono small">${esc(r.principal || "-")}</td>
+          <td class="small">${esc(r.client || "-")}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
+  }
+  function renderPolicyView(d) {
+    const a = S.admin;
+    const adm = (d && d.admin) || {};
+    const pol = (d && d.metering_policy) || (a.portal && a.portal.metering_policy) || {};
+    const ident = pol.identification_priority || [];
+    const pii = pol.pii_minimization || {};
+    const mu = pol.metering_units_spec || {};
+    const sto = pol.storage || {};
+    const mode = adm.auth_mode || (a.cfg && a.cfg.auth_mode) || "google";
+    const allowed = (adm.allowed_emails || []).join(", ") || a.principal || "-";
+    const ttlH = Math.round(((adm.session_ttl_s || (a.cfg && a.cfg.session_ttl_s) || 43200) / 3600) * 10) / 10;
+    return `<div class="adm-pol-grid">
+      <div class="adm-pol-box full"><h4>${T("adm.pol.access")}</h4><ul>
+        <li><b>${T("adm.pol.accessMode")}:</b> <code>${esc(mode)}</code> · Firebase project: <code>${esc(adm.firebase_project || (a.cfg && a.cfg.google_auth && a.cfg.google_auth.projectId) || "-")}</code></li>
+        <li><b>${T("adm.pol.accessAllow")}:</b> <code>${esc(allowed)}</code></li>
+        <li><b>${T("adm.pol.accessSession")}:</b> <code>${esc(a.principal || "-")}</code> (${esc(a.method || "google_signin")} · ${ttlH}h HttpOnly sliding cookie)</li>
+        <li><b>${T("adm.pol.accessKeyOff")}:</b> ${mode === "google" ? T("adm.pol.accessKeyDisabledVal") : T("adm.pol.accessKeyLegacyVal")}</li>
+      </ul></div>
+      <div class="adm-pol-box"><h4>${T("adm.pol.ident")}</h4><ul>
+        ${ident.map((x) => `<li><b>#${esc(x.priority)} ${esc(x.name)}</b> — <span class="mono">${esc((x.headers || []).join(", ") || "none")}</span><div class="meta">${esc(x.verification)}</div></li>`).join("") || `<li><span class="meta">-</span></li>`}
+      </ul></div>
+      <div class="adm-pol-box"><h4>${T("adm.pol.pii")}</h4><ul>
+        <li><b>Mode:</b> <code>${esc(pii.mode || "masked")}</code> (${esc((pii.modes_supported || []).join(" / "))})</li>
+        <li><b>User email:</b> ${esc((pii.user_email_handling || {}).masked || "-")}</li>
+        <li><b>Service Account:</b> ${esc(pii.service_account_handling || "-")}</li>
+        <li><b>API Key:</b> ${esc(pii.api_key_handling || "-")}</li>
+        <li><b>Never stored:</b> <span class="mono">${esc((pii.excluded_fields || []).join(", "))}</span></li>
+      </ul></div>
+      <div class="adm-pol-box"><h4>${T("adm.pol.mu")}</h4>
+        ${mu.formula ? `<div class="mb8"><code>${esc(mu.formula)}</code></div>` : ""}
+        <ul>${Object.entries(mu.weights || {}).map(([k, v]) => `<li><code>${esc(k)}</code>: <b>${esc(v)}</b></li>`).join("")}</ul></div>
+      <div class="adm-pol-box"><h4>${T("adm.pol.storage")}</h4><ul>
+        <li><b>Table:</b> <code>${esc(sto.table_fq || d.table_fq || "-")}</code></li>
+        <li><b>Partition / Cluster:</b> <code>${esc(sto.partition_by || "DATE(event_ts)")}</code> · <code>${esc((sto.cluster_by || []).join(", "))}</code></li>
+        <li><b>Write mode:</b> <code>${esc(sto.write_mode || "non_blocking_batch_insertAll")}</code> (${esc(sto.dedup_key || "insertId")})</li>
+        <li><b>IAM:</b> ${esc(sto.iam_isolation || "-")}</li>
+      </ul></div>
+    </div>`;
+  }
+  const GOOGLE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`;
+  PAGES.admin = () => {
+    const a = S.admin;
+    const cfg = a.cfg;
+    const portalHref = (a.portal && a.portal.portal_url) || (cfg && cfg.core_mcp_portal_url) || "";
+    const userChip = a.authed ? `<span class="adm-user-pill">
+      ${a.picture ? `<img src="${esc(a.picture)}" alt="" referrerpolicy="no-referrer">` : `<span class="adm-user-avatar">${esc((a.principal || "A").slice(0, 1).toUpperCase())}</span>`}
+      <span>${esc(a.principal || "admin")}</span></span>` : "";
+    const hdr = head(T("adm.eyebrow"), T("adm.title"), T("adm.lead"),
+      a.authed ? `<div class="flex" style="align-items:center;gap:6px;flex-wrap:wrap">
+        ${userChip}
+        ${portalHref ? `<a class="btn small" href="${esc(portalHref)}" target="_blank" rel="noopener">${T("adm.openRawPortal")}</a>` : ""}
+        <button class="btn small" data-act="adm-refresh" ${S.busy.adm ? "disabled" : ""}>${S.busy.adm ? T("common.loading") : T("adm.refresh")}</button>
+        <button class="btn small" data-act="adm-export" data-fmt="csv">${T("adm.exportCsv")}</button>
+        <button class="btn small" data-act="adm-export" data-fmt="json">${T("adm.exportJson")}</button>
+        <button class="btn small danger" data-act="adm-logout">${T("adm.logout")}</button></div>` : "");
+    if (!a.authed) {
+      if (!cfg) return hdr + `<div class="card adm-gate"><div class="empty">${T("common.loading")}</div></div>`;
+      const mode = cfg.auth_mode || "google";
+      const gOk = mode === "google" && cfg.configured && cfg.google_auth && cfg.google_auth.enabled;
+      const errMsg = a.err ? (a.err.code === "ADMIN_FORBIDDEN" && a.err.email
+        ? T("adm.gate.forbiddenHint", { email: a.err.email }) : (a.err.message || a.err.status)) : "";
+      if (mode === "google") {
+        return hdr + `<div class="card adm-gate"><div class="adm-gate-icon">🛡️</div>
+          <h2>${T("adm.gate.title")}</h2><p class="muted mt4">${T("adm.gate.lead")}</p>
+          ${!gOk ? `<div class="note err mt12">${T("adm.gate.unconfigured")}</div>` : ""}
+          ${errMsg ? `<div class="note err mt12">${esc(errMsg)}</div>` : ""}
+          <div class="mt16"><button type="button" class="adm-gbtn" id="adm-google-btn" data-act="adm-google-login" ${S.busy.adm || !gOk ? "disabled" : ""}>
+            ${GOOGLE_SVG}<span>${S.busy.adm ? T("adm.gate.googleBusy") : T("adm.gate.googleBtn")}</span></button></div>
+          <div class="meta mt12">${T("adm.gate.note")}</div></div>`;
+      }
+      const uncfg = cfg.configured === false;
+      const hasTok = !!token();
+      return hdr + `<div class="card adm-gate"><div class="adm-gate-icon">🔒</div>
+        <h2>${T("adm.gate.legacyTitle")}</h2><p class="muted mt4">${T("adm.gate.lead")}</p>
+        ${uncfg ? `<div class="note err mt12">${T("adm.gate.unconfigured")}</div>` : ""}
+        ${errMsg ? `<div class="note err mt12">${esc(errMsg)}</div>` : ""}
+        <div class="form mt16">
+          <div class="field"><label>${T("adm.gate.keyLabel")}</label><input id="adm-key" type="password" autocomplete="current-password" placeholder="${esc(T("adm.gate.keyPh"))}"></div>
+          <div class="field"><label>${T("adm.gate.tokLabel")}</label><div class="cmd"><input id="adm-tok" type="password" placeholder="${esc(T("adm.gate.tokPh"))}" style="flex:1">
+            ${hasTok ? `<button class="btn small" type="button" data-act="adm-use-tok">${T("adm.gate.useStudioTok")}</button>` : ""}</div></div>
+        </div>
+        <div class="form-actions mt12"><button class="btn primary" data-act="adm-login" ${S.busy.adm || uncfg ? "disabled" : ""}>${S.busy.adm ? T("common.loading") : T("adm.gate.unlock")}</button></div>
+        <div class="meta mt12">${T("adm.gate.note")}</div></div>`;
+    }
+    const d = a.data;
+    const s = (d && d.summary) || {};
+    const h = (d && d.core_mcp_health) || (a.portal && a.portal.core_mcp_health) || {};
+    const sink = h.metering || {};
+    const sinkOn = !!sink.bq_enabled;
+    const types = (d && d.by_type) || [];
+    const accounts = (d && d.by_account) || [];
+    const clients = (d && d.by_client) || [];
+    const tools = (d && d.by_tool) || [];
+    const daily = (d && d.by_day) || [];
+    const recent = (d && d.recent) || [];
+    const catCount = (a.portal && a.portal.catalog && a.portal.catalog.tools_count) || 57;
+    const tab = a.tab || "overview";
+    const actSub = a.actSub || "daily";
+    const hasDrill = !!(a.phash || a.tool || a.ptype || a.pstatus);
+    let tabBody = "";
+    if (tab === "overview") {
+      tabBody = renderPortalOverview(d || {});
+    } else if (tab === "catalog") {
+      tabBody = renderCatalogTab(d || {});
+    } else if (tab === "accounts") {
+      const totalCalls = Math.max(1, Number(s.calls || 0));
+      tabBody = (!accounts.length ? `<div class="empty">${T("adm.chart.empty")}</div>` : `<div class="meta mb8">${T("adm.hintClick")}</div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr>
+          <th>${T("adm.col.account")}</th><th>${T("adm.col.type")}</th><th>${T("adm.col.auth")}</th>
+          <th class="num">${T("adm.col.calls")}</th><th class="num">${T("adm.col.errors")}</th><th class="num">${T("adm.col.tools")}</th>
+          <th class="num">${T("adm.col.gemini")}</th><th class="num">${T("adm.col.tokens")}</th><th class="num">${T("adm.col.bytes")}</th>
+          <th class="num">${T("adm.col.bq")}</th><th class="num">${T("adm.col.mu")}</th><th class="num">${T("adm.col.p95")}</th><th>${T("adm.col.last")}</th>
+        </tr></thead><tbody>${accounts.map((r) => `<tr class="adm-row-click ${a.phash === r.principal_hash ? "on" : ""}" data-act="adm-drill-acct" data-h="${esc(r.principal_hash)}" data-l="${esc(r.principal_id)}">
+          <td class="mono"><b>${esc(r.principal_id)}</b></td>
+          <td><span class="adm-badge t-${esc(r.principal_type)}">${esc(r.principal_type)}</span></td>
+          <td class="mono small">${esc(r.auth_method)}${r.auth_verified ? " ✓" : ""}</td>
+          <td class="num"><b>${fmtNum(r.calls)}</b></td><td class="num">${fmtNum(r.errors)}</td><td class="num">${fmtNum(r.tools_used)}</td>
+          <td class="num">${fmtNum(r.gemini_calls)}</td><td class="num">${fmtNum(r.tokens_total)}</td>
+          <td class="num">${fmtBytes(r.payload_bytes)}</td><td class="num">${fmtBytes(r.bq_bytes_processed)}</td>
+          <td class="num"><b>${fmtMu(r.metering_units)}</b></td><td class="num">${fmtNum(r.p95_ms)}</td>
+          <td class="mono small">${esc(r.last_seen_kst || "")}</td></tr>`).join("")}</tbody></table></div>`)
+        + (clients.length ? `<div class="adm-sec-h mt16">${T("adm.clients.title")}</div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>${T("adm.col.client")}</th><th class="num">${T("adm.col.calls")}</th><th class="num">${T("adm.col.accounts")}</th>
+            <th class="num">${T("adm.col.mu")}</th><th>${T("adm.clients.share")}</th></tr></thead><tbody>
+            ${clients.map((c) => `<tr><td class="mono"><b>${esc(c.client_name)}</b></td>
+              <td class="num">${fmtNum(c.calls)}</td><td class="num">${fmtNum(c.accounts)}</td><td class="num">${fmtMu(c.metering_units)}</td>
+              <td><div class="adm-meter"><i style="width:${Math.min(100, (Number(c.calls || 0) / totalCalls) * 100).toFixed(1)}%"></i></div></td></tr>`).join("")}
+          </tbody></table></div>` : "");
+    } else if (tab === "tools") {
+      tabBody = !tools.length ? `<div class="empty">${T("adm.chart.empty")}</div>` : `<div class="meta mb8">${T("adm.hintClick")}</div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr>
+          <th>${T("adm.col.tool")}</th><th>${T("adm.col.cat")}</th><th class="num">${T("adm.col.calls")}</th>
+          <th class="num">${T("adm.col.errors")}</th><th class="num">${T("adm.col.errRate")}</th><th class="num">${T("adm.col.accounts")}</th>
+          <th class="num">${T("adm.col.gemini")}</th><th class="num">${T("adm.col.tokens")}</th><th class="num">${T("adm.col.mu")}</th>
+          <th class="num">${T("adm.col.p50")}</th><th class="num">${T("adm.col.p95")}</th><th>${T("adm.col.action")}</th>
+        </tr></thead><tbody>${tools.map((r) => `<tr class="adm-row-click ${a.tool === r.tool_name ? "on" : ""}" data-act="adm-drill-tool" data-t="${esc(r.tool_name)}">
+          <td class="mono"><b>${esc(r.tool_name)}</b></td><td><span class="tag">${esc(r.tool_category || "-")}</span></td>
+          <td class="num"><b>${fmtNum(r.calls)}</b></td><td class="num">${fmtNum(r.errors)}</td><td class="num">${pct(r.error_rate)}</td>
+          <td class="num">${fmtNum(r.accounts)}</td><td class="num">${fmtNum(r.gemini_calls)}</td><td class="num">${fmtNum(r.tokens_total)}</td>
+          <td class="num"><b>${fmtMu(r.metering_units)}</b></td><td class="num">${fmtNum(r.p50_ms)}</td><td class="num">${fmtNum(r.p95_ms)}</td>
+          <td><button type="button" class="btn small" data-act="adm-goto-tool" data-t="${esc(r.tool_name)}">${T("adm.cat.inspectSpec")}</button></td></tr>`).join("")}</tbody></table></div>`;
+    } else if (tab === "activity") {
+      const subSeg = `<div class="adm-bar mb12"><div class="adm-seg">
+        <button type="button" class="${actSub === "daily" ? "on" : ""}" data-act="adm-act-sub" data-s="daily">${esc(T("adm.act.daily", { n: fmtNum(daily.length) }))}</button>
+        <button type="button" class="${actSub === "recent" ? "on" : ""}" data-act="adm-act-sub" data-s="recent">${esc(T("adm.act.recent", { n: fmtNum(recent.length) }))}</button>
+        <button type="button" class="${actSub === "live" ? "on" : ""}" data-act="adm-act-sub" data-s="live">${T("adm.act.live")}</button>
+      </div></div>`;
+      if (actSub === "live") {
+        tabBody = subSeg + renderLiveInstanceSub();
+      } else if (actSub === "recent") {
+        tabBody = subSeg + (!recent.length ? `<div class="empty">${T("adm.chart.empty")}</div>` : `
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>${T("adm.col.ts")}</th><th>${T("adm.col.account")}</th><th>${T("adm.col.type")}</th><th>${T("adm.col.tool")}</th>
+            <th>${T("adm.col.client")}</th><th>${T("adm.col.status")}</th><th class="num">${T("adm.col.ms")}</th>
+            <th class="num">${T("adm.col.tokens")}</th><th class="num">${T("adm.col.bytes")}</th><th class="num">${T("adm.col.mu")}</th>
+          </tr></thead><tbody>${recent.map((r) => `<tr>
+            <td class="mono small">${esc(r.event_ts_kst || "")}</td>
+            <td class="mono small">${esc(r.principal_id || "")}</td>
+            <td><span class="adm-badge t-${esc(r.principal_type)}">${esc(r.principal_type)}</span></td>
+            <td class="mono small">${esc(r.tool_name || "")}</td>
+            <td class="small">${esc(r.client_name || "-")}</td>
+            <td><span class="adm-badge s-${esc(r.status)}">${esc(r.status)}${r.error_code ? " · " + esc(r.error_code) : ""}</span></td>
+            <td class="num">${fmtNum(r.duration_ms)}</td><td class="num">${fmtNum(r.tokens_total)}</td>
+            <td class="num">${fmtBytes(Number(r.request_bytes || 0) + Number(r.response_bytes || 0))}</td>
+            <td class="num"><b>${fmtMu(r.metering_units)}</b></td></tr>`).join("")}</tbody></table></div>`);
+      } else {
+        tabBody = subSeg + (!daily.length ? `<div class="empty">${T("adm.chart.empty")}</div>` : `
+          <div class="tbl-wrap"><table class="tbl"><thead><tr>
+            <th>${T("adm.col.day")}</th><th class="num">${T("adm.col.calls")}</th><th class="num">${T("adm.col.errors")}</th>
+            <th class="num">${T("adm.col.accounts")}</th><th class="num">${T("adm.col.gemini")}</th><th class="num">${T("adm.col.tokens")}</th>
+            <th class="num">${T("adm.col.bytes")}</th><th class="num">${T("adm.col.bq")}</th><th class="num">${T("adm.col.mu")}</th><th class="num">${T("adm.col.p95")}</th>
+          </tr></thead><tbody>${daily.slice().reverse().map((r) => `<tr>
+            <td class="mono"><b>${esc(r.day)}</b></td><td class="num">${fmtNum(r.calls)}</td><td class="num">${fmtNum(r.errors)}</td>
+            <td class="num">${fmtNum(r.accounts)}</td><td class="num">${fmtNum(r.gemini_calls)}</td><td class="num">${fmtNum(r.tokens_total)}</td>
+            <td class="num">${fmtBytes(r.payload_bytes)}</td><td class="num">${fmtBytes(r.bq_bytes_processed)}</td>
+            <td class="num"><b>${fmtMu(r.metering_units)}</b></td><td class="num">${fmtNum(r.p95_ms)}</td></tr>`).join("")}</tbody></table></div>`);
+      }
+    } else {
+      tabBody = renderPolicyView(d || {});
+    }
+    return hdr + `
+      <div class="card">
+        <div class="adm-sink-strip">
+          <span class="st">${statusDot(sinkOn ? "ok" : "warn")}<b>${sinkOn ? T("adm.sinkOk") : T("adm.sinkOff")}</b></span>
+          <span class="mono small">${esc(T("adm.sinkMeta", { ver: h.version || "-", tbl: (d && d.table_fq) || sink.table_fq || "-", flushed: fmtNum(sink.flushed), failed: fmtNum(sink.failed), q: fmtNum(sink.queue_depth) }))}</span>
+          <span class="spacer grow"></span>
+          <span class="adm-badge s-ok">${esc(T("adm.authBadge"))}</span>
+        </div>
+        <div class="adm-bar mt12">
+          <div class="adm-filters">
+            <div class="adm-seg">${[1, 7, 14, 30, 90].map((dd) => `<button type="button" class="${a.days === dd ? "on" : ""}" data-act="adm-days" data-d="${dd}">${esc(T("adm.days", { d: dd }))}</button>`).join("")}</div>
+            <select id="adm-ftype" class="adm-sel" aria-label="${esc(T("adm.fType"))}">
+              <option value="">${esc(T("adm.fType"))}: ${esc(T("adm.all"))}</option>
+              ${["user", "service_account", "api_key", "oauth_client", "anonymous", "unresolved"].map((tp) => `<option value="${tp}" ${a.ptype === tp ? "selected" : ""}>${esc(T("adm.type." + tp))}</option>`).join("")}
+            </select>
+            <select id="adm-fstatus" class="adm-sel" aria-label="${esc(T("adm.fStatus"))}">
+              <option value="">${esc(T("adm.fStatus"))}: ${esc(T("adm.all"))}</option>
+              <option value="ok" ${a.pstatus === "ok" ? "selected" : ""}>ok</option>
+              <option value="error" ${a.pstatus === "error" ? "selected" : ""}>error</option>
+            </select>
+            ${hasDrill ? `<button class="btn small" data-act="adm-clear">${T("adm.clearDrill")}</button>` : ""}
+            ${a.phash ? `<span class="tag mcp">${esc(T("adm.drillLabel", { v: a.plabel || a.phash }))}</span>` : ""}
+            ${a.tool ? `<span class="tag mcp">${esc(T("adm.drillLabel", { v: a.tool }))}</span>` : ""}
+          </div>
+          ${d && d.bq_job_id ? `<span class="meta mono">${esc(T("adm.bqJob", { id: d.bq_job_id, ts: d.generated_at_kst || "" }))}</span>` : ""}
+        </div>
+        ${a.err ? `<div class="note err mt12">${esc(a.err.message || a.err.status)}</div>` : ""}
+        ${!d ? `<div class="empty mt12">${T("common.loading")}</div>` : `
+          <div class="adm-kpis mt16">
+            <div class="kpi"><div class="k">${T("adm.kpi.calls")}</div><div class="v">${fmtNum(s.calls)}</div><div class="s">${esc(T("adm.kpi.callsSub", { err: fmtNum(s.errors), rate: pct(s.error_rate) }))}</div></div>
+            <div class="kpi"><div class="k">${T("adm.kpi.accounts")}</div><div class="v">${fmtNum(s.accounts)}</div><div class="s">${esc(T("adm.kpi.accountsSub", { tools: fmtNum(s.tools) }))}</div></div>
+            <div class="kpi"><div class="k">${T("adm.kpi.mu")}</div><div class="v">${fmtMu(s.metering_units)}</div><div class="s">${T("adm.kpi.muSub")}</div></div>
+            <div class="kpi"><div class="k">${T("adm.kpi.gemini")}</div><div class="v">${fmtNum(s.gemini_calls)} · ${fmtNum(s.tokens_total)}</div><div class="s">${esc(T("adm.kpi.geminiSub", { in_: fmtNum(s.tokens_in), out_: fmtNum(s.tokens_out), th_: fmtNum(s.tokens_thought) }))}</div></div>
+            <div class="kpi"><div class="k">${T("adm.kpi.lat")}</div><div class="v">${fmtNum(s.p50_ms)} / ${fmtNum(s.p95_ms)}</div><div class="s">${T("adm.kpi.latSub")}</div></div>
+            <div class="kpi"><div class="k">${T("adm.kpi.bytes")}</div><div class="v">${fmtBytes(Number(s.request_bytes || 0) + Number(s.response_bytes || 0))}</div><div class="s">${esc(T("adm.kpi.bytesSub", { io: fmtBytes(Number(s.request_bytes || 0) + Number(s.response_bytes || 0)), bq: fmtBytes(s.bq_bytes_processed) }))}</div></div>
+          </div>
+          ${types.length ? `<div class="adm-type-pills mt12">${types.map((tp) => `<button type="button" class="adm-tpill ${a.ptype === tp.principal_type ? "on" : ""}" data-act="adm-type-pill" data-t="${esc(tp.principal_type)}">
+            <span class="adm-badge t-${esc(tp.principal_type)}">${esc(T("adm.type." + tp.principal_type))}</span>
+            <span><b>${fmtNum(tp.calls)}</b></span><span class="meta">${fmtNum(tp.accounts)} accts · ${fmtMu(tp.metering_units)} MU</span></button>`).join("")}</div>` : ""}
+        `}
+      </div>
+      <div class="card"><div class="tabs">
+        ${[["overview", null], ["catalog", catCount], ["accounts", accounts.length], ["tools", tools.length], ["activity", null], ["policy", null]].map(([k, n]) =>
+          `<button type="button" class="${tab === k ? "on" : ""}" data-act="adm-tab" data-t="${k}">${esc(n == null ? T("adm.tab." + k) : T("adm.tab." + k, { n: fmtNum(n) }))}</button>`).join("")}
+      </div>${tabBody}</div>`;
+  };
+  AFTER.admin = () => {
+    const ft = $("#adm-ftype"), fs = $("#adm-fstatus");
+    if (ft) ft.addEventListener("change", () => { S.admin.ptype = ft.value; loadAdminMetering(); });
+    if (fs) fs.addEventListener("change", () => { S.admin.pstatus = fs.value; loadAdminMetering(); });
+    const kEl = $("#adm-key");
+    if (kEl) kEl.addEventListener("keydown", (e) => { if (e.key === "Enter") ACTIONS["adm-login"](); });
+    const qEl = $("#adm-tool-q");
+    if (qEl) {
+      qEl.addEventListener("input", () => {
+        S.admin.toolQ = qEl.value;
+        const body = renderCatalogBody(S.admin.data || {});
+        const host = $("#adm-cat-body"), cnt = $("#adm-cat-cnt");
+        if (host) host.innerHTML = body.html;
+        if (cnt) cnt.textContent = T("adm.cat.count", { shown: fmtNum(body.shown), total: fmtNum(body.total) });
+      });
+    }
+    if (!S.admin.cfg && !S.busy.admStatus) { loadAdminStatus(); return; }
+    if (S.admin.authed && !S.admin.data && !S.busy.adm) loadAdminMetering(false);
+    if (S.admin.authed && !S.admin.portal && !S.busy.admCat) loadAdminCatalog(false);
+  };
+
   // ------------------------------------------------------------------ actions
   const ACTIONS = {
     go: (a) => { if (a.dataset.need === "objective" && !S.scenario.objective.trim()) { toast(T("scn.needObjective")); return; } go(a.dataset.route); },
@@ -1819,6 +2515,149 @@ python3 -m src.cli ask --bucket ${b} --ws ${w} --agent wiki --apply-cg "..."   #
       } else errToast(j);
       rerender();
     },
+    "adm-use-tok": () => { const el = $("#adm-tok"); if (el) el.value = token(); },
+    "adm-google-login": async () => {
+      const cfg = S.admin.cfg;
+      const gcfg = cfg && cfg.google_auth;
+      if (!gcfg || !gcfg.enabled) { S.admin.err = { message: T("adm.gate.unconfigured") }; rerender(); return; }
+      S.busy.adm = true; S.admin.err = null; rerender();
+      try {
+        const fa = await ensureFirebaseAuth(gcfg);
+        await fa.setPersistence(window.firebase.auth.Auth.Persistence.NONE);
+        const provider = new window.firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        const cred = await fa.signInWithPopup(provider);
+        const idToken = await cred.user.getIdToken();
+        const r = await fetch("/api/v5/admin/auth", {
+          method: "POST", credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_token: idToken }),
+        });
+        const j = await r.json().catch(() => ({ status: "ERROR", message: "HTTP " + r.status }));
+        try { await fa.signOut(); } catch (_) { /* ignore */ }
+        S.busy.adm = false;
+        if (r.ok && j.authorized) {
+          S.admin.authed = true;
+          S.admin.principal = (j.user && j.user.email) || j.principal || "";
+          S.admin.name = (j.user && j.user.name) || "";
+          S.admin.picture = (j.user && j.user.picture) || "";
+          S.admin.method = j.auth_method || "google_signin";
+          S.admin.err = null;
+          await loadAdminAll(true);
+          return;
+        }
+        S.admin.err = j;
+      } catch (e) {
+        S.busy.adm = false;
+        const code = (e && e.code) || "";
+        if (code === "auth/popup-blocked") S.admin.err = { message: T("adm.gate.popupBlocked") };
+        else if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") S.admin.err = { message: T("adm.gate.popupClosed") };
+        else S.admin.err = { message: (e && e.message) || String(e) };
+      }
+      rerender();
+    },
+    "adm-login": async () => {
+      const k = (($("#adm-key") || {}).value || "").trim();
+      const t = (($("#adm-tok") || {}).value || "").trim();
+      if (!k && !t) { S.admin.err = { message: T("adm.gate.lead") }; rerender(); return; }
+      S.busy.adm = true; S.admin.err = null; rerender();
+      try {
+        const body = k ? { admin_key: k } : { access_token: t };
+        const r = await fetch("/api/v5/admin/auth", {
+          method: "POST", credentials: "same-origin",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        const j = await r.json().catch(() => ({ status: "ERROR", message: "HTTP " + r.status }));
+        S.busy.adm = false;
+        if (r.ok && j.authorized) {
+          S.admin.authed = true;
+          saveAdminSession(j.admin_session || "", j.principal, j.auth_method);
+          S.admin.err = null;
+          await loadAdminAll(true);
+          return;
+        }
+        S.admin.err = j;
+      } catch (e) { S.busy.adm = false; S.admin.err = { message: T("err.network", { e: e.message }) }; }
+      rerender();
+    },
+    "adm-logout": async () => {
+      try { await fetch("/api/v5/admin/logout", { method: "POST", credentials: "same-origin" }); } catch (_) { /* ignore */ }
+      clearAdminState();
+      S.admin.err = null;
+      if (S.admin.cfg) { S.admin.cfg.authenticated = false; S.admin.cfg.user = null; }
+      toast(T("adm.loggedOut"));
+      rerender();
+    },
+    "adm-refresh": () => loadAdminAll(true),
+    "adm-days": (a) => { S.admin.days = Number(a.dataset.d) || 14; loadAdminMetering(); },
+    "adm-type-pill": (a) => { const t = a.dataset.t || ""; S.admin.ptype = S.admin.ptype === t ? "" : t; loadAdminMetering(); },
+    "adm-drill-acct": (a) => {
+      const h = a.dataset.h || "";
+      if (S.admin.phash === h) { S.admin.phash = ""; S.admin.plabel = ""; } else { S.admin.phash = h; S.admin.plabel = a.dataset.l || h; }
+      loadAdminMetering();
+    },
+    "adm-drill-tool": (a) => { const t = a.dataset.t || ""; S.admin.tool = S.admin.tool === t ? "" : t; loadAdminMetering(); },
+    "adm-clear": () => { S.admin.ptype = ""; S.admin.pstatus = ""; S.admin.phash = ""; S.admin.plabel = ""; S.admin.tool = ""; loadAdminMetering(); },
+    "adm-tab": (a) => {
+      S.admin.tab = a.dataset.t || "overview";
+      if (S.admin.tab === "catalog" && !S.admin.portal && !S.busy.admCat) loadAdminCatalog(false);
+      if (S.admin.tab === "activity" && S.admin.actSub === "live" && !S.admin.live && !S.busy.admLive) loadAdminLiveUsage();
+      rerender();
+    },
+    "adm-act-sub": (a) => {
+      S.admin.actSub = a.dataset.s || "daily";
+      if (S.admin.actSub === "live" && !S.admin.live && !S.busy.admLive) loadAdminLiveUsage();
+      rerender();
+    },
+    "adm-live-hrs": (a) => { S.admin.liveHours = Number(a.dataset.h) || 24; loadAdminLiveUsage(); },
+    "adm-live-refresh": () => loadAdminLiveUsage(),
+    "adm-goto-tool": (a, e) => {
+      if (e && e.stopPropagation) e.stopPropagation();
+      const t = a.dataset.t || "";
+      if (!t) return;
+      S.admin.tab = "catalog"; S.admin.cat = "all"; S.admin.toolQ = t; S.admin.openTools = { [t]: true };
+      if (!S.admin.portal && !S.busy.admCat) loadAdminCatalog(false);
+      rerender();
+    },
+    "adm-goto-cat": (a, e) => {
+      if (e && e.stopPropagation) e.stopPropagation();
+      const cat = a.dataset.cat || "all";
+      S.admin.tab = "catalog"; S.admin.cat = cat; S.admin.toolQ = "";
+      if (!S.admin.portal && !S.busy.admCat) loadAdminCatalog(false);
+      rerender();
+    },
+    "adm-cat-pill": (a) => { S.admin.cat = a.dataset.cat || "all"; rerender(); },
+    "adm-cat-expand": () => {
+      const list = (S.admin.portal && S.admin.portal.catalog && S.admin.portal.catalog.tools) || [];
+      list.forEach((x) => { S.admin.openTools[x.name] = true; });
+      rerender();
+    },
+    "adm-cat-collapse": () => { S.admin.openTools = {}; rerender(); },
+    "adm-tool-toggle": (a) => {
+      const t = a.dataset.t || "";
+      if (!t) return;
+      if (S.admin.openTools[t]) delete S.admin.openTools[t]; else S.admin.openTools[t] = true;
+      rerender();
+    },
+    "adm-filter-from-cat": (a, e) => {
+      if (e && e.stopPropagation) e.stopPropagation();
+      S.admin.tool = a.dataset.t || "";
+      S.admin.tab = "accounts";
+      loadAdminMetering();
+    },
+    "adm-export": async (a) => {
+      if (!S.admin.authed) return;
+      const fmt = a.dataset.fmt || "csv";
+      const scope = S.admin.tab === "accounts" ? "accounts" : S.admin.tab === "tools" ? "tools"
+        : (S.admin.tab === "activity" && S.admin.actSub === "daily") ? "daily" : "recent";
+      const r = await fetch("/api/v5/admin/metering/export", {
+        method: "POST", credentials: "same-origin", headers: adminHeaders(),
+        body: JSON.stringify({ days: S.admin.days, principal_type: S.admin.ptype, status: S.admin.pstatus, principal_hash: S.admin.phash, tool_name: S.admin.tool, format: fmt, scope }),
+      });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); toast(j.message || "HTTP " + r.status, 5000); return; }
+      download(`core_mcp_metering_${scope}.${fmt}`, await r.blob());
+      toast(T("adm.exported"));
+    },
   };
   async function evalRun(ids) {
     if (S.ui.cqDraft && !(await ACTIONS["cq-save"]())) return;
@@ -1897,9 +2736,11 @@ python3 -m src.cli ask --bucket ${b} --ws ${w} --agent wiki --apply-cg "..."   #
 
   async function boot() {
     load();
+    loadAdminSession();
+    if (!location.hash && location.pathname.replace(/\/+$/, "") === "/admin") location.hash = "#/admin";
     const qs = new URLSearchParams(location.search);
-    if (qs.get("lang")) S.lang = qs.get("lang") === "en" ? "en" : "ko";
-    if (qs.get("reset") === "1") { localStorage.removeItem(LS); sessionStorage.removeItem(TOKEN_KEY); load(); }
+    if (qs.get("lang")) S.lang = qs.get("lang") === "ko" ? "ko" : "en";
+    if (qs.get("reset") === "1") { localStorage.removeItem(LS); sessionStorage.removeItem(TOKEN_KEY); S.lang = qs.get("lang") === "ko" ? "ko" : "en"; load(); }
     const [i18n, b] = await Promise.all([fetch("/static/studio_i18n.json").then((r) => r.json()), fetch("/api/v5/bootstrap?lang=" + S.lang).then((r) => r.json())]);
     S.i18n = i18n; S.boot = b;
     for (const [k, v] of Object.entries(b.env_defaults || {})) if (!S.env[k] && k !== "dataset") S.env[k] = v;

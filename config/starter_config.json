@@ -1,6 +1,6 @@
 {
   "project_name": "Agentic Ontology Starter (Resource-Connected Edition)",
-  "version": "2.2.0",
+  "version": "6.14.0",
   "architecture_mode": "RESOURCE_CONNECTED_STARTER",
   "domain": "Telecom Subscription & Penalty Governance (Sample Reference)",
   "default_serving_model": "gemini-4-argon",
@@ -26,19 +26,19 @@
   },
   "reference_studios": {
     "starter_live_studio": {
-      "title": "Starter Portal (6-Tab · Resource-Connected)",
-      "url": "https://agentic-ontology-starter-115847445822.asia-northeast3.run.app/",
-      "scope": "Stage 0~5 Resource-Connected Starter UI & 3 Domain Business Tools"
+      "title": "Starter Studio (v6.14 · English Default · Spanner Graph & Context Graph)",
+      "url": "https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/",
+      "scope": "5-Step Guided Builder · Instant 100/100 Workspace · Code & MCP Hand-off"
+    },
+    "notebook_lab": {
+      "title": "Starter Notebook Lab (3 Interactive Labs · Instant Guest Access)",
+      "url": "https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/",
+      "scope": "Lab 1 Ontology · Lab 2 Workflow & Approval · Lab 3 Context Graph Closed Loop · /showcase Hub"
     },
     "lguplus_reference_studio": {
-      "title": "LGU+ Reference Studio (12-Tab · Full Platform)",
-      "url": "https://agentic-ontology-studio-lguplus-924723860007.asia-northeast3.run.app/",
+      "title": "LG U+ Reference Studio (13-Tab · Full Platform)",
+      "url": "https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/",
       "scope": "6-Layer Ontology Standard · P1/P2/P3 × W1/W2/W3 × Gate G2-W · Full Enterprise Governance"
-    },
-    "hnh_reference_studio": {
-      "title": "LG H&H Reference Studio (12-Tab · Multi-Regulation)",
-      "url": "https://hnh-agentic-ontology-studio-384182013777.asia-northeast3.run.app/",
-      "scope": "KR/US/EU Cosmetics Ad & Restricted Ingredient Multi-Jurisdiction Graph"
     }
   },
   "code_exposure_boundary": {
