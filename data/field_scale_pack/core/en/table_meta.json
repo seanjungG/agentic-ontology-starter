@@ -1,0 +1,79 @@
+{
+  "dataset": "aol_lab_source_en",
+  "as_of_date": "2026-09-27",
+  "domain": "Telco device subsidies · plan commitments · penalty consultations (de-identified synthetic data)",
+  "tables": [
+    {
+      "table": "devices",
+      "title": "Device master",
+      "description": "Reference data for the mobile handsets on sale. The retail price is the list price before any subsidy is deducted (VAT included, KRW).",
+      "primary_key": "device_id",
+      "columns": [
+        {"name": "device_id", "type": "STRING", "description": "Device identifier (primary key). Referenced by the subsidy policy table and by customer contracts."},
+        {"name": "device_name", "type": "STRING", "description": "Device display name (model name + storage), e.g. Galaxy S26 Ultra 256GB"},
+        {"name": "manufacturer", "type": "STRING", "description": "Manufacturer"},
+        {"name": "storage_gb", "type": "INT64", "description": "Storage capacity (GB)"},
+        {"name": "factory_price_krw", "type": "INT64", "description": "Retail price (KRW, VAT included). Net purchase price = retail price − total subsidy"},
+        {"name": "release_date", "type": "DATE", "description": "Release date"}
+      ]
+    },
+    {
+      "table": "plans",
+      "title": "Plan master",
+      "description": "Reference data for mobile plans. The baseline flag (is_baseline_tier) decides the 180-day retention rule.",
+      "primary_key": "plan_id",
+      "columns": [
+        {"name": "plan_id", "type": "STRING", "description": "Plan identifier (primary key)"},
+        {"name": "plan_name", "type": "STRING", "description": "Plan name, e.g. 5G Premier Essential"},
+        {"name": "network_type", "type": "STRING", "description": "Network type (5G / LTE)"},
+        {"name": "monthly_fee_krw", "type": "INT64", "description": "Monthly fee (KRW, VAT included)"},
+        {"name": "tier_category", "type": "STRING", "description": "Plan tier category: 5G_HIGH · 5G_MID · BELOW_BASELINE (below the baseline tier) · SENIOR_WELFARE (senior/welfare-only plan)"},
+        {"name": "is_baseline_tier", "type": "BOOL", "description": "Whether the plan is at or above the 180-day retention baseline tier (KRW 45,000/month). Downgrading to a plan where this is false is subject to clawback"},
+        {"name": "selective_discount_rate", "type": "FLOAT64", "description": "Monthly fee discount rate of the 25% discount contract (0.25 = 25% off the monthly fee)"}
+      ]
+    },
+    {
+      "table": "subsidy_policies",
+      "title": "Subsidy policy table by device and plan",
+      "description": "The subsidy published for each device and plan combination. One row = one (device, plan) combination.",
+      "primary_key": "policy_id",
+      "columns": [
+        {"name": "policy_id", "type": "STRING", "description": "Subsidy policy identifier (primary key)"},
+        {"name": "device_id", "type": "STRING", "description": "Target device (references devices.device_id)"},
+        {"name": "plan_id", "type": "STRING", "description": "Target plan (references plans.plan_id)"},
+        {"name": "base_subsidy_krw", "type": "INT64", "description": "Public subsidy (KRW). The base subsidy published by the carrier and the basis for calculating the clawback"},
+        {"name": "additional_subsidy_krw", "type": "INT64", "description": "Retailer additional subsidy (KRW). Up to 15% of the public subsidy. Total subsidy = public subsidy + retailer additional subsidy"},
+        {"name": "effective_from", "type": "DATE", "description": "Effective start date"},
+        {"name": "effective_to", "type": "DATE", "description": "Effective end date"}
+      ]
+    },
+    {
+      "table": "customer_contracts",
+      "title": "Customer contract ledger",
+      "description": "Activation contract per customer. Elapsed days are calculated as of the reference date 2026-09-27.",
+      "primary_key": "contract_id",
+      "columns": [
+        {"name": "contract_id", "type": "STRING", "description": "Contract identifier (primary key)"},
+        {"name": "customer_id", "type": "STRING", "description": "Customer identifier (de-identified), e.g. CUST_DEMO_001"},
+        {"name": "customer_segment", "type": "STRING", "description": "Customer segment"},
+        {"name": "age_group", "type": "STRING", "description": "Age group (65+ = aged 65 or older)"},
+        {"name": "device_id", "type": "STRING", "description": "Activated device (references devices.device_id)"},
+        {"name": "plan_id", "type": "STRING", "description": "Current plan (references plans.plan_id)"},
+        {"name": "policy_id", "type": "STRING", "description": "Subsidy policy applied at activation (references subsidy_policies.policy_id; empty for a 25% discount contract)"},
+        {"name": "contract_type", "type": "STRING", "description": "Contract type: PUBLIC_SUBSIDY (public subsidy) · SELECTIVE_25PCT (25% discount contract)"},
+        {"name": "activation_date", "type": "DATE", "description": "Activation date"},
+        {"name": "elapsed_days", "type": "INT64", "description": "Elapsed days since activation (as of the reference date 2026-09-27)"},
+        {"name": "granted_subsidy_krw", "type": "INT64", "description": "Total subsidy received at activation (public + retailer, KRW). 0 for a 25% discount contract"},
+        {"name": "welfare_status", "type": "STRING", "description": "Welfare / exemption status: NONE · SENIOR_EXEMPT (eligible for the senior/welfare exemption) · MILITARY_PAUSE_ELIGIBLE (eligible for the military service pause)"},
+        {"name": "status", "type": "STRING", "description": "Contract status"}
+      ]
+    }
+  ],
+  "relationships": [
+    {"from_table": "subsidy_policies", "column": "device_id", "to_table": "devices", "to_column": "device_id"},
+    {"from_table": "subsidy_policies", "column": "plan_id", "to_table": "plans", "to_column": "plan_id"},
+    {"from_table": "customer_contracts", "column": "device_id", "to_table": "devices", "to_column": "device_id"},
+    {"from_table": "customer_contracts", "column": "plan_id", "to_table": "plans", "to_column": "plan_id"},
+    {"from_table": "customer_contracts", "column": "policy_id", "to_table": "subsidy_policies", "to_column": "policy_id"}
+  ]
+}

@@ -569,3 +569,25 @@ details.preset-fold > summary .meta { font-weight: 500; margin-left: auto; }
   .adm-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 720px) { .adm-cat-grid { grid-template-columns: minmax(0, 1fr); } .adm-th .nm { flex: 1 1 100%; } }
+
+/* ---- RAG vs Wiki vs Graph (GOAL-296) — numbers come from run files; the layout adds no ranking of its own ---- */
+.cmp-why { margin: 0; padding-left: 18px; font-size: 13px; color: var(--slate-600); line-height: 1.65; }
+.cmp-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.cmp-tbl td, .cmp-tbl th { font-variant-numeric: tabular-nums; }
+.cmp-tbl td.cmp-top { font-weight: 700; }
+.cmp-d.pos { color: var(--ok); font-weight: 650; }
+.cmp-d.neg { color: var(--err); font-weight: 650; }
+.cmp-cqs { max-height: 460px; overflow: auto; }
+.cmp-row { cursor: pointer; }
+.cmp-row:hover td { background: var(--slate-50); }
+.cmp-row.on td { background: var(--indigo-50); }
+.cmp-answers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.cmp-ans { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: #fff; min-width: 0; }
+.cmp-ans-h { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.cmp-ans-body { max-height: 420px; overflow: auto; font-size: 12.5px; }
+.cmp-ded { margin: 8px 0 0; padding-left: 18px; font-size: 12px; color: var(--slate-600); }
+.cmp-teaser h3 { margin: 4px 0; font-size: 16px; }
+.cmp-teaser p { margin: 0; color: var(--muted); font-size: 13px; max-width: 860px; }
+.step-head h2 { font-size: 19px; font-weight: 740; margin: 6px 0; letter-spacing: -0.01em; }
+.step-head p + p { margin-top: 6px; }
+@media (max-width: 1100px) { .cmp-answers { grid-template-columns: 1fr; } }

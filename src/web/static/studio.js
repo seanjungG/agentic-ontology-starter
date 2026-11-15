@@ -1,6 +1,6 @@
 /* Agentic Ontology Starter v6 studio (GOAL-233 · v6 intake GOAL-243).
  * Vanilla JS, no build step. All visible text comes from studio_i18n.json (KO · EN) — keep this file free of UI prose.
- * Routes: #/start · #/scenario · #/env · #/data · #/types · #/build · #/studio/{overview,assets,wiki,graph,search,agents,eval,cg} · #/deploy · #/handoff
+ * Routes: #/start · #/scenario · #/env · #/data · #/types · #/build · #/studio/{overview,assets,wiki,graph,search,agents,eval,compare,cg} · #/deploy · #/handoff
  * GOAL-285: sentence feedback under every agent answer (+ 👍/👎 · reason chips) → /api/v5/cg/feedback; Context Graph tab (studio/cg):
  * 3-agent live demo · sentence feedback panel · layered graph viewer · L0/L1/L2 inspector · SME review → ChangeSet + regression CQ.
  * v6 (GOAL-243): flow & service catalog + template (Core MCP), local/GCS/Drive intake with PDF/Office → Markdown conversion and
@@ -14,8 +14,9 @@
   const TOKEN_KEY = "aol.studio.v5.token";
   const ADMIN_SESS_KEY = "aol.studio.v5.admin";
   const STAGES = ["prepare", "ingest", "cqs", "wiki", "graph", "eval"];
+  const OPT_STAGES = ["rag", "compare"];  // GOAL-296: opt-in — never part of "build all" (a RAG corpus bills while it exists)
   const ROUTES = ["start", "scenario", "env", "data", "types", "build", "studio/overview", "studio/assets", "studio/wiki", "studio/graph",
-    "studio/search", "studio/agents", "studio/eval", "studio/cg", "deploy", "handoff", "admin"];
+    "studio/search", "studio/agents", "studio/eval", "studio/compare", "studio/cg", "deploy", "handoff", "admin"];
   const STRATEGIES = ["direct", "typed", "reconvert"];
   const S = {
     lang: "en", boot: null, i18n: {}, route: "start",
@@ -210,7 +211,7 @@
     const buildState = STAGES.every((k) => st(k) === "done" || st(k) === "skipped") ? "done" : STAGES.some((k) => st(k) === "error") ? "error" : S.busy.build ? "running" : "";
     const has = built();
     const studio = [["studio/overview", "rail.overview"], ["studio/assets", "rail.assets"], ["studio/wiki", "rail.wiki"], ["studio/graph", "rail.graph"],
-      ["studio/search", "rail.search"], ["studio/agents", "rail.agents"], ["studio/eval", "rail.eval"], ["studio/cg", "rail.cg"]];
+      ["studio/search", "rail.search"], ["studio/agents", "rail.agents"], ["studio/eval", "rail.eval"], ["studio/compare", "rail.compare"], ["studio/cg", "rail.cg"]];
     $("#rail").innerHTML = `
       <div class="rail-group"><div class="rail-label">${T("rail.g.understand")}</div>${railItem("start", "0", T("rail.start"), T("rail.start.s"), "")}</div>
       <div class="rail-group"><div class="rail-label">${T("rail.g.build")}</div>
@@ -287,6 +288,8 @@
       <button class="btn big" data-act="ws-open-modal">${T("start.ctaOpen")}</button></div></div>
     ${pillars()}
     ${applyMap()}
+    <div class="card cmp-teaser"><div class="flex"><div class="grow"><div class="eyebrow">${T("cmp.optIn")}</div><h3>${T("cmp.teaserTitle")}</h3><p>${esc(T("cmp.teaserBody"))}</p></div>
+      <button class="btn" data-act="open-demo" data-route="studio/compare">${T("cmp.teaserCta")}</button></div></div>
     <div class="card"><div class="card-head"><h2>${T("start.flowTitle")}</h2><span class="sub">${T("start.flowSub")}</span></div><div id="flow-host" class="flow-host"></div></div>
     <div class="card"><div class="card-head"><h2>${T("start.layersTitle")}</h2></div><div class="layers">
       ${[1, 2, 3].map((i) => `<div class="layer l${i}"><h3>${T(`start.l${i}.t`)}</h3><p>${T(`start.l${i}.d`)}</p><ul>${[1, 2, 3].map((j) => `<li>${esc(T(`start.l${i}.b${j}`))}</li>`).join("")}</ul></div>`).join("")}
@@ -692,7 +695,8 @@
       <span class="tag">${esc(T("id." + S.identMode))}${S.identInfo ? " · " + esc(S.identInfo.principal) : ""}</span>${dataType() ? `<span class="pill-p">${dataType()}</span>` : ""}</div>
       ${allDone ? `<div class="note mt12"><b>${T("build.done")}</b> <a class="btn small primary" href="#/studio/agents">${T("build.toAgent")}</a> <a class="btn small" href="#/studio/overview">${T("build.toStudio")}</a> <a class="btn small dark" href="#/deploy">${T("build.toDeploy")}</a></div>` : ""}
       ${S.template && S.template.flow ? `<div class="flex small mt8"><span class="tag">${esc(T("build.tpl", { f: S.template.flow.title }))}</span><span class="tag">${esc(T("tpl.target." + S.template.target))}</span></div>` : ""}
-      <ul class="stage-list mt12">${rows}</ul></div>
+      <ul class="stage-list mt12">${rows}</ul>
+      <div class="note mt12 cmp-opt"><b>${T("cmp.optTitle")}</b> ${esc(T("cmp.optBody"))} ${built() ? `<a class="btn small" href="#/studio/compare">${T("rail.compare")}</a>` : ""}</div></div>
     <div class="card"><div class="card-head"><h3>${T("build.log")}</h3></div><div class="stream" id="stream">${S.log.length ? S.log.map(logLine).join("") : `<div class="mc">${T("build.logEmpty")}</div>`}</div></div>`;
   };
   AFTER.build = () => { const el = $("#stream"); if (el) el.scrollTop = el.scrollHeight; };
@@ -787,7 +791,7 @@
       ${kpi(T("ov.graph"), gr.nodes != null ? `${gr.nodes}N · ${gr.edges}E` : "-", gr.mode ? T("ov.graphMode." + gr.mode) : "")}
       ${kpi(T("ov.cqs"), sm.cqs ?? "-", "")}${kpi(T("ov.eval"), ev.score != null ? ev.score : "-", ev.total ? `${ev.passed}/${ev.total} PASS` : "")}</div>
     <div class="grid2"><div class="card"><div class="card-head"><h3>${T("ov.stages")}</h3><span class="right"><a class="btn small" href="#/build">${T("rail.build")}</a></span></div><ul class="stage-list">
-      ${STAGES.map((k) => { const s = stageOf(k) || {}; return `<li>${statusDot(s.stale ? "warn" : s.status || "idle")}<div><div class="t">${T("build.s." + k)}</div><div class="d">${s.at ? esc(s.at) : ""} ${s.identity && s.identity.principal ? " · " + esc(s.identity.principal) : ""}</div></div><div class="meta">${s.ms ? (s.ms / 1000).toFixed(1) + " s" : ""}</div></li>`; }).join("")}</ul></div>
+      ${STAGES.concat(OPT_STAGES.filter((k) => stageOf(k))).map((k) => { const s = stageOf(k) || {}; return `<li>${statusDot(s.stale ? "warn" : s.status || "idle")}<div><div class="t">${T("build.s." + k)}</div><div class="d">${s.at ? esc(s.at) : ""} ${s.identity && s.identity.principal ? " · " + esc(s.identity.principal) : ""}</div></div><div class="meta">${s.ms ? (s.ms / 1000).toFixed(1) + " s" : ""}</div></li>`; }).join("")}</ul></div>
     <div class="card"><div class="card-head"><h3>${T("ov.resources")}</h3></div><div class="box"><ul>
       <li><span class="ld wiki"></span><span class="lt"><a href="${consoleUrl.gcs(env.bucket, "aos/" + w.ws_id + "/")}" target="_blank" rel="noopener">gs://${esc(env.bucket)}/aos/${esc(w.ws_id)}/</a></span></li>
       <li><span class="ld table"></span><span class="lt"><a href="${consoleUrl.bq(env.project, env.dataset)}" target="_blank" rel="noopener">${esc(env.project)}.${esc(env.dataset)}</a></span></li>
@@ -1089,6 +1093,180 @@
       const c = list[+el.dataset.cq];
       c[el.dataset.f] = el.dataset.f === "key_facts" ? el.value.split(",").map((x) => x.trim()).filter(Boolean) : el.value;
     }));
+  };
+
+  // ------------------------------------------------------------------ RAG vs Wiki vs Graph (GOAL-296)
+  // Every number here is read from a run file — the workspace's runs/three_way_latest.json (opt-in stages `rag` · `compare`) or the
+  // shipped data/field_scale_pack/results/<lang>.json. Nothing is computed, rounded differently or ranked in the browser.
+  const CMP_SYS = ["rag", "wiki", "graph"];
+  const cmpNum = (v) => (v == null || v === "" ? "–" : esc(String(v)));
+  const cmpDelta = (v) => (v == null ? "–" : `<span class="cmp-d ${v > 0 ? "pos" : v < 0 ? "neg" : ""}">${v > 0 ? "+" : ""}${esc(String(v))}</span>`);
+  const cmpSys = (s) => esc(T(`cmp.sys.${s}`));
+  const cmpBest = (row) => {  // systems sharing the top average — more than one is a tie and is shown as a tie
+    const vals = CMP_SYS.filter((s) => row[s] != null).map((s) => row[s]);
+    if (!vals.length) return [];
+    const top = Math.max.apply(null, vals);
+    return CMP_SYS.filter((s) => row[s] === top);
+  };
+  const cmpKv = (o) => Object.entries(o || {}).filter(([, v]) => v != null && v !== "").map(([k, v]) => `<span class="tag mono">${esc(k)}=${esc(typeof v === "object" ? JSON.stringify(v) : String(v))}</span>`).join("");
+  async function ensureCmp(force) {
+    if (!force && S.cmpFor === S.wsId) return;
+    const key = S.wsId;
+    const j = await api("/api/v5/compare/latest", { ws: wsRef() });
+    S.cmp = j.status === "OK" ? j : { error: j.message || j.status };
+    S.cmpFor = key;
+  }
+  async function ensureBench() {
+    const lang = S.lang;
+    S.bench = S.bench || {};
+    try {
+      const r = await fetch("/api/v5/bench/field-scale?lang=" + lang);
+      S.bench[lang] = r.ok ? await r.json() : { available: false };
+    } catch (e) { S.bench[lang] = { available: false }; }
+  }
+  function cmpVerdict(score, th) {
+    if (score == null) return "";
+    return score >= ((th && th.pass) || 85) ? "PASS" : score >= ((th && th.partial) || 60) ? "PARTIAL" : "FAIL";
+  }
+  function cmpDeduction(d) {
+    if (d == null) return "";
+    if (typeof d !== "object") return esc(String(d));
+    return Object.entries(d).map(([k, v]) => `<b>${esc(k)}</b> ${esc(typeof v === "object" ? JSON.stringify(v) : String(v))}`).join(" · ");
+  }
+  function cmpPairCard(c, stageKey, title, base, cand, types) {
+    const st = c[stageKey] || {}, b = st.base || {}, d = st.candidate || {};
+    const f = ((c.findings || []).find((x) => x.stage === (stageKey.startsWith("stage1") ? "stage1" : "stage2") && x.kind === "overall") || {})[S.lang === "ko" ? "ko" : "en"];
+    return `<div class="card"><div class="card-head"><h3>${esc(title)}</h3><span class="sub">${esc(T("cmp.overN", { n: st.count }))}</span></div>
+      <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.metric")}</th><th>${cmpSys(base)}</th><th>${cmpSys(cand)}</th><th>${T("cmp.delta")}</th></tr></thead><tbody>
+        <tr><td>${T("cmp.avg")}</td><td>${cmpNum(b.avg)}</td><td>${cmpNum(d.avg)}</td><td>${cmpDelta(st.delta_points)}</td></tr>
+        <tr><td>PASS</td><td>${cmpNum(b.pass)}/${cmpNum(b.count)}</td><td>${cmpNum(d.pass)}/${cmpNum(d.count)}</td><td>${cmpDelta(st.delta_pass)}</td></tr>
+        <tr><td>${T("cmp.latency")}</td><td>${cmpNum(b.avg_latency_sec)}</td><td>${cmpNum(d.avg_latency_sec)}</td><td></td></tr>
+        <tr><td>${esc(T("cmp.wtl", { c: T(`cmp.sys.${cand}`) }))}</td><td colspan="3">${cmpNum(st.wins)} · ${cmpNum(st.ties)} · ${cmpNum(st.losses)}</td></tr></tbody></table></div>
+      ${f ? `<div class="meta mt8">${esc(f)}</div>` : ""}
+      <details class="fold mt8"><summary>${T("cmp.byType")}</summary><div class="inner"><div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.type")}</th><th>${T("cmp.n")}</th><th>${cmpSys(base)}</th><th>${cmpSys(cand)}</th><th>${T("cmp.delta")}</th></tr></thead><tbody>
+        ${(st.by_type || []).map((r) => `<tr><td>${esc((types && types[r.type]) || r.type)}</td><td>${cmpNum(r.count)}</td><td>${cmpNum(r.base_avg)}</td><td>${cmpNum(r.candidate_avg)}</td><td>${cmpDelta(r.delta_points)}</td></tr>`).join("")}</tbody></table></div></div></details></div>`;
+  }
+  function threeWayView(run, key, types) {
+    const c = run.comparison, m = run.method || {};
+    if (!c) return `<div class="note warn">${esc(T("cmp.partial", { s: (run.systems_run || []).join(", ") }))}</div>`;
+    const fin = c.final_three_way || {}, sums = fin.summaries || {}, th = c.thresholds || {}, rm = m.rag || {};
+    const tl = (t) => esc((types && types[t]) || t);
+    const ui = (S.ui.cmpView = S.ui.cmpView || {}), v = ui[key] || (ui[key] = {});
+    const rows = (fin.per_cq || []).filter((r) => !v.type || r.type === v.type);
+    const typeSet = Array.from(new Set((fin.per_cq || []).map((r) => r.type)));
+    const sc = (x) => (x == null ? "–" : `<span class="verdict-${cmpVerdict(x, th)}">${esc(String(x))}</span>`);
+    const sel = v.id && (run.cqs || []).find((q) => q.id === v.id);
+    const detail = sel ? `<div class="card cmp-detail"><div class="card-head"><h3>${esc(sel.id)} · ${tl(sel.type)}</h3><span class="right"><button class="btn small" data-act="cmp-cq" data-key="${esc(key)}" data-id="">${T("common.close")}</button></span></div>
+        <div class="md"><p><b>${esc(sel.question)}</b></p></div>
+        <div class="meta"><b>${T("cmp.ref")}</b> ${esc(sel.reference_answer || "–")}</div>
+        ${(sel.key_facts || []).length ? `<div class="flex small mt8">${sel.key_facts.map((k) => `<span class="tag">${esc(k)}</span>`).join("")}</div>` : ""}
+        <div class="cmp-answers mt12">${CMP_SYS.map((s) => { const r = ((run.results || {})[s] || []).find((x) => x.id === sel.id); if (!r) return `<div class="cmp-ans"><div class="cmp-ans-h"><b>${cmpSys(s)}</b></div><div class="empty">${T("common.none")}</div></div>`;
+          return `<div class="cmp-ans"><div class="cmp-ans-h"><b>${cmpSys(s)}</b><span class="verdict-${esc(r.verdict)}">${esc(r.verdict)} ${esc(String(r.score))}</span><span class="meta">${cmpNum(r.latency_sec)} s</span></div>
+            ${r.error ? `<div class="note err">${esc(r.error)}</div>` : ""}
+            <div class="md cmp-ans-body">${md(r.answer || "")}</div>
+            ${r.judge_summary ? `<div class="meta mt8"><b>${T("cmp.judge")}</b> ${esc(r.judge_summary)}</div>` : ""}
+            ${(r.deductions || []).length ? `<ul class="cmp-ded">${r.deductions.map((d) => `<li>${cmpDeduction(d)}</li>`).join("")}</ul>` : ""}
+            ${(r.sources || []).length ? `<div class="flex small mt8">${r.sources.map((x) => `<span class="tag mono">${esc(x)}</span>`).join("")}</div>` : ""}</div>`; }).join("")}</div></div>` : "";
+    return `<div class="card"><div class="flex small">${[T("cmp.metaN", { n: c.cq_count }), T("cmp.metaModel", { m: m.answer_model || "–" }), T("cmp.metaJudge", { j: m.judge || "–" }), String(run.at || "").slice(0, 19)].map((x) => `<span class="tag">${esc(x)}</span>`).join("")}
+        <span class="tag">${esc(T("cmp.thr", { p: th.pass, q: th.partial, t: th.tie_margin }))}</span></div>
+        ${rm.embedding_model || rm.retrieve ? `<div class="flex small mt8"><span class="meta">${T("cmp.ragCfg")}</span>${rm.embedding_model ? `<span class="tag mono">${esc(rm.embedding_model)}</span>` : ""}${cmpKv(rm.retrieve)}${rm.stats ? cmpKv({ units: rm.stats.units, files: rm.stats.files }) : ""}</div>` : ""}
+        <div class="cmp-kpis mt12">${CMP_SYS.map((s) => { const x = sums[s] || {}; return `<div class="kpi"><div class="k">${cmpSys(s)}</div><div class="v">${cmpNum(x.avg)}</div><div class="s">${cmpNum(x.pass)}/${cmpNum(x.count)} PASS · ${cmpNum(x.avg_latency_sec)} s</div></div>`; }).join("")}</div></div>
+      <div class="grid2">${cmpPairCard(c, "stage1_rag_vs_wiki", T("cmp.stage1"), "rag", "wiki", types)}${cmpPairCard(c, "stage2_wiki_vs_graph", T("cmp.stage2"), "wiki", "graph", types)}</div>
+      <div class="card"><div class="card-head"><h3>${T("cmp.final")}</h3><span class="sub">${esc(T("cmp.overN", { n: c.cq_count }))}</span></div>
+        <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.system")}</th><th>${T("cmp.avg")}</th><th>PASS</th><th>PARTIAL</th><th>FAIL</th><th>${T("cmp.minmax")}</th><th>${T("cmp.latency")}</th></tr></thead><tbody>
+          ${CMP_SYS.map((s) => { const x = sums[s] || {}; return `<tr><td><b>${cmpSys(s)}</b></td><td>${cmpNum(x.avg)}</td><td>${cmpNum(x.pass)}/${cmpNum(x.count)}</td><td>${cmpNum(x.partial)}</td><td>${cmpNum(x.fail)}</td><td>${cmpNum(x.min)} – ${cmpNum(x.max)}</td><td>${cmpNum(x.avg_latency_sec)}</td></tr>`; }).join("")}</tbody></table></div>
+        <div class="eyebrow mt16">${T("cmp.byType")}</div>
+        <div class="tbl-wrap mt8"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.type")}</th><th>${T("cmp.n")}</th>${CMP_SYS.map((s) => `<th>${cmpSys(s)}</th>`).join("")}<th>${T("cmp.best")}</th></tr></thead><tbody>
+          ${(fin.by_type || []).map((r) => { const best = cmpBest(r); return `<tr><td>${tl(r.type)}</td><td>${cmpNum(r.count)}</td>${CMP_SYS.map((s) => `<td class="${best.length === 1 && best[0] === s ? "cmp-top" : ""}">${cmpNum(r[s])}</td>`).join("")}<td>${best.map((s) => cmpSys(s)).join(" = ")}${best.length > 1 ? ` <span class="tag">${T("cmp.tie")}</span>` : ""}</td></tr>`; }).join("")}</tbody></table></div></div>
+      <div class="card"><div class="card-head"><h3>${T("cmp.perCq")} · ${rows.length}</h3><span class="right"><select data-cmpf="${esc(key)}"><option value="">${T("cmp.allTypes")}</option>${typeSet.map((t) => `<option value="${esc(t)}" ${v.type === t ? "selected" : ""}>${tl(t)}</option>`).join("")}</select></span></div>
+        <div class="tbl-wrap cmp-cqs"><table class="tbl cmp-tbl"><thead><tr><th>ID</th><th>${T("cmp.type")}</th><th>${T("ev.q")}</th>${CMP_SYS.map((s) => `<th>${cmpSys(s)}</th>`).join("")}</tr></thead><tbody>
+          ${rows.map((r) => `<tr class="cmp-row ${v.id === r.id ? "on" : ""}" data-act="cmp-cq" data-key="${esc(key)}" data-id="${esc(r.id)}"><td class="mono nowrap">${esc(r.id)}</td><td class="nowrap">${tl(r.type)}</td><td>${esc(r.question)}</td>${CMP_SYS.map((s) => `<td>${sc(r[s])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+        <div class="meta mt8">${T("cmp.clickRow")}</div></div>${detail}`;
+  }
+  function cmpControls() {
+    const d = S.cmp || {}, rag = d.rag || {}, built = d.built || {}, busy = S.busy.cmp || "";
+    const canCompare = rag.exists && built.wiki && built.graph;
+    const need = [!rag.exists ? T("build.s.rag") : "", !built.wiki ? T("build.s.wiki") : "", !built.graph ? T("build.s.graph") : ""].filter(Boolean);
+    const row = (k, enabled) => {
+      const s = (d.stages || {})[k] || stageOf(k) || {};
+      const status = busy === k ? "running" : s.stale ? "warn" : s.status || "idle";
+      const sum = s.summary ? Object.assign({}, s.summary) : null;
+      if (sum) delete sum.run;
+      return `<li>${statusDot(status)}<div><div class="t">${T("build.s." + k)} ${s.stale ? `<span class="tag">${T("common.status.stale")}</span>` : ""}</div><div class="d">${T("build.s." + k + ".d")}</div>
+        ${sum ? `<div class="sum">${esc(JSON.stringify(sum)).slice(0, 420)}</div>` : ""}${s.error ? `<div class="err">${esc(s.error)}</div>` : ""}</div>
+        <div class="acts">${s.ms ? `<span class="meta">${(s.ms / 1000).toFixed(1)} s · MCP ${s.mcp_calls || 0}</span>` : ""}<button class="btn small" data-act="cmp-run" data-stage="${k}" ${busy || !enabled ? "disabled" : ""}>${s.status ? T("common.rerun") : T("common.run")}</button></div></li>`;
+    };
+    const log = S.ui.cmpLog || [];
+    return `<div class="card"><div class="card-head"><h3>${T("cmp.runTitle")}</h3><span class="tag">${T("cmp.optIn")}</span><span class="right"><button class="btn small primary" data-act="cmp-both" ${busy || !(built.wiki && built.graph) ? "disabled" : ""}>${T("cmp.runBoth")}</button></span></div>
+      ${d.error ? `<div class="note err">${esc(d.error)}</div>` : ""}
+      <ul class="stage-list">${row("rag", true)}${row("compare", canCompare)}</ul>
+      ${!canCompare && need.length ? `<div class="meta">${esc(T("cmp.need", { s: need.join(" · ") }))}</div>` : ""}
+      <div class="eyebrow mt16">${T("cmp.corpus")}</div>
+      ${rag.exists ? `<div class="flex small mt8"><span class="tag mono">${esc(String(rag.corpus).split("/").slice(-1)[0])}</span>${rag.location ? `<span class="tag mono">${esc(rag.location)}</span>` : ""}${rag.embedding_model ? `<span class="tag mono">${esc(rag.embedding_model)}</span>` : ""}${cmpKv(rag.stats)}${rag.built_at ? `<span class="tag">${esc(rag.built_at)}</span>` : ""}
+          <span class="spacer grow"></span><button class="btn small danger" data-act="cmp-delete" ${busy ? "disabled" : ""}>${T("cmp.del")}</button></div>
+        ${rag.retrieve ? `<div class="flex small mt8"><span class="meta">${T("cmp.retrieve")}</span>${cmpKv(rag.retrieve)}</div>` : ""}
+        <div class="note warn mt8">${T("cmp.billing")}</div>`
+      : `<div class="meta mt8">${rag.deleted_at ? esc(T("cmp.deleted", { at: rag.deleted_at })) : T("cmp.noCorpus")}</div>`}
+      ${busy || log.length ? `<div class="flex small mt12"><span class="eyebrow">${T("build.log")}</span><span class="meta" id="cmp-prog">${cmpProgText()}</span></div><div class="stream mt8" id="cmp-stream">${log.map(logLine).join("")}</div>${busy ? `<div class="meta mt8">${T("cmp.keeps")}</div>` : ""}` : ""}</div>`;
+  }
+  function cmpProgText() {
+    const p = S.ui.cmpProg;
+    return p && p.total ? esc(T("cmp.prog", { d: p.done, t: p.total })) : "";
+  }
+  async function cmpRun(stage) {
+    if (S.busy.cmp) return false;
+    S.busy.cmp = stage;
+    S.ui.cmpProg = { done: 0, total: stage === "compare" ? (((S.ws && S.ws.summary) || {}).cqs || 0) * CMP_SYS.length : 0 };
+    rerender();
+    let ok = true;
+    const push = (ev) => {
+      ev._t = Date.now();
+      const log = (S.ui.cmpLog = S.ui.cmpLog || []);
+      log.push(ev);
+      if (log.length > 600) log.splice(0, log.length - 600);
+      const el = $("#cmp-stream");
+      if (el && S.route === "studio/compare") { el.insertAdjacentHTML("beforeend", logLine(ev)); el.scrollTop = el.scrollHeight; }
+    };
+    await stream("/api/v5/build", { ws: wsRef(), stage }, (ev) => {
+      if (ev.type === "result") {
+        if (ev.ws) S.ws = ev.ws;
+        ok = !!(ev.record && ev.record.status !== "error");
+        if (!ok && ev.record && ev.record.error) toast(ev.record.error, 8000);
+        return;
+      }
+      if (ev.type === "error") { ok = false; toast(ev.message || ev.status, 8000); }
+      if (ev.type === "cq") { S.ui.cmpProg.done += 1; const p = $("#cmp-prog"); if (p) p.innerHTML = cmpProgText(); }
+      push(ev);
+    });
+    S.busy.cmp = "";
+    save();
+    await ensureCmp(true);
+    rerender();
+    return ok;
+  }
+  PAGES["studio/compare"] = () => {
+    const again = () => { if (S.route === "studio/compare") rerender(); };
+    if (S.cmpFor !== S.wsId && !S.busy.cmpLoad) { S.busy.cmpLoad = true; ensureCmp().then(() => { S.busy.cmpLoad = false; again(); }); }
+    if (!(S.bench && S.lang in S.bench) && !S.busy.benchLoad) { S.busy.benchLoad = true; ensureBench().then(() => { S.busy.benchLoad = false; again(); }); }
+    const d = S.cmpFor === S.wsId ? S.cmp || {} : null;
+    const b = (S.bench || {})[S.lang];
+    const pk = (b && b.pack) || {};
+    return head(T("rail.g.studio"), T("cmp.title"), T("cmp.lead")) + `
+    <div class="card"><div class="card-head"><h3>${T("cmp.whyTitle")}</h3></div><ul class="cmp-why">${[1, 2, 3, 4].map((i) => `<li>${esc(T(`cmp.why${i}`))}</li>`).join("")}</ul></div>
+    ${d ? cmpControls() : `<div class="card"><div class="empty">${T("common.loading")}</div></div>`}
+    ${d && d.run ? `<div class="card step-head"><div class="eyebrow">${T("cmp.wsEyebrow")}</div><h2>${T("cmp.wsTitle")}</h2><p>${esc(T("cmp.wsLead", { ws: d.run.ws_id || "" }))}</p></div>${threeWayView(d.run, "ws", null)}`
+      : d ? `<div class="card"><div class="empty">${T("cmp.noRun")}</div></div>` : ""}
+    ${b && b.available ? `<div class="card step-head"><div class="eyebrow">${T("cmp.fsEyebrow")}</div><h2>${T("cmp.fsTitle")}</h2><p>${esc(T("cmp.fsLead", { docs: pk.docs == null ? "–" : pk.docs, tables: pk.tables == null ? "–" : pk.tables, cqs: pk.cqs == null ? "–" : pk.cqs, asof: pk.as_of || "–" }))}</p>
+        <p>${esc(T("cmp.fsSmall"))}</p>${b.placeholder ? `<div class="note err" id="cmp-placeholder"><b>${T("cmp.placeholder")}</b></div>` : ""}</div>${threeWayView(b.run, "bench", pk.types)}` : ""}`;
+  };
+  AFTER["studio/compare"] = () => {
+    document.querySelectorAll("[data-cmpf]").forEach((el) => el.addEventListener("change", () => {
+      const ui = (S.ui.cmpView = S.ui.cmpView || {});
+      (ui[el.dataset.cmpf] = ui[el.dataset.cmpf] || {}).type = el.value;
+      rerender();
+    }));
+    const el = $("#cmp-stream");
+    if (el) el.scrollTop = el.scrollHeight;
   };
 
   // ------------------------------------------------------------------ Context Graph (GOAL-285)
@@ -2448,6 +2626,17 @@ python3 -m src.cli ask --bucket ${b} --ws ${w} --agent wiki --apply-cg "..."   #
       if (j.status === "SUCCESS") { S.data.cqs = j.cqs; S.ui.cqDraft = null; toast(T("ev.savedCqs", { n: j.cqs.length })); rerender(); return true; }
       toast(j.message || j.status); return false;
     },
+    "cmp-run": async (a) => cmpRun(a.dataset.stage),
+    "cmp-both": async () => { if (await cmpRun("rag")) await cmpRun("compare"); },
+    "cmp-delete": () => confirmModal(T("cmp.delConfirm"), async () => {
+      S.busy.cmp = "delete"; rerender();
+      const j = await api("/api/v5/rag/delete", { ws: wsRef() });
+      S.busy.cmp = "";
+      if (j.status === "OK") { if (j.ws) S.ws = j.ws; toast(j.deleted ? T("cmp.delDone") : j.message || T("cmp.noCorpus"), 5000); } else toast(j.message || j.status, 8000);
+      await ensureCmp(true);
+      rerender();
+    }),
+    "cmp-cq": (a) => { const ui = (S.ui.cmpView = S.ui.cmpView || {}); const v = ui[a.dataset.key] || (ui[a.dataset.key] = {}); v.id = v.id === a.dataset.id ? "" : a.dataset.id; rerender(); },
     "ev-run": async () => evalRun([]),
     "ev-one": async (a) => evalRun([a.dataset.id]),
     "ho-stage": (a) => { S.ui.hoStage = a.dataset.s; rerender(); },

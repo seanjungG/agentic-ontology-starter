@@ -1,0 +1,28 @@
+{
+ "docs": [
+  {
+   "doc_id": "GUIDE-SUB-01",
+   "file": "01_subsidy_policy_guide.md",
+   "title": "Device Subsidy Policy Guide",
+   "kind": "Policy guide"
+  },
+  {
+   "doc_id": "GUIDE-SUB-02",
+   "file": "02_retention_penalty_guide.md",
+   "title": "Plan Retention & Clawback Guide",
+   "kind": "Policy guide"
+  },
+  {
+   "doc_id": "GUIDE-SUB-03",
+   "file": "03_exemption_guide.md",
+   "title": "Penalty Exemption Guide",
+   "kind": "Policy guide"
+  },
+  {
+   "doc_id": "MANUAL-OPS-01",
+   "file": "04_counter_operations_manual.md",
+   "title": "Store and Contact Center Subsidy Operations Manual",
+   "kind": "Manual"
+  }
+ ]
+}

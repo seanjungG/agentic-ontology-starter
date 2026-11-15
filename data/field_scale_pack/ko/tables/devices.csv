@@ -1,0 +1,5 @@
+device_id,device_name,manufacturer,storage_gb,factory_price_krw,release_date
+DEV-S26U-256,Galaxy S26 Ultra 256GB,Samsung,256,1698400,2026-01-15
+DEV-S26U-512,Galaxy S26 Ultra 512GB,Samsung,512,1841400,2026-01-15
+DEV-IP16P-256,iPhone 16 Pro 256GB,Apple,256,1700000,2026-01-15
+DEV-IP16P-512,iPhone 16 Pro 512GB,Apple,512,2000000,2026-01-15

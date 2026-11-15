@@ -1,0 +1,790 @@
+{
+ "version": "field-scale-296",
+ "as_of": "2026-10-15",
+ "types": {
+  "lookup": {
+   "ko": "단일 조항 조회",
+   "en": "Single-clause lookup",
+   "group": "doc"
+  },
+  "current": {
+   "ko": "현행 값 (개정 2회 이상)",
+   "en": "Current value (2+ amendments)",
+   "group": "doc"
+  },
+  "temporal": {
+   "ko": "특정 시점 값",
+   "en": "Value on a past date",
+   "group": "doc"
+  },
+  "exception": {
+   "ko": "예외 부칙 적용",
+   "en": "Exception addendum",
+   "group": "doc"
+  },
+  "calc": {
+   "ko": "규정 적용 계산",
+   "en": "Rule-based calculation",
+   "group": "doc"
+  },
+  "compare": {
+   "ko": "계열 간 비교",
+   "en": "Cross-line comparison",
+   "group": "doc"
+  },
+  "history": {
+   "ko": "변경 이력 나열",
+   "en": "Change history",
+   "group": "doc"
+  },
+  "alias": {
+   "ko": "현장 별칭 질문",
+   "en": "Field-alias wording",
+   "group": "doc"
+  },
+  "hybrid": {
+   "ko": "문서 + 원장 결합",
+   "en": "Documents + ledger",
+   "group": "hybrid"
+  },
+  "data": {
+   "ko": "원장 조회·집계",
+   "en": "Ledger lookup / count",
+   "group": "data"
+  }
+ },
+ "cqs": [
+  {
+   "id": "FS-01",
+   "type": "lookup",
+   "question": "As of October 2026, what is the 2-line discount of the family bundle discount for the teen & kids line?",
+   "expected_answer": "KRW 2,000. It is the value in GUIDE-FAMILY-TEEN Article 2 and was not amended in 2026.",
+   "key_facts": [
+    "KRW 2,000"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_2"
+   }
+  },
+  {
+   "id": "FS-02",
+   "type": "lookup",
+   "question": "As of October 2026, what is the HIGH-tier limit of the port-in switch bonus for the 5G smartphone line?",
+   "expected_answer": "KRW 300,000. It is the value in GUIDE-SWITCH-5G Article 3(1) and was not amended in 2026.",
+   "key_facts": [
+    "KRW 300,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "limit_high"
+   }
+  },
+  {
+   "id": "FS-03",
+   "type": "lookup",
+   "question": "As of October 2026, what is the damage deductible of the device insurance for the LTE smartphone line?",
+   "expected_answer": "KRW 40,000. It is the value in GUIDE-INSUR-LTE Article 3(2) and was not amended in 2026.",
+   "key_facts": [
+    "KRW 40,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "LTE",
+    "param": "damage_deduct"
+   }
+  },
+  {
+   "id": "FS-04",
+   "type": "lookup",
+   "question": "As of October 2026, what is the loss coverage rate of the device insurance for the tablet & wearable line?",
+   "expected_answer": "70%. It is the value in GUIDE-INSUR-TAB Article 2(1) and was not amended in 2026.",
+   "key_facts": [
+    "70%"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "loss_cover_pct"
+   }
+  },
+  {
+   "id": "FS-05",
+   "type": "lookup",
+   "question": "Until how many days after activation can device insurance be taken out on the tablet & wearable line?",
+   "expected_answer": "Within 14 days of activation (GUIDE-INSUR-TAB Article 1).",
+   "key_facts": [
+    "14 days"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "enroll_days"
+   }
+  },
+  {
+   "id": "FS-06",
+   "type": "lookup",
+   "question": "Until how many days after activation can device insurance be taken out on the 5G smartphone line?",
+   "expected_answer": "Within 30 days of activation (GUIDE-INSUR-5G Article 1).",
+   "key_facts": [
+    "30 days"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "5G",
+    "param": "enroll_days"
+   }
+  },
+  {
+   "id": "FS-07",
+   "type": "current",
+   "question": "As of October 2026, what is the reward rate after 12 months of the device trade-in reward for the 5G smartphone line?",
+   "expected_answer": "65%. History: 50% (GUIDE-TRADEIN-5G, 2026-01-01) → 45% (NOTICE-2026-02, 2026-02-01) → 55% (NOTICE-2026-03, 2026-03-01) → 60% (NOTICE-2026-04, 2026-04-01) → 65% (NOTICE-2026-05, 2026-05-01).",
+   "key_facts": [
+    "65%"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "line": "5G",
+    "param": "rate_12m",
+    "amendments": 4
+   }
+  },
+  {
+   "id": "FS-08",
+   "type": "current",
+   "question": "As of October 2026, what is the 2-line discount of the family bundle discount for the tablet & wearable line?",
+   "expected_answer": "KRW 500. History: KRW 1,000 (GUIDE-FAMILY-TAB, 2026-01-01) → KRW 500 (NOTICE-2026-02, 2026-02-01) → KRW 1,000 (NOTICE-2026-06, 2026-06-01) → KRW 500 (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "KRW 500"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TAB",
+    "param": "disc_2",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-09",
+   "type": "current",
+   "question": "As of October 2026, what is the damage deductible of the device insurance for the tablet & wearable line?",
+   "expected_answer": "KRW 40,000. History: KRW 30,000 (GUIDE-INSUR-TAB, 2026-01-01) → KRW 25,000 (NOTICE-2026-05, 2026-05-01) → KRW 30,000 (NOTICE-2026-06, 2026-06-01) → KRW 40,000 (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "KRW 40,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_deduct",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-10",
+   "type": "current",
+   "question": "As of October 2026, what is the minimum time with the previous carrier of the port-in switch bonus for the 5G smartphone line?",
+   "expected_answer": "120 days. History: 90 days (GUIDE-SWITCH-5G, 2026-01-01) → 120 days (NOTICE-2026-04, 2026-04-01) → 135 days (NOTICE-2026-05, 2026-05-01) → 120 days (NOTICE-2026-09, 2026-09-01).",
+   "key_facts": [
+    "120 days"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "prior_days",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-11",
+   "type": "current",
+   "question": "As of October 2026, what is the MID-tier limit of the port-in switch bonus for the LTE smartphone line?",
+   "expected_answer": "KRW 180,000. History: KRW 150,000 (GUIDE-SWITCH-LTE, 2026-01-01) → KRW 170,000 (NOTICE-2026-02, 2026-02-01) → KRW 190,000 (NOTICE-2026-06, 2026-06-01) → KRW 180,000 (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "KRW 180,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "LTE",
+    "param": "limit_mid",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-12",
+   "type": "current",
+   "question": "As of October 2026, what is the HIGH-tier limit of the port-in switch bonus for the tablet & wearable line?",
+   "expected_answer": "KRW 85,000. History: KRW 100,000 (GUIDE-SWITCH-TAB, 2026-01-01) → KRW 110,000 (NOTICE-2026-04, 2026-04-01) → KRW 90,000 (NOTICE-2026-08, 2026-08-01) → KRW 85,000 (NOTICE-2026-09, 2026-09-01).",
+   "key_facts": [
+    "KRW 85,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "TAB",
+    "param": "limit_high",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-13",
+   "type": "current",
+   "question": "As of October 2026, what is the 4-or-more-line discount of the family bundle discount for the teen & kids line?",
+   "expected_answer": "KRW 5,000. History: KRW 5,000 (GUIDE-FAMILY-TEEN, 2026-01-01) → KRW 5,500 (NOTICE-2026-02, 2026-02-01) → KRW 5,000 (NOTICE-2026-04, 2026-04-01).",
+   "key_facts": [
+    "KRW 5,000"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_4p",
+    "amendments": 2
+   }
+  },
+  {
+   "id": "FS-14",
+   "type": "current",
+   "question": "As of October 2026, what is the damage coverage cap of the device insurance for the 5G smartphone line?",
+   "expected_answer": "KRW 480,000. History: KRW 400,000 (GUIDE-INSUR-5G, 2026-01-01) → KRW 430,000 (NOTICE-2026-04, 2026-04-01) → KRW 480,000 (NOTICE-2026-06, 2026-06-01).",
+   "key_facts": [
+    "KRW 480,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "5G",
+    "param": "damage_cap",
+    "amendments": 2
+   }
+  },
+  {
+   "id": "FS-15",
+   "type": "temporal",
+   "question": "What damage deductible of the device insurance applied to a tablet & wearable line incident dated 2026-05-13?",
+   "expected_answer": "KRW 25,000. History up to 2026-05-13: KRW 30,000 (GUIDE-INSUR-TAB, 2026-01-01) → KRW 25,000 (NOTICE-2026-05, 2026-05-01). Later amendments do not apply to this case.",
+   "key_facts": [
+    "KRW 25,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_deduct",
+    "on": "2026-05-13"
+   }
+  },
+  {
+   "id": "FS-16",
+   "type": "temporal",
+   "question": "What minimum time with the previous carrier of the port-in switch bonus applied to a 5G smartphone line activation dated 2026-04-13?",
+   "expected_answer": "120 days. History up to 2026-04-13: 90 days (GUIDE-SWITCH-5G, 2026-01-01) → 120 days (NOTICE-2026-04, 2026-04-01). Later amendments do not apply to this case.",
+   "key_facts": [
+    "120 days"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "prior_days",
+    "on": "2026-04-13"
+   }
+  },
+  {
+   "id": "FS-17",
+   "type": "temporal",
+   "question": "What MID-tier limit of the port-in switch bonus applied to a LTE smartphone line activation dated 2026-02-13?",
+   "expected_answer": "KRW 170,000. History up to 2026-02-13: KRW 150,000 (GUIDE-SWITCH-LTE, 2026-01-01) → KRW 170,000 (NOTICE-2026-02, 2026-02-01). Later amendments do not apply to this case.",
+   "key_facts": [
+    "KRW 170,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "LTE",
+    "param": "limit_mid",
+    "on": "2026-02-13"
+   }
+  },
+  {
+   "id": "FS-18",
+   "type": "temporal",
+   "question": "What HIGH-tier limit of the port-in switch bonus applied to a tablet & wearable line activation dated 2026-04-13?",
+   "expected_answer": "KRW 110,000. History up to 2026-04-13: KRW 100,000 (GUIDE-SWITCH-TAB, 2026-01-01) → KRW 110,000 (NOTICE-2026-04, 2026-04-01). Later amendments do not apply to this case.",
+   "key_facts": [
+    "KRW 110,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "TAB",
+    "param": "limit_high",
+    "on": "2026-04-13"
+   }
+  },
+  {
+   "id": "FS-19",
+   "type": "temporal",
+   "question": "What 4-or-more-line discount of the family bundle discount applied to a teen & kids line bill dated 2026-02-13?",
+   "expected_answer": "KRW 5,500. History up to 2026-02-13: KRW 5,000 (GUIDE-FAMILY-TEEN, 2026-01-01) → KRW 5,500 (NOTICE-2026-02, 2026-02-01). Later amendments do not apply to this case.",
+   "key_facts": [
+    "KRW 5,500"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_4p",
+    "on": "2026-02-13"
+   }
+  },
+  {
+   "id": "FS-20",
+   "type": "exception",
+   "question": "As of October 2026, what is the maximum switch bonus for a port-in at a designated island or mountain store on an LTE smartphone line MID-tier plan?",
+   "expected_answer": "KRW 216,000. The current MID-tier limit KRW 180,000 × 120% under ADDENDUM-EX-01 Addendum Article 1.",
+   "key_facts": [
+    "KRW 216,000"
+   ],
+   "meta": {
+    "rule": "ISL",
+    "line": "LTE"
+   }
+  },
+  {
+   "id": "FS-21",
+   "type": "exception",
+   "question": "As of October 2026, what is the maximum switch bonus for a port-in at a designated island or mountain store on a tablet & wearable line HIGH-tier plan?",
+   "expected_answer": "KRW 85,000. The 120% island uplift does not apply to the tablet & wearable line (ADDENDUM-EX-02 Addendum Article 2), so the current HIGH-tier limit applies as it is.",
+   "key_facts": [
+    "KRW 85,000"
+   ],
+   "meta": {
+    "rule": "ISL_TAB",
+    "line": "TAB"
+   }
+  },
+  {
+   "id": "FS-22",
+   "type": "exception",
+   "question": "As of October 2026, a 17-year-old with a guardian's consent form ports in to a 5G smartphone line HIGH-tier plan. What is the maximum switch bonus?",
+   "expected_answer": "KRW 150,000. The current HIGH-tier limit KRW 300,000 × 50% for a minor's line (ADDENDUM-EX-01 Addendum Article 3).",
+   "key_facts": [
+    "KRW 150,000"
+   ],
+   "meta": {
+    "rule": "MINOR",
+    "line": "5G"
+   }
+  },
+  {
+   "id": "FS-23",
+   "type": "exception",
+   "question": "As of October 2026, a 15-year-old with a guardian's consent form ports in to a teen & kids line HIGH-tier plan. What is the maximum switch bonus?",
+   "expected_answer": "KRW 180,000. The 50% restriction for minors does not apply to the teen & kids line (ADDENDUM-EX-02 Addendum Article 1), so 100% of the current HIGH-tier limit is available.",
+   "key_facts": [
+    "KRW 180,000"
+   ],
+   "meta": {
+    "rule": "MINOR_TEEN",
+    "line": "TEEN"
+   }
+  },
+  {
+   "id": "FS-24",
+   "type": "exception",
+   "question": "As of October 2026, what loss deductible rate applies when a 70-year-old customer loses an LTE smartphone line device?",
+   "expected_answer": "25%. The current LTE smartphone line loss deductible rate 30% minus 5 percentage points for customers aged 65 or over (ADDENDUM-EX-02 Addendum Article 4).",
+   "key_facts": [
+    "25%"
+   ],
+   "meta": {
+    "rule": "SENIOR_DEDUCT",
+    "line": "LTE"
+   }
+  },
+  {
+   "id": "FS-25",
+   "type": "calc",
+   "question": "A customer ported in on 2026-07-20 to a 5G smartphone line HIGH-tier plan and received the switch bonus up to that day's limit. What is clawed back if they cancel on day 120? (no promotion, no exception)",
+   "expected_answer": "KRW 100,000. That day's HIGH-tier limit was KRW 300,000; Activated on or after 2026-07-01 and 90–179 days elapsed, so pro-rata: 300,000 × (180 − 120) ÷ 180.",
+   "key_facts": [
+    "KRW 100,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "mode": "prorata"
+   }
+  },
+  {
+   "id": "FS-26",
+   "type": "calc",
+   "question": "A customer ported in on 2026-05-18 to a 5G smartphone line HIGH-tier plan and received the switch bonus up to that day's limit. What is clawed back if they cancel on day 120? (no promotion, no exception)",
+   "expected_answer": "KRW 300,000. That day's HIGH-tier limit was KRW 300,000; The pro-rata rule does not apply to this 5G smartphone line activation date, so cancelling within 180 days means clawback in full.",
+   "key_facts": [
+    "KRW 300,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "mode": "full"
+   }
+  },
+  {
+   "id": "FS-27",
+   "type": "calc",
+   "question": "A customer ported in on 2026-08-05 to a teen & kids line HIGH-tier plan and received the switch bonus up to that day's limit. What is clawed back if they cancel on day 100? (no promotion, no exception)",
+   "expected_answer": "KRW 180,000. That day's HIGH-tier limit was KRW 180,000; The pro-rata rule does not apply to this teen & kids line activation date, so cancelling within 180 days means clawback in full.",
+   "key_facts": [
+    "KRW 180,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "TEEN",
+    "mode": "full"
+   }
+  },
+  {
+   "id": "FS-28",
+   "type": "calc",
+   "question": "As of October 2026, a LTE smartphone line on a KRW 69,000 plan is in a 3-line family bundle, has the selective discount and is in its 6th year. What is the monthly payment?",
+   "expected_answer": "KRW 44,750. 69,000 × 0.75 = 51,750, minus the 3-line bundle discount 4,000 and the 5-year loyalty discount 3,000.",
+   "key_facts": [
+    "KRW 44,750"
+   ],
+   "meta": {
+    "prog": "FAMILY+LOYAL",
+    "line": "LTE"
+   }
+  },
+  {
+   "id": "FS-29",
+   "type": "calc",
+   "question": "As of October 2026, a teen & kids line on a KRW 49,000 plan is in a 4-line family bundle, has the selective discount and is in its 6th year. What is the monthly payment?",
+   "expected_answer": "KRW 29,750. 49,000 × 0.75 = 36,750, minus the 4-or-more-line bundle discount 5,000 and the 5-year loyalty discount 2,000.",
+   "key_facts": [
+    "KRW 29,750"
+   ],
+   "meta": {
+    "prog": "FAMILY+LOYAL",
+    "line": "TEEN"
+   }
+  },
+  {
+   "id": "FS-30",
+   "type": "calc",
+   "question": "An insured customer lost a tablet & wearable line device with a list price of KRW 1,200,000 on 10 October 2026. How much is actually paid?",
+   "expected_answer": "KRW 714,000. Coverage on the incident date 70% = 840,000; deductible 15% = 126,000.",
+   "key_facts": [
+    "KRW 714,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB"
+   }
+  },
+  {
+   "id": "FS-31",
+   "type": "calc",
+   "question": "A 5G smartphone line device with a list price of KRW 1,000,000 at activation is returned on 12 October 2026 after 24 months, graded B. What is the reward?",
+   "expected_answer": "KRW 160,000. The 24-month rate on the return date 20% = 200,000, × 80% for grade B.",
+   "key_facts": [
+    "KRW 160,000"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "line": "5G"
+   }
+  },
+  {
+   "id": "FS-32",
+   "type": "compare",
+   "question": "As of October 2026, which of the four product lines has the highest MID-tier limit for the port-in switch bonus, and what is the value?",
+   "expected_answer": "The 5G smartphone line, at KRW 200,000. Current values: 5G smartphone KRW 200,000, LTE smartphone KRW 180,000, tablet & wearable KRW 60,000, teen & kids KRW 120,000.",
+   "key_facts": [
+    "5G smartphone",
+    "KRW 200,000"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "param": "limit_mid",
+    "mode": "max"
+   }
+  },
+  {
+   "id": "FS-33",
+   "type": "compare",
+   "question": "As of October 2026, which of the four product lines has the lowest 3-line discount for the family bundle discount, and what is the value?",
+   "expected_answer": "The tablet & wearable line, at KRW 1,500. Current values: 5G smartphone KRW 6,000, LTE smartphone KRW 4,000, tablet & wearable KRW 1,500, teen & kids KRW 4,500.",
+   "key_facts": [
+    "tablet & wearable",
+    "KRW 1,500"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "param": "disc_3",
+    "mode": "min"
+   }
+  },
+  {
+   "id": "FS-34",
+   "type": "compare",
+   "question": "As of October 2026, which of the four product lines has the highest loss deductible rate for the device insurance, and what is the value?",
+   "expected_answer": "The 5G smartphone, LTE smartphone line, at 30%. Current values: 5G smartphone 30%, LTE smartphone 30%, tablet & wearable 15%, teen & kids 20%.",
+   "key_facts": [
+    "5G smartphone, LTE smartphone",
+    "30%"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "param": "loss_deduct_pct",
+    "mode": "max"
+   }
+  },
+  {
+   "id": "FS-35",
+   "type": "compare",
+   "question": "As of October 2026, which of the four product lines has the highest reward rate after 12 months for the device trade-in reward, and what is the value?",
+   "expected_answer": "The 5G smartphone line, at 65%. Current values: 5G smartphone 65%, LTE smartphone 50%, tablet & wearable 40%, teen & kids 45%.",
+   "key_facts": [
+    "5G smartphone",
+    "65%"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "param": "rate_12m",
+    "mode": "max"
+   }
+  },
+  {
+   "id": "FS-36",
+   "type": "history",
+   "question": "List every 2026 change to the reward rate after 12 months of the device trade-in reward for the 5G smartphone line, in order of effective date.",
+   "expected_answer": "2026-01-01 50% (GUIDE-TRADEIN-5G); 2026-02-01 45% (NOTICE-2026-02); 2026-03-01 55% (NOTICE-2026-03); 2026-04-01 60% (NOTICE-2026-04); 2026-05-01 65% (NOTICE-2026-05).",
+   "key_facts": [
+    "2026-01-01 50%",
+    "2026-02-01 45%",
+    "2026-03-01 55%",
+    "2026-04-01 60%",
+    "2026-05-01 65%"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "line": "5G",
+    "param": "rate_12m"
+   }
+  },
+  {
+   "id": "FS-37",
+   "type": "history",
+   "question": "List every 2026 change to the 2-line discount of the family bundle discount for the tablet & wearable line, in order of effective date.",
+   "expected_answer": "2026-01-01 KRW 1,000 (GUIDE-FAMILY-TAB); 2026-02-01 KRW 500 (NOTICE-2026-02); 2026-06-01 KRW 1,000 (NOTICE-2026-06); 2026-07-01 KRW 500 (NOTICE-2026-07).",
+   "key_facts": [
+    "2026-01-01 KRW 1,000",
+    "2026-02-01 KRW 500",
+    "2026-06-01 KRW 1,000",
+    "2026-07-01 KRW 500"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TAB",
+    "param": "disc_2"
+   }
+  },
+  {
+   "id": "FS-38",
+   "type": "history",
+   "question": "List every 2026 change to the damage deductible of the device insurance for the tablet & wearable line, in order of effective date.",
+   "expected_answer": "2026-01-01 KRW 30,000 (GUIDE-INSUR-TAB); 2026-05-01 KRW 25,000 (NOTICE-2026-05); 2026-06-01 KRW 30,000 (NOTICE-2026-06); 2026-07-01 KRW 40,000 (NOTICE-2026-07).",
+   "key_facts": [
+    "2026-01-01 KRW 30,000",
+    "2026-05-01 KRW 25,000",
+    "2026-06-01 KRW 30,000",
+    "2026-07-01 KRW 40,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_deduct"
+   }
+  },
+  {
+   "id": "FS-39",
+   "type": "history",
+   "question": "List every 2026 change to the minimum time with the previous carrier of the port-in switch bonus for the 5G smartphone line, in order of effective date.",
+   "expected_answer": "2026-01-01 90 days (GUIDE-SWITCH-5G); 2026-04-01 120 days (NOTICE-2026-04); 2026-05-01 135 days (NOTICE-2026-05); 2026-09-01 120 days (NOTICE-2026-09).",
+   "key_facts": [
+    "2026-01-01 90 days",
+    "2026-04-01 120 days",
+    "2026-05-01 135 days",
+    "2026-09-01 120 days"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "prior_days"
+   }
+  },
+  {
+   "id": "FS-40",
+   "type": "alias",
+   "question": "Right now, what's the loss cover rate of the PhoneCare for the LTE phone?",
+   "expected_answer": "75%. 'LTE phone' is the LTE smartphone line, 'PhoneCare' the device insurance, 'loss cover rate' the loss coverage rate. History: 75% (GUIDE-INSUR-LTE, 2026-01-01) → 70% (NOTICE-2026-03, 2026-03-01) → 75% (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "75%"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "LTE",
+    "param": "loss_cover_pct"
+   }
+  },
+  {
+   "id": "FS-41",
+   "type": "alias",
+   "question": "Right now, what's the damage cap of the PhoneCare for the second device?",
+   "expected_answer": "KRW 210,000. 'second device' is the tablet & wearable line, 'PhoneCare' the device insurance, 'damage cap' the damage coverage cap. History: KRW 200,000 (GUIDE-INSUR-TAB, 2026-01-01) → KRW 220,000 (NOTICE-2026-03, 2026-03-01) → KRW 210,000 (NOTICE-2026-09, 2026-09-01).",
+   "key_facts": [
+    "KRW 210,000"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_cap"
+   }
+  },
+  {
+   "id": "FS-42",
+   "type": "alias",
+   "question": "Right now, what's the 3-line pack discount of the Fam pack for the Teens line?",
+   "expected_answer": "KRW 4,500. 'Teens line' is the teen & kids line, 'Fam pack' the family bundle discount, '3-line pack discount' the 3-line discount. History: KRW 3,500 (GUIDE-FAMILY-TEEN, 2026-01-01) → KRW 4,500 (NOTICE-2026-03, 2026-03-01).",
+   "key_facts": [
+    "KRW 4,500"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_3"
+   }
+  },
+  {
+   "id": "FS-43",
+   "type": "alias",
+   "question": "Right now, what's the 3-year long-run discount of the Long-run discount for the LTE phone?",
+   "expected_answer": "KRW 2,000. 'LTE phone' is the LTE smartphone line, 'Long-run discount' the loyalty discount, '3-year long-run discount' the discount from 3 years. History: KRW 1,500 (GUIDE-LOYAL-LTE, 2026-01-01) → KRW 2,000 (NOTICE-2026-02, 2026-02-01).",
+   "key_facts": [
+    "KRW 2,000"
+   ],
+   "meta": {
+    "prog": "LOYAL",
+    "line": "LTE",
+    "param": "disc_3y"
+   }
+  },
+  {
+   "id": "FS-44",
+   "type": "hybrid",
+   "question": "Assuming customer CUST_DEMO_002 has device insurance, how much is actually paid if they lose their current device on 10 October 2026?",
+   "expected_answer": "KRW 951,104. CUST_DEMO_002's device is the Galaxy S26 Ultra 256GB (list price 1,698,400, 5G smartphone line); coverage on the incident date 80% = 1,358,720, deductible 30% = 407,616.",
+   "key_facts": [
+    "KRW 951,104"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "devices"
+    ],
+    "prog": "INSUR"
+   }
+  },
+  {
+   "id": "FS-45",
+   "type": "hybrid",
+   "question": "If customer CUST_DEMO_004's line joins a 3-line family bundle, what is the monthly payment of that line as of october 2026?",
+   "expected_answer": "KRW 57,750. CUST_DEMO_004 is on 5G Premier Essential (KRW 85,000) with the selective discount: 85,000 × 0.75 = 63,750, minus the 5G smartphone line 3-line bundle discount 6,000.",
+   "key_facts": [
+    "KRW 57,750"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "plans"
+    ],
+    "prog": "FAMILY"
+   }
+  },
+  {
+   "id": "FS-46",
+   "type": "hybrid",
+   "question": "Assuming customer CUST_DEMO_005 joined the trade-in reward and has met the 12-month requirement, what is the reward for a grade-A return on 12 October 2026?",
+   "expected_answer": "KRW 1,300,000. CUST_DEMO_005's device is the iPhone 16 Pro 512GB (list price 2,000,000) and the 5G smartphone line 12-month rate on the return date is 65%.",
+   "key_facts": [
+    "KRW 1,300,000"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "devices"
+    ],
+    "prog": "TRADEIN"
+   }
+  },
+  {
+   "id": "FS-47",
+   "type": "hybrid",
+   "question": "Assuming customer CUST_DEMO_007 ported in on their activation date, what switch bonus limit applied for that date and plan?",
+   "expected_answer": "KRW 200,000. CUST_DEMO_007 activated on 2026-09-01 on 5G Direct 61 (KRW 61,000, MID tier); the 5G smartphone line MID-tier limit that day was KRW 200,000.",
+   "key_facts": [
+    "KRW 200,000"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "plans"
+    ],
+    "prog": "SWITCH"
+   }
+  },
+  {
+   "id": "FS-48",
+   "type": "data",
+   "question": "What is the list price of the Galaxy S26 Ultra 256GB?",
+   "expected_answer": "KRW 1,698,400 (devices table).",
+   "key_facts": [
+    "KRW 1,698,400"
+   ],
+   "meta": {
+    "tables": [
+     "devices"
+    ]
+   }
+  },
+  {
+   "id": "FS-49",
+   "type": "data",
+   "question": "How many customers are senior/welfare exempt (SENIOR_EXEMPT), and who are they?",
+   "expected_answer": "Two: CUST_DEMO_003 and CUST_DEMO_008.",
+   "key_facts": [
+    "2",
+    "CUST_DEMO_003",
+    "CUST_DEMO_008"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts"
+    ]
+   }
+  },
+  {
+   "id": "FS-50",
+   "type": "data",
+   "question": "How many customers activated with the selective discount (SELECTIVE_25PCT), and who are they?",
+   "expected_answer": "One: CUST_DEMO_004.",
+   "key_facts": [
+    "1",
+    "CUST_DEMO_004"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts"
+    ]
+   }
+  }
+ ]
+}

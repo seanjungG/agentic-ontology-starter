@@ -1,0 +1,1112 @@
+{
+ "seed": 296,
+ "as_of": "2026-10-15",
+ "lines": {
+  "5G": {
+   "ko": "5G 스마트폰",
+   "en": "5G smartphone",
+   "high": 85000,
+   "mid": 45000
+  },
+  "LTE": {
+   "ko": "LTE 스마트폰",
+   "en": "LTE smartphone",
+   "high": 69000,
+   "mid": 35000
+  },
+  "TAB": {
+   "ko": "태블릿·웨어러블",
+   "en": "tablet & wearable",
+   "high": 30000,
+   "mid": 15000
+  },
+  "TEEN": {
+   "ko": "청소년·키즈",
+   "en": "teen & kids",
+   "high": 49000,
+   "mid": 29000
+  }
+ },
+ "values": [
+  {
+   "program": "SWITCH",
+   "line": "5G",
+   "param": "limit_high",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 300000,
+     "source": "GUIDE-SWITCH-5G"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "5G",
+   "param": "limit_mid",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 200000,
+     "source": "GUIDE-SWITCH-5G"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "5G",
+   "param": "prior_days",
+   "unit": "days",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 90,
+     "source": "GUIDE-SWITCH-5G"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 120,
+     "source": "NOTICE-2026-04"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 135,
+     "source": "NOTICE-2026-05"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 120,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "LTE",
+   "param": "limit_high",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 220000,
+     "source": "GUIDE-SWITCH-LTE"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 210000,
+     "source": "NOTICE-2026-07"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 260000,
+     "source": "NOTICE-2026-08"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "LTE",
+   "param": "limit_mid",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 150000,
+     "source": "GUIDE-SWITCH-LTE"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 170000,
+     "source": "NOTICE-2026-02"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 190000,
+     "source": "NOTICE-2026-06"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 180000,
+     "source": "NOTICE-2026-07"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "LTE",
+   "param": "prior_days",
+   "unit": "days",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 90,
+     "source": "GUIDE-SWITCH-LTE"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 120,
+     "source": "NOTICE-2026-07"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 135,
+     "source": "NOTICE-2026-08"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "TAB",
+   "param": "limit_high",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 100000,
+     "source": "GUIDE-SWITCH-TAB"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 110000,
+     "source": "NOTICE-2026-04"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 90000,
+     "source": "NOTICE-2026-08"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 85000,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "TAB",
+   "param": "limit_mid",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 60000,
+     "source": "GUIDE-SWITCH-TAB"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "TAB",
+   "param": "prior_days",
+   "unit": "days",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 60,
+     "source": "GUIDE-SWITCH-TAB"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "TEEN",
+   "param": "limit_high",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 180000,
+     "source": "GUIDE-SWITCH-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "TEEN",
+   "param": "limit_mid",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 120000,
+     "source": "GUIDE-SWITCH-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "SWITCH",
+   "line": "TEEN",
+   "param": "prior_days",
+   "unit": "days",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 90,
+     "source": "GUIDE-SWITCH-TEEN"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 120,
+     "source": "NOTICE-2026-03"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "5G",
+   "param": "disc_2",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 3000,
+     "source": "GUIDE-FAMILY-5G"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "5G",
+   "param": "disc_3",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 5000,
+     "source": "GUIDE-FAMILY-5G"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 6000,
+     "source": "NOTICE-2026-08"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "5G",
+   "param": "disc_4p",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 7000,
+     "source": "GUIDE-FAMILY-5G"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "LTE",
+   "param": "disc_2",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 2500,
+     "source": "GUIDE-FAMILY-LTE"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 3000,
+     "source": "NOTICE-2026-06"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "LTE",
+   "param": "disc_3",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 4000,
+     "source": "GUIDE-FAMILY-LTE"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "LTE",
+   "param": "disc_4p",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 5500,
+     "source": "GUIDE-FAMILY-LTE"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "TAB",
+   "param": "disc_2",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 1000,
+     "source": "GUIDE-FAMILY-TAB"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 500,
+     "source": "NOTICE-2026-02"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 1000,
+     "source": "NOTICE-2026-06"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 500,
+     "source": "NOTICE-2026-07"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "TAB",
+   "param": "disc_3",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 1500,
+     "source": "GUIDE-FAMILY-TAB"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "TAB",
+   "param": "disc_4p",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 2000,
+     "source": "GUIDE-FAMILY-TAB"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "TEEN",
+   "param": "disc_2",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 2000,
+     "source": "GUIDE-FAMILY-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "TEEN",
+   "param": "disc_3",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 3500,
+     "source": "GUIDE-FAMILY-TEEN"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 4500,
+     "source": "NOTICE-2026-03"
+    }
+   ]
+  },
+  {
+   "program": "FAMILY",
+   "line": "TEEN",
+   "param": "disc_4p",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 5000,
+     "source": "GUIDE-FAMILY-TEEN"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 5500,
+     "source": "NOTICE-2026-02"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 5000,
+     "source": "NOTICE-2026-04"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "5G",
+   "param": "loss_cover_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 80,
+     "source": "GUIDE-INSUR-5G"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "5G",
+   "param": "loss_deduct_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 25,
+     "source": "GUIDE-INSUR-5G"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 30,
+     "source": "NOTICE-2026-08"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "5G",
+   "param": "damage_cap",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 400000,
+     "source": "GUIDE-INSUR-5G"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 430000,
+     "source": "NOTICE-2026-04"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 480000,
+     "source": "NOTICE-2026-06"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "5G",
+   "param": "damage_deduct",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 50000,
+     "source": "GUIDE-INSUR-5G"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "LTE",
+   "param": "loss_cover_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 75,
+     "source": "GUIDE-INSUR-LTE"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 70,
+     "source": "NOTICE-2026-03"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 75,
+     "source": "NOTICE-2026-07"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "LTE",
+   "param": "loss_deduct_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 25,
+     "source": "GUIDE-INSUR-LTE"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 30,
+     "source": "NOTICE-2026-06"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "LTE",
+   "param": "damage_cap",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 300000,
+     "source": "GUIDE-INSUR-LTE"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "LTE",
+   "param": "damage_deduct",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 40000,
+     "source": "GUIDE-INSUR-LTE"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TAB",
+   "param": "loss_cover_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 70,
+     "source": "GUIDE-INSUR-TAB"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TAB",
+   "param": "loss_deduct_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 20,
+     "source": "GUIDE-INSUR-TAB"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 15,
+     "source": "NOTICE-2026-08"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TAB",
+   "param": "damage_cap",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 200000,
+     "source": "GUIDE-INSUR-TAB"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 220000,
+     "source": "NOTICE-2026-03"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 210000,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TAB",
+   "param": "damage_deduct",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 30000,
+     "source": "GUIDE-INSUR-TAB"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 25000,
+     "source": "NOTICE-2026-05"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 30000,
+     "source": "NOTICE-2026-06"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 40000,
+     "source": "NOTICE-2026-07"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TEEN",
+   "param": "loss_cover_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 80,
+     "source": "GUIDE-INSUR-TEEN"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 85,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TEEN",
+   "param": "loss_deduct_pct",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 20,
+     "source": "GUIDE-INSUR-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TEEN",
+   "param": "damage_cap",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 300000,
+     "source": "GUIDE-INSUR-TEEN"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 320000,
+     "source": "NOTICE-2026-04"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 300000,
+     "source": "NOTICE-2026-05"
+    }
+   ]
+  },
+  {
+   "program": "INSUR",
+   "line": "TEEN",
+   "param": "damage_deduct",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 30000,
+     "source": "GUIDE-INSUR-TEEN"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 25000,
+     "source": "NOTICE-2026-04"
+    },
+    {
+     "effective": "2026-06-01",
+     "value": 20000,
+     "source": "NOTICE-2026-06"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "5G",
+   "param": "rate_12m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 50,
+     "source": "GUIDE-TRADEIN-5G"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 45,
+     "source": "NOTICE-2026-02"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 55,
+     "source": "NOTICE-2026-03"
+    },
+    {
+     "effective": "2026-04-01",
+     "value": 60,
+     "source": "NOTICE-2026-04"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 65,
+     "source": "NOTICE-2026-05"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "5G",
+   "param": "rate_24m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 30,
+     "source": "GUIDE-TRADEIN-5G"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 25,
+     "source": "NOTICE-2026-05"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 20,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "LTE",
+   "param": "rate_12m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 45,
+     "source": "GUIDE-TRADEIN-LTE"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 50,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "LTE",
+   "param": "rate_24m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 25,
+     "source": "GUIDE-TRADEIN-LTE"
+    },
+    {
+     "effective": "2026-09-01",
+     "value": 20,
+     "source": "NOTICE-2026-09"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "TAB",
+   "param": "rate_12m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 40,
+     "source": "GUIDE-TRADEIN-TAB"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "TAB",
+   "param": "rate_24m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 20,
+     "source": "GUIDE-TRADEIN-TAB"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 25,
+     "source": "NOTICE-2026-05"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "TEEN",
+   "param": "rate_12m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 45,
+     "source": "GUIDE-TRADEIN-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "TRADEIN",
+   "line": "TEEN",
+   "param": "rate_24m",
+   "unit": "pct",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 25,
+     "source": "GUIDE-TRADEIN-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "5G",
+   "param": "disc_3y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 2000,
+     "source": "GUIDE-LOYAL-5G"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "5G",
+   "param": "disc_5y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 4000,
+     "source": "GUIDE-LOYAL-5G"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "5G",
+   "param": "disc_10y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 7000,
+     "source": "GUIDE-LOYAL-5G"
+    },
+    {
+     "effective": "2026-08-01",
+     "value": 7500,
+     "source": "NOTICE-2026-08"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "LTE",
+   "param": "disc_3y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 1500,
+     "source": "GUIDE-LOYAL-LTE"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 2000,
+     "source": "NOTICE-2026-02"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "LTE",
+   "param": "disc_5y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 3000,
+     "source": "GUIDE-LOYAL-LTE"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "LTE",
+   "param": "disc_10y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 5000,
+     "source": "GUIDE-LOYAL-LTE"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "TAB",
+   "param": "disc_3y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 500,
+     "source": "GUIDE-LOYAL-TAB"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "TAB",
+   "param": "disc_5y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 1000,
+     "source": "GUIDE-LOYAL-TAB"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 1500,
+     "source": "NOTICE-2026-02"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 2000,
+     "source": "NOTICE-2026-03"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "TAB",
+   "param": "disc_10y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 2000,
+     "source": "GUIDE-LOYAL-TAB"
+    },
+    {
+     "effective": "2026-02-01",
+     "value": 2500,
+     "source": "NOTICE-2026-02"
+    },
+    {
+     "effective": "2026-07-01",
+     "value": 3000,
+     "source": "NOTICE-2026-07"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "TEEN",
+   "param": "disc_3y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 1000,
+     "source": "GUIDE-LOYAL-TEEN"
+    },
+    {
+     "effective": "2026-03-01",
+     "value": 500,
+     "source": "NOTICE-2026-03"
+    },
+    {
+     "effective": "2026-05-01",
+     "value": 1500,
+     "source": "NOTICE-2026-05"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "TEEN",
+   "param": "disc_5y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 2000,
+     "source": "GUIDE-LOYAL-TEEN"
+    }
+   ]
+  },
+  {
+   "program": "LOYAL",
+   "line": "TEEN",
+   "param": "disc_10y",
+   "unit": "krw",
+   "history": [
+    {
+     "effective": "2026-01-01",
+     "value": 3500,
+     "source": "GUIDE-LOYAL-TEEN"
+    }
+   ]
+  }
+ ],
+ "clawback_prorata_from": {
+  "5G": "2026-07-01",
+  "LTE": "2026-07-01"
+ },
+ "promotions": [
+  {
+   "id": "SPRING",
+   "line": "5G",
+   "add": 50000,
+   "start": "2026-03-01",
+   "end": "2026-04-30"
+  },
+  {
+   "id": "SUMMER",
+   "line": "TEEN",
+   "add": 30000,
+   "start": "2026-06-15",
+   "end": "2026-09-30"
+  }
+ ]
+}

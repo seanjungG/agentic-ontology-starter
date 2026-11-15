@@ -7,6 +7,9 @@
 
   python3 -m src.cli new   --spec spec.json | --from workspace.json   [--bucket B] [--project P] ...   → prints the new ws id
   python3 -m src.cli build --bucket B --ws WS [--stages prepare,ingest,cqs,wiki,graph,eval]
+  python3 -m src.cli build --bucket B --ws WS --stages rag,compare   opt-in (GOAL-296): RAG Engine baseline over the same sources +
+                                    RAG vs OKF Wiki → OKF Wiki vs Graph → all three, one system-blind judge (runs/three_way_latest.json)
+  python3 -m src.cli rag-delete --bucket B --ws WS                   delete the workspace's RAG corpus (it bills while it exists)
   python3 -m src.cli ask   --bucket B --ws WS [--agent wiki|graph|hybrid] [--apply-cg] "question"
   python3 -m src.cli cg    --bucket B --ws WS feedback --agent wiki --question Q --answer A [--sentence S] [--rating up|down] [--reason CODE] [--run-id R]
   python3 -m src.cli cg    --bucket B --ws WS graph | rules | review --candidate ID --decision approve|reject [--note N]
@@ -121,6 +124,8 @@ def main(argv=None) -> int:
     p.add_argument("--lang", default="ko")
     p = sub.add_parser("eval")
     common(p)
+    p = sub.add_parser("rag-delete")
+    common(p)
     p = sub.add_parser("calls")
     common(p)
     p.add_argument("--stage", default="")
@@ -204,6 +209,11 @@ def main(argv=None) -> int:
         if a.cmd == "eval":
             rec = pipeline.run_stage(ws, "eval", _printer)
             return 0 if rec["status"] == "done" else 1
+        if a.cmd == "rag-delete":
+            from src.aos import three_way
+            res = three_way.delete_corpus(ws)
+            print(json.dumps({k: v for k, v in res.items() if k != "ws"}, ensure_ascii=False, indent=1))
+            return 0 if res.get("status") == "OK" else 1
         if a.cmd == "calls":
             for c in read_calls(a.bucket, a.ws):
                 if a.stage and c.get("stage") != a.stage:

@@ -32,6 +32,7 @@ These static notebooks (**6 English under `en/`, 6 Korean under `ko/`** — iden
 - Saved cell outputs and SQL snippets inside these static `.ipynb` files are reference snapshots captured with `gemini-4-argon` (Vertex AI `global`).
 - To execute them against your own project, configure `.env` from [`.env.example`](../.env.example) (`GCP_PROJECT_ID`, `BQ_DATASET_ID`, `GCS_WIKI_BUCKET`) and replace the dataset prefix in `%%bqsql` cells with `<your-gcp-project>.<your_dataset>`.
 - Load the sample tables and property graph first using Starter Studio (Step 4) or `/wizard#step-4`, then run the notebook cells against the same dataset.
+- **Evaluation beyond Stage 5 — "Why not just RAG?"**: the Stage 5 notebooks grade the Wiki / Graph / Hybrid agents on Golden CQs. To measure them against a retrieval baseline, the starter adds two opt-in stages (`python3 -m src.cli build --bucket B --ws WS --stages rag,compare`): a Vertex AI RAG Engine corpus over the same sources, then RAG vs OKF Wiki → OKF Wiki vs Graph → all three with one system-blind 100-point judge. See [README §1.2](../README.md#12-why-not-just-rag--measured-opt-in) and the synthetic field-scale benchmark in [`data/field_scale_pack/`](../data/field_scale_pack/). A RAG corpus bills while it exists — delete it afterwards (`python3 -m src.cli rag-delete`).
 - Flow diagrams (`assets/stage*_flow_{en,ko}.png`) use the shared Studio v6 flow renderer (`assets/flows/render_stage_flows.html?stage=<name>&lang=en|ko`, renderer `src/web/static/aolflow.js`).
 
 ---
@@ -40,3 +41,4 @@ These static notebooks (**6 English under `en/`, 6 Korean under `ko/`** — iden
 
 - **추천 시작점**: 설치나 로그인 없이 브라우저에서 바로 실행할 수 있는 **[라이브 3-Lab 노트북 랩 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov)** (`#ov` 온톨로지 · `#w0` 워크플로우 · `#c0` Context Graph, 영문 기본 + `EN | KO` 전환)을 먼저 경험하세요.
 - 위 표의 정적 `.ipynb` 12종(`ko/` 6종 · `en/` 6종)은 같은 방법론을 **코드 한 줄 단위**로 따라가는 오프라인 참고 워크스루입니다. 내 프로젝트에서 실행할 때는 루트 `.env`와 `%%bqsql` 셀의 프로젝트 · 데이터셋 이름을 내 값으로 바꿔 실행하세요.
+- **Stage 5 이후의 평가 — "RAG로 충분하지 않나?"**: Stage 5 노트북은 Golden CQ로 Wiki / Graph / Hybrid 에이전트를 채점합니다. 검색 베이스라인과 비교하려면 스타터의 선택 단계 두 개(`python3 -m src.cli build --bucket B --ws WS --stages rag,compare`)를 실행합니다 — 같은 원천으로 Vertex AI RAG Engine 코퍼스를 만들고, RAG vs OKF 위키 → OKF 위키 vs 그래프 → 세 방식을 방식을 모르는 100점 채점기 하나로 비교합니다. [README.ko §1.2](../README.ko.md)와 합성 필드 규모 벤치마크 [`data/field_scale_pack/`](../data/field_scale_pack/)를 참고하세요. RAG 코퍼스는 존재하는 동안 과금되므로 끝나면 삭제합니다(`python3 -m src.cli rag-delete`).

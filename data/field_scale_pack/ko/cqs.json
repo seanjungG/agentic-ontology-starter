@@ -1,0 +1,790 @@
+{
+ "version": "field-scale-296",
+ "as_of": "2026-10-15",
+ "types": {
+  "lookup": {
+   "ko": "단일 조항 조회",
+   "en": "Single-clause lookup",
+   "group": "doc"
+  },
+  "current": {
+   "ko": "현행 값 (개정 2회 이상)",
+   "en": "Current value (2+ amendments)",
+   "group": "doc"
+  },
+  "temporal": {
+   "ko": "특정 시점 값",
+   "en": "Value on a past date",
+   "group": "doc"
+  },
+  "exception": {
+   "ko": "예외 부칙 적용",
+   "en": "Exception addendum",
+   "group": "doc"
+  },
+  "calc": {
+   "ko": "규정 적용 계산",
+   "en": "Rule-based calculation",
+   "group": "doc"
+  },
+  "compare": {
+   "ko": "계열 간 비교",
+   "en": "Cross-line comparison",
+   "group": "doc"
+  },
+  "history": {
+   "ko": "변경 이력 나열",
+   "en": "Change history",
+   "group": "doc"
+  },
+  "alias": {
+   "ko": "현장 별칭 질문",
+   "en": "Field-alias wording",
+   "group": "doc"
+  },
+  "hybrid": {
+   "ko": "문서 + 원장 결합",
+   "en": "Documents + ledger",
+   "group": "hybrid"
+  },
+  "data": {
+   "ko": "원장 조회·집계",
+   "en": "Ledger lookup / count",
+   "group": "data"
+  }
+ },
+ "cqs": [
+  {
+   "id": "FS-01",
+   "type": "lookup",
+   "question": "2026년 10월 기준 청소년·키즈 계열 가족결합 할인의 2회선 할인액은 얼마인가요?",
+   "expected_answer": "2,000원이다. GUIDE-FAMILY-TEEN 제2조의 값이며 2026년에 개정된 적이 없다.",
+   "key_facts": [
+    "2,000원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_2"
+   }
+  },
+  {
+   "id": "FS-02",
+   "type": "lookup",
+   "question": "2026년 10월 기준 5G 스마트폰 계열 번호이동 전환지원금의 HIGH 구간 한도는 얼마인가요?",
+   "expected_answer": "300,000원이다. GUIDE-SWITCH-5G 제3조 제1항의 값이며 2026년에 개정된 적이 없다.",
+   "key_facts": [
+    "300,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "limit_high"
+   }
+  },
+  {
+   "id": "FS-03",
+   "type": "lookup",
+   "question": "2026년 10월 기준 LTE 스마트폰 계열 단말 보험의 파손 자기부담금은 얼마인가요?",
+   "expected_answer": "40,000원이다. GUIDE-INSUR-LTE 제3조 제2항의 값이며 2026년에 개정된 적이 없다.",
+   "key_facts": [
+    "40,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "LTE",
+    "param": "damage_deduct"
+   }
+  },
+  {
+   "id": "FS-04",
+   "type": "lookup",
+   "question": "2026년 10월 기준 태블릿·웨어러블 계열 단말 보험의 분실 보상 한도 비율은 얼마인가요?",
+   "expected_answer": "70%이다. GUIDE-INSUR-TAB 제2조 제1항의 값이며 2026년에 개정된 적이 없다.",
+   "key_facts": [
+    "70%"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "loss_cover_pct"
+   }
+  },
+  {
+   "id": "FS-05",
+   "type": "lookup",
+   "question": "태블릿·웨어러블 계열 단말 보험은 개통 후 며칠까지 가입할 수 있나요?",
+   "expected_answer": "개통일로부터 14일 이내이다(GUIDE-INSUR-TAB 제1조).",
+   "key_facts": [
+    "14일"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "enroll_days"
+   }
+  },
+  {
+   "id": "FS-06",
+   "type": "lookup",
+   "question": "5G 스마트폰 계열 단말 보험은 개통 후 며칠까지 가입할 수 있나요?",
+   "expected_answer": "개통일로부터 30일 이내이다(GUIDE-INSUR-5G 제1조).",
+   "key_facts": [
+    "30일"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "5G",
+    "param": "enroll_days"
+   }
+  },
+  {
+   "id": "FS-07",
+   "type": "current",
+   "question": "2026년 10월 기준 5G 스마트폰 계열 기기반납 보상의 12개월 사용 후 반납 보상률은 얼마인가요?",
+   "expected_answer": "65%이다. 변경 이력: 50% (GUIDE-TRADEIN-5G, 2026-01-01) → 45% (NOTICE-2026-02, 2026-02-01) → 55% (NOTICE-2026-03, 2026-03-01) → 60% (NOTICE-2026-04, 2026-04-01) → 65% (NOTICE-2026-05, 2026-05-01).",
+   "key_facts": [
+    "65%"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "line": "5G",
+    "param": "rate_12m",
+    "amendments": 4
+   }
+  },
+  {
+   "id": "FS-08",
+   "type": "current",
+   "question": "2026년 10월 기준 태블릿·웨어러블 계열 가족결합 할인의 2회선 할인액은 얼마인가요?",
+   "expected_answer": "500원이다. 변경 이력: 1,000원 (GUIDE-FAMILY-TAB, 2026-01-01) → 500원 (NOTICE-2026-02, 2026-02-01) → 1,000원 (NOTICE-2026-06, 2026-06-01) → 500원 (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "500원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TAB",
+    "param": "disc_2",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-09",
+   "type": "current",
+   "question": "2026년 10월 기준 태블릿·웨어러블 계열 단말 보험의 파손 자기부담금은 얼마인가요?",
+   "expected_answer": "40,000원이다. 변경 이력: 30,000원 (GUIDE-INSUR-TAB, 2026-01-01) → 25,000원 (NOTICE-2026-05, 2026-05-01) → 30,000원 (NOTICE-2026-06, 2026-06-01) → 40,000원 (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "40,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_deduct",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-10",
+   "type": "current",
+   "question": "2026년 10월 기준 5G 스마트폰 계열 번호이동 전환지원금의 직전 통신사 사용 기간은 얼마인가요?",
+   "expected_answer": "120일이다. 변경 이력: 90일 (GUIDE-SWITCH-5G, 2026-01-01) → 120일 (NOTICE-2026-04, 2026-04-01) → 135일 (NOTICE-2026-05, 2026-05-01) → 120일 (NOTICE-2026-09, 2026-09-01).",
+   "key_facts": [
+    "120일"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "prior_days",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-11",
+   "type": "current",
+   "question": "2026년 10월 기준 LTE 스마트폰 계열 번호이동 전환지원금의 MID 구간 한도는 얼마인가요?",
+   "expected_answer": "180,000원이다. 변경 이력: 150,000원 (GUIDE-SWITCH-LTE, 2026-01-01) → 170,000원 (NOTICE-2026-02, 2026-02-01) → 190,000원 (NOTICE-2026-06, 2026-06-01) → 180,000원 (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "180,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "LTE",
+    "param": "limit_mid",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-12",
+   "type": "current",
+   "question": "2026년 10월 기준 태블릿·웨어러블 계열 번호이동 전환지원금의 HIGH 구간 한도는 얼마인가요?",
+   "expected_answer": "85,000원이다. 변경 이력: 100,000원 (GUIDE-SWITCH-TAB, 2026-01-01) → 110,000원 (NOTICE-2026-04, 2026-04-01) → 90,000원 (NOTICE-2026-08, 2026-08-01) → 85,000원 (NOTICE-2026-09, 2026-09-01).",
+   "key_facts": [
+    "85,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "TAB",
+    "param": "limit_high",
+    "amendments": 3
+   }
+  },
+  {
+   "id": "FS-13",
+   "type": "current",
+   "question": "2026년 10월 기준 청소년·키즈 계열 가족결합 할인의 4회선 이상 할인액은 얼마인가요?",
+   "expected_answer": "5,000원이다. 변경 이력: 5,000원 (GUIDE-FAMILY-TEEN, 2026-01-01) → 5,500원 (NOTICE-2026-02, 2026-02-01) → 5,000원 (NOTICE-2026-04, 2026-04-01).",
+   "key_facts": [
+    "5,000원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_4p",
+    "amendments": 2
+   }
+  },
+  {
+   "id": "FS-14",
+   "type": "current",
+   "question": "2026년 10월 기준 5G 스마트폰 계열 단말 보험의 파손 보상 한도는 얼마인가요?",
+   "expected_answer": "480,000원이다. 변경 이력: 400,000원 (GUIDE-INSUR-5G, 2026-01-01) → 430,000원 (NOTICE-2026-04, 2026-04-01) → 480,000원 (NOTICE-2026-06, 2026-06-01).",
+   "key_facts": [
+    "480,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "5G",
+    "param": "damage_cap",
+    "amendments": 2
+   }
+  },
+  {
+   "id": "FS-15",
+   "type": "temporal",
+   "question": "2026-05-13에 발생한 사고에 적용된 태블릿·웨어러블 계열 단말 보험의 파손 자기부담금은 얼마였나요?",
+   "expected_answer": "25,000원이었다. 2026-05-13 시점까지의 이력: 30,000원 (GUIDE-INSUR-TAB, 2026-01-01) → 25,000원 (NOTICE-2026-05, 2026-05-01). 그 뒤의 개정은 이 건에 적용하지 않는다.",
+   "key_facts": [
+    "25,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_deduct",
+    "on": "2026-05-13"
+   }
+  },
+  {
+   "id": "FS-16",
+   "type": "temporal",
+   "question": "2026-04-13에 개통한 건에 적용된 5G 스마트폰 계열 번호이동 전환지원금의 직전 통신사 사용 기간은 얼마였나요?",
+   "expected_answer": "120일이었다. 2026-04-13 시점까지의 이력: 90일 (GUIDE-SWITCH-5G, 2026-01-01) → 120일 (NOTICE-2026-04, 2026-04-01). 그 뒤의 개정은 이 건에 적용하지 않는다.",
+   "key_facts": [
+    "120일"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "prior_days",
+    "on": "2026-04-13"
+   }
+  },
+  {
+   "id": "FS-17",
+   "type": "temporal",
+   "question": "2026-02-13에 개통한 건에 적용된 LTE 스마트폰 계열 번호이동 전환지원금의 MID 구간 한도는 얼마였나요?",
+   "expected_answer": "170,000원이었다. 2026-02-13 시점까지의 이력: 150,000원 (GUIDE-SWITCH-LTE, 2026-01-01) → 170,000원 (NOTICE-2026-02, 2026-02-01). 그 뒤의 개정은 이 건에 적용하지 않는다.",
+   "key_facts": [
+    "170,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "LTE",
+    "param": "limit_mid",
+    "on": "2026-02-13"
+   }
+  },
+  {
+   "id": "FS-18",
+   "type": "temporal",
+   "question": "2026-04-13에 개통한 건에 적용된 태블릿·웨어러블 계열 번호이동 전환지원금의 HIGH 구간 한도는 얼마였나요?",
+   "expected_answer": "110,000원이었다. 2026-04-13 시점까지의 이력: 100,000원 (GUIDE-SWITCH-TAB, 2026-01-01) → 110,000원 (NOTICE-2026-04, 2026-04-01). 그 뒤의 개정은 이 건에 적용하지 않는다.",
+   "key_facts": [
+    "110,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "TAB",
+    "param": "limit_high",
+    "on": "2026-04-13"
+   }
+  },
+  {
+   "id": "FS-19",
+   "type": "temporal",
+   "question": "2026-02-13 청구분에 적용된 청소년·키즈 계열 가족결합 할인의 4회선 이상 할인액은 얼마였나요?",
+   "expected_answer": "5,500원이었다. 2026-02-13 시점까지의 이력: 5,000원 (GUIDE-FAMILY-TEEN, 2026-01-01) → 5,500원 (NOTICE-2026-02, 2026-02-01). 그 뒤의 개정은 이 건에 적용하지 않는다.",
+   "key_facts": [
+    "5,500원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_4p",
+    "on": "2026-02-13"
+   }
+  },
+  {
+   "id": "FS-20",
+   "type": "exception",
+   "question": "2026년 10월 기준 도서·산간 지정 매장에서 번호이동으로 LTE 스마트폰 계열 MID 구간 요금제에 개통하면 전환지원금은 최대 얼마인가요?",
+   "expected_answer": "216,000원이다. MID 구간 현행 한도 180,000원에 ADDENDUM-EX-01 부칙 제1조의 120%를 적용한다.",
+   "key_facts": [
+    "216,000원"
+   ],
+   "meta": {
+    "rule": "ISL",
+    "line": "LTE"
+   }
+  },
+  {
+   "id": "FS-21",
+   "type": "exception",
+   "question": "2026년 10월 기준 도서·산간 지정 매장에서 번호이동으로 태블릿·웨어러블 계열 HIGH 구간 요금제에 개통하면 전환지원금은 최대 얼마인가요?",
+   "expected_answer": "85,000원이다. 태블릿·웨어러블 계열에는 도서·산간 120% 가산을 적용하지 않으므로(ADDENDUM-EX-02 부칙 제2조) HIGH 구간 현행 한도 그대로다.",
+   "key_facts": [
+    "85,000원"
+   ],
+   "meta": {
+    "rule": "ISL_TAB",
+    "line": "TAB"
+   }
+  },
+  {
+   "id": "FS-22",
+   "type": "exception",
+   "question": "2026년 10월 기준 만 17세 고객이 법정대리인 동의서를 내고 번호이동으로 5G 스마트폰 계열 HIGH 구간 요금제에 개통하면 전환지원금은 최대 얼마인가요?",
+   "expected_answer": "150,000원이다. HIGH 구간 현행 한도 300,000원에 미성년자 명의 50%(ADDENDUM-EX-01 부칙 제3조)를 적용한다.",
+   "key_facts": [
+    "150,000원"
+   ],
+   "meta": {
+    "rule": "MINOR",
+    "line": "5G"
+   }
+  },
+  {
+   "id": "FS-23",
+   "type": "exception",
+   "question": "2026년 10월 기준 만 15세 고객이 법정대리인 동의서를 내고 번호이동으로 청소년·키즈 계열 HIGH 구간 요금제에 개통하면 전환지원금은 최대 얼마인가요?",
+   "expected_answer": "180,000원이다. 청소년·키즈 계열에는 미성년자 50% 제한을 적용하지 않으므로(ADDENDUM-EX-02 부칙 제1조) HIGH 구간 현행 한도 100%를 받을 수 있다.",
+   "key_facts": [
+    "180,000원"
+   ],
+   "meta": {
+    "rule": "MINOR_TEEN",
+    "line": "TEEN"
+   }
+  },
+  {
+   "id": "FS-24",
+   "type": "exception",
+   "question": "2026년 10월 기준 만 70세 고객이 LTE 스마트폰 계열 단말을 분실했을 때 적용하는 분실 자기부담 비율은 얼마인가요?",
+   "expected_answer": "25%이다. LTE 스마트폰 계열의 현행 분실 자기부담 비율 30%에서 만 65세 이상 5%p 차감(ADDENDUM-EX-02 부칙 제4조)을 적용한다.",
+   "key_facts": [
+    "25%"
+   ],
+   "meta": {
+    "rule": "SENIOR_DEDUCT",
+    "line": "LTE"
+   }
+  },
+  {
+   "id": "FS-25",
+   "type": "calc",
+   "question": "2026-07-20에 번호이동으로 5G 스마트폰 계열 HIGH 구간 요금제에 개통하면서 전환지원금을 그날의 한도까지 받은 고객이 개통 120일째에 해지하면 환수액은 얼마인가요? (프로모션·예외 없음)",
+   "expected_answer": "100,000원이다. 그날의 HIGH 구간 한도는 300,000원이고, 개통일이 2026-07-01 이후이고 90일 이상 180일 미만이므로 일할 환수한다. 300,000 × (180 − 120) ÷ 180.",
+   "key_facts": [
+    "100,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "mode": "prorata"
+   }
+  },
+  {
+   "id": "FS-26",
+   "type": "calc",
+   "question": "2026-05-18에 번호이동으로 5G 스마트폰 계열 HIGH 구간 요금제에 개통하면서 전환지원금을 그날의 한도까지 받은 고객이 개통 120일째에 해지하면 환수액은 얼마인가요? (프로모션·예외 없음)",
+   "expected_answer": "300,000원이다. 그날의 HIGH 구간 한도는 300,000원이고, 5G 스마트폰 계열의 이 개통일에는 일할 환수 규정이 적용되지 않으므로 180일 안 해지는 전액 환수다.",
+   "key_facts": [
+    "300,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "mode": "full"
+   }
+  },
+  {
+   "id": "FS-27",
+   "type": "calc",
+   "question": "2026-08-05에 번호이동으로 청소년·키즈 계열 HIGH 구간 요금제에 개통하면서 전환지원금을 그날의 한도까지 받은 고객이 개통 100일째에 해지하면 환수액은 얼마인가요? (프로모션·예외 없음)",
+   "expected_answer": "180,000원이다. 그날의 HIGH 구간 한도는 180,000원이고, 청소년·키즈 계열의 이 개통일에는 일할 환수 규정이 적용되지 않으므로 180일 안 해지는 전액 환수다.",
+   "key_facts": [
+    "180,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "TEEN",
+    "mode": "full"
+   }
+  },
+  {
+   "id": "FS-28",
+   "type": "calc",
+   "question": "2026년 10월 기준 LTE 스마트폰 계열 가족 3회선 결합에 속한 월 69,000원 요금제 회선이 선택약정이고 가입 6년 차라면 월 납부액은 얼마인가요?",
+   "expected_answer": "44,750원이다. 69,000 × 0.75 = 51,750원에서 3회선 결합 할인 4,000원과 5년 이상 장기고객 할인 3,000원을 뺀다.",
+   "key_facts": [
+    "44,750원"
+   ],
+   "meta": {
+    "prog": "FAMILY+LOYAL",
+    "line": "LTE"
+   }
+  },
+  {
+   "id": "FS-29",
+   "type": "calc",
+   "question": "2026년 10월 기준 청소년·키즈 계열 가족 4회선 결합에 속한 월 49,000원 요금제 회선이 선택약정이고 가입 6년 차라면 월 납부액은 얼마인가요?",
+   "expected_answer": "29,750원이다. 49,000 × 0.75 = 36,750원에서 4회선 이상 결합 할인 5,000원과 5년 이상 장기고객 할인 2,000원을 뺀다.",
+   "key_facts": [
+    "29,750원"
+   ],
+   "meta": {
+    "prog": "FAMILY+LOYAL",
+    "line": "TEEN"
+   }
+  },
+  {
+   "id": "FS-30",
+   "type": "calc",
+   "question": "보험에 가입한 고객이 2026년 10월 10일에 출고가 1,200,000원인 태블릿·웨어러블 계열 단말을 분실했습니다. 고객이 실제로 받는 보상액은 얼마인가요?",
+   "expected_answer": "714,000원이다. 사고일 기준 보상 한도 70% = 840,000원, 자기부담 15% = 126,000원.",
+   "key_facts": [
+    "714,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB"
+   }
+  },
+  {
+   "id": "FS-31",
+   "type": "calc",
+   "question": "개통 당시 출고가 1,000,000원인 5G 스마트폰 계열 단말을 24개월 쓰고 2026년 10월 12일에 B등급으로 반납하면 보상액은 얼마인가요?",
+   "expected_answer": "160,000원이다. 반납일 기준 24개월 보상률 20% = 200,000원에 B등급 80%를 적용한다.",
+   "key_facts": [
+    "160,000원"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "line": "5G"
+   }
+  },
+  {
+   "id": "FS-32",
+   "type": "compare",
+   "question": "2026년 10월 기준 네 상품 계열 가운데 번호이동 전환지원금의 MID 구간 한도가 가장 큰 계열과 그 값을 알려 주세요.",
+   "expected_answer": "5G 스마트폰 계열이며 200,000원이다. 현행 값: 5G 스마트폰 200,000원, LTE 스마트폰 180,000원, 태블릿·웨어러블 60,000원, 청소년·키즈 120,000원.",
+   "key_facts": [
+    "5G 스마트폰",
+    "200,000원"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "param": "limit_mid",
+    "mode": "max"
+   }
+  },
+  {
+   "id": "FS-33",
+   "type": "compare",
+   "question": "2026년 10월 기준 네 상품 계열 가운데 가족결합 할인의 3회선 할인액이 가장 작은 계열과 그 값을 알려 주세요.",
+   "expected_answer": "태블릿·웨어러블 계열이며 1,500원이다. 현행 값: 5G 스마트폰 6,000원, LTE 스마트폰 4,000원, 태블릿·웨어러블 1,500원, 청소년·키즈 4,500원.",
+   "key_facts": [
+    "태블릿·웨어러블",
+    "1,500원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "param": "disc_3",
+    "mode": "min"
+   }
+  },
+  {
+   "id": "FS-34",
+   "type": "compare",
+   "question": "2026년 10월 기준 네 상품 계열 가운데 단말 보험의 분실 자기부담 비율이 가장 큰 계열과 그 값을 알려 주세요.",
+   "expected_answer": "5G 스마트폰, LTE 스마트폰 계열이며 30%이다. 현행 값: 5G 스마트폰 30%, LTE 스마트폰 30%, 태블릿·웨어러블 15%, 청소년·키즈 20%.",
+   "key_facts": [
+    "5G 스마트폰, LTE 스마트폰",
+    "30%"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "param": "loss_deduct_pct",
+    "mode": "max"
+   }
+  },
+  {
+   "id": "FS-35",
+   "type": "compare",
+   "question": "2026년 10월 기준 네 상품 계열 가운데 기기반납 보상의 12개월 사용 후 반납 보상률이 가장 큰 계열과 그 값을 알려 주세요.",
+   "expected_answer": "5G 스마트폰 계열이며 65%이다. 현행 값: 5G 스마트폰 65%, LTE 스마트폰 50%, 태블릿·웨어러블 40%, 청소년·키즈 45%.",
+   "key_facts": [
+    "5G 스마트폰",
+    "65%"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "param": "rate_12m",
+    "mode": "max"
+   }
+  },
+  {
+   "id": "FS-36",
+   "type": "history",
+   "question": "5G 스마트폰 계열 기기반납 보상의 12개월 사용 후 반납 보상률이 2026년에 바뀐 이력을 시행일 순서로 모두 알려 주세요.",
+   "expected_answer": "2026-01-01 50% (GUIDE-TRADEIN-5G); 2026-02-01 45% (NOTICE-2026-02); 2026-03-01 55% (NOTICE-2026-03); 2026-04-01 60% (NOTICE-2026-04); 2026-05-01 65% (NOTICE-2026-05).",
+   "key_facts": [
+    "2026-01-01 50%",
+    "2026-02-01 45%",
+    "2026-03-01 55%",
+    "2026-04-01 60%",
+    "2026-05-01 65%"
+   ],
+   "meta": {
+    "prog": "TRADEIN",
+    "line": "5G",
+    "param": "rate_12m"
+   }
+  },
+  {
+   "id": "FS-37",
+   "type": "history",
+   "question": "태블릿·웨어러블 계열 가족결합 할인의 2회선 할인액이 2026년에 바뀐 이력을 시행일 순서로 모두 알려 주세요.",
+   "expected_answer": "2026-01-01 1,000원 (GUIDE-FAMILY-TAB); 2026-02-01 500원 (NOTICE-2026-02); 2026-06-01 1,000원 (NOTICE-2026-06); 2026-07-01 500원 (NOTICE-2026-07).",
+   "key_facts": [
+    "2026-01-01 1,000원",
+    "2026-02-01 500원",
+    "2026-06-01 1,000원",
+    "2026-07-01 500원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TAB",
+    "param": "disc_2"
+   }
+  },
+  {
+   "id": "FS-38",
+   "type": "history",
+   "question": "태블릿·웨어러블 계열 단말 보험의 파손 자기부담금이 2026년에 바뀐 이력을 시행일 순서로 모두 알려 주세요.",
+   "expected_answer": "2026-01-01 30,000원 (GUIDE-INSUR-TAB); 2026-05-01 25,000원 (NOTICE-2026-05); 2026-06-01 30,000원 (NOTICE-2026-06); 2026-07-01 40,000원 (NOTICE-2026-07).",
+   "key_facts": [
+    "2026-01-01 30,000원",
+    "2026-05-01 25,000원",
+    "2026-06-01 30,000원",
+    "2026-07-01 40,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_deduct"
+   }
+  },
+  {
+   "id": "FS-39",
+   "type": "history",
+   "question": "5G 스마트폰 계열 번호이동 전환지원금의 직전 통신사 사용 기간이 2026년에 바뀐 이력을 시행일 순서로 모두 알려 주세요.",
+   "expected_answer": "2026-01-01 90일 (GUIDE-SWITCH-5G); 2026-04-01 120일 (NOTICE-2026-04); 2026-05-01 135일 (NOTICE-2026-05); 2026-09-01 120일 (NOTICE-2026-09).",
+   "key_facts": [
+    "2026-01-01 90일",
+    "2026-04-01 120일",
+    "2026-05-01 135일",
+    "2026-09-01 120일"
+   ],
+   "meta": {
+    "prog": "SWITCH",
+    "line": "5G",
+    "param": "prior_days"
+   }
+  },
+  {
+   "id": "FS-40",
+   "type": "alias",
+   "question": "지금 엘티이폰 폰케어의 분실 보상률이 얼마예요?",
+   "expected_answer": "75%이다. '엘티이폰'는 LTE 스마트폰 계열, '폰케어'는 단말 보험, '분실 보상률'는 분실 보상 한도 비율이다. 이력: 75% (GUIDE-INSUR-LTE, 2026-01-01) → 70% (NOTICE-2026-03, 2026-03-01) → 75% (NOTICE-2026-07, 2026-07-01).",
+   "key_facts": [
+    "75%"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "LTE",
+    "param": "loss_cover_pct"
+   }
+  },
+  {
+   "id": "FS-41",
+   "type": "alias",
+   "question": "지금 세컨드 디바이스 폰케어의 파손 보상 상한이 얼마예요?",
+   "expected_answer": "210,000원이다. '세컨드 디바이스'는 태블릿·웨어러블 계열, '폰케어'는 단말 보험, '파손 보상 상한'는 파손 보상 한도이다. 이력: 200,000원 (GUIDE-INSUR-TAB, 2026-01-01) → 220,000원 (NOTICE-2026-03, 2026-03-01) → 210,000원 (NOTICE-2026-09, 2026-09-01).",
+   "key_facts": [
+    "210,000원"
+   ],
+   "meta": {
+    "prog": "INSUR",
+    "line": "TAB",
+    "param": "damage_cap"
+   }
+  },
+  {
+   "id": "FS-42",
+   "type": "alias",
+   "question": "지금 틴즈 패밀리 번들의 3회선 번들 할인이 얼마예요?",
+   "expected_answer": "4,500원이다. '틴즈'는 청소년·키즈 계열, '패밀리 번들'는 가족결합 할인, '3회선 번들 할인'는 3회선 할인액이다. 이력: 3,500원 (GUIDE-FAMILY-TEEN, 2026-01-01) → 4,500원 (NOTICE-2026-03, 2026-03-01).",
+   "key_facts": [
+    "4,500원"
+   ],
+   "meta": {
+    "prog": "FAMILY",
+    "line": "TEEN",
+    "param": "disc_3"
+   }
+  },
+  {
+   "id": "FS-43",
+   "type": "alias",
+   "question": "지금 엘티이폰 롱런 할인의 3년 차 롱런 할인이 얼마예요?",
+   "expected_answer": "2,000원이다. '엘티이폰'는 LTE 스마트폰 계열, '롱런 할인'는 장기고객 할인, '3년 차 롱런 할인'는 3년 이상 할인액이다. 이력: 1,500원 (GUIDE-LOYAL-LTE, 2026-01-01) → 2,000원 (NOTICE-2026-02, 2026-02-01).",
+   "key_facts": [
+    "2,000원"
+   ],
+   "meta": {
+    "prog": "LOYAL",
+    "line": "LTE",
+    "param": "disc_3y"
+   }
+  },
+  {
+   "id": "FS-44",
+   "type": "hybrid",
+   "question": "CUST_DEMO_002 고객이 단말 보험에 가입해 있다고 가정할 때, 2026년 10월 10일에 지금 쓰는 단말을 분실하면 실제로 받는 보상액은 얼마인가요?",
+   "expected_answer": "951,104원이다. CUST_DEMO_002의 단말은 Galaxy S26 Ultra 256GB(출고가 1,698,400원, 5G 스마트폰 계열)이고, 사고일 기준 보상 한도 80% = 1,358,720원, 자기부담 30% = 407,616원이다.",
+   "key_facts": [
+    "951,104원"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "devices"
+    ],
+    "prog": "INSUR"
+   }
+  },
+  {
+   "id": "FS-45",
+   "type": "hybrid",
+   "question": "CUST_DEMO_004 고객의 회선이 가족 3회선 결합에 들어가면 2026년 10월 기준 이 회선의 월 납부액은 얼마인가요?",
+   "expected_answer": "57,750원이다. CUST_DEMO_004는 5G 프리미어 에센셜(월 85,000원)을 선택약정으로 쓰므로 85,000 × 0.75 = 63,750원에서 5G 스마트폰 계열 3회선 결합 할인 6,000원을 뺀다.",
+   "key_facts": [
+    "57,750원"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "plans"
+    ],
+    "prog": "FAMILY"
+   }
+  },
+  {
+   "id": "FS-46",
+   "type": "hybrid",
+   "question": "CUST_DEMO_005 고객이 기기반납 보상에 가입했고 12개월 사용 요건을 채웠다고 가정할 때, 2026년 10월 12일에 A등급으로 반납하면 보상액은 얼마인가요?",
+   "expected_answer": "1,300,000원이다. CUST_DEMO_005의 단말은 iPhone 16 Pro 512GB(출고가 2,000,000원)이고 반납일 기준 5G 스마트폰 계열 12개월 보상률은 65%다.",
+   "key_facts": [
+    "1,300,000원"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "devices"
+    ],
+    "prog": "TRADEIN"
+   }
+  },
+  {
+   "id": "FS-47",
+   "type": "hybrid",
+   "question": "CUST_DEMO_007 고객이 개통일에 번호이동으로 들어왔다고 가정하면, 그 개통일과 요금제 기준으로 받을 수 있었던 전환지원금 한도는 얼마인가요?",
+   "expected_answer": "200,000원이다. CUST_DEMO_007은 2026-09-01에 5G 다이렉트 61(월 61,000원, MID 구간)로 개통했고, 그날 5G 스마트폰 계열 MID 구간 한도는 200,000원이다.",
+   "key_facts": [
+    "200,000원"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts",
+     "plans"
+    ],
+    "prog": "SWITCH"
+   }
+  },
+  {
+   "id": "FS-48",
+   "type": "data",
+   "question": "Galaxy S26 Ultra 256GB 단말의 출고가는 얼마인가요?",
+   "expected_answer": "1,698,400원이다(devices 테이블).",
+   "key_facts": [
+    "1,698,400원"
+   ],
+   "meta": {
+    "tables": [
+     "devices"
+    ]
+   }
+  },
+  {
+   "id": "FS-49",
+   "type": "data",
+   "question": "시니어·복지 면제 대상(SENIOR_EXEMPT) 고객은 몇 명이고 누구인가요?",
+   "expected_answer": "2명이다: CUST_DEMO_003, CUST_DEMO_008.",
+   "key_facts": [
+    "2명",
+    "CUST_DEMO_003",
+    "CUST_DEMO_008"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts"
+    ]
+   }
+  },
+  {
+   "id": "FS-50",
+   "type": "data",
+   "question": "선택약정(SELECTIVE_25PCT)으로 개통한 고객은 몇 명이고 누구인가요?",
+   "expected_answer": "1명이다: CUST_DEMO_004.",
+   "key_facts": [
+    "1명",
+    "CUST_DEMO_004"
+   ],
+   "meta": {
+    "tables": [
+     "customer_contracts"
+    ]
+   }
+  }
+ ]
+}
