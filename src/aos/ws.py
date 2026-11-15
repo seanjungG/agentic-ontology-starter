@@ -247,9 +247,12 @@ def clean_template(raw: Any) -> Dict[str, Any]:
     return out
 
 
+MAX_DOCS = 80   # GOAL-296: field-scale packs (50+ documents)
+
+
 def clean_sources(src: Dict[str, Any]) -> Dict[str, Any]:
     docs, tables = [], []
-    for d in (src.get("docs") or [])[:40]:
+    for d in (src.get("docs") or [])[:MAX_DOCS]:
         if isinstance(d, dict) and d.get("origin") in ("upload", "gcs", "sample", "drive") and (d.get("uri") or d.get("path")):
             e = {"name": str(d.get("name") or "")[:200], "origin": d["origin"], "uri": str(d.get("uri") or d.get("path"))[:500],
                  "chars": int(d.get("chars") or 0)}

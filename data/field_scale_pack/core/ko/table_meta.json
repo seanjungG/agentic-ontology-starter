@@ -1,0 +1,79 @@
+{
+  "dataset": "aol_lab_source",
+  "as_of_date": "2026-09-27",
+  "domain": "통신사 단말 지원금 · 요금제 약정 · 위약금 상담 (비식별 합성 데이터)",
+  "tables": [
+    {
+      "table": "devices",
+      "title": "단말 마스터",
+      "description": "판매 중인 휴대폰 단말의 기준 정보. 출고가는 지원금을 빼기 전 정가(부가세 포함, 원).",
+      "primary_key": "device_id",
+      "columns": [
+        {"name": "device_id", "type": "STRING", "description": "단말 식별자 (기본 키). 지원금 정책표·고객 계약이 이 값을 참조한다."},
+        {"name": "device_name", "type": "STRING", "description": "단말 표시명 (모델명 + 저장용량), 예: Galaxy S26 Ultra 256GB"},
+        {"name": "manufacturer", "type": "STRING", "description": "제조사"},
+        {"name": "storage_gb", "type": "INT64", "description": "저장용량 (GB)"},
+        {"name": "factory_price_krw", "type": "INT64", "description": "출고가 (원, 부가세 포함). 실구매가 = 출고가 − 총 지원금"},
+        {"name": "release_date", "type": "DATE", "description": "출시일"}
+      ]
+    },
+    {
+      "table": "plans",
+      "title": "요금제 마스터",
+      "description": "요금제 기준 정보. 기준선 여부(is_baseline_tier)가 180일 의무유지 판단 기준이다.",
+      "primary_key": "plan_id",
+      "columns": [
+        {"name": "plan_id", "type": "STRING", "description": "요금제 식별자 (기본 키)"},
+        {"name": "plan_name", "type": "STRING", "description": "요금제 이름, 예: 5G 프리미어 에센셜"},
+        {"name": "network_type", "type": "STRING", "description": "망 구분 (5G / LTE)"},
+        {"name": "monthly_fee_krw", "type": "INT64", "description": "월정액 (원, 부가세 포함)"},
+        {"name": "tier_category", "type": "STRING", "description": "요금제 구분: 5G_HIGH · 5G_MID · BELOW_BASELINE(기준선 미만) · SENIOR_WELFARE(시니어·복지 전용)"},
+        {"name": "is_baseline_tier", "type": "BOOL", "description": "180일 의무유지 기준 요금제선(월 45,000원) 이상 여부. false로 낮추면 차액정산 대상"},
+        {"name": "selective_discount_rate", "type": "FLOAT64", "description": "선택약정 요금 할인율 (0.25 = 월정액의 25% 할인)"}
+      ]
+    },
+    {
+      "table": "subsidy_policies",
+      "title": "단말·요금제별 지원금 정책표",
+      "description": "단말과 요금제 조합마다 공시된 지원금. 한 행 = (단말, 요금제) 조합 하나.",
+      "primary_key": "policy_id",
+      "columns": [
+        {"name": "policy_id", "type": "STRING", "description": "지원금 정책 식별자 (기본 키)"},
+        {"name": "device_id", "type": "STRING", "description": "대상 단말 (devices.device_id 참조)"},
+        {"name": "plan_id", "type": "STRING", "description": "대상 요금제 (plans.plan_id 참조)"},
+        {"name": "base_subsidy_krw", "type": "INT64", "description": "공시지원금 (원). 통신사가 공시한 기본 지원금이며 차액정산금 계산의 기준"},
+        {"name": "additional_subsidy_krw", "type": "INT64", "description": "유통망 추가지원금 (원). 공시지원금의 15% 이내. 총 지원금 = 공시지원금 + 유통망 추가지원금"},
+        {"name": "effective_from", "type": "DATE", "description": "적용 시작일"},
+        {"name": "effective_to", "type": "DATE", "description": "적용 종료일"}
+      ]
+    },
+    {
+      "table": "customer_contracts",
+      "title": "고객 계약 원장",
+      "description": "고객별 개통 계약. 경과일수는 기준일 2026-09-27 기준으로 계산된 값이다.",
+      "primary_key": "contract_id",
+      "columns": [
+        {"name": "contract_id", "type": "STRING", "description": "계약 식별자 (기본 키)"},
+        {"name": "customer_id", "type": "STRING", "description": "고객 식별자 (비식별), 예: CUST_DEMO_001"},
+        {"name": "customer_segment", "type": "STRING", "description": "고객 세그먼트"},
+        {"name": "age_group", "type": "STRING", "description": "연령대 (65+ = 만 65세 이상)"},
+        {"name": "device_id", "type": "STRING", "description": "개통 단말 (devices.device_id 참조)"},
+        {"name": "plan_id", "type": "STRING", "description": "현재 요금제 (plans.plan_id 참조)"},
+        {"name": "policy_id", "type": "STRING", "description": "개통 때 적용된 지원금 정책 (subsidy_policies.policy_id 참조, 선택약정이면 비어 있음)"},
+        {"name": "contract_type", "type": "STRING", "description": "약정 방식: PUBLIC_SUBSIDY(공시지원금) · SELECTIVE_25PCT(선택약정 25%)"},
+        {"name": "activation_date", "type": "DATE", "description": "개통일"},
+        {"name": "elapsed_days", "type": "INT64", "description": "개통 후 경과일수 (기준일 2026-09-27)"},
+        {"name": "granted_subsidy_krw", "type": "INT64", "description": "개통 때 받은 총 지원금 (공시 + 유통망, 원). 선택약정이면 0"},
+        {"name": "welfare_status", "type": "STRING", "description": "복지·특례 상태: NONE · SENIOR_EXEMPT(시니어·복지 면제 대상) · MILITARY_PAUSE_ELIGIBLE(군 입대 정지 대상)"},
+        {"name": "status", "type": "STRING", "description": "계약 상태"}
+      ]
+    }
+  ],
+  "relationships": [
+    {"from_table": "subsidy_policies", "column": "device_id", "to_table": "devices", "to_column": "device_id"},
+    {"from_table": "subsidy_policies", "column": "plan_id", "to_table": "plans", "to_column": "plan_id"},
+    {"from_table": "customer_contracts", "column": "device_id", "to_table": "devices", "to_column": "device_id"},
+    {"from_table": "customer_contracts", "column": "plan_id", "to_table": "plans", "to_column": "plan_id"},
+    {"from_table": "customer_contracts", "column": "policy_id", "to_table": "subsidy_policies", "to_column": "policy_id"}
+  ]
+}

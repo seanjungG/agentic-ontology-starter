@@ -1,0 +1,8 @@
+plan_id,plan_name,network_type,monthly_fee_krw,tier_category,is_baseline_tier,selective_discount_rate
+PLAN-5G-130,5G 프리미어 슈퍼,5G,130000,5G_HIGH,true,0.25
+PLAN-5G-85,5G 프리미어 에센셜,5G,85000,5G_HIGH,true,0.25
+PLAN-5G-61,5G 다이렉트 61,5G,61000,5G_MID,true,0.25
+PLAN-5G-45,5G 슬림,5G,45000,5G_MID,true,0.25
+PLAN-5G-37,5G 라이트,5G,37000,BELOW_BASELINE,false,0.25
+PLAN-LTE-33,LTE 베이직,LTE,33000,BELOW_BASELINE,false,0.25
+PLAN-5G-SR33,5G 시니어 33,5G,33000,SENIOR_WELFARE,false,0.25

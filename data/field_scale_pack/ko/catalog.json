@@ -1,0 +1,375 @@
+{
+ "docs": [
+  {
+   "doc_id": "GUIDE-SUB-01",
+   "title": "단말 지원금 정책 가이드",
+   "kind": "core",
+   "file": "core_01_subsidy_policy_guide.md",
+   "chars": 1067
+  },
+  {
+   "doc_id": "GUIDE-SUB-02",
+   "title": "요금제 의무유지 및 차액정산 가이드",
+   "kind": "core",
+   "file": "core_02_retention_penalty_guide.md",
+   "chars": 935
+  },
+  {
+   "doc_id": "GUIDE-SUB-03",
+   "title": "위약금 면제 특례 가이드",
+   "kind": "core",
+   "file": "core_03_exemption_guide.md",
+   "chars": 659
+  },
+  {
+   "doc_id": "MANUAL-OPS-01",
+   "title": "매장·고객센터 지원금 업무 매뉴얼",
+   "kind": "core",
+   "file": "core_04_counter_operations_manual.md",
+   "chars": 1443
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-5G",
+   "title": "번호이동 전환지원금 가이드 — 5G 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_switch_5g.md",
+   "chars": 1130
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-LTE",
+   "title": "번호이동 전환지원금 가이드 — LTE 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_switch_lte.md",
+   "chars": 1134
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-TAB",
+   "title": "번호이동 전환지원금 가이드 — 태블릿·웨어러블 계열",
+   "kind": "guide",
+   "file": "guide_switch_tab.md",
+   "chars": 1133
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-TEEN",
+   "title": "번호이동 전환지원금 가이드 — 청소년·키즈 계열",
+   "kind": "guide",
+   "file": "guide_switch_teen.md",
+   "chars": 1129
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-5G",
+   "title": "가족결합 할인 가이드 — 5G 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_family_5g.md",
+   "chars": 906
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-LTE",
+   "title": "가족결합 할인 가이드 — LTE 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_family_lte.md",
+   "chars": 909
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-TAB",
+   "title": "가족결합 할인 가이드 — 태블릿·웨어러블 계열",
+   "kind": "guide",
+   "file": "guide_family_tab.md",
+   "chars": 909
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-TEEN",
+   "title": "가족결합 할인 가이드 — 청소년·키즈 계열",
+   "kind": "guide",
+   "file": "guide_family_teen.md",
+   "chars": 906
+  },
+  {
+   "doc_id": "GUIDE-INSUR-5G",
+   "title": "단말 보험 가이드 — 5G 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_insur_5g.md",
+   "chars": 713
+  },
+  {
+   "doc_id": "GUIDE-INSUR-LTE",
+   "title": "단말 보험 가이드 — LTE 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_insur_lte.md",
+   "chars": 716
+  },
+  {
+   "doc_id": "GUIDE-INSUR-TAB",
+   "title": "단말 보험 가이드 — 태블릿·웨어러블 계열",
+   "kind": "guide",
+   "file": "guide_insur_tab.md",
+   "chars": 716
+  },
+  {
+   "doc_id": "GUIDE-INSUR-TEEN",
+   "title": "단말 보험 가이드 — 청소년·키즈 계열",
+   "kind": "guide",
+   "file": "guide_insur_teen.md",
+   "chars": 713
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-5G",
+   "title": "기기반납 보상 가이드 — 5G 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_tradein_5g.md",
+   "chars": 675
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-LTE",
+   "title": "기기반납 보상 가이드 — LTE 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_tradein_lte.md",
+   "chars": 678
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-TAB",
+   "title": "기기반납 보상 가이드 — 태블릿·웨어러블 계열",
+   "kind": "guide",
+   "file": "guide_tradein_tab.md",
+   "chars": 678
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-TEEN",
+   "title": "기기반납 보상 가이드 — 청소년·키즈 계열",
+   "kind": "guide",
+   "file": "guide_tradein_teen.md",
+   "chars": 675
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-5G",
+   "title": "장기고객 할인 가이드 — 5G 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_loyal_5g.md",
+   "chars": 657
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-LTE",
+   "title": "장기고객 할인 가이드 — LTE 스마트폰 계열",
+   "kind": "guide",
+   "file": "guide_loyal_lte.md",
+   "chars": 660
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-TAB",
+   "title": "장기고객 할인 가이드 — 태블릿·웨어러블 계열",
+   "kind": "guide",
+   "file": "guide_loyal_tab.md",
+   "chars": 658
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-TEEN",
+   "title": "장기고객 할인 가이드 — 청소년·키즈 계열",
+   "kind": "guide",
+   "file": "guide_loyal_teen.md",
+   "chars": 657
+  },
+  {
+   "doc_id": "NOTICE-2026-02",
+   "title": "정책 개정 공지 2026-02호",
+   "kind": "notice",
+   "file": "notice_2026_02.md",
+   "chars": 862
+  },
+  {
+   "doc_id": "NOTICE-2026-03",
+   "title": "정책 개정 공지 2026-03호",
+   "kind": "notice",
+   "file": "notice_2026_03.md",
+   "chars": 1113
+  },
+  {
+   "doc_id": "NOTICE-2026-04",
+   "title": "정책 개정 공지 2026-04호",
+   "kind": "notice",
+   "file": "notice_2026_04.md",
+   "chars": 961
+  },
+  {
+   "doc_id": "NOTICE-2026-05",
+   "title": "정책 개정 공지 2026-05호",
+   "kind": "notice",
+   "file": "notice_2026_05.md",
+   "chars": 1042
+  },
+  {
+   "doc_id": "NOTICE-2026-06",
+   "title": "정책 개정 공지 2026-06호",
+   "kind": "notice",
+   "file": "notice_2026_06.md",
+   "chars": 1126
+  },
+  {
+   "doc_id": "NOTICE-2026-07",
+   "title": "정책 개정 공지 2026-07호",
+   "kind": "notice",
+   "file": "notice_2026_07.md",
+   "chars": 1258
+  },
+  {
+   "doc_id": "NOTICE-2026-08",
+   "title": "정책 개정 공지 2026-08호",
+   "kind": "notice",
+   "file": "notice_2026_08.md",
+   "chars": 1056
+  },
+  {
+   "doc_id": "NOTICE-2026-09",
+   "title": "정책 개정 공지 2026-09호",
+   "kind": "notice",
+   "file": "notice_2026_09.md",
+   "chars": 961
+  },
+  {
+   "doc_id": "ADDENDUM-EX-01",
+   "title": "지원금 예외 처리 부칙 (공통)",
+   "kind": "addendum",
+   "file": "addendum_ex_01.md",
+   "chars": 906
+  },
+  {
+   "doc_id": "ADDENDUM-EX-02",
+   "title": "지원금 예외 처리 부칙 (계열별)",
+   "kind": "addendum",
+   "file": "addendum_ex_02.md",
+   "chars": 671
+  },
+  {
+   "doc_id": "GLOSSARY-01",
+   "title": "지원금 용어·코드 사전",
+   "kind": "glossary",
+   "file": "glossary_01.md",
+   "chars": 1819
+  },
+  {
+   "doc_id": "FAQ-5G-202603",
+   "title": "상담 FAQ — 5G 스마트폰 계열 (2026-03 기준)",
+   "kind": "faq",
+   "file": "faq_5g_202603.md",
+   "chars": 897
+  },
+  {
+   "doc_id": "FAQ-5G-202606",
+   "title": "상담 FAQ — 5G 스마트폰 계열 (2026-06 기준)",
+   "kind": "faq",
+   "file": "faq_5g_202606.md",
+   "chars": 866
+  },
+  {
+   "doc_id": "ARCHIVE-2025-5G",
+   "title": "[폐지] 2025년판 지원 기준 — 5G 스마트폰 계열",
+   "kind": "archive",
+   "file": "archive_2025_5g.md",
+   "chars": 747
+  },
+  {
+   "doc_id": "FAQ-LTE-202603",
+   "title": "상담 FAQ — LTE 스마트폰 계열 (2026-03 기준)",
+   "kind": "faq",
+   "file": "faq_lte_202603.md",
+   "chars": 868
+  },
+  {
+   "doc_id": "FAQ-LTE-202606",
+   "title": "상담 FAQ — LTE 스마트폰 계열 (2026-06 기준)",
+   "kind": "faq",
+   "file": "faq_lte_202606.md",
+   "chars": 868
+  },
+  {
+   "doc_id": "ARCHIVE-2025-LTE",
+   "title": "[폐지] 2025년판 지원 기준 — LTE 스마트폰 계열",
+   "kind": "archive",
+   "file": "archive_2025_lte.md",
+   "chars": 751
+  },
+  {
+   "doc_id": "FAQ-TAB-202603",
+   "title": "상담 FAQ — 태블릿·웨어러블 계열 (2026-03 기준)",
+   "kind": "faq",
+   "file": "faq_tab_202603.md",
+   "chars": 867
+  },
+  {
+   "doc_id": "FAQ-TAB-202606",
+   "title": "상담 FAQ — 태블릿·웨어러블 계열 (2026-06 기준)",
+   "kind": "faq",
+   "file": "faq_tab_202606.md",
+   "chars": 869
+  },
+  {
+   "doc_id": "ARCHIVE-2025-TAB",
+   "title": "[폐지] 2025년판 지원 기준 — 태블릿·웨어러블 계열",
+   "kind": "archive",
+   "file": "archive_2025_tab.md",
+   "chars": 747
+  },
+  {
+   "doc_id": "FAQ-TEEN-202603",
+   "title": "상담 FAQ — 청소년·키즈 계열 (2026-03 기준)",
+   "kind": "faq",
+   "file": "faq_teen_202603.md",
+   "chars": 864
+  },
+  {
+   "doc_id": "FAQ-TEEN-202606",
+   "title": "상담 FAQ — 청소년·키즈 계열 (2026-06 기준)",
+   "kind": "faq",
+   "file": "faq_teen_202606.md",
+   "chars": 898
+  },
+  {
+   "doc_id": "ARCHIVE-2025-TEEN",
+   "title": "[폐지] 2025년판 지원 기준 — 청소년·키즈 계열",
+   "kind": "archive",
+   "file": "archive_2025_teen.md",
+   "chars": 746
+  },
+  {
+   "doc_id": "MEMO-CS-2026-04",
+   "title": "고객센터 처리 사례 메모 (2026년 4월)",
+   "kind": "memo",
+   "file": "memo_cs_2026_04.md",
+   "chars": 984
+  },
+  {
+   "doc_id": "MEMO-CS-2026-05",
+   "title": "고객센터 처리 사례 메모 (2026년 5월)",
+   "kind": "memo",
+   "file": "memo_cs_2026_05.md",
+   "chars": 991
+  },
+  {
+   "doc_id": "MEMO-CS-2026-06",
+   "title": "고객센터 처리 사례 메모 (2026년 6월)",
+   "kind": "memo",
+   "file": "memo_cs_2026_06.md",
+   "chars": 987
+  },
+  {
+   "doc_id": "MEMO-CS-2026-07",
+   "title": "고객센터 처리 사례 메모 (2026년 7월)",
+   "kind": "memo",
+   "file": "memo_cs_2026_07.md",
+   "chars": 993
+  },
+  {
+   "doc_id": "MEMO-CS-2026-08",
+   "title": "고객센터 처리 사례 메모 (2026년 8월)",
+   "kind": "memo",
+   "file": "memo_cs_2026_08.md",
+   "chars": 988
+  },
+  {
+   "doc_id": "MEMO-CS-2026-09",
+   "title": "고객센터 처리 사례 메모 (2026년 9월)",
+   "kind": "memo",
+   "file": "memo_cs_2026_09.md",
+   "chars": 987
+  }
+ ]
+}

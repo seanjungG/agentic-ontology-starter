@@ -29,6 +29,9 @@ workspace reference `ws: {bucket, ws_id}`; the server keeps no state (workspaces
   POST /api/v5/cg/feedback            sentence and/or 👍/👎 feedback → L1 signal + L2 candidate (run synthesized if unknown)
   POST /api/v5/cg/graph               Context Graph viewer data (stages · nodes/edges · L0/L1/L2 lists)
   POST /api/v5/cg/review              SME approve/reject → ChangeSet + regression CQ `CG-<n>` (origin context_graph)
+  POST /api/v5/compare/latest         latest RAG vs Wiki vs Graph run + RAG corpus state (GOAL-296; run it with /build {stage: rag | compare})
+  POST /api/v5/rag/delete             delete the workspace's RAG Engine corpus (cleanup — a corpus bills while it exists)
+  GET  /api/v5/bench/field-scale?lang=  shipped synthetic field-scale benchmark result (placeholder flag kept)
   POST /api/v5/export                 zip bundle
 """
 from __future__ import annotations
@@ -40,7 +43,7 @@ from typing import Any, Callable, Dict, Optional
 from src import identity
 from src.aos import agent as agent_mod
 from src.aos import context_graph as cg
-from src.aos import intake, pipeline, sources, studio
+from src.aos import intake, pipeline, sources, studio, three_way
 from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, clean_template, default_dataset, env_defaults, error_text, load,
                         new_workspace, new_ws_id, now_iso, save)
 from src.config import APP_VERSION, DEMO_WS, GITHUB_URL, NOTEBOOK_URL, SHOWCASE_URL
@@ -56,7 +59,7 @@ def bootstrap(lang: str) -> Dict[str, Any]:
     return {"version": APP_VERSION, "lang": lang, "presets": studio.presets(lang), "env_defaults": env_defaults(),
             "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL, "notebook_url": NOTEBOOK_URL, "showcase_url": SHOWCASE_URL, "demo_ws": DEMO_WS,
             "model": s["vertex_model"], "impersonation": bool(__import__("os").environ.get("STARTER_IMPERSONATE_ALLOW", "").strip()),
-            "stages": list(pipeline.STAGES), "max_upload_bytes": UPLOAD_MAX, "upload_ext": list(intake.ALL_UPLOAD_EXT)}
+            "stages": list(pipeline.STAGES), "optional_stages": list(pipeline.OPTIONAL_STAGES), "max_upload_bytes": UPLOAD_MAX, "upload_ext": list(intake.ALL_UPLOAD_EXT)}
 
 
 def _ws_ref(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -327,6 +330,10 @@ def handle_post(path: str, data: Dict[str, Any], send_json: Callable[..., None],
                              read_cqs=lambda: studio.studio_data(ws, ["cqs"]).get("cqs") or [],
                              save_cqs=lambda cqs: studio.save_cqs(ws, cqs))
         guarded(cg_review)
+    elif path == "/api/v5/compare/latest":  # GOAL-296: read-only — the run itself goes through /build (opt-in stages rag · compare)
+        guarded(lambda: three_way.latest(_ws_ref(data)))
+    elif path == "/api/v5/rag/delete":
+        guarded(lambda: three_way.delete_corpus(_ws_ref(data)))
     elif path == "/api/v5/export":
         with identity.bind(ident.get("token"), pub):
             try:

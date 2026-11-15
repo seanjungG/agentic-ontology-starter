@@ -1,0 +1,375 @@
+{
+ "docs": [
+  {
+   "doc_id": "GUIDE-SUB-01",
+   "title": "Device Subsidy Policy Guide",
+   "kind": "core",
+   "file": "core_01_subsidy_policy_guide.md",
+   "chars": 2474
+  },
+  {
+   "doc_id": "GUIDE-SUB-02",
+   "title": "Plan Retention & Clawback Guide",
+   "kind": "core",
+   "file": "core_02_retention_penalty_guide.md",
+   "chars": 1910
+  },
+  {
+   "doc_id": "GUIDE-SUB-03",
+   "title": "Penalty Exemption Guide",
+   "kind": "core",
+   "file": "core_03_exemption_guide.md",
+   "chars": 1294
+  },
+  {
+   "doc_id": "MANUAL-OPS-01",
+   "title": "Store and Contact Center Subsidy Operations Manual",
+   "kind": "core",
+   "file": "core_04_counter_operations_manual.md",
+   "chars": 3090
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-5G",
+   "title": "Port-in switch bonus guide — 5G smartphone line",
+   "kind": "guide",
+   "file": "guide_switch_5g.md",
+   "chars": 2083
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-LTE",
+   "title": "Port-in switch bonus guide — LTE smartphone line",
+   "kind": "guide",
+   "file": "guide_switch_lte.md",
+   "chars": 2087
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-TAB",
+   "title": "Port-in switch bonus guide — tablet & wearable line",
+   "kind": "guide",
+   "file": "guide_switch_tab.md",
+   "chars": 2095
+  },
+  {
+   "doc_id": "GUIDE-SWITCH-TEEN",
+   "title": "Port-in switch bonus guide — teen & kids line",
+   "kind": "guide",
+   "file": "guide_switch_teen.md",
+   "chars": 2079
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-5G",
+   "title": "Family bundle discount guide — 5G smartphone line",
+   "kind": "guide",
+   "file": "guide_family_5g.md",
+   "chars": 1784
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-LTE",
+   "title": "Family bundle discount guide — LTE smartphone line",
+   "kind": "guide",
+   "file": "guide_family_lte.md",
+   "chars": 1787
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-TAB",
+   "title": "Family bundle discount guide — tablet & wearable line",
+   "kind": "guide",
+   "file": "guide_family_tab.md",
+   "chars": 1793
+  },
+  {
+   "doc_id": "GUIDE-FAMILY-TEEN",
+   "title": "Family bundle discount guide — teen & kids line",
+   "kind": "guide",
+   "file": "guide_family_teen.md",
+   "chars": 1782
+  },
+  {
+   "doc_id": "GUIDE-INSUR-5G",
+   "title": "Device insurance guide — 5G smartphone line",
+   "kind": "guide",
+   "file": "guide_insur_5g.md",
+   "chars": 1327
+  },
+  {
+   "doc_id": "GUIDE-INSUR-LTE",
+   "title": "Device insurance guide — LTE smartphone line",
+   "kind": "guide",
+   "file": "guide_insur_lte.md",
+   "chars": 1330
+  },
+  {
+   "doc_id": "GUIDE-INSUR-TAB",
+   "title": "Device insurance guide — tablet & wearable line",
+   "kind": "guide",
+   "file": "guide_insur_tab.md",
+   "chars": 1336
+  },
+  {
+   "doc_id": "GUIDE-INSUR-TEEN",
+   "title": "Device insurance guide — teen & kids line",
+   "kind": "guide",
+   "file": "guide_insur_teen.md",
+   "chars": 1325
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-5G",
+   "title": "Device trade-in reward guide — 5G smartphone line",
+   "kind": "guide",
+   "file": "guide_tradein_5g.md",
+   "chars": 1216
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-LTE",
+   "title": "Device trade-in reward guide — LTE smartphone line",
+   "kind": "guide",
+   "file": "guide_tradein_lte.md",
+   "chars": 1219
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-TAB",
+   "title": "Device trade-in reward guide — tablet & wearable line",
+   "kind": "guide",
+   "file": "guide_tradein_tab.md",
+   "chars": 1225
+  },
+  {
+   "doc_id": "GUIDE-TRADEIN-TEEN",
+   "title": "Device trade-in reward guide — teen & kids line",
+   "kind": "guide",
+   "file": "guide_tradein_teen.md",
+   "chars": 1214
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-5G",
+   "title": "Loyalty discount guide — 5G smartphone line",
+   "kind": "guide",
+   "file": "guide_loyal_5g.md",
+   "chars": 1268
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-LTE",
+   "title": "Loyalty discount guide — LTE smartphone line",
+   "kind": "guide",
+   "file": "guide_loyal_lte.md",
+   "chars": 1271
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-TAB",
+   "title": "Loyalty discount guide — tablet & wearable line",
+   "kind": "guide",
+   "file": "guide_loyal_tab.md",
+   "chars": 1275
+  },
+  {
+   "doc_id": "GUIDE-LOYAL-TEEN",
+   "title": "Loyalty discount guide — teen & kids line",
+   "kind": "guide",
+   "file": "guide_loyal_teen.md",
+   "chars": 1266
+  },
+  {
+   "doc_id": "NOTICE-2026-02",
+   "title": "Policy amendment notice 2026-02",
+   "kind": "notice",
+   "file": "notice_2026_02.md",
+   "chars": 1605
+  },
+  {
+   "doc_id": "NOTICE-2026-03",
+   "title": "Policy amendment notice 2026-03",
+   "kind": "notice",
+   "file": "notice_2026_03.md",
+   "chars": 2024
+  },
+  {
+   "doc_id": "NOTICE-2026-04",
+   "title": "Policy amendment notice 2026-04",
+   "kind": "notice",
+   "file": "notice_2026_04.md",
+   "chars": 1758
+  },
+  {
+   "doc_id": "NOTICE-2026-05",
+   "title": "Policy amendment notice 2026-05",
+   "kind": "notice",
+   "file": "notice_2026_05.md",
+   "chars": 1917
+  },
+  {
+   "doc_id": "NOTICE-2026-06",
+   "title": "Policy amendment notice 2026-06",
+   "kind": "notice",
+   "file": "notice_2026_06.md",
+   "chars": 2055
+  },
+  {
+   "doc_id": "NOTICE-2026-07",
+   "title": "Policy amendment notice 2026-07",
+   "kind": "notice",
+   "file": "notice_2026_07.md",
+   "chars": 2278
+  },
+  {
+   "doc_id": "NOTICE-2026-08",
+   "title": "Policy amendment notice 2026-08",
+   "kind": "notice",
+   "file": "notice_2026_08.md",
+   "chars": 1941
+  },
+  {
+   "doc_id": "NOTICE-2026-09",
+   "title": "Policy amendment notice 2026-09",
+   "kind": "notice",
+   "file": "notice_2026_09.md",
+   "chars": 1767
+  },
+  {
+   "doc_id": "ADDENDUM-EX-01",
+   "title": "Subsidy exceptions addendum (common)",
+   "kind": "addendum",
+   "file": "addendum_ex_01.md",
+   "chars": 1903
+  },
+  {
+   "doc_id": "ADDENDUM-EX-02",
+   "title": "Subsidy exceptions addendum (by product line)",
+   "kind": "addendum",
+   "file": "addendum_ex_02.md",
+   "chars": 1277
+  },
+  {
+   "doc_id": "GLOSSARY-01",
+   "title": "Subsidy glossary and codes",
+   "kind": "glossary",
+   "file": "glossary_01.md",
+   "chars": 3007
+  },
+  {
+   "doc_id": "FAQ-5G-202603",
+   "title": "Agent FAQ — 5G smartphone line (as of 2026-03)",
+   "kind": "faq",
+   "file": "faq_5g_202603.md",
+   "chars": 1437
+  },
+  {
+   "doc_id": "FAQ-5G-202606",
+   "title": "Agent FAQ — 5G smartphone line (as of 2026-06)",
+   "kind": "faq",
+   "file": "faq_5g_202606.md",
+   "chars": 1394
+  },
+  {
+   "doc_id": "ARCHIVE-2025-5G",
+   "title": "[Repealed] 2025 edition support rules — 5G smartphone line",
+   "kind": "archive",
+   "file": "archive_2025_5g.md",
+   "chars": 1281
+  },
+  {
+   "doc_id": "FAQ-LTE-202603",
+   "title": "Agent FAQ — LTE smartphone line (as of 2026-03)",
+   "kind": "faq",
+   "file": "faq_lte_202603.md",
+   "chars": 1396
+  },
+  {
+   "doc_id": "FAQ-LTE-202606",
+   "title": "Agent FAQ — LTE smartphone line (as of 2026-06)",
+   "kind": "faq",
+   "file": "faq_lte_202606.md",
+   "chars": 1396
+  },
+  {
+   "doc_id": "ARCHIVE-2025-LTE",
+   "title": "[Repealed] 2025 edition support rules — LTE smartphone line",
+   "kind": "archive",
+   "file": "archive_2025_lte.md",
+   "chars": 1285
+  },
+  {
+   "doc_id": "FAQ-TAB-202603",
+   "title": "Agent FAQ — tablet & wearable line (as of 2026-03)",
+   "kind": "faq",
+   "file": "faq_tab_202603.md",
+   "chars": 1398
+  },
+  {
+   "doc_id": "FAQ-TAB-202606",
+   "title": "Agent FAQ — tablet & wearable line (as of 2026-06)",
+   "kind": "faq",
+   "file": "faq_tab_202606.md",
+   "chars": 1400
+  },
+  {
+   "doc_id": "ARCHIVE-2025-TAB",
+   "title": "[Repealed] 2025 edition support rules — tablet & wearable line",
+   "kind": "archive",
+   "file": "archive_2025_tab.md",
+   "chars": 1287
+  },
+  {
+   "doc_id": "FAQ-TEEN-202603",
+   "title": "Agent FAQ — teen & kids line (as of 2026-03)",
+   "kind": "faq",
+   "file": "faq_teen_202603.md",
+   "chars": 1394
+  },
+  {
+   "doc_id": "FAQ-TEEN-202606",
+   "title": "Agent FAQ — teen & kids line (as of 2026-06)",
+   "kind": "faq",
+   "file": "faq_teen_202606.md",
+   "chars": 1440
+  },
+  {
+   "doc_id": "ARCHIVE-2025-TEEN",
+   "title": "[Repealed] 2025 edition support rules — teen & kids line",
+   "kind": "archive",
+   "file": "archive_2025_teen.md",
+   "chars": 1278
+  },
+  {
+   "doc_id": "MEMO-CS-2026-04",
+   "title": "Contact-centre case memo (April 2026)",
+   "kind": "memo",
+   "file": "memo_cs_2026_04.md",
+   "chars": 1727
+  },
+  {
+   "doc_id": "MEMO-CS-2026-05",
+   "title": "Contact-centre case memo (May 2026)",
+   "kind": "memo",
+   "file": "memo_cs_2026_05.md",
+   "chars": 1740
+  },
+  {
+   "doc_id": "MEMO-CS-2026-06",
+   "title": "Contact-centre case memo (June 2026)",
+   "kind": "memo",
+   "file": "memo_cs_2026_06.md",
+   "chars": 1734
+  },
+  {
+   "doc_id": "MEMO-CS-2026-07",
+   "title": "Contact-centre case memo (July 2026)",
+   "kind": "memo",
+   "file": "memo_cs_2026_07.md",
+   "chars": 1743
+  },
+  {
+   "doc_id": "MEMO-CS-2026-08",
+   "title": "Contact-centre case memo (August 2026)",
+   "kind": "memo",
+   "file": "memo_cs_2026_08.md",
+   "chars": 1734
+  },
+  {
+   "doc_id": "MEMO-CS-2026-09",
+   "title": "Contact-centre case memo (September 2026)",
+   "kind": "memo",
+   "file": "memo_cs_2026_09.md",
+   "chars": 1738
+  }
+ ]
+}

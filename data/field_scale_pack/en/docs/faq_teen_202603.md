@@ -1,0 +1,34 @@
+# Agent FAQ — teen & kids line (as of 2026-03)
+
+> Document no.: FAQ-TEEN-202603 · Compiled: 2026-03-15 · Audience: store and contact-centre agents · Synthetic, de-identified training document
+> These answers were compiled as of 2026-03-15. Any policy amendment notice issued after that date prevails, and amounts in this FAQ may have changed.
+
+**Q1. How much MNP bonus can an H-tier Teens line port-in get?**
+A. Up to KRW 180,000 at the moment.
+
+**Q2. And on the M-tier?**
+A. Up to KRW 120,000.
+
+**Q3. How long must they have been with the old carrier?**
+A. At least 120 days.
+
+**Q4. What is the Fam pack discount for 3 lines?**
+A. KRW 4,500 per line per month. 2 lines: KRW 2,000; 4 or more: KRW 5,500.
+
+**Q5. What does a PhoneCare customer get for a lost device?**
+A. The cover is 80% of the list price, of which 20% is the customer's excess.
+
+**Q6. And a cracked screen?**
+A. Repair is covered up to KRW 300,000 per incident and the excess is KRW 30,000.
+
+**Q7. How much does the Return plan pay after one year?**
+A. 45% of the list price; 25% after two years.
+
+**Q8. How much is the Long-run discount in year 5?**
+A. KRW 2,000 per month. Year 3: KRW 500; year 10: KRW 3,500.
+
+**Q9. Until when can insurance be taken out?**
+A. Within 30 days of activation.
+
+**Q10. Can a selective-discount customer get the MNP bonus?**
+A. Yes, but not the public subsidy or the retailer additional subsidy.

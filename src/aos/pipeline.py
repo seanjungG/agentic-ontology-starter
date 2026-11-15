@@ -28,6 +28,7 @@ from typing import Any, Callable, Dict, List, Optional
 from src import identity
 from src.aos import agent as agent_mod
 from src.aos import graph_allocation as GA
+from src.aos import rag as rag_mod
 from src.aos import sources as S
 from src.aos import spanner_graph as SG
 from src.aos.ws import (McpLog, WsError, append_calls, can_write, error_text, get_json, now_iso, prefix, put_json, put_text,
@@ -35,7 +36,12 @@ from src.aos.ws import (McpLog, WsError, append_calls, can_write, error_text, ge
 
 Emit = Callable[[Dict[str, Any]], None]
 STAGES = ("prepare", "ingest", "cqs", "wiki", "graph", "eval")
+# GOAL-296: opt-in stages — a Vertex AI RAG Engine baseline over the SAME sources and the three-stage comparison
+# (RAG vs OKF Wiki → OKF Wiki vs Graph → all three). Not part of the default build: a RAG corpus bills while it exists.
+OPTIONAL_STAGES = ("rag", "compare")
+ALL_STAGES = STAGES + OPTIONAL_STAGES
 STAGE_LABEL = {
+    "rag": ("S6 RAG 베이스라인", "S6 RAG baseline"), "compare": ("S7 RAG · 위키 · 그래프 비교", "S7 RAG vs Wiki vs Graph"),
     "prepare": ("S0 준비", "S0 Prepare"), "ingest": ("S1 수집 · 프로파일", "S1 Ingest & profile"), "cqs": ("S2 CQ 초안", "S2 CQ draft"),
     "wiki": ("S3 OKF 위키", "S3 OKF wiki"), "graph": ("S4 시맨틱 그래프", "S4 Semantic Graph"), "eval": ("S5 평가", "S5 Evaluate"),
 }
@@ -56,10 +62,10 @@ def _kh_common(ws: Dict[str, Any]) -> Dict[str, Any]:
 
 def run_stage(ws: Dict[str, Any], stage: str, emit: Emit) -> Dict[str, Any]:
     lang = ws.get("lang", "ko")
-    if stage not in STAGES:
+    if stage not in ALL_STAGES:
         raise WsError("BAD_REQUEST", f"알 수 없는 단계: {stage}", f"unknown stage: {stage}")
     ok, allowed = can_write(ws["env"])
-    if not ok and stage != "eval":
+    if not ok and stage not in ("eval", "compare"):
         raise WsError("WRITE_BLOCKED",
                       f"데모 신원(runtime)은 {allowed} 프로젝트에만 쓸 수 있습니다. 내 프로젝트에 만들려면 3단계에서 내 토큰 또는 SA를 입력하세요.",
                       f"The demo (runtime) identity may only write to {allowed}. To build in your project, enter your token or SA in step 3.")
@@ -67,7 +73,8 @@ def run_stage(ws: Dict[str, Any], stage: str, emit: Emit) -> Dict[str, Any]:
     label = t(lang, *STAGE_LABEL[stage])
     emit({"type": "stage", "stage": stage, "status": "running", "label": label})
     t0 = time.perf_counter()
-    fn = {"prepare": stage_prepare, "ingest": stage_ingest, "cqs": stage_cqs, "wiki": stage_wiki, "graph": stage_graph, "eval": stage_eval}[stage]
+    fn = {"prepare": stage_prepare, "ingest": stage_ingest, "cqs": stage_cqs, "wiki": stage_wiki, "graph": stage_graph, "eval": stage_eval,
+          "rag": lambda w, l, e: rag_mod.stage_rag(w, l, e, _parsed(w, l)), "compare": rag_mod.stage_compare}[stage]
     rec: Dict[str, Any]
     try:
         summary = fn(ws, log, emit)
@@ -78,8 +85,10 @@ def run_stage(ws: Dict[str, Any], stage: str, emit: Emit) -> Dict[str, Any]:
         rec = {"status": "error", "error": f"{type(e).__name__}: {str(e)[:600]}"}
     rec.update(ms=_ms(t0), at=now_iso(), mcp_calls=len(log.calls), identity=identity.current())
     ws.setdefault("stages", {})[stage] = rec
-    for later in STAGES[STAGES.index(stage) + 1:]:
-        if rec["status"] == "done" and ws["stages"].get(later, {}).get("status") == "done" and stage in ("ingest", "wiki", "graph"):
+    for later in ALL_STAGES[ALL_STAGES.index(stage) + 1:]:
+        if later == "rag" and stage != "ingest":   # the RAG corpus depends on the parsed sources only
+            continue
+        if rec["status"] == "done" and ws["stages"].get(later, {}).get("status") == "done" and stage in ("ingest", "wiki", "graph", "rag"):
             ws["stages"][later]["stale"] = True
     ws["stages"][stage].pop("stale", None)
     try:
@@ -347,9 +356,15 @@ def stage_wiki(ws: Dict[str, Any], log: McpLog, emit: Emit) -> Dict[str, Any]:
     rounds = int(os.environ.get("AOS_WIKI_REPAIR_ROUNDS", "2") or 0)
     r = log.call("aos_core_compile_wiki", {**_kh_common(ws), "objective": ws["scenario"].get("objective", ""),
                                               "docs": kh_docs, "tables": _kh_tables(p["tables"], 5),
-                                              "coverage_repair": rounds > 0, "repair_rounds": rounds}, timeout_s=880)
+                                              "coverage_repair": rounds > 0, "repair_rounds": rounds,
+                                              # GOAL-296: reference-aware compile (amendments/notices are read next to the page they change)
+                                              **({"reconcile": False} if os.environ.get("AOS_WIKI_RECONCILE", "1") == "0" else {}),
+                                              **({"batch_docs": int(os.environ["AOS_WIKI_BATCH_DOCS"])} if os.environ.get("AOS_WIKI_BATCH_DOCS") else {})},
+                 timeout_s=880 if len(kh_docs) <= 12 and sum(len(d["text"]) for d in kh_docs) <= 60_000 else 1750)   # large sets compile in several waves of parallel batches
     if r.get("status") != "SUCCESS":
         raise RuntimeError("aos_core_compile_wiki: " + error_text(r))
+    if r.get("failed_docs"):   # GOAL-296: never hide a partially compiled wiki
+        _step(emit, "wiki_failed", "warn", t(lang, "컴파일 실패 문서", "documents that failed to compile"), ", ".join(r["failed_docs"])[:300])
     _step(emit, "wiki", "done", t(lang, "위키 컴파일", "wiki compiled"),
           f"{r.get('counts')} · gates {r.get('gates_passed')}/{r.get('gates_total')}", _ms(s))
     cov = wiki_coverage_summary(r)

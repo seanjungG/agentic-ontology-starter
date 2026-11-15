@@ -23,7 +23,7 @@ Pure Python 3.11 stdlib.
 2. Unified Core MCP Portal & Metering Backend:
    - BigQuery metering aggregation (`seanjung-agentic-starter.aos_metering.core_mcp_usage_events`) via direct REST API
      (never creates recursive Core MCP metering events).
-   - Authenticated same-origin proxy for Core MCP `/portal/api/catalog` (57 tools, categories, interactive flow lanes,
+   - Authenticated same-origin proxy for Core MCP `/portal/api/catalog` (67 tools, categories, interactive flow lanes,
      input/output schemas) and `/portal/api/usage?source=live` (live Cloud Run instance ring buffer & hourly chart).
 """
 from __future__ import annotations
@@ -701,7 +701,7 @@ def fetch_core_mcp_catalog(
     force: bool = False,
     http_get: Optional[Callable[[str, float], Tuple[int, Any]]] = None,
 ) -> Tuple[int, Dict[str, Any]]:
-    """Proxy Core MCP `/portal/api/catalog` (57 tools, categories, interactive flow) for the unified Admin UI."""
+    """Proxy Core MCP `/portal/api/catalog` (67 tools, categories, interactive flow) for the unified Admin UI."""
     now = time.time()
     base = core_mcp_base_url()
     if not force and (now - float(_MCP_CATALOG_CACHE.get("ts") or 0)) < 60.0 and _MCP_CATALOG_CACHE.get("catalog"):

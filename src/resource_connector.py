@@ -70,10 +70,10 @@ REFERENCE_STUDIOS = {
     },
     "builder_core_mcp_server": {
         "id": "aos_builder_core_mcp",
-        "name_ko": "코어 빌더 MCP 서버 (`aos-builder-core-mcp` · 57 Tools)",
-        "name_en": "Builder Core MCP Server (`aos-builder-core-mcp` · 57 Tools)",
+        "name_ko": "코어 빌더 MCP 서버 (`aos-builder-core-mcp` · 67 Tools)",
+        "name_en": "Builder Core MCP Server (`aos-builder-core-mcp` · 67 Tools)",
         "url": DEFAULT_CORE_MCP_URL,
-        "domain": "Zero-Privilege Automated Ontology & Studio Compiler MCP (v1.12.0)",
+        "domain": "Zero-Privilege Automated Ontology & Studio Compiler MCP (v1.13.0)",
         "tabs": "JSON-RPC 2.0 MCP Endpoint (`/mcp`) · Starter Admin Portal (`/admin`) · Proxy (`GET /api/core-mcp/tools`)",
         "resources": "AOS Builder Stage 0–6 (10) · AOS Core Engine & Intake (12) · Context Graph (5) · Data Plane & Drive (30)",
     },
