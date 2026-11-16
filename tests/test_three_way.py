@@ -427,6 +427,10 @@ class PackAndDocsTests(unittest.TestCase):
             ids = [c["id"] for c in _load(os.path.join(three_way.PACK_DIR, lang, "cqs.json"))["cqs"]]
             self.assertEqual([c["id"] for c in run["cqs"]], ids, lang)
             self.assertEqual(run["comparison"]["cq_count"], len(ids), lang)
+            s1 = run["comparison"]["stage1_rag_vs_wiki"]
+            self.assertEqual((s1["scope"], s1["count"], s1["excluded_count"]), ("doc_only", 43, 7), lang)
+            self.assertEqual(run["comparison"]["stage2_wiki_vs_graph"]["scope"], "all_unified", lang)
+            self.assertEqual(run["comparison"]["final_three_way"]["scope"], "all_unified", lang)
             for s in three_way.SYSTEMS:
                 self.assertEqual(sorted(r["id"] for r in run["results"][s]), sorted(ids), f"{lang}/{s}")
                 rows = run["results"][s]

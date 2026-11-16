@@ -1051,7 +1051,7 @@
     "build.s.compare": "S7 RAG · 위키 · 그래프 비교 (선택)",
     "build.s.compare.d": "모든 CQ를 RAG · Wiki · Graph 에이전트로 묻고, 방식을 가린 100점 채점기 하나로 채점",
     "cmp.title": "RAG vs 위키 vs 그래프",
-    "cmp.lead": "같은 원천 · 같은 CQ · 같은 답변 모델 · 같은 채점기로 세 방식을 측정합니다. 1단계 RAG vs OKF 위키 → 2단계 OKF 위키 vs 그래프 → 최종 세 방식. 이 화면의 모든 숫자는 실행 결과 파일에서 읽은 값입니다.",
+    "cmp.lead": "같은 원천 · 같은 CQ · 같은 답변 모델 · 같은 채점기로 세 방식을 측정합니다. 1단계 RAG vs OKF 위키(문서 전용 문항 · 정형·복합 제외) → 2단계 OKF 위키 vs 그래프(통합 전체) → 최종 통합 세 방식. 이 화면의 모든 숫자는 실행 결과 파일에서 읽은 값입니다.",
     "cmp.whyTitle": "왜 비교하는가",
     "cmp.why1": "\"RAG로 되는데 왜 온톨로지를 만드나?\"는 고객이 가장 먼저 묻는 질문입니다. 이 화면은 주장 대신 이 워크스페이스의 원천으로 측정한 결과로 답합니다.",
     "cmp.why2": "세 방식이 같은 CQ에 답합니다 — 튜닝한 Vertex AI RAG Engine 베이스라인, OKF Wiki 에이전트, Graph 에이전트(위키 + 시맨틱 그래프). 원천 · 답변 모델은 같고, 채점은 어떤 방식의 답인지 모르는 100점 채점기 하나가 합니다.",
@@ -1114,7 +1114,12 @@
     "cmp.teaserTitle": "\"RAG로 충분하지 않나?\" — 측정해서 답합니다",
     "cmp.teaserBody": "같은 원천 · 같은 CQ · 같은 채점기로 RAG, OKF 위키, 그래프를 3단계로 비교합니다. 합성 필드 규모 벤치마크의 측정 결과를 바로 볼 수 있고, 내 워크스페이스에서도 선택 단계로 실행할 수 있습니다.",
     "cmp.teaserCta": "비교 결과 보기",
-    "cmp.keeps": "실행 중 이 화면을 닫아도 단계는 서버에서 끝까지 실행됩니다. 다시 열면 저장된 결과가 표시됩니다."
+    "cmp.keeps": "실행 중 이 화면을 닫아도 단계는 서버에서 끝까지 실행됩니다. 다시 열면 저장된 결과가 표시됩니다.",
+    "cmp.scopeDoc": "문서 전용 {n}/{total}문항 (정형·복합 {ex}제외)",
+    "cmp.scopeUnified": "통합 전체 {n}문항 (문서 {doc} + 정형·복합 {st})",
+    "cmp.allRef": "참고 · 전체 {n}문항 기준: RAG {b} vs OKF 위키 {c} (Δ {d}점)",
+    "cmp.tagDoc": "문서",
+    "cmp.tagStructured": "정형·복합"
   },
   "en": {
     "brand.sub": "Build enterprise ontology agents on your data and your GCP",
@@ -2168,7 +2173,7 @@
     "build.s.compare": "S7 RAG vs Wiki vs Graph (optional)",
     "build.s.compare.d": "every CQ through the RAG, Wiki and Graph agents · one system-blind 100-point judge",
     "cmp.title": "RAG vs Wiki vs Graph",
-    "cmp.lead": "Three systems measured on the same sources, the same CQs, the same answer model and the same judge. Stage 1 RAG vs OKF Wiki → stage 2 OKF Wiki vs Graph → all three. Every number on this page is read from a run file.",
+    "cmp.lead": "Three systems measured on the same sources, the same CQs, the same answer model and the same judge. Stage 1 RAG vs OKF Wiki (document-only CQs · structured/hybrid excluded) → Stage 2 OKF Wiki vs Graph (unified full set) → Final unified three-way. Every number on this page is read from a run file.",
     "cmp.whyTitle": "Why this comparison exists",
     "cmp.why1": "\"Why build an ontology when RAG works?\" is the first question customers ask. This page answers it with measurements on this workspace's own sources instead of an argument.",
     "cmp.why2": "Three systems answer the same CQs: a tuned Vertex AI RAG Engine baseline, the OKF Wiki agent, and the Graph agent (wiki + semantic graph). Same sources and answer model; one 100-point judge that does not know which system wrote the answer.",
@@ -2231,6 +2236,11 @@
     "cmp.teaserTitle": "\"Why not just RAG?\" — answered by measurement",
     "cmp.teaserBody": "RAG, OKF Wiki and Graph compared in three stages on the same sources, the same CQs and one judge. See the measured result of the synthetic field-scale benchmark, or run it on your own workspace as an optional step.",
     "cmp.teaserCta": "See the comparison",
-    "cmp.keeps": "If you close this page while a stage runs, it still finishes on the server; reopen the page to see the stored result."
+    "cmp.keeps": "If you close this page while a stage runs, it still finishes on the server; reopen the page to see the stored result.",
+    "cmp.scopeDoc": "Doc-only {n}/{total} CQs ({ex} structured excluded)",
+    "cmp.scopeUnified": "Unified all {n} CQs ({doc} doc + {st} structured)",
+    "cmp.allRef": "All-{n}-CQ reference: RAG {b} vs OKF Wiki {c} (Δ {d}p)",
+    "cmp.tagDoc": "Doc",
+    "cmp.tagStructured": "Structured"
   }
 }

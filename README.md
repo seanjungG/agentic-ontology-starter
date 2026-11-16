@@ -21,11 +21,11 @@ All web surfaces default to **English** with an instant **`EN | KO`** toggle in 
 | 📓 **Notebook Lab 1 · Ontology** (~10 min) | [`#ov` Overview Map ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) | **Instant guest access** (optional Google sign-in): `#n1` CQs → `#n2` OKF Wiki + coverage pass → `#n3` Graph design · Spanner Graph load · GQL check → `#n4` Knowledge Catalog · GQL Agent → `#n5` Head-to-head Wiki vs. GQL Agent evaluation |
 | 📓 **Notebook Lab 2 · Workflow** (~6 min) | [`#w0` Overview Map ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) | `#w1` Extract rules & workflows → `#w2` Extend Spanner Graph → `#w3` Interactive Workflow Agent → `#w4` Evaluate → `#w5` Change request · Admin approval · Apply · Before/After diff · Rollback |
 | 📓 **Notebook Lab 3 · Context Graph** (~6 min) | [`#c0` Overview Map ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) | `#c1` BigQuery Property Graph setup → `#c2` Log agent runs → `#c3` GQL audit → `#c4` 👍/👎 & sentence feedback → tacit candidates → `#c5` SME approve · apply to KC · re-ask → `#c6` Loop dashboard · KG snapshots · data explorer |
-| 🏛️ **Starter Studio (`v6.15.0`)** | [Open Starter Studio ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | Full flow (`⓪ Understand`) → **Try with sample** (demo identity · sample pack) → build on your data → CLI & code bundle hand-off |
+| 🏛️ **Starter Studio (`v6.16.0`)** | [Open Starter Studio ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | Full flow (`⓪ Understand`) → **Try with sample** (demo identity · sample pack) → build on your data → CLI & code bundle hand-off |
 | ⚡ **Pre-Built 100/100 Workspace** | [3-Agent Q&A & Feedback ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) · [Context Graph Demo ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) | Zero build wait on finished workspace `ws-20261105-5525c8` (eval score **100**): query Wiki / Graph / Hybrid agents and run the 1-click 3-agent Context Graph closed-loop demo |
 | 🏢 **Production-Domain Studio (LG U+)** | [Open LG U+ Studio ↗](https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/) | 13-tab unified enterprise ontology reference platform (Telecom subsidy domain, English default with `EN | KO` toggle) |
 | 🧭 **Reference Wizard** | [`/wizard` ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/wizard#step-1) | Curated 6-step reference flow (Flow A / B / C, baseline 100) for side-by-side comparison |
-| 🔌 **Platform Core MCP (`v1.13.0`)** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | **67 tools** = Builder 10 + Data Plane 28 + Core / Intake 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) + **RAG baseline 8** (`aos_core_rag_decompose` · `create_corpus` · `import_files` · `get_operation` · `status` · `delete_corpus` · `retrieve` · `answer`) + **Comparison 2** (`aos_core_eval_rubric_judge` · `aos_core_eval_compare`) · JSON-RPC `tools/list` & `tools/call` |
+| 🔌 **Platform Core MCP (`v1.14.0`)** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | **67 tools** = Builder 10 + Data Plane 28 + Core / Intake 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) + **RAG baseline 8** (`aos_core_rag_decompose` · `create_corpus` · `import_files` · `get_operation` · `status` · `delete_corpus` · `retrieve` · `answer`) + **Comparison 2** (`aos_core_eval_rubric_judge` · `aos_core_eval_compare`) · JSON-RPC `tools/list` & `tools/call` |
 
 > **Notebook Lab session lifecycle**: Enter immediately as a guest (or sign in optionally with Google). Every session provisions an isolated GCS bucket and Spanner database automatically and cleans up idle resources after 3 hours. Use **▶ Run all** in the sidebar to execute an entire lab end to end; if your laptop sleeps or the page reloads, it automatically resumes from the next unfinished cell.
 
@@ -129,9 +129,9 @@ python3 -m src.cli ask --bucket B --ws WS --agent wiki --apply-cg "Your question
 
 | Stage | What is compared | The question it answers |
 | :---: | :--- | :--- |
-| **Stage 1** | RAG vs OKF Wiki | Does compiling the documents into a wiki answer better than retrieving passages from them? |
-| **Stage 2** | OKF Wiki vs Graph | Does a graph over the tables add anything on top of the wiki? |
-| **Final** | RAG vs OKF Wiki vs Graph | Side by side — average score, PASS counts, wins · ties · losses, by CQ type, latency |
+| **Stage 1** | RAG vs OKF Wiki *(Doc-only CQs · structured/hybrid excluded)* | Does compiling the documents into a wiki answer better than retrieving passages from them? |
+| **Stage 2** | OKF Wiki vs Graph *(Unified full CQ set)* | Does a graph over the tables add anything on top of the wiki? |
+| **Final** | RAG vs OKF Wiki vs Graph *(Unified full CQ set)* | Side by side — average score, PASS counts, wins · ties · losses, by CQ type, latency |
 
 **Fairness rules** (enforced in [`src/aos/rag.py`](src/aos/rag.py), not by convention):
 
@@ -177,13 +177,17 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 **Stage 1 — RAG vs OKF Wiki**
 
+> Document-only scope: 43/50 CQs (7 structured/hybrid excluded: `data, hybrid`). *(all-50-CQ reference: RAG 85.0 vs OKF Wiki 90.1, Δ +5.1)*
+
 | Metric | RAG | OKF Wiki | Δ |
 |---|---:|---:|---:|
-| Average score (of 100) | 85.0 | 90.1 | +5.1 |
-| PASS | 36/50 | 43/50 | +7 |
-| OKF Wiki wins · ties · losses | | 11 · 34 · 5 | |
+| Average score (of 100) | 88.5 | 99.7 | +11.2 |
+| PASS | 33/43 | 43/43 | +10 |
+| OKF Wiki wins · ties · losses | | 11 · 31 · 1 | |
 
 **Stage 2 — OKF Wiki vs Graph**
+
+> Unified full scope: all 50 CQs (43 document + 7 structured/hybrid).
 
 | Metric | OKF Wiki | Graph | Δ |
 |---|---:|---:|---:|
@@ -192,6 +196,8 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 | Graph wins · ties · losses | | 7 · 42 · 1 | |
 
 **Final — RAG vs OKF Wiki vs Graph**
+
+> Unified full scope: all 50 CQs (43 document + 7 structured/hybrid).
 
 | System | Average score (of 100) | PASS | PARTIAL | FAIL | Avg latency (s) |
 |---|---:|---:|---:|---:|---:|
@@ -203,16 +209,16 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 | Type | CQs | RAG | OKF Wiki | Graph | Top average |
 |---|---:|---:|---:|---:|---|
-| `alias` | 4 | 87.8 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `calc` | 7 | 91.0 | 99.6 | 99.9 | Graph |
-| `compare` | 4 | 99.2 | 100.0 | 99.8 | OKF Wiki |
-| `current` | 8 | 75.1 | 100.0 | 98.2 | OKF Wiki |
-| `data` | 3 | 100.0 | 27.0 | 100.0 | RAG = Graph (tie) |
-| `exception` | 5 | 90.2 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `history` | 4 | 87.8 | 97.2 | 96.2 | OKF Wiki |
-| `hybrid` | 4 | 36.8 | 35.0 | 99.2 | Graph |
-| `lookup` | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
-| `temporal` | 5 | 83.4 | 99.8 | 100.0 | Graph |
+| `alias` (doc) | 4 | 87.8 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `calc` (doc) | 7 | 91.0 | 99.6 | 99.9 | Graph |
+| `compare` (doc) | 4 | 99.2 | 100.0 | 99.8 | OKF Wiki |
+| `current` (doc) | 8 | 75.1 | 100.0 | 98.2 | OKF Wiki |
+| `data` (structured) | 3 | 100.0 | 27.0 | 100.0 | RAG = Graph (tie) |
+| `exception` (doc) | 5 | 90.2 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `history` (doc) | 4 | 87.8 | 97.2 | 96.2 | OKF Wiki |
+| `hybrid` (structured) | 4 | 36.8 | 35.0 | 99.2 | Graph |
+| `lookup` (doc) | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `temporal` (doc) | 5 | 83.4 | 99.8 | 100.0 | Graph |
 <!-- GOAL296_RESULTS:en:END -->
 
 **Measured — Korean pack** (`data/field_scale_pack/results/ko.json`)
@@ -224,13 +230,17 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 **Stage 1 — RAG vs OKF Wiki**
 
+> Document-only scope: 43/50 CQs (7 structured/hybrid excluded: `data, hybrid`). *(all-50-CQ reference: RAG 90.9 vs OKF Wiki 90.1, Δ -0.8)*
+
 | Metric | RAG | OKF Wiki | Δ |
 |---|---:|---:|---:|
-| Average score (of 100) | 90.9 | 90.1 | -0.8 |
-| PASS | 42/50 | 43/50 | +1 |
-| OKF Wiki wins · ties · losses | | 4 · 41 · 5 | |
+| Average score (of 100) | 95.2 | 100.0 | +4.8 |
+| PASS | 39/43 | 43/43 | +4 |
+| OKF Wiki wins · ties · losses | | 4 · 39 · 0 | |
 
 **Stage 2 — OKF Wiki vs Graph**
+
+> Unified full scope: all 50 CQs (43 document + 7 structured/hybrid).
 
 | Metric | OKF Wiki | Graph | Δ |
 |---|---:|---:|---:|
@@ -239,6 +249,8 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 | Graph wins · ties · losses | | 7 · 43 · 0 | |
 
 **Final — RAG vs OKF Wiki vs Graph**
+
+> Unified full scope: all 50 CQs (43 document + 7 structured/hybrid).
 
 | System | Average score (of 100) | PASS | PARTIAL | FAIL | Avg latency (s) |
 |---|---:|---:|---:|---:|---:|
@@ -250,16 +262,16 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 | Type | CQs | RAG | OKF Wiki | Graph | Top average |
 |---|---:|---:|---:|---:|---|
-| `alias` | 4 | 87.5 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `calc` | 7 | 93.4 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `compare` | 4 | 99.0 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `current` | 8 | 92.5 | 100.0 | 99.5 | OKF Wiki |
-| `data` | 3 | 100.0 | 25.0 | 100.0 | RAG = Graph (tie) |
-| `exception` | 5 | 91.0 | 100.0 | 99.4 | OKF Wiki |
-| `history` | 4 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
-| `hybrid` | 4 | 37.2 | 32.5 | 99.8 | Graph |
-| `lookup` | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
-| `temporal` | 5 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `alias` (doc) | 4 | 87.5 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `calc` (doc) | 7 | 93.4 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `compare` (doc) | 4 | 99.0 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `current` (doc) | 8 | 92.5 | 100.0 | 99.5 | OKF Wiki |
+| `data` (structured) | 3 | 100.0 | 25.0 | 100.0 | RAG = Graph (tie) |
+| `exception` (doc) | 5 | 91.0 | 100.0 | 99.4 | OKF Wiki |
+| `history` (doc) | 4 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `hybrid` (structured) | 4 | 37.2 | 32.5 | 99.8 | Graph |
+| `lookup` (doc) | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `temporal` (doc) | 5 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
 <!-- GOAL296_RESULTS:ko:END -->
 
 Per-question answers, judge summaries and deductions for both packs are in the Studio (**RAG vs Wiki vs Graph › Field-scale benchmark**). This is one synthetic estate, one answer model and one judge — treat it as a worked example of the method, and run the comparison on your own sources and CQs before deciding.
