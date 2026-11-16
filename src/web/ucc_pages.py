@@ -225,7 +225,7 @@ def create_comment(data: Dict[str, Any], remote: str = "", user_agent: str = "")
     delete_token = secrets.token_urlsafe(18)
     record = {**fields, "id": cid, "created_at": now.isoformat(timespec="seconds"), "client": key,
               "user_agent": (user_agent or "")[:160], "delete_token": delete_token,
-              "page_url": f"/ucc/{fields['doc']}{'?lang=en' if fields['lang'] == 'en' else ''}#{fields['section_id']}",
+              "page_url": f"/ucc/{fields['doc']}?lang={fields['lang']}#{fields['section_id']}",
               "relayed": False, "deleted": False}
     name = f"{COMMENTS_PREFIX}{fields['doc']}/{cid}.json"
     code, payload = gcs_upload(name, json.dumps(record, ensure_ascii=False, indent=2).encode("utf-8"), _bucket(),

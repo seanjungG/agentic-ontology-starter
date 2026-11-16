@@ -21,11 +21,11 @@
 | 📓 **노트북 Lab 1 · 온톨로지** (약 10분) | [`#ov` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) | **게스트 즉시 체험**(Google 로그인 선택): `#n1` CQ → `#n2` OKF 위키 + 커버리지 보완 → `#n3` 그래프 설계 · Spanner 적재 · GQL 확인 → `#n4` Knowledge Catalog · GQL Agent → `#n5` Wiki vs GQL Agent 평가 |
 | 📓 **노트북 Lab 2 · 워크플로우** (약 6분) | [`#w0` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) | `#w1` 룰 · 워크플로우 추출 → `#w2` Spanner Graph 확장 → `#w3` Workflow Agent 대화 → `#w4` 평가 → `#w5` 변경 요청 · 어드민 승인 · 반영 · 전/후 비교 · 원복 |
 | 📓 **노트북 Lab 3 · Context Graph** (약 6분) | [`#c0` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) | `#c1` BigQuery Graph 준비 → `#c2` 답변 기록 → `#c3` GQL 감사 → `#c4` 👍/👎 · 정정 → 암묵지 후보 → `#c5` 승인 · KC 반영 · 재질의 → `#c6` 루프 대시보드 · KG 스냅샷 · 적재 데이터 탐색 |
-| 🏛️ **스타터 스튜디오 (`v6.16.0`)** | [스타터 스튜디오 열기 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | `⓪ 이해` 전체 흐름 → **샘플로 바로 체험**(데모 신원 · 샘플 팩) → 내 데이터로 구축 → CLI · 코드 번들 인계 |
+| 🏛️ **스타터 스튜디오 (`v6.17.0`)** | [스타터 스튜디오 열기 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | `⓪ 이해` 전체 흐름 → **샘플로 바로 체험**(데모 신원 · 샘플 팩) → 내 데이터로 구축 → CLI · 코드 번들 인계 |
 | ⚡ **완성 100/100 워크스페이스** | [3-에이전트 질의 · 피드백 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) · [Context Graph 시연 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) | 구축 대기 0초 · 평가 **100점** 워크스페이스 `ws-20261105-5525c8`에서 3-에이전트 질의와 1클릭 Context Graph 폐루프 시연 |
 | 🏢 **운영 도메인 스튜디오 (LG U+)** | [LG U+ 스튜디오 열기 ↗](https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/) | 13개 탭 통합 엔터프라이즈 온톨로지 레퍼런스 플랫폼 (통신 지원금 도메인, 영문 기본 + `EN | KO` 전환) |
 | 🧭 **레퍼런스 마법사** | [`/wizard` ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/wizard#step-1) | 큐레이션된 6단계 샘플 결과(Flow A/B/C, 기준 100점) — 비교용 |
-| 🔌 **Platform Core MCP (`v1.14.0`)** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | **도구 67종** = 빌드 10 + 데이터 플레인 28 + 코어 · 인테이크 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) + **RAG 베이스라인 8** (`aos_core_rag_decompose` · `create_corpus` · `import_files` · `get_operation` · `status` · `delete_corpus` · `retrieve` · `answer`) + **비교 2** (`aos_core_eval_rubric_judge` · `aos_core_eval_compare`) · JSON-RPC `tools/list` · `tools/call` |
+| 🔌 **Platform Core MCP (`v1.14.1`)** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | **도구 67종** = 빌드 10 + 데이터 플레인 28 + 코어 · 인테이크 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) + **RAG 베이스라인 8** (`aos_core_rag_decompose` · `create_corpus` · `import_files` · `get_operation` · `status` · `delete_corpus` · `retrieve` · `answer`) + **비교 2** (`aos_core_eval_rubric_judge` · `aos_core_eval_compare`) · JSON-RPC `tools/list` · `tools/call` |
 
 > **노트북 랩 세션 정책**: 로그인 없이 **게스트로 바로 시작**하거나 Google 계정(선택)으로 로그인할 수 있습니다. 세션마다 전용 GCS 버킷 · Spanner DB가 자동 생성되고 미사용 3시간 뒤 자동 정리됩니다. 사이드바 **▶ Run all**로 Lab을 끝까지 실행할 수 있으며, PC가 잠들거나 새로고침돼도 완료된 셀은 건너뛰고 이어서 실행합니다.
 
@@ -74,8 +74,10 @@
 | 단계 | 비교 대상 | 답하려는 질문 |
 | :---: | :--- | :--- |
 | **1단계** | RAG vs OKF 위키 *(문서 전용 CQ · 정형·복합 제외)* | 문서를 위키로 컴파일하면, 문서에서 단락을 검색하는 것보다 더 잘 답하는가? |
-| **2단계** | OKF 위키 vs 그래프 | 테이블 위의 그래프가 위키에 무엇을 더하는가? |
-| **최종** | RAG vs OKF 위키 vs 그래프 | 나란히 — 평균 점수 · PASS 수 · 승 · 무 · 패 · CQ 유형별 · 응답 시간 |
+| **2단계** | OKF 위키 vs 그래프 *(통합 전체 CQ)* | 테이블 위의 그래프가 위키에 무엇을 더하는가? |
+| **최종** | RAG vs OKF 위키 vs 그래프 *(통합 전체 CQ)* | 나란히 — 평균 점수 · PASS 수 · 승 · 무 · 패 · CQ 유형별 · 응답 시간 |
+
+**1단계를 문서 전용으로 집계하는 이유.** RAG 코퍼스에는 테이블 행이 검색 카드로 들어 있지만 Wiki 에이전트는 컴파일된 위키(규칙 · 정의)만 읽습니다. 따라서 `data` · `hybrid` CQ에서 생기는 RAG 대 위키 차이는 문서 이해력이 아니라 행 데이터 접근 여부를 재게 됩니다. 그래서 `aos_core_eval_compare`는 기본값으로 이 유형을 1단계에서 제외하고, 전체 CQ 기준 1단계 평균을 참고치로 함께 보고합니다. 2단계와 최종은 모든 CQ(문서 + 정형·복합)를 채점하며, 그래프의 행 단위 답변은 여기서 측정됩니다.
 
 **공정성 규칙** (관례가 아니라 [`src/aos/rag.py`](src/aos/rag.py)가 강제합니다):
 

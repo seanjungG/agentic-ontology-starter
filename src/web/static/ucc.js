@@ -46,10 +46,10 @@
     },
   };
 
-  const state = { docId: null, lang: "ko", doc: null, meta: null, comments: [], demoUrl: "", composerFor: null, panelOpen: false }; // GOAL-270: comments drawer hidden until asked for
+  const state = { docId: null, lang: "en", doc: null, meta: null, comments: [], demoUrl: "", composerFor: null, panelOpen: false }; // GOAL-270: comments drawer hidden until asked for
   const SLIDE_DOCS = { onepager: 1, discovery: 1 }; // rendered as a slide canvas, no header table / TOC
   const BRD_GROUP = { brd: 1, onepager: 1, discovery: 1 }; // 1-Pager · Discovery live under the BRD menu
-  const T = () => I18N[state.lang] || I18N.ko;
+  const T = () => I18N[state.lang] || I18N.en;
   const tokens = () => { try { return JSON.parse(localStorage.getItem("ucc.tokens") || "{}"); } catch (_) { return {}; } };
   const saveToken = (id, tok) => { const t = tokens(); t[id] = tok; localStorage.setItem("ucc.tokens", JSON.stringify(t)); };
   const adminKey = () => localStorage.getItem("ucc.adminKey") || "";
@@ -59,9 +59,9 @@
     const q = new URLSearchParams(location.search).get("lang");
     if (q === "en" || q === "ko") return q;
     const saved = localStorage.getItem("ucc.lang");
-    return saved === "en" ? "en" : "ko";
+    return saved === "ko" ? "ko" : "en";  // English by default (clean load, no ?lang)
   }
-  function urlFor(doc, lang, hash) { return `/ucc/${doc}${lang === "en" ? "?lang=en" : ""}${hash || ""}`; }
+  function urlFor(doc, lang, hash) { return `/ucc/${doc}${lang === "ko" ? "?lang=ko" : ""}${hash || ""}`; }
 
   function toast(msg, err) {
     const t = $("#ucc-toast"); t.textContent = msg; t.classList.toggle("err", !!err); t.classList.add("show");
@@ -86,7 +86,7 @@
     $("#ucc-refresh").title = t.refresh; $("#ucc-toggle-panel").title = t.panelToggle; $("#ucc-admin").title = t.adminTitle;
     $("#ucc-admin").classList.toggle("on", !!adminKey());
     const subOf = (d) => (d === "onepager" ? t.onepagerSub : (d === "discovery" ? t.discoverySub : (d === "brd" ? t.brdSub : t.sddSub)));
-    const verOf = (d) => { const meta = state.meta && state.meta.docs && state.meta.docs[d]; const m = meta && (meta[state.lang] || meta.ko); return (m && m.version) || ""; };
+    const verOf = (d) => { const meta = state.meta && state.meta.docs && state.meta.docs[d]; const m = meta && (meta[state.lang] || meta.en || meta.ko); return (m && m.version) || ""; };
     document.querySelectorAll(".ucc-tab[data-doc], .ucc-dd-item[data-doc]").forEach((a) => {
       const d = a.dataset.doc, v = verOf(d);
       a.title = subOf(d) + (v ? ` · ${v}` : "");
@@ -311,7 +311,7 @@
     loadComments(false);
   }
   function setLang(l, push) {
-    l = l === "en" ? "en" : "ko"; if (l === state.lang) return;
+    l = l === "ko" ? "ko" : "en"; if (l === state.lang) return;
     state.lang = l; localStorage.setItem("ucc.lang", l);
     switchDoc(state.docId, push !== false);
   }
