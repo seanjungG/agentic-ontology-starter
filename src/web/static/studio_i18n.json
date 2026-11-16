@@ -1115,7 +1115,7 @@
     "cmp.teaserBody": "같은 원천 · 같은 CQ · 같은 채점기로 RAG, OKF 위키, 그래프를 3단계로 비교합니다. 합성 필드 규모 벤치마크의 측정 결과를 바로 볼 수 있고, 내 워크스페이스에서도 선택 단계로 실행할 수 있습니다.",
     "cmp.teaserCta": "비교 결과 보기",
     "cmp.keeps": "실행 중 이 화면을 닫아도 단계는 서버에서 끝까지 실행됩니다. 다시 열면 저장된 결과가 표시됩니다.",
-    "cmp.scopeDoc": "문서 전용 {n}/{total}문항 (정형·복합 {ex}제외)",
+    "cmp.scopeDoc": "문서 전용 {n}/{total}문항 (정형·복합 {ex}문항 제외)",
     "cmp.scopeUnified": "통합 전체 {n}문항 (문서 {doc} + 정형·복합 {st})",
     "cmp.allRef": "참고 · 전체 {n}문항 기준: RAG {b} vs OKF 위키 {c} (Δ {d}점)",
     "cmp.tagDoc": "문서",
@@ -2237,9 +2237,9 @@
     "cmp.teaserBody": "RAG, OKF Wiki and Graph compared in three stages on the same sources, the same CQs and one judge. See the measured result of the synthetic field-scale benchmark, or run it on your own workspace as an optional step.",
     "cmp.teaserCta": "See the comparison",
     "cmp.keeps": "If you close this page while a stage runs, it still finishes on the server; reopen the page to see the stored result.",
-    "cmp.scopeDoc": "Doc-only {n}/{total} CQs ({ex} structured excluded)",
-    "cmp.scopeUnified": "Unified all {n} CQs ({doc} doc + {st} structured)",
-    "cmp.allRef": "All-{n}-CQ reference: RAG {b} vs OKF Wiki {c} (Δ {d}p)",
+    "cmp.scopeDoc": "Doc-only {n}/{total} CQs ({ex} structured/hybrid excluded)",
+    "cmp.scopeUnified": "Unified all {n} CQs ({doc} doc + {st} structured/hybrid)",
+    "cmp.allRef": "All-{n}-CQ reference: RAG {b} vs OKF Wiki {c} (Δ {d} pts)",
     "cmp.tagDoc": "Doc",
     "cmp.tagStructured": "Structured"
   }

@@ -212,7 +212,7 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/ucc/docs":
             return self._json(ucc_pages.docs_payload())
         if path == "/api/ucc/doc":
-            doc = ucc_pages.load_doc(arg("id", "brd").lower(), arg("lang", "ko"))
+            doc = ucc_pages.load_doc(arg("id", "brd").lower(), arg("lang", "en"))
             return self._json(doc) if doc else self._json({"status": "NOT_FOUND", "message": "document not published"}, 404)
         if path == "/api/ucc/comments":
             code, payload = ucc_pages.list_comments(arg("doc", "brd").lower(), force=arg("refresh") == "1")

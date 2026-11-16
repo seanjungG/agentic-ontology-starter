@@ -1,6 +1,6 @@
 {
   "project_name": "Agentic Ontology Starter (Resource-Connected Edition)",
-  "version": "6.16.0",
+  "version": "6.17.0",
   "architecture_mode": "RESOURCE_CONNECTED_STARTER",
   "domain": "Telecom Subscription & Penalty Governance (Sample Reference)",
   "default_serving_model": "gemini-4-argon",
@@ -26,7 +26,7 @@
   },
   "reference_studios": {
     "starter_live_studio": {
-      "title": "Starter Studio (v6.16 · English Default · Spanner Graph & Context Graph)",
+      "title": "Starter Studio (v6.17 · English Default · Spanner Graph & Context Graph)",
       "url": "https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/",
       "scope": "5-Step Guided Builder · Instant 100/100 Workspace · Code & MCP Hand-off"
     },
