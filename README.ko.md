@@ -21,11 +21,11 @@
 | 📓 **노트북 Lab 1 · 온톨로지** (약 10분) | [`#ov` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) | **게스트 즉시 체험**(Google 로그인 선택): `#n1` CQ → `#n2` OKF 위키 + 커버리지 보완 → `#n3` 그래프 설계 · Spanner 적재 · GQL 확인 → `#n4` Knowledge Catalog · GQL Agent → `#n5` Wiki vs GQL Agent 평가 |
 | 📓 **노트북 Lab 2 · 워크플로우** (약 6분) | [`#w0` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) | `#w1` 룰 · 워크플로우 추출 → `#w2` Spanner Graph 확장 → `#w3` Workflow Agent 대화 → `#w4` 평가 → `#w5` 변경 요청 · 어드민 승인 · 반영 · 전/후 비교 · 원복 |
 | 📓 **노트북 Lab 3 · Context Graph** (약 6분) | [`#c0` 전체 도식 ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) | `#c1` BigQuery Graph 준비 → `#c2` 답변 기록 → `#c3` GQL 감사 → `#c4` 👍/👎 · 정정 → 암묵지 후보 → `#c5` 승인 · KC 반영 · 재질의 → `#c6` 루프 대시보드 · KG 스냅샷 · 적재 데이터 탐색 |
-| 🏛️ **스타터 스튜디오 (`v6.15.0`)** | [스타터 스튜디오 열기 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | `⓪ 이해` 전체 흐름 → **샘플로 바로 체험**(데모 신원 · 샘플 팩) → 내 데이터로 구축 → CLI · 코드 번들 인계 |
+| 🏛️ **스타터 스튜디오 (`v6.16.0`)** | [스타터 스튜디오 열기 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | `⓪ 이해` 전체 흐름 → **샘플로 바로 체험**(데모 신원 · 샘플 팩) → 내 데이터로 구축 → CLI · 코드 번들 인계 |
 | ⚡ **완성 100/100 워크스페이스** | [3-에이전트 질의 · 피드백 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) · [Context Graph 시연 ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) | 구축 대기 0초 · 평가 **100점** 워크스페이스 `ws-20261105-5525c8`에서 3-에이전트 질의와 1클릭 Context Graph 폐루프 시연 |
 | 🏢 **운영 도메인 스튜디오 (LG U+)** | [LG U+ 스튜디오 열기 ↗](https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/) | 13개 탭 통합 엔터프라이즈 온톨로지 레퍼런스 플랫폼 (통신 지원금 도메인, 영문 기본 + `EN | KO` 전환) |
 | 🧭 **레퍼런스 마법사** | [`/wizard` ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/wizard#step-1) | 큐레이션된 6단계 샘플 결과(Flow A/B/C, 기준 100점) — 비교용 |
-| 🔌 **Platform Core MCP (`v1.13.0`)** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | **도구 67종** = 빌드 10 + 데이터 플레인 28 + 코어 · 인테이크 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) + **RAG 베이스라인 8** (`aos_core_rag_decompose` · `create_corpus` · `import_files` · `get_operation` · `status` · `delete_corpus` · `retrieve` · `answer`) + **비교 2** (`aos_core_eval_rubric_judge` · `aos_core_eval_compare`) · JSON-RPC `tools/list` · `tools/call` |
+| 🔌 **Platform Core MCP (`v1.14.0`)** | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | **도구 67종** = 빌드 10 + 데이터 플레인 28 + 코어 · 인테이크 12 + Drive 2 + **Context Graph 5** (`aos_core_cg_*`) + **RAG 베이스라인 8** (`aos_core_rag_decompose` · `create_corpus` · `import_files` · `get_operation` · `status` · `delete_corpus` · `retrieve` · `answer`) + **비교 2** (`aos_core_eval_rubric_judge` · `aos_core_eval_compare`) · JSON-RPC `tools/list` · `tools/call` |
 
 > **노트북 랩 세션 정책**: 로그인 없이 **게스트로 바로 시작**하거나 Google 계정(선택)으로 로그인할 수 있습니다. 세션마다 전용 GCS 버킷 · Spanner DB가 자동 생성되고 미사용 3시간 뒤 자동 정리됩니다. 사이드바 **▶ Run all**로 Lab을 끝까지 실행할 수 있으며, PC가 잠들거나 새로고침돼도 완료된 셀은 건너뛰고 이어서 실행합니다.
 
@@ -73,7 +73,7 @@
 
 | 단계 | 비교 대상 | 답하려는 질문 |
 | :---: | :--- | :--- |
-| **1단계** | RAG vs OKF 위키 | 문서를 위키로 컴파일하면, 문서에서 단락을 검색하는 것보다 더 잘 답하는가? |
+| **1단계** | RAG vs OKF 위키 *(문서 전용 CQ · 정형·복합 제외)* | 문서를 위키로 컴파일하면, 문서에서 단락을 검색하는 것보다 더 잘 답하는가? |
 | **2단계** | OKF 위키 vs 그래프 | 테이블 위의 그래프가 위키에 무엇을 더하는가? |
 | **최종** | RAG vs OKF 위키 vs 그래프 | 나란히 — 평균 점수 · PASS 수 · 승 · 무 · 패 · CQ 유형별 · 응답 시간 |
 
@@ -121,13 +121,17 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · 5.0점 이내 차이는 무승부
 
 **1단계 — RAG vs OKF 위키**
 
+> 문서 전용 43/50문항 (정형·복합 7문항 제외: `data, hybrid`). *(참고 · 전체 50문항: RAG 90.9 vs OKF 위키 90.1, 차이 -0.8)*
+
 | 지표 | RAG | OKF 위키 | 차이 |
 |---|---:|---:|---:|
-| 평균 점수 (100점) | 90.9 | 90.1 | -0.8 |
-| PASS | 42/50 | 43/50 | +1 |
-| OKF 위키 기준 승 · 무 · 패 | | 4 · 41 · 5 | |
+| 평균 점수 (100점) | 95.2 | 100.0 | +4.8 |
+| PASS | 39/43 | 43/43 | +4 |
+| OKF 위키 기준 승 · 무 · 패 | | 4 · 39 · 0 | |
 
 **2단계 — OKF 위키 vs 그래프**
+
+> 통합 전체 50문항 (문서 43 + 정형·복합 7).
 
 | 지표 | OKF 위키 | 그래프 | 차이 |
 |---|---:|---:|---:|
@@ -136,6 +140,8 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · 5.0점 이내 차이는 무승부
 | 그래프 기준 승 · 무 · 패 | | 7 · 43 · 0 | |
 
 **최종 — RAG vs OKF 위키 vs 그래프**
+
+> 통합 전체 50문항 (문서 43 + 정형·복합 7).
 
 | 방식 | 평균 점수 (100점) | PASS | PARTIAL | FAIL | 평균 응답 시간(초) |
 |---|---:|---:|---:|---:|---:|
@@ -147,16 +153,16 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · 5.0점 이내 차이는 무승부
 
 | 유형 | 문항 | RAG | OKF 위키 | 그래프 | 최고 평균 |
 |---|---:|---:|---:|---:|---|
-| `alias` | 4 | 87.5 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
-| `calc` | 7 | 93.4 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
-| `compare` | 4 | 99.0 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
-| `current` | 8 | 92.5 | 100.0 | 99.5 | OKF 위키 |
-| `data` | 3 | 100.0 | 25.0 | 100.0 | RAG = 그래프 (동률) |
-| `exception` | 5 | 91.0 | 100.0 | 99.4 | OKF 위키 |
-| `history` | 4 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
-| `hybrid` | 4 | 37.2 | 32.5 | 99.8 | 그래프 |
-| `lookup` | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
-| `temporal` | 5 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
+| `alias` (문서) | 4 | 87.5 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
+| `calc` (문서) | 7 | 93.4 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
+| `compare` (문서) | 4 | 99.0 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
+| `current` (문서) | 8 | 92.5 | 100.0 | 99.5 | OKF 위키 |
+| `data` (정형·복합) | 3 | 100.0 | 25.0 | 100.0 | RAG = 그래프 (동률) |
+| `exception` (문서) | 5 | 91.0 | 100.0 | 99.4 | OKF 위키 |
+| `history` (문서) | 4 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
+| `hybrid` (정형·복합) | 4 | 37.2 | 32.5 | 99.8 | 그래프 |
+| `lookup` (문서) | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
+| `temporal` (문서) | 5 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
 <!-- GOAL296_RESULTS:ko:END -->
 
 **측정 결과 — 영어 팩** (`data/field_scale_pack/results/en.json`)
@@ -168,13 +174,17 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · 5.0점 이내 차이는 무승부
 
 **1단계 — RAG vs OKF 위키**
 
+> 문서 전용 43/50문항 (정형·복합 7문항 제외: `data, hybrid`). *(참고 · 전체 50문항: RAG 85.0 vs OKF 위키 90.1, 차이 +5.1)*
+
 | 지표 | RAG | OKF 위키 | 차이 |
 |---|---:|---:|---:|
-| 평균 점수 (100점) | 85.0 | 90.1 | +5.1 |
-| PASS | 36/50 | 43/50 | +7 |
-| OKF 위키 기준 승 · 무 · 패 | | 11 · 34 · 5 | |
+| 평균 점수 (100점) | 88.5 | 99.7 | +11.2 |
+| PASS | 33/43 | 43/43 | +10 |
+| OKF 위키 기준 승 · 무 · 패 | | 11 · 31 · 1 | |
 
 **2단계 — OKF 위키 vs 그래프**
+
+> 통합 전체 50문항 (문서 43 + 정형·복합 7).
 
 | 지표 | OKF 위키 | 그래프 | 차이 |
 |---|---:|---:|---:|
@@ -183,6 +193,8 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · 5.0점 이내 차이는 무승부
 | 그래프 기준 승 · 무 · 패 | | 7 · 42 · 1 | |
 
 **최종 — RAG vs OKF 위키 vs 그래프**
+
+> 통합 전체 50문항 (문서 43 + 정형·복합 7).
 
 | 방식 | 평균 점수 (100점) | PASS | PARTIAL | FAIL | 평균 응답 시간(초) |
 |---|---:|---:|---:|---:|---:|
@@ -194,16 +206,16 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · 5.0점 이내 차이는 무승부
 
 | 유형 | 문항 | RAG | OKF 위키 | 그래프 | 최고 평균 |
 |---|---:|---:|---:|---:|---|
-| `alias` | 4 | 87.8 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
-| `calc` | 7 | 91.0 | 99.6 | 99.9 | 그래프 |
-| `compare` | 4 | 99.2 | 100.0 | 99.8 | OKF 위키 |
-| `current` | 8 | 75.1 | 100.0 | 98.2 | OKF 위키 |
-| `data` | 3 | 100.0 | 27.0 | 100.0 | RAG = 그래프 (동률) |
-| `exception` | 5 | 90.2 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
-| `history` | 4 | 87.8 | 97.2 | 96.2 | OKF 위키 |
-| `hybrid` | 4 | 36.8 | 35.0 | 99.2 | 그래프 |
-| `lookup` | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
-| `temporal` | 5 | 83.4 | 99.8 | 100.0 | 그래프 |
+| `alias` (문서) | 4 | 87.8 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
+| `calc` (문서) | 7 | 91.0 | 99.6 | 99.9 | 그래프 |
+| `compare` (문서) | 4 | 99.2 | 100.0 | 99.8 | OKF 위키 |
+| `current` (문서) | 8 | 75.1 | 100.0 | 98.2 | OKF 위키 |
+| `data` (정형·복합) | 3 | 100.0 | 27.0 | 100.0 | RAG = 그래프 (동률) |
+| `exception` (문서) | 5 | 90.2 | 100.0 | 100.0 | OKF 위키 = 그래프 (동률) |
+| `history` (문서) | 4 | 87.8 | 97.2 | 96.2 | OKF 위키 |
+| `hybrid` (정형·복합) | 4 | 36.8 | 35.0 | 99.2 | 그래프 |
+| `lookup` (문서) | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF 위키 = 그래프 (동률) |
+| `temporal` (문서) | 5 | 83.4 | 99.8 | 100.0 | 그래프 |
 <!-- GOAL296_RESULTS:en:END -->
 
 두 팩의 문항별 답변 · 채점 요약 · 감점 사유는 스튜디오(**RAG vs 위키 vs 그래프 › 필드 규모 벤치마크**)에서 볼 수 있습니다. 이 결과는 합성 자료 하나 · 답변 모델 하나 · 채점기 하나로 측정한 것이므로 방법을 보여 주는 예시로 받아들이고, 결정하기 전에 내 원천과 내 CQ로 비교를 실행하세요.

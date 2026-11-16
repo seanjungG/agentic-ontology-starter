@@ -1136,13 +1136,22 @@
   function cmpPairCard(c, stageKey, title, base, cand, types) {
     const st = c[stageKey] || {}, b = st.base || {}, d = st.candidate || {};
     const f = ((c.findings || []).find((x) => x.stage === (stageKey.startsWith("stage1") ? "stage1" : "stage2") && x.kind === "overall") || {})[S.lang === "ko" ? "ko" : "en"];
-    return `<div class="card"><div class="card-head"><h3>${esc(title)}</h3><span class="sub">${esc(T("cmp.overN", { n: st.count }))}</span></div>
+    const scopeSub = st.scope === "doc_only" && st.excluded_count
+      ? T("cmp.scopeDoc", { n: st.count, total: st.total_cq_count, ex: st.excluded_count })
+      : (stageKey.startsWith("stage2") && st.structured_count
+        ? T("cmp.scopeUnified", { n: st.count, doc: st.doc_count, st: st.structured_count })
+        : T("cmp.overN", { n: st.count }));
+    const ref = st.scope === "doc_only" && st.all_cqs_reference && st.all_cqs_reference.count ? st.all_cqs_reference : null;
+    const refB = ref ? (ref.base_avg != null ? ref.base_avg : (ref.base || {}).avg) : null;
+    const refC = ref ? (ref.candidate_avg != null ? ref.candidate_avg : (ref.candidate || {}).avg) : null;
+    const refLine = (ref && refB != null && refC != null) ? `<div class="meta mt8">${esc(T("cmp.allRef", { n: ref.count, b: cmpNum(refB), c: cmpNum(refC), d: (ref.delta_points > 0 ? "+" : "") + cmpNum(ref.delta_points) }))}</div>` : "";
+    return `<div class="card"><div class="card-head"><h3>${esc(title)}</h3><span class="tag">${esc(scopeSub)}</span></div>
       <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.metric")}</th><th>${cmpSys(base)}</th><th>${cmpSys(cand)}</th><th>${T("cmp.delta")}</th></tr></thead><tbody>
         <tr><td>${T("cmp.avg")}</td><td>${cmpNum(b.avg)}</td><td>${cmpNum(d.avg)}</td><td>${cmpDelta(st.delta_points)}</td></tr>
         <tr><td>PASS</td><td>${cmpNum(b.pass)}/${cmpNum(b.count)}</td><td>${cmpNum(d.pass)}/${cmpNum(d.count)}</td><td>${cmpDelta(st.delta_pass)}</td></tr>
         <tr><td>${T("cmp.latency")}</td><td>${cmpNum(b.avg_latency_sec)}</td><td>${cmpNum(d.avg_latency_sec)}</td><td></td></tr>
         <tr><td>${esc(T("cmp.wtl", { c: T(`cmp.sys.${cand}`) }))}</td><td colspan="3">${cmpNum(st.wins)} · ${cmpNum(st.ties)} · ${cmpNum(st.losses)}</td></tr></tbody></table></div>
-      ${f ? `<div class="meta mt8">${esc(f)}</div>` : ""}
+      ${f ? `<div class="meta mt8">${esc(f)}</div>` : ""}${refLine}
       <details class="fold mt8"><summary>${T("cmp.byType")}</summary><div class="inner"><div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.type")}</th><th>${T("cmp.n")}</th><th>${cmpSys(base)}</th><th>${cmpSys(cand)}</th><th>${T("cmp.delta")}</th></tr></thead><tbody>
         ${(st.by_type || []).map((r) => `<tr><td>${esc((types && types[r.type]) || r.type)}</td><td>${cmpNum(r.count)}</td><td>${cmpNum(r.base_avg)}</td><td>${cmpNum(r.candidate_avg)}</td><td>${cmpDelta(r.delta_points)}</td></tr>`).join("")}</tbody></table></div></div></details></div>`;
   }
@@ -1172,12 +1181,12 @@
         ${rm.embedding_model || rm.retrieve ? `<div class="flex small mt8"><span class="meta">${T("cmp.ragCfg")}</span>${rm.embedding_model ? `<span class="tag mono">${esc(rm.embedding_model)}</span>` : ""}${cmpKv(rm.retrieve)}${rm.stats ? cmpKv({ units: rm.stats.units, files: rm.stats.files }) : ""}</div>` : ""}
         <div class="cmp-kpis mt12">${CMP_SYS.map((s) => { const x = sums[s] || {}; return `<div class="kpi"><div class="k">${cmpSys(s)}</div><div class="v">${cmpNum(x.avg)}</div><div class="s">${cmpNum(x.pass)}/${cmpNum(x.count)} PASS · ${cmpNum(x.avg_latency_sec)} s</div></div>`; }).join("")}</div></div>
       <div class="grid2">${cmpPairCard(c, "stage1_rag_vs_wiki", T("cmp.stage1"), "rag", "wiki", types)}${cmpPairCard(c, "stage2_wiki_vs_graph", T("cmp.stage2"), "wiki", "graph", types)}</div>
-      <div class="card"><div class="card-head"><h3>${T("cmp.final")}</h3><span class="sub">${esc(T("cmp.overN", { n: c.cq_count }))}</span></div>
+      <div class="card"><div class="card-head"><h3>${T("cmp.final")}</h3><span class="tag">${esc(fin.structured_count ? T("cmp.scopeUnified", { n: c.cq_count, doc: fin.doc_count, st: fin.structured_count }) : T("cmp.overN", { n: c.cq_count }))}</span></div>
         <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.system")}</th><th>${T("cmp.avg")}</th><th>PASS</th><th>PARTIAL</th><th>FAIL</th><th>${T("cmp.minmax")}</th><th>${T("cmp.latency")}</th></tr></thead><tbody>
           ${CMP_SYS.map((s) => { const x = sums[s] || {}; return `<tr><td><b>${cmpSys(s)}</b></td><td>${cmpNum(x.avg)}</td><td>${cmpNum(x.pass)}/${cmpNum(x.count)}</td><td>${cmpNum(x.partial)}</td><td>${cmpNum(x.fail)}</td><td>${cmpNum(x.min)} – ${cmpNum(x.max)}</td><td>${cmpNum(x.avg_latency_sec)}</td></tr>`; }).join("")}</tbody></table></div>
         <div class="eyebrow mt16">${T("cmp.byType")}</div>
         <div class="tbl-wrap mt8"><table class="tbl cmp-tbl"><thead><tr><th>${T("cmp.type")}</th><th>${T("cmp.n")}</th>${CMP_SYS.map((s) => `<th>${cmpSys(s)}</th>`).join("")}<th>${T("cmp.best")}</th></tr></thead><tbody>
-          ${(fin.by_type || []).map((r) => { const best = cmpBest(r); return `<tr><td>${tl(r.type)}</td><td>${cmpNum(r.count)}</td>${CMP_SYS.map((s) => `<td class="${best.length === 1 && best[0] === s ? "cmp-top" : ""}">${cmpNum(r[s])}</td>`).join("")}<td>${best.map((s) => cmpSys(s)).join(" = ")}${best.length > 1 ? ` <span class="tag">${T("cmp.tie")}</span>` : ""}</td></tr>`; }).join("")}</tbody></table></div></div>
+          ${(fin.by_type || []).map((r) => { const best = cmpBest(r); const sTag = r.scope ? ` <span class="tag">${esc(r.scope === "structured" ? T("cmp.tagStructured") : T("cmp.tagDoc"))}</span>` : ""; return `<tr><td>${tl(r.type)}${sTag}</td><td>${cmpNum(r.count)}</td>${CMP_SYS.map((s) => `<td class="${best.length === 1 && best[0] === s ? "cmp-top" : ""}">${cmpNum(r[s])}</td>`).join("")}<td>${best.map((s) => cmpSys(s)).join(" = ")}${best.length > 1 ? ` <span class="tag">${T("cmp.tie")}</span>` : ""}</td></tr>`; }).join("")}</tbody></table></div></div>
       <div class="card"><div class="card-head"><h3>${T("cmp.perCq")} · ${rows.length}</h3><span class="right"><select data-cmpf="${esc(key)}"><option value="">${T("cmp.allTypes")}</option>${typeSet.map((t) => `<option value="${esc(t)}" ${v.type === t ? "selected" : ""}>${tl(t)}</option>`).join("")}</select></span></div>
         <div class="tbl-wrap cmp-cqs"><table class="tbl cmp-tbl"><thead><tr><th>ID</th><th>${T("cmp.type")}</th><th>${T("ev.q")}</th>${CMP_SYS.map((s) => `<th>${cmpSys(s)}</th>`).join("")}</tr></thead><tbody>
           ${rows.map((r) => `<tr class="cmp-row ${v.id === r.id ? "on" : ""}" data-act="cmp-cq" data-key="${esc(key)}" data-id="${esc(r.id)}"><td class="mono nowrap">${esc(r.id)}</td><td class="nowrap">${tl(r.type)}</td><td>${esc(r.question)}</td>${CMP_SYS.map((s) => `<td>${sc(r[s])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>

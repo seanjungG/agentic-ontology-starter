@@ -179,10 +179,43 @@ def render_markdown(run: Optional[Dict[str, Any]], lang: str = "en", pack_lang: 
         lines.append(_tx(lang, "thr", p=_num(th.get("pass")), q=_num(th.get("partial")), m=_num(th.get("tie_margin"))))
     s1 = {**cmp_["stage1_rag_vs_wiki"], "base_name": "rag", "candidate_name": "wiki"}
     s2 = {**cmp_["stage2_wiki_vs_graph"], "base_name": "wiki", "candidate_name": "graph"}
-    lines += ["", f"**{_tx(lang, 'stage1')}**", ""] + _pair_table(lang, s1)
-    lines += ["", f"**{_tx(lang, 'stage2')}**", ""] + _pair_table(lang, s2)
+    s1_note: List[str] = []
+    if s1.get("scope") == "doc_only" and s1.get("excluded_count"):
+        excl = ", ".join(str(x) for x in (s1.get("excluded_types") or []))
+        ref = s1.get("all_cqs_reference") if isinstance(s1.get("all_cqs_reference"), dict) else None
+        ref_s = ""
+        if ref and ref.get("count"):
+            rb = ref.get("base_avg") if ref.get("base_avg") is not None else (ref.get("base") or {}).get("avg")
+            rc = ref.get("candidate_avg") if ref.get("candidate_avg") is not None else (ref.get("candidate") or {}).get("avg")
+            ref_s = (f" *(참고 · 전체 {ref.get('count')}문항: RAG {_num(rb)} vs OKF 위키 {_num(rc)}, 차이 {_signed(ref.get('delta_points'))})*"
+                     if lang == "ko"
+                     else f" *(all-{ref.get('count')}-CQ reference: RAG {_num(rb)} vs OKF Wiki {_num(rc)}, Δ {_signed(ref.get('delta_points'))})*")
+        s1_note = [
+            f"> 문서 전용 {s1.get('count')}/{s1.get('total_cq_count')}문항 (정형·복합 {s1.get('excluded_count')}문항 제외: `{excl}`).{ref_s}"
+            if lang == "ko"
+            else f"> Document-only scope: {s1.get('count')}/{s1.get('total_cq_count')} CQs ({s1.get('excluded_count')} structured/hybrid excluded: `{excl}`).{ref_s}",
+            "",
+        ]
+    s2_note: List[str] = []
+    if s2.get("structured_count"):
+        s2_note = [
+            f"> 통합 전체 {s2.get('count')}문항 (문서 {s2.get('doc_count')} + 정형·복합 {s2.get('structured_count')})."
+            if lang == "ko"
+            else f"> Unified full scope: all {s2.get('count')} CQs ({s2.get('doc_count')} document + {s2.get('structured_count')} structured/hybrid).",
+            "",
+        ]
+    lines += ["", f"**{_tx(lang, 'stage1')}**", ""] + s1_note + _pair_table(lang, s1)
+    lines += ["", f"**{_tx(lang, 'stage2')}**", ""] + s2_note + _pair_table(lang, s2)
     fin = cmp_["final_three_way"]
-    lines += ["", f"**{_tx(lang, 'final')}**", "",
+    fin_note: List[str] = []
+    if fin.get("structured_count"):
+        fin_note = [
+            f"> 통합 전체 {cmp_.get('cq_count')}문항 (문서 {fin.get('doc_count')} + 정형·복합 {fin.get('structured_count')})."
+            if lang == "ko"
+            else f"> Unified full scope: all {cmp_.get('cq_count')} CQs ({fin.get('doc_count')} document + {fin.get('structured_count')} structured/hybrid).",
+            "",
+        ]
+    lines += ["", f"**{_tx(lang, 'final')}**", ""] + fin_note + [
               f"| {_tx(lang, 'system')} | {_tx(lang, 'avg')} | {_tx(lang, 'pass')} | {_tx(lang, 'partial')} | {_tx(lang, 'fail')} | {_tx(lang, 'lat')} |",
               "|---|---:|---:|---:|---:|---:|"]
     for s in SYSTEMS:
@@ -194,5 +227,11 @@ def render_markdown(run: Optional[Dict[str, Any]], lang: str = "en", pack_lang: 
     for row in fin.get("by_type") or []:
         best = best_of(row)
         label = " = ".join(_name(lang, s) for s in best) + (f" ({_tx(lang, 'tie')})" if len(best) > 1 else "")
-        lines.append(f"| `{row.get('type')}` | {row.get('count', '')} | {_num(row.get('rag'))} | {_num(row.get('wiki'))} | {_num(row.get('graph'))} | {label} |")
+        sc = row.get("scope")
+        sc_lbl = ""
+        if sc == "structured":
+            sc_lbl = " (정형·복합)" if lang == "ko" else " (structured)"
+        elif sc == "doc":
+            sc_lbl = " (문서)" if lang == "ko" else " (doc)"
+        lines.append(f"| `{row.get('type')}`{sc_lbl} | {row.get('count', '')} | {_num(row.get('rag'))} | {_num(row.get('wiki'))} | {_num(row.get('graph'))} | {label} |")
     return "\n".join(lines)
