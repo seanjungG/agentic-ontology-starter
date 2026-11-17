@@ -711,3 +711,9 @@ body[data-doc="discovery"] .ucc-sec-lead .s-pair-bar { margin: 0; }
 .ucc-doc-head, .ucc-doc, .ucc-foot { max-width: 1240px; }
 .ucc-sec { padding-left: 40px; padding-right: 48px; }
 @media (max-width: 1100px) { .ucc-main { padding: 18px 20px 60px 14px; } .ucc-sec { padding-left: 22px; padding-right: 40px; } }
+
+/* Pitch ▾ dropdown (Sales / Tech pitch decks, external Google Slides) */
+.ucc-dd-toggle { font: inherit; font-size: 14.5px; font-weight: 600; color: var(--dim); border: 0; border-bottom: 3px solid transparent; background: none; cursor: pointer; }
+.ucc-dd-toggle .caret { font-size: 12px; margin-left: 4px; color: var(--dim); }
+#ucc-pitch-group .ucc-dd-menu { min-width: 300px; }
+.ucc-dd-item.ucc-ext b { color: #137333; }

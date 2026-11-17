@@ -37,6 +37,8 @@ ADMIN_KEY = os.environ.get("UCC_ADMIN_KEY", "").strip()
 COMMENTS_PREFIX = os.environ.get("UCC_COMMENTS_PREFIX", "ucc/comments/").strip("/") + "/"
 DEMO_URL_DEFAULT = "https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/"
 NOTEBOOK_URL_DEFAULT = "https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/"
+PITCH_SALES_URL_DEFAULT = "https://docs.google.com/presentation/d/1GuhiNY5hklr8bcVM3Wy_m8I7U5yLDTEk-i_-W8OyUwI/edit"
+PITCH_TECH_URL_DEFAULT = "https://docs.google.com/presentation/d/1uPDIUx9MbvC9nWgwVGhgADmpE6Q8VPomDKxZNDOXjpk/edit"
 KST = dt.timezone(dt.timedelta(hours=9))
 
 MAX_TEXT = 2000
@@ -62,6 +64,10 @@ def manifest() -> Dict[str, Any]:
     data["demo_url"] = os.environ.get("UCC_DEMO_URL") or data["demo_url"]
     data.setdefault("notebook_url", NOTEBOOK_URL_DEFAULT)
     data["notebook_url"] = os.environ.get("UCC_NOTEBOOK_URL") or data["notebook_url"]
+    data.setdefault("pitch_sales_url", PITCH_SALES_URL_DEFAULT)
+    data["pitch_sales_url"] = os.environ.get("UCC_PITCH_SALES_URL") or data["pitch_sales_url"]
+    data.setdefault("pitch_tech_url", PITCH_TECH_URL_DEFAULT)
+    data["pitch_tech_url"] = os.environ.get("UCC_PITCH_TECH_URL") or data["pitch_tech_url"]
     data.setdefault("docs", {})
     return data
 
@@ -151,7 +157,8 @@ def docs_payload() -> Dict[str, Any]:
             meta = _doc_meta(k, lang)
             if meta:
                 docs[k][lang] = {kk: vv for kk, vv in meta.items() if kk != "source"}
-    return {"docs": docs, "demo_url": m["demo_url"], "notebook_url": m["notebook_url"], "published_at": m.get("published_at", ""),
+    return {"docs": docs, "demo_url": m["demo_url"], "notebook_url": m["notebook_url"],
+            "pitch_sales_url": m["pitch_sales_url"], "pitch_tech_url": m["pitch_tech_url"], "published_at": m.get("published_at", ""),
             "langs": [l for l in LANGS if any(l in v for v in docs.values())], "admin_enabled": bool(ADMIN_KEY)}
 
 

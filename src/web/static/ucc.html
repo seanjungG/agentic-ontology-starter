@@ -24,6 +24,14 @@
       </div>
     </div>
     <a class="ucc-tab" data-doc="sdd" href="/ucc/sdd">SDD</a>
+    <!-- Sales / Tech pitch decks (Google Slides, open in a new tab). URLs come from /api/ucc/docs (manifest pitch_*_url, env UCC_PITCH_*_URL). -->
+    <div class="ucc-dd" id="ucc-pitch-group">
+      <button type="button" class="ucc-tab ucc-tab-group ucc-dd-toggle" id="ucc-pitch-btn" aria-haspopup="true" aria-expanded="false" aria-controls="ucc-pitch-menu">Pitch<span class="caret">▾</span></button>
+      <div class="ucc-dd-menu" id="ucc-pitch-menu" role="menu">
+        <a class="ucc-dd-item ucc-ext" role="menuitem" id="ucc-pitch-sales" href="#" target="_blank" rel="noopener"><b>Sales Pitch ↗</b><small id="ucc-pitch-sales-sub"></small></a>
+        <a class="ucc-dd-item ucc-ext" role="menuitem" id="ucc-pitch-tech" href="#" target="_blank" rel="noopener"><b>Tech Pitch ↗</b><small id="ucc-pitch-tech-sub"></small></a>
+      </div>
+    </div>
     <a class="ucc-tab ucc-demo" id="ucc-demo" href="#" rel="noopener">Demo<span class="arrow">↗</span></a>
     <a class="ucc-tab ucc-demo" id="ucc-notebook" href="#" rel="noopener">Notebook<span class="arrow">↗</span></a>
   </nav>
