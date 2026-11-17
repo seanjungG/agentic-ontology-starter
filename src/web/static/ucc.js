@@ -298,6 +298,12 @@
     $("#ucc-toggle-panel").classList.toggle("on", state.panelOpen); $("#ucc-toggle-panel").setAttribute("aria-pressed", String(state.panelOpen));
   }
   function setMenu(open) { const g = $("#ucc-brd-group"); g.classList.toggle("open", open); $("#ucc-brd-caret").setAttribute("aria-expanded", String(open)); }
+  function setPitch(open) { const g = $("#ucc-pitch-group"); if (!g) return; g.classList.toggle("open", open); $("#ucc-pitch-btn").setAttribute("aria-expanded", String(open)); }
+  function pitchSubs() {
+    const ko = state.lang === "ko";
+    if ($("#ucc-pitch-sales-sub")) $("#ucc-pitch-sales-sub").textContent = ko ? "C레벨·세일즈 리더용 (Google Slides 10장)" : "For C-level & sales leaders (Google Slides, 10 slides)";
+    if ($("#ucc-pitch-tech-sub")) $("#ucc-pitch-tech-sub").textContent = ko ? "고객 아키텍트·CE용 (Google Slides 12장)" : "For customer architects & CEs (Google Slides, 12 slides)";
+  }
 
   // ------------------------------------------------------------------ boot
   async function switchDoc(id, push) {
@@ -312,7 +318,7 @@
   }
   function setLang(l, push) {
     l = l === "ko" ? "ko" : "en"; if (l === state.lang) return;
-    state.lang = l; localStorage.setItem("ucc.lang", l);
+    state.lang = l; localStorage.setItem("ucc.lang", l); pitchSubs();
     switchDoc(state.docId, push !== false);
   }
   async function boot() {
@@ -322,14 +328,23 @@
       state.demoUrl = state.meta.demo_url || "";
       $("#ucc-demo").href = state.demoUrl || "#"; // same tab, one-way: the demo app has no "back" control
       if ($("#ucc-notebook")) $("#ucc-notebook").href = state.meta.notebook_url || "#"; // one-way like Demo
+      if ($("#ucc-pitch-sales")) $("#ucc-pitch-sales").href = state.meta.pitch_sales_url || "#";
+      if ($("#ucc-pitch-tech")) $("#ucc-pitch-tech").href = state.meta.pitch_tech_url || "#";
+      if (!state.meta.pitch_sales_url && !state.meta.pitch_tech_url && $("#ucc-pitch-group")) $("#ucc-pitch-group").hidden = true;
       if (!(state.meta.langs || []).includes("en")) $("#lang-toggle").hidden = true;
     } catch (e) { toast(T().listFail + e.message, true); }
     document.querySelectorAll(".ucc-tab[data-doc], .ucc-dd-item[data-doc]").forEach((a) => a.addEventListener("click", (ev) => { ev.preventDefault(); setMenu(false); a.blur(); switchDoc(a.dataset.doc, true); window.scrollTo(0, 0); }));
     $("#ucc-brd-group").addEventListener("mouseleave", () => setMenu(false)); // GOAL-272: never leave the menu covering the page
-    window.addEventListener("scroll", () => setMenu(false), { passive: true });
+    window.addEventListener("scroll", () => { setMenu(false); setPitch(false); }, { passive: true });
+    if ($("#ucc-pitch-group")) {
+      pitchSubs();
+      $("#ucc-pitch-group").addEventListener("mouseleave", () => setPitch(false));
+      $("#ucc-pitch-btn").addEventListener("click", (ev) => { ev.stopPropagation(); setMenu(false); setPitch(!$("#ucc-pitch-group").classList.contains("open")); });
+      document.querySelectorAll("#ucc-pitch-menu a").forEach((a) => a.addEventListener("click", () => { setPitch(false); a.blur(); }));
+    }
     $("#ucc-brd-caret").addEventListener("click", (ev) => { ev.stopPropagation(); setMenu(!$("#ucc-brd-group").classList.contains("open")); });
-    document.addEventListener("click", (ev) => { if (!ev.target.closest("#ucc-brd-group")) setMenu(false); });
-    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { setMenu(false); if (state.panelOpen && $("#ucc-composer").hidden) togglePanel(false); } });
+    document.addEventListener("click", (ev) => { if (!ev.target.closest("#ucc-brd-group")) setMenu(false); if (!ev.target.closest("#ucc-pitch-group")) setPitch(false); });
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { setMenu(false); setPitch(false); if (state.panelOpen && $("#ucc-composer").hidden) togglePanel(false); } });
     $("#ucc-panel-close").addEventListener("click", () => togglePanel(false));
     document.querySelectorAll("#lang-toggle button").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
     window.addEventListener("popstate", () => { state.lang = langFromUrl(); switchDoc(docFromPath(), false); });
