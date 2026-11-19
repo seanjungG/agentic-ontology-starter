@@ -47,7 +47,7 @@ from src.aos import intake, pipeline, sources, studio, three_way
 from src.aos.ws import (McpLog, WsError, clean_env, clean_sources, clean_template, default_dataset, env_defaults, error_text, load,
                         new_workspace, new_ws_id, now_iso, save)
 from src.config import APP_VERSION, DEMO_WS, GITHUB_URL, NOTEBOOK_URL, SHOWCASE_URL
-from src.gcp_client import call_core_mcp_tool, runtime_settings
+from src.gcp_client import call_core_mcp_tool, model_display, runtime_settings
 from src.web import admin_metering
 
 UPLOAD_MAX = intake.MAX_CONVERT_BYTES  # GOAL-243: binary documents up to 12 MB (converted by Core MCP)
@@ -58,7 +58,9 @@ def bootstrap(lang: str) -> Dict[str, Any]:
     s = runtime_settings()
     return {"version": APP_VERSION, "lang": lang, "presets": studio.presets(lang), "env_defaults": env_defaults(),
             "sample": sources.sample_sources(lang), "core_mcp_url": s["core_mcp_url"], "github_url": GITHUB_URL, "notebook_url": NOTEBOOK_URL, "showcase_url": SHOWCASE_URL, "demo_ws": DEMO_WS,
-            "model": s["vertex_model"], "impersonation": bool(__import__("os").environ.get("STARTER_IMPERSONATE_ALLOW", "").strip()),
+            "model": s["vertex_model"], "model_display": model_display(s["vertex_model"]), "answer_model": s["vertex_answer_model"],
+            "answer_model_display": model_display(s["vertex_answer_model"]), "answer_thinking_level": s["vertex_answer_thinking_level"],
+            "impersonation": bool(__import__("os").environ.get("STARTER_IMPERSONATE_ALLOW", "").strip()),
             "stages": list(pipeline.STAGES), "optional_stages": list(pipeline.OPTIONAL_STAGES), "max_upload_bytes": UPLOAD_MAX, "upload_ext": list(intake.ALL_UPLOAD_EXT)}
 
 

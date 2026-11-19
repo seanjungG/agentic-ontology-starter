@@ -8,8 +8,9 @@ gcp_client.py
 Real Google Cloud Platform REST Client for Agentic Ontology Starter:
 - Connects to real BigQuery (`$GCP_PROJECT_ID.$BQ_DATASET_ID`) for SQL & SQL:2023 Property Graph GQL queries
 - Connects to real Cloud Storage (`gs://$GCS_WIKI_BUCKET`) for 3-Layer OKF Wiki artifacts
-- Connects to real Vertex AI (`$VERTEX_GEMINI_MODEL`, default `gemini-4-argon` on location `global`)
-  for dynamic decomposition & grounded synthesis
+- Connects to real Vertex AI on location `global`: build / extraction / grading on `$VERTEX_GEMINI_MODEL`
+  (default `gemini-4-argon`), agent answers on `$VERTEX_ANSWER_MODEL` (default `gemini-4-hydrogen`) with an
+  explicit `$VERTEX_ANSWER_THINKING_LEVEL` (default `LOW`)
 - Calls the remote Platform Core MCP (`$CORE_MCP_URL`, JSON-RPC 2.0) — may live in another GCP project
 - Zero external pip dependencies (uses standard library urllib + Metadata Server / gcloud token)
 
@@ -19,6 +20,7 @@ All resource ids come from environment variables; the defaults below are only th
 import base64
 import json
 import os
+import re
 import ssl
 import subprocess
 import time
@@ -38,6 +40,42 @@ DEFAULT_VERTEX_LOCATION = os.environ.get("VERTEX_LOCATION", "global")
 # GOAL-228: gemini-4-argon thinkingLevel MEDIUM for chat/agent answers AND build/extraction (HIGH was 2-3x slower).
 DEFAULT_THINKING_LEVEL = os.environ.get("VERTEX_THINKING_LEVEL", "MEDIUM").upper()
 DEFAULT_BUILD_THINKING_LEVEL = os.environ.get("VERTEX_BUILD_THINKING_LEVEL", "MEDIUM").upper()
+# Agent answers (final answer + the steps on the way: slot extraction, agent step loop, GQL generation, RAG answer) use
+# their own model and thinking level; build / extraction / grading keep VERTEX_GEMINI_MODEL + VERTEX_THINKING_LEVEL.
+# The level is always sent explicitly: gemini-4-hydrogen without a thinkingConfig thinks at its (slow) default, and
+# MINIMAL is rejected by the API.
+THINKING_LEVELS = ("LOW", "MEDIUM", "HIGH")
+DEFAULT_ANSWER_MODEL = "gemini-4-hydrogen"
+DEFAULT_ANSWER_THINKING_LEVEL = "LOW"
+
+
+def answer_model() -> str:
+    """Model for agent answers (`VERTEX_ANSWER_MODEL`, default gemini-4-hydrogen) — read at call time."""
+    return os.environ.get("VERTEX_ANSWER_MODEL", "").strip() or DEFAULT_ANSWER_MODEL
+
+
+def answer_thinking_level() -> str:
+    """thinkingLevel for agent answers (`VERTEX_ANSWER_THINKING_LEVEL`, default LOW; anything but LOW/MEDIUM/HIGH → LOW)."""
+    lvl = os.environ.get("VERTEX_ANSWER_THINKING_LEVEL", "").strip().upper()
+    return lvl if lvl in THINKING_LEVELS else DEFAULT_ANSWER_THINKING_LEVEL
+
+
+def answer_settings(env: Optional[Dict[str, Any]] = None) -> Tuple[str, str]:
+    """(model, thinking level) for agent answers.
+
+    Runtime env first; a workspace env overrides only with an explicit `answer_model` / `answer_thinking_level`.
+    The workspace `model` (build / grading model) is never used for answers.
+    """
+    env = env or {}
+    model = str(env.get("answer_model") or "").strip() or answer_model()
+    lvl = str(env.get("answer_thinking_level") or "").strip().upper()
+    return model, (lvl if lvl in THINKING_LEVELS else answer_thinking_level())
+
+
+def model_display(model_id: str) -> str:
+    """`gemini-4-hydrogen` → `Gemini 4 Hydrogen`; ids of another shape are shown as they are."""
+    m = re.match(r"^gemini-(\d+(?:\.\d+)?)-([a-z]+)$", model_id or "")
+    return f"Gemini {m.group(1)} {m.group(2).capitalize()}" if m else str(model_id or "")
 DEFAULT_GEMINI_TIMEOUT_S = int(os.environ.get("VERTEX_TIMEOUT_S", "150"))
 DEFAULT_SPANNER_INSTANCE = os.environ.get("SPANNER_INSTANCE_ID", "starter-spanner")
 DEFAULT_SPANNER_DATABASE = os.environ.get("SPANNER_DATABASE_ID", "starter_ontology_db")
@@ -82,6 +120,8 @@ def runtime_settings() -> Dict[str, Any]:
         "vertex_location": DEFAULT_VERTEX_LOCATION,
         "vertex_thinking_level": DEFAULT_THINKING_LEVEL,
         "vertex_build_thinking_level": DEFAULT_BUILD_THINKING_LEVEL,
+        "vertex_answer_model": answer_model(),
+        "vertex_answer_thinking_level": answer_thinking_level(),
         "core_mcp_url": _core_mcp_url(),
         "core_mcp_fallback": os.environ.get("AOS_CORE_MCP_FALLBACK", "strict"),
     }
@@ -373,6 +413,22 @@ def _thinking_cfg(model_name: str, level: str) -> Dict[str, Any]:
     return {"thinkingBudget": 0}
 
 
+ANSWER_THINKING_HEADROOM = 1024  # thought tokens an agent-answer call may spend on top of its visible output
+ANSWER_MIN_OUT = 2048            # … and the floor of its output limit (gemini-4-hydrogen LOW: ~400–450 thought tokens per answer)
+
+
+def output_cap(max_tokens: int, level: str = "", role: str = "build") -> int:
+    """maxOutputTokens of a call — the one place where the thinking allowance is applied.
+
+    build:  max(max_tokens, level floor) with floors LOW 2048 / MEDIUM 8192 / HIGH 16384 (unchanged).
+    answer: max(max_tokens + ANSWER_THINKING_HEADROOM, ANSWER_MIN_OUT, level floor).
+    """
+    floor = {"HIGH": 16384, "MEDIUM": 8192}.get(str(level or "").upper(), 2048)
+    if role == "answer":
+        return max(int(max_tokens) + ANSWER_THINKING_HEADROOM, ANSWER_MIN_OUT, floor)
+    return max(int(max_tokens), floor)
+
+
 def call_vertex_gemini(
     prompt: str,
     system_instruction: Optional[str] = None,
@@ -384,6 +440,7 @@ def call_vertex_gemini(
     thinking_level: str = DEFAULT_THINKING_LEVEL,
     timeout_s: int = DEFAULT_GEMINI_TIMEOUT_S,
     location: str = DEFAULT_VERTEX_LOCATION,
+    role: str = "build",
 ) -> Dict[str, Any]:
     """
     Calls the real Vertex AI Gemini model (`$VERTEX_GEMINI_MODEL`, default `gemini-4-argon`) on `location`
@@ -391,6 +448,10 @@ def call_vertex_gemini(
     Never downgrades the model silently; returns full telemetry (model, latency_ms, token usage, text).
     Thought tokens count against maxOutputTokens, so the limit is floored (LOW 2048 / MEDIUM 8192 / HIGH 16384)
     and an empty MAX_TOKENS answer is retried with a 4x larger limit. 429/5xx/timeouts are retried with backoff.
+
+    `role="answer"` (agent-answer calls): the answer model spends thought tokens even at LOW (they count against
+    maxOutputTokens), so the limit gets a thinking allowance — see `output_cap()` — and a reply cut off by MAX_TOKENS
+    (empty or not) is retried with a 4x larger limit instead of being returned truncated. `role="build"` is unchanged.
     """
     t0 = time.perf_counter()
     location = location or DEFAULT_VERTEX_LOCATION
@@ -400,10 +461,9 @@ def call_vertex_gemini(
         f"publishers/google/models/{model_name}:generateContent"
     )
     eff_level = str(thinking_level or DEFAULT_THINKING_LEVEL).upper()
-    min_out = {"HIGH": 16384, "MEDIUM": 8192}.get(eff_level, 2048)
     gen_cfg: Dict[str, Any] = {
         "temperature": temperature,
-        "maxOutputTokens": max(int(max_tokens), min_out),
+        "maxOutputTokens": output_cap(max_tokens, eff_level, role),
         "topP": 0.95,
         "thinkingConfig": _thinking_cfg(model_name, eff_level),
     }
@@ -463,6 +523,12 @@ def call_vertex_gemini(
         text = "".join(p.get("text", "") for p in parts if "text" in p and not p.get("thought")).strip()
         finish = candidates[0].get("finishReason", "") if candidates else ""
         usage = raw.get("usageMetadata", {})
+        truncated = (role == "answer" and bool(text) and finish == "MAX_TOKENS" and attempt < 2
+                     and int(gen_cfg["maxOutputTokens"]) < 32768)
+        if truncated:  # an answer cut off by the output limit is not usable — retry with a larger limit
+            gen_cfg["maxOutputTokens"] = min(int(gen_cfg["maxOutputTokens"]) * 4, 32768)
+            last_err = (200, "truncated response (finishReason=MAX_TOKENS)")
+            continue
         if not text:
             last_err = (200, f"empty response (finishReason={finish or 'NO_CANDIDATES'})")
             if finish == "MAX_TOKENS":

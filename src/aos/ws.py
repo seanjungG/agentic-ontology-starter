@@ -34,6 +34,8 @@ _RX = {
     "bucket": re.compile(r"^[a-z0-9][a-z0-9._-]{1,220}[a-z0-9]$"),
     "graph_name": re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$"),
     "model": re.compile(r"^[a-z0-9][a-z0-9.\-]{1,62}$"),
+    "answer_model": re.compile(r"^[a-z0-9][a-z0-9.\-]{1,62}$"),
+    "answer_thinking_level": re.compile(r"^(?:LOW|MEDIUM|HIGH)$"),
     "vertex_location": re.compile(r"^(?:global|[a-z]+-[a-z]+[0-9]{1,2})$"),
     "ws_id": re.compile(r"^ws-[0-9]{8}-[a-z0-9]{6}$"),
     "graph_engine": re.compile(r"^(?:spanner|bigquery)$"),
@@ -42,9 +44,11 @@ _RX = {
 }
 LABELS = {"project": ("프로젝트", "Project"), "region": ("리전", "Region"), "dataset": ("데이터셋", "Dataset"),
           "bucket": ("버킷", "Bucket"), "graph_name": ("그래프 이름", "Graph name"), "model": ("모델", "Model"),
+          "answer_model": ("답변 모델", "Answer model"), "answer_thinking_level": ("답변 thinking level", "Answer thinking level"),
           "vertex_location": ("Vertex 위치", "Vertex location"), "ws_id": ("워크스페이스 ID", "Workspace ID"),
           "graph_engine": ("그래프 엔진", "Graph engine"), "spanner_instance": ("Spanner 인스턴스", "Spanner instance"),
           "spanner_database": ("Spanner 데이터베이스", "Spanner database")}
+OPTIONAL_ENV = ("answer_model", "answer_thinking_level")
 Emit = Callable[[Dict[str, Any]], None]
 
 
@@ -91,6 +95,18 @@ def clean_env(raw: Optional[Dict[str, Any]], ws_id: str = "") -> Dict[str, str]:
         if k == "dataset" and not val:
             val = default_dataset(ws_id) if ws_id else ""
         if val and not _RX[k].match(val):
+            ko, en = LABELS[k]
+            raise WsError("CONFIG_ERROR", f"{ko} 값 '{val}'의 형식이 올바르지 않습니다.", f"The {en} value '{val}' is not valid.", k)
+        env[k] = val
+    # Optional explicit overrides for agent answers — kept only when given (the runtime env decides otherwise, so an
+    # existing workspace never pins answers to its build model): see gcp_client.answer_settings().
+    for k in OPTIONAL_ENV:
+        val = str((raw or {}).get(k) or "").strip()
+        if k == "answer_thinking_level":
+            val = val.upper()
+        if not val:
+            continue
+        if not _RX[k].match(val):
             ko, en = LABELS[k]
             raise WsError("CONFIG_ERROR", f"{ko} 값 '{val}'의 형식이 올바르지 않습니다.", f"The {en} value '{val}' is not valid.", k)
         env[k] = val

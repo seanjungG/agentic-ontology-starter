@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from src.aos import spanner_graph as SG
 from src.aos.ws import McpLog, error_text, get_json, prefix, t
+from src.gcp_client import answer_settings
 
 Emit = Callable[[Dict[str, Any]], None]
 AGENTS = ("wiki", "graph", "hybrid")
@@ -93,17 +94,18 @@ def run(ws: Dict[str, Any], agent: str, question: str, emit: Optional[Emit] = No
                "engine": "spanner" if spanner else "bigquery"}
     observations: List[Dict[str, Any]] = []
     steps: List[Dict[str, Any]] = []
-    tel = {"llm_ms": 0, "tokens_in": 0, "tokens_out": 0, "data_ms": 0, "steps": 0, "model": ""}
+    a_model, a_level = answer_settings(env)
+    tel = {"llm_ms": 0, "tokens_in": 0, "tokens_out": 0, "data_ms": 0, "steps": 0, "model": "", "thinking_level": a_level}
     answer, citations, confidence, status = "", [], "", "ERROR"
     for i in range(max_steps):
         emit({"type": "step", "step": f"think-{i + 1}", "status": "running", "label": t(lang, f"추론 {i + 1} · Core MCP aos_core_agent_step", f"Reason {i + 1} · Core MCP aos_core_agent_step")})
-        res = log.call("aos_core_agent_step", {"agent": agent, "question": question, "lang": lang, "context": context,
-                                                  "observations": observations, "max_steps": max_steps, "project": env["project"],
-                                                  "model": env["model"], "location": env["vertex_location"]}, timeout_s=300)
+        # agent answers: answer model + explicit thinking level (never the workspace build model — see gcp_client.answer_settings)
+        step_args = {"agent": agent, "question": question, "lang": lang, "context": context, "observations": observations,
+                     "max_steps": max_steps, "project": env["project"], "model": a_model, "thinking_level": a_level,
+                     "location": env["vertex_location"]}
+        res = log.call("aos_core_agent_step", step_args, timeout_s=300)
         if res.get("status") != "SUCCESS" and res.get("status") != "AUTH_REQUIRED":  # one retry for transient model errors
-            res = log.call("aos_core_agent_step", {"agent": agent, "question": question, "lang": lang, "context": context,
-                                                      "observations": observations, "max_steps": max_steps, "project": env["project"],
-                                                      "model": env["model"], "location": env["vertex_location"]}, timeout_s=300)
+            res = log.call("aos_core_agent_step", step_args, timeout_s=300)
         if res.get("status") != "SUCCESS":
             msg = error_text(res)
             emit({"type": "step", "step": f"think-{i + 1}", "status": "error", "label": "aos_core_agent_step", "detail": msg[:300]})

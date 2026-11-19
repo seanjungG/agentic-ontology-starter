@@ -111,7 +111,7 @@ _L = {
                 "_Not measured yet — run `python3 benchmarks/run_field_scale.py --lang {pack}`, then `python3 benchmarks/render_results.py` generates this table._"),
     "placeholder": ("_결과 파일이 자리표시자(`\"placeholder\": true`)입니다 — 측정값이 아니므로 표를 만들지 않습니다._",
                     "_The result file is a placeholder (`\"placeholder\": true`) — it holds no measurements, so no table is rendered._"),
-    "meta": ("CQ {n}개 · 답변 모델 `{model}` · 채점 `{judge}` · 측정 {at}", "{n} CQs · answer model `{model}` · judge `{judge}` · measured {at}"),
+    "meta": ("CQ {n}개 · 답변 모델 `{model}`{level} · 채점 `{judge}` · 측정 {at}", "{n} CQs · answer model `{model}`{level} · judge `{judge}` · measured {at}"),
     "rag": ("RAG 설정(Core MCP가 돌려준 값): 임베딩 `{emb}` · 검색 `{ret}` · 조각 {units}개",
             "RAG settings (as returned by Core MCP): embedding `{emb}` · retrieval `{ret}` · {units} units"),
     "stage1": ("1단계 — RAG vs OKF 위키", "Stage 1 — RAG vs OKF Wiki"), "stage2": ("2단계 — OKF 위키 vs 그래프", "Stage 2 — OKF Wiki vs Graph"),
@@ -170,7 +170,8 @@ def render_markdown(run: Optional[Dict[str, Any]], lang: str = "en", pack_lang: 
         return _tx(lang, "placeholder")
     cmp_, method = run["comparison"], run.get("method") or {}
     rag_m = method.get("rag") or {}
-    lines = [_tx(lang, "meta", n=cmp_.get("cq_count"), model=method.get("answer_model"), judge=method.get("judge"), at=str(run.get("at") or "")[:10]) + "  "]
+    lines = [_tx(lang, "meta", n=cmp_.get("cq_count"), model=method.get("answer_model"),
+                 level=f" · thinking `{method['answer_thinking_level']}`" if method.get("answer_thinking_level") else "", judge=method.get("judge"), at=str(run.get("at") or "")[:10]) + "  "]
     if rag_m.get("embedding_model") or rag_m.get("retrieve"):
         lines.append(_tx(lang, "rag", emb=rag_m.get("embedding_model"), ret=json.dumps(rag_m.get("retrieve"), ensure_ascii=False),
                          units=(rag_m.get("stats") or {}).get("units")) + "  ")
