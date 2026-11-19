@@ -48,7 +48,7 @@ from src.agent.agents import make_server, presets, run_agent  # noqa: E402
 from src.config import (APP_VERSION, DEFAULT_GRAPH, GITHUB_URL, ConfigError, StarterConfig, defaults,  # noqa: E402
                         write_projects)
 from src.evaluation import run_eval  # noqa: E402
-from src.gcp_client import call_core_mcp, runtime_settings  # noqa: E402
+from src.gcp_client import call_core_mcp, model_display, runtime_settings  # noqa: E402
 from src.loader import graph_check_sql, run_load, verify  # noqa: E402
 from src.resource_connector import STARTER_PUBLIC_URL  # noqa: E402
 from src.web import admin_metering  # noqa: E402
@@ -83,7 +83,14 @@ def resolve_static(name: str):
 def settings_payload() -> Dict[str, Any]:
     return {**runtime_settings(), "version": APP_VERSION, "defaults": defaults(), "graph_defaults": DEFAULT_GRAPH,
             "write_projects": write_projects(), "public_url": STARTER_PUBLIC_URL, "github_url": GITHUB_URL,
-            "model_display": "Gemini 4 Argon" if runtime_settings()["vertex_model"] == "gemini-4-argon" else runtime_settings()["vertex_model"]}
+            **model_payload()}
+
+
+def model_payload() -> Dict[str, Any]:
+    """Build / grading model and agent-answer model (+ explicit thinking level) for the UI and /health."""
+    s = runtime_settings()
+    return {"model_display": model_display(s["vertex_model"]), "answer_model": s["vertex_answer_model"],
+            "answer_model_display": model_display(s["vertex_answer_model"]), "answer_thinking_level": s["vertex_answer_thinking_level"]}
 
 
 def catalog_payload(lang: str) -> Dict[str, Any]:
@@ -226,7 +233,8 @@ class StudioHandler(http.server.BaseHTTPRequestHandler):
         if path == "/health":
             s = runtime_settings()
             return self._json({"status": "ok", "version": APP_VERSION, "project_id": s["gcp_project_id"], "model": s["vertex_model"],
-                               "vertex_thinking_level": s["vertex_thinking_level"], "vertex_build_thinking_level": s["vertex_build_thinking_level"]})
+                               "vertex_thinking_level": s["vertex_thinking_level"], "vertex_build_thinking_level": s["vertex_build_thinking_level"],
+                               **model_payload()})
         if path == "/api/settings":
             return self._json(settings_payload())
         if path == "/api/catalog":

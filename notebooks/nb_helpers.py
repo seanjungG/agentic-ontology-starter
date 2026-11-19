@@ -35,7 +35,8 @@ from matplotlib import font_manager  # noqa: E402
 from src.agent.i18n_en import localize_en_obj, localize_en_str  # noqa: E402
 from src.gcp_client import (DEFAULT_BQ_SPANNER_CONN, DEFAULT_DATASET_ID, DEFAULT_GEMINI_MODEL,  # noqa: E402
                             DEFAULT_LOCATION, DEFAULT_PROJECT_ID, DEFAULT_SPANNER_DATABASE,
-                            DEFAULT_SPANNER_INSTANCE, call_vertex_gemini, execute_bq_sql,
+                            DEFAULT_SPANNER_INSTANCE, answer_model, answer_thinking_level, call_vertex_gemini,
+                            execute_bq_sql,
                             execute_spanner_sql, get_gcp_token)
 
 PROJECT, DATASET, LOCATION, MODEL = DEFAULT_PROJECT_ID, DEFAULT_DATASET_ID, DEFAULT_LOCATION, DEFAULT_GEMINI_MODEL
@@ -761,7 +762,8 @@ Rules:
 
 def _gen(prompt):
     r = call_vertex_gemini(prompt=prompt, system_instruction=GQL_SYS.replace("GRAPH_NAME", GRAPH).replace(
-        "LANGUAGE", t("Korean", "English")), response_mime_type="application/json", temperature=0.0, max_tokens=2048)
+        "LANGUAGE", t("Korean", "English")), response_mime_type="application/json", temperature=0.0, max_tokens=2048,
+        model_name=answer_model(), thinking_level=answer_thinking_level(), role="answer")  # agent query path: answer model + explicit LOW
     try:
         spec = json.loads(r.get("text") or "{}")
     except json.JSONDecodeError:

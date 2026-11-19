@@ -18,7 +18,7 @@ from src import datapack
 from src.agent.mcp_server import BqQueryError, DomainMcpServer
 from src.agent.reasoning_engine import AiFdeAgentEngine
 from src.config import StarterConfig
-from src.gcp_client import call_vertex_gemini, error_message, execute_bq_sql, gcs_download_text, gcs_list
+from src.gcp_client import answer_settings, call_vertex_gemini, error_message, execute_bq_sql, gcs_download_text, gcs_list
 
 Emit = Callable[[Dict[str, Any]], None]
 GRAPH_TOOLS = ["mcp_lookup_customer_profile", "mcp_query_graph_and_wiki"]
@@ -95,14 +95,16 @@ def run_wiki(cfg: StarterConfig, recipe: str, lang: str, question: str, emit: Em
     context = "\n\n".join(f"[{p['id']}] {p['title']}\n{p['text']}" for p in pages)
     prompt = (f"[Wiki pages]\n{context}\n\n[Question]\n{question}" if lang == "en" else f"[위키 페이지]\n{context}\n\n[질문]\n{question}")
     emit({"type": "step", "step": "gemini", "status": "running", "label": f"Gemini · {t(lang, '위키 근거 답변', 'wiki-grounded answer')}"})
+    a_model, a_level = answer_settings()  # agent answers: answer model + explicit thinking level (cfg.model = build model)
     r = call_vertex_gemini(prompt=prompt, system_instruction=WIKI_SYS[lang].replace("{ids}", ", ".join(ids)), temperature=0.0,
-                           max_tokens=2048, model_name=cfg.model, project_id=cfg.project_id, location=cfg.vertex_location)
+                           max_tokens=2048, model_name=a_model, thinking_level=a_level, role="answer",
+                           project_id=cfg.project_id, location=cfg.vertex_location)
     answer = r.get("text") or ""
     emit({"type": "step", "step": "gemini", "status": "done" if answer else "error", "ms": r.get("elapsed_ms"),
           "label": f"Gemini · {t(lang, '위키 근거 답변', 'wiki-grounded answer')}"})
     cited = sorted(set(PAGE_RE.findall(answer)))
     if not answer:
-        status, answer = "LLM_ERROR", f"Vertex AI `{cfg.model}` HTTP {r.get('http_code')}: {str(r.get('error'))[:300]}"
+        status, answer = "LLM_ERROR", f"Vertex AI `{a_model}` HTTP {r.get('http_code')}: {str(r.get('error'))[:300]}"
     elif NOT_FOUND[lang].lower() in answer.lower():
         status = "NOT_FOUND"
     elif not cited:
@@ -115,9 +117,9 @@ def run_wiki(cfg: StarterConfig, recipe: str, lang: str, question: str, emit: Em
     return {"agent": "wiki", "status": status, "answer": answer, "lang": lang,
             "evidence": {"refs": refs, "cited": cited, "queries": [], "tools": [
                 {"name": "Core MCP · storage_list_objects + storage_read_object", "status": "SUCCESS", "ms": gcs_ms, "detail": f"{len(pages)} pages · {prefix}"},
-                {"name": f"Vertex AI · {cfg.model}", "status": r.get("status"), "ms": r.get("elapsed_ms"),
+                {"name": f"Vertex AI · {a_model}", "status": r.get("status"), "ms": r.get("elapsed_ms"),
                  "detail": f"{r.get('prompt_tokens', 0)} in / {r.get('candidates_tokens', 0)} out"}],
-                "timing": {"model": r.get("model") or cfg.model, "location": cfg.vertex_location, "tokens_in": r.get("prompt_tokens", 0),
+                "timing": {"model": r.get("model") or a_model, "thinking_level": r.get("thinking_level") or a_level, "location": cfg.vertex_location, "tokens_in": r.get("prompt_tokens", 0),
                            "tokens_out": r.get("candidates_tokens", 0), "llm_ms": r.get("elapsed_ms"), "gcs_ms": gcs_ms, "total_ms": _ms(t0)}}}
 
 
@@ -163,7 +165,7 @@ def _engine_evidence(res: Dict[str, Any], lang: str) -> Dict[str, Any]:
 
 def _run_engine(cfg: StarterConfig, recipe: str, lang: str, question: str, emit: Emit, tools: Optional[List[str]]) -> Dict[str, Any]:
     server = make_server(cfg, recipe)
-    eng = AiFdeAgentEngine(project_id=cfg.project_id, model_name=cfg.model, server=server, location=cfg.vertex_location,
+    eng = AiFdeAgentEngine(project_id=cfg.project_id, model_name=answer_settings()[0], server=server, location=cfg.vertex_location,
                            tools=tools, trace=lambda ev: emit({"type": "step", **ev}))
     return eng.execute_cycle(question, engine="bigquery", lang=lang)
 

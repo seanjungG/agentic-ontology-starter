@@ -5,7 +5,7 @@
 # -*- coding: utf-8 -*-
 """
 AI FDE Reasoning Engine (Starter v2.0 - Live Gemini + BigQuery).
-1) Vertex AI `$VERTEX_GEMINI_MODEL` (default `gemini-4-argon`) maps the question to parameters using the live BigQuery catalog.
+1) Vertex AI `$VERTEX_ANSWER_MODEL` (default `gemini-4-hydrogen`, thinkingLevel `$VERTEX_ANSWER_THINKING_LEVEL` = LOW) maps the question to parameters using the live BigQuery catalog.
 2) Guard: fee/day numbers must appear literally in the question; names must exist in the catalog.
 3) MCP tools run real BigQuery SQL / GRAPH_TABLE queries.
 4) Gemini writes the answer strictly from the tool results.
@@ -19,7 +19,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from src.agent.i18n_en import is_english_mode, localize_en_obj
 from src.agent.mcp_server import DomainMcpServer
-from src.gcp_client import DEFAULT_GEMINI_MODEL, DEFAULT_PROJECT_ID, DEFAULT_VERTEX_LOCATION, call_vertex_gemini
+from src.gcp_client import (DEFAULT_PROJECT_ID, DEFAULT_VERTEX_LOCATION, answer_model, answer_thinking_level,
+                            call_vertex_gemini)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
@@ -112,11 +113,15 @@ def _strip_sql(obj: Any) -> Any:
 
 
 class AiFdeAgentEngine:
-    def __init__(self, project_id: str = DEFAULT_PROJECT_ID, model_name: str = DEFAULT_GEMINI_MODEL,
+    def __init__(self, project_id: str = DEFAULT_PROJECT_ID, model_name: Optional[str] = None,
                  server: Optional[DomainMcpServer] = None, location: Optional[str] = None,
-                 tools: Optional[List[str]] = None, trace: Optional[Callable[[Dict[str, Any]], None]] = None):
+                 tools: Optional[List[str]] = None, trace: Optional[Callable[[Dict[str, Any]], None]] = None,
+                 thinking_level: Optional[str] = None):
         self.project_id = project_id
-        self.model_name = model_name
+        # agent answers (slot extraction + synthesis): answer model + explicit thinking level
+        self.model_name = model_name or answer_model()
+        lvl = str(thinking_level or "").upper()
+        self.thinking_level = lvl if lvl in ("LOW", "MEDIUM", "HIGH") else answer_thinking_level()
         self.server = server or DomainMcpServer(project_id=project_id)
         self.location = location or DEFAULT_VERTEX_LOCATION
         self.allowed_tools = list(tools) if tools else None
@@ -205,7 +210,8 @@ class AiFdeAgentEngine:
                 else f"[문서 청크]\n{context}\n\n[사용자 질문]\n{query}",
                 system_instruction=LITE_SYS_EN if en else LITE_SYS,
                 response_mime_type="text/plain", temperature=0.0, max_tokens=2048,
-                model_name=self.model_name, project_id=self.project_id)
+                model_name=self.model_name, thinking_level=self.thinking_level, role="answer", project_id=self.project_id,
+                location=self.location)
             body = synth.get("text") or f"Vertex AI `{self.model_name}` HTTP {synth.get('http_code')}: {str(synth.get('error', ''))[:500]}"
             cited = sorted(set(CHUNK_ID_RE.findall(body)))
             if synth.get("status") != "SUCCESS" or not synth.get("text"):
@@ -274,7 +280,8 @@ class AiFdeAgentEngine:
             prompt=decomp_prompt,
             system_instruction=decomp_sys,
             response_mime_type="application/json", temperature=0.0, max_tokens=1024,
-            model_name=self.model_name, project_id=self.project_id, location=self.location)
+            model_name=self.model_name, thinking_level=self.thinking_level, role="answer", project_id=self.project_id,
+            location=self.location)
         llm: Dict[str, Any] = {}
         if decomp.get("status") == "SUCCESS":
             try:
@@ -359,7 +366,8 @@ class AiFdeAgentEngine:
             prompt=synth_prompt,
             system_instruction=(SYNTH_SYS_EN if en else SYNTH_SYS).replace("{FQ_DATASET}", self.server.fq),
             response_mime_type="text/plain", temperature=0.1, max_tokens=2048,
-            model_name=self.model_name, project_id=self.project_id, location=self.location)
+            model_name=self.model_name, thinking_level=self.thinking_level, role="answer", project_id=self.project_id,
+            location=self.location)
         self._emit(step="synth", status="done" if synth.get("status") == "SUCCESS" else "error", ms=synth.get("elapsed_ms"),
                    label=f"Gemini · {'grounded answer' if en else '근거 기반 답변 작성'}")
         if synth.get("status") != "SUCCESS" or not synth.get("text"):

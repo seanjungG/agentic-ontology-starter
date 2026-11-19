@@ -26,6 +26,7 @@ from src.gcp_client import (
     DEFAULT_DATASET_ID,
     DEFAULT_GCS_BUCKET,
     DEFAULT_GEMINI_MODEL,
+    answer_model,
     DEFAULT_LOCATION,
     DEFAULT_PROJECT_ID,
     DEFAULT_SPANNER_DATABASE,
@@ -429,7 +430,7 @@ CODE_EXPOSURE_BOUNDARY = {
         {"file": "src/resource_connector.py", "role_ko": "내 GCP 리소스 연결(`connect_my_resources`), 선택형 플로우(`P1/P2/P3 × W1/W2/W3`) 프리셋 및 2-Tier MCP 가이드", "role_en": "GCP resource connector (`connect_my_resources`), selective flow presets (`P1/P2/P3 × W1/W2/W3`), and 2-Tier MCP guide"},
         {"file": "src/gcp_client.py", "role_ko": "외부 SDK 의존성 없는 순수 Python 표준 라이브러리 기반 BigQuery / Spanner / GCS / Vertex AI REST 클라이언트", "role_en": "Zero-dependency Python stdlib REST client for BigQuery, Cloud Spanner, GCS, and Vertex AI Gemini"},
         {"file": "src/agent/mcp_server.py", "role_ko": "워크플로우 노드에 1:1 바인딩되는 런타임 도메인 비즈니스 MCP 도구 3종 (`DomainMcpServer`)", "role_en": "3 Runtime Domain Business MCP tools bound 1:1 to workflow nodes (`DomainMcpServer`)"},
-        {"file": "src/agent/reasoning_engine.py", "role_ko": "Vertex AI `gemini-4-argon` 기반 슬롯 추출, 도메인 MCP 도구 체이닝 및 SHA-256 근거 합성 엔진 (`AiFdeAgentEngine`)", "role_en": "Vertex AI `gemini-4-argon` slot extraction, domain MCP tool chaining, and grounded synthesis (`AiFdeAgentEngine`)"},
+        {"file": "src/agent/reasoning_engine.py", "role_ko": "Vertex AI `gemini-4-hydrogen`(thinkingLevel LOW) 기반 슬롯 추출, 도메인 MCP 도구 체이닝 및 SHA-256 근거 합성 엔진 (`AiFdeAgentEngine`)", "role_en": "Vertex AI `gemini-4-hydrogen` (thinkingLevel LOW) slot extraction, domain MCP tool chaining, and grounded synthesis (`AiFdeAgentEngine`)"},
         {"file": "src/web/studio_server.py", "role_ko": "`0. Getting Started` + 선택형 `v1-mcp` 플로우 구성기 + `MCP 역할/커스텀 가이드` + 라이브 실행 스튜디오 UI", "role_en": "`0. Getting Started` + Selective `v1-mcp` Flow Composer + `MCP Guide` + Live Studio UI"},
     ],
 }
@@ -533,7 +534,7 @@ class OntologyResourceConnector:
                 "gcs_wiki_bucket": f"gs://{self.gcs_bucket}/ontology/",
                 "gcs_okf_wiki": {"uri": f"gs://{self.gcs_bucket}/ontology/"},
                 "spanner_graph": f"projects/{self.project_id}/instances/{self.spanner_instance_id}/databases/{self.spanner_database_id}/graphs/STARTER_ONTOLOGY_GRAPH",
-                "serving_model": DEFAULT_GEMINI_MODEL,
+                "serving_model": answer_model(),
                 "builder_core_mcp_url": MCP_ARCHITECTURE_GUIDE["tier1_builder_core_mcp"]["endpoint_url"],
             },
             "selective_flow_presets": SELECTIVE_FLOW_PRESETS,
@@ -615,7 +616,7 @@ class OntologyResourceConnector:
             },
             "stage4": {
                 "status": "READY",
-                "summary": f"2-Tier MCP (Builder Core 8 Tools + Runtime Domain 3 Tools) + AI FDE ({DEFAULT_GEMINI_MODEL})",
+                "summary": f"2-Tier MCP (Builder Core 8 Tools + Runtime Domain 3 Tools) + AI FDE ({answer_model()})",
             },
             "stage5": {
                 "status": "READY",

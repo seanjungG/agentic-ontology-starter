@@ -1,6 +1,6 @@
 # Design System (`DESIGN.md`) — Agentic Ontology Starter
 
-- **Scope**: All web surfaces in `src/web/static/` — Starter Studio `v6.17.0` (`studio.html`, `studio.js`, `studio.css`, `studio_i18n.json`, `flows_v5.js`), Reference Wizard `/wizard` (`index.html`, `app.js`, `app.css`, `i18n.json`, `flows.js`), and the shared flow renderer `aolflow.js` / `aolflow.css`.
+- **Scope**: All web surfaces in `src/web/static/` — Starter Studio `v6.18.0` (`studio.html`, `studio.js`, `studio.css`, `studio_i18n.json`, `flows_v5.js`), Reference Wizard `/wizard` (`index.html`, `app.js`, `app.css`, `i18n.json`, `flows.js`), and the shared flow renderer `aolflow.js` / `aolflow.css`.
 - **Visual alignment**: Shares the unified **Studio v6** light visual grammar across the **Starter Notebook Lab**, **Starter Studio**, and the **Production Reference Studio** (`0. Overview`).
 - **Core principle**: Single light theme — crisp white cards, hairline borders, high-contrast charcoal/slate typography, and accurate information rendered through layered diagrams, tables, and live execution logs.
 - **Default locale**: **English (`en`) by default** on all routes (`/`, `/wizard`, `/admin`) with instant client-side **`EN | KO`** toggle and 100% key parity.

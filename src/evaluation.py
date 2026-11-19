@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 from src import datapack
 from src.agent.agents import run_agent
 from src.config import StarterConfig
+from src.gcp_client import answer_settings
 
 Emit = Callable[[Dict[str, Any]], None]
 # numbers next to Korean units (원 · 일 · 개월) count; numbers glued to ASCII letters/digits/underscores (5G, CHUNK_003) do not
@@ -84,6 +85,7 @@ def run_eval(cfg: StarterConfig, recipe: str, lang: str, emit: Optional[Emit] = 
     summary = {"recipe": recipe, "lang": lang, "total": len(rows), "pass": sum(r["verdict"] == "PASS" for r in rows),
                "partial": sum(r["verdict"] == "PARTIAL" for r in rows), "fail": sum(r["verdict"] == "FAIL" for r in rows),
                "score": round(100 * total_pts / len(rows), 1) if rows else 0.0, "per_agent": per_agent,
-               "ms": round((time.perf_counter() - t0) * 1000, 1), "model": cfg.model}
+               "ms": round((time.perf_counter() - t0) * 1000, 1), "model": answer_settings()[0],
+               "thinking_level": answer_settings()[1]}
     emit({"type": "summary", **summary})
     return {"summary": summary, "rows": rows}

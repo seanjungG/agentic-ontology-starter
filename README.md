@@ -21,7 +21,7 @@ All web surfaces default to **English** with an instant **`EN | KO`** toggle in 
 | 📓 **Notebook Lab 1 · Ontology** (~10 min) | [`#ov` Overview Map ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#ov) | **Instant guest access** (optional Google sign-in): `#n1` CQs → `#n2` OKF Wiki + coverage pass → `#n3` Graph design · Spanner Graph load · GQL check → `#n4` Knowledge Catalog · GQL Agent → `#n5` Head-to-head Wiki vs. GQL Agent evaluation |
 | 📓 **Notebook Lab 2 · Workflow** (~6 min) | [`#w0` Overview Map ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#w0) | `#w1` Extract rules & workflows → `#w2` Extend Spanner Graph → `#w3` Interactive Workflow Agent → `#w4` Evaluate → `#w5` Change request · Admin approval · Apply · Before/After diff · Rollback |
 | 📓 **Notebook Lab 3 · Context Graph** (~6 min) | [`#c0` Overview Map ↗](https://agentic-ontology-starter-notebook-dasz7pvvua-du.a.run.app/#c0) | `#c1` BigQuery Property Graph setup → `#c2` Log agent runs → `#c3` GQL audit → `#c4` 👍/👎 & sentence feedback → tacit candidates → `#c5` SME approve · apply to KC · re-ask → `#c6` Loop dashboard · KG snapshots · data explorer |
-| 🏛️ **Starter Studio (`v6.17.0`)** | [Open Starter Studio ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | Full flow (`⓪ Understand`) → **Try with sample** (demo identity · sample pack) → build on your data → CLI & code bundle hand-off |
+| 🏛️ **Starter Studio (`v6.18.0`)** | [Open Starter Studio ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/) | Full flow (`⓪ Understand`) → **Try with sample** (demo identity · sample pack) → build on your data → CLI & code bundle hand-off |
 | ⚡ **Pre-Built 100/100 Workspace** | [3-Agent Q&A & Feedback ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/agents) · [Context Graph Demo ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/?bucket=seanjung-agentic-starter-ontology&ws=ws-20261105-5525c8#/studio/cg) | Zero build wait on finished workspace `ws-20261105-5525c8` (eval score **100**): query Wiki / Graph / Hybrid agents and run the 1-click 3-agent Context Graph closed-loop demo |
 | 🏢 **Production-Domain Studio (LG U+)** | [Open LG U+ Studio ↗](https://agentic-ontology-studio-lguplus-lwrlf7yogq-du.a.run.app/) | 13-tab unified enterprise ontology reference platform (Telecom subsidy domain, English default with `EN | KO` toggle) |
 | 🧭 **Reference Wizard** | [`/wizard` ↗](https://agentic-ontology-starter-dasz7pvvua-du.a.run.app/wizard#step-1) | Curated 6-step reference flow (Flow A / B / C, baseline 100) for side-by-side comparison |
@@ -173,19 +173,19 @@ python3 benchmarks/render_results.py                     # regenerate the tables
 **Measured — English pack** (`data/field_scale_pack/results/en.json`)
 
 <!-- GOAL296_RESULTS:en:BEGIN -->
-50 CQs · answer model `gemini-4-argon` · judge `aos_core_eval_rubric_judge (100 points, system-blind)` · measured 2026-11-15  
+50 CQs · answer model `gemini-4-hydrogen` · thinking `LOW` · judge `aos_core_eval_rubric_judge (100 points, system-blind)` · measured 2026-11-18  
 RAG settings (as returned by Core MCP): embedding `text-multilingual-embedding-002` · retrieval `{"multi_query": 3, "candidates_per_query": 24, "rerank": "semantic-ranker-default@latest", "keep": 20, "vector_distance_threshold": null}` · 167 units  
 PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 **Stage 1 — RAG vs OKF Wiki**
 
-> Document-only scope: 43/50 CQs (7 structured/hybrid excluded: `data, hybrid`). *(all-50-CQ reference: RAG 85.0 vs OKF Wiki 90.1, Δ +5.1)*
+> Document-only scope: 43/50 CQs (7 structured/hybrid excluded: `data, hybrid`). *(all-50-CQ reference: RAG 87.3 vs OKF Wiki 89.1, Δ +1.8)*
 
 | Metric | RAG | OKF Wiki | Δ |
 |---|---:|---:|---:|
-| Average score (of 100) | 88.5 | 99.7 | +11.2 |
-| PASS | 33/43 | 43/43 | +10 |
-| OKF Wiki wins · ties · losses | | 11 · 31 · 1 | |
+| Average score (of 100) | 91.0 | 99.5 | +8.6 |
+| PASS | 35/43 | 43/43 | +8 |
+| OKF Wiki wins · ties · losses | | 9 · 33 · 1 | |
 
 **Stage 2 — OKF Wiki vs Graph**
 
@@ -193,9 +193,9 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 | Metric | OKF Wiki | Graph | Δ |
 |---|---:|---:|---:|
-| Average score (of 100) | 90.1 | 99.3 | +9.2 |
+| Average score (of 100) | 89.1 | 99.7 | +10.6 |
 | PASS | 43/50 | 50/50 | +7 |
-| Graph wins · ties · losses | | 7 · 42 · 1 | |
+| Graph wins · ties · losses | | 8 · 41 · 1 | |
 
 **Final — RAG vs OKF Wiki vs Graph**
 
@@ -203,42 +203,42 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 | System | Average score (of 100) | PASS | PARTIAL | FAIL | Avg latency (s) |
 |---|---:|---:|---:|---:|---:|
-| RAG | 85.0 | 36/50 | 4 | 10 | 32.9 |
-| OKF Wiki | 90.1 | 43/50 | 0 | 7 | 36.6 |
-| Graph | 99.3 | 50/50 | 0 | 0 | 49.8 |
+| RAG | 87.3 | 38/50 | 2 | 10 | 20.5 |
+| OKF Wiki | 89.1 | 43/50 | 0 | 7 | 13.2 |
+| Graph | 99.7 | 50/50 | 0 | 0 | 14.7 |
 
 **Average by CQ type**
 
 | Type | CQs | RAG | OKF Wiki | Graph | Top average |
 |---|---:|---:|---:|---:|---|
-| `alias` (doc) | 4 | 87.8 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `calc` (doc) | 7 | 91.0 | 99.6 | 99.9 | Graph |
-| `compare` (doc) | 4 | 99.2 | 100.0 | 99.8 | OKF Wiki |
-| `current` (doc) | 8 | 75.1 | 100.0 | 98.2 | OKF Wiki |
-| `data` (structured) | 3 | 100.0 | 27.0 | 100.0 | RAG = Graph (tie) |
-| `exception` (doc) | 5 | 90.2 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `history` (doc) | 4 | 87.8 | 97.2 | 96.2 | OKF Wiki |
-| `hybrid` (structured) | 4 | 36.8 | 35.0 | 99.2 | Graph |
-| `lookup` (doc) | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
-| `temporal` (doc) | 5 | 83.4 | 99.8 | 100.0 | Graph |
+| `alias` (doc) | 4 | 88.0 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `calc` (doc) | 7 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `compare` (doc) | 4 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `current` (doc) | 8 | 83.4 | 99.0 | 98.6 | OKF Wiki |
+| `data` (structured) | 3 | 100.0 | 25.7 | 99.0 | RAG |
+| `exception` (doc) | 5 | 92.4 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `history` (doc) | 4 | 84.5 | 97.8 | 100.0 | Graph |
+| `hybrid` (structured) | 4 | 38.0 | 24.5 | 100.0 | Graph |
+| `lookup` (doc) | 6 | 99.5 | 99.5 | 100.0 | Graph |
+| `temporal` (doc) | 5 | 79.2 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
 <!-- GOAL296_RESULTS:en:END -->
 
 **Measured — Korean pack** (`data/field_scale_pack/results/ko.json`)
 
 <!-- GOAL296_RESULTS:ko:BEGIN -->
-50 CQs · answer model `gemini-4-argon` · judge `aos_core_eval_rubric_judge (100 points, system-blind)` · measured 2026-11-15  
+50 CQs · answer model `gemini-4-hydrogen` · thinking `LOW` · judge `aos_core_eval_rubric_judge (100 points, system-blind)` · measured 2026-11-18  
 RAG settings (as returned by Core MCP): embedding `text-multilingual-embedding-002` · retrieval `{"multi_query": 3, "candidates_per_query": 24, "rerank": "semantic-ranker-default@latest", "keep": 20, "vector_distance_threshold": null}` · 118 units  
 PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 **Stage 1 — RAG vs OKF Wiki**
 
-> Document-only scope: 43/50 CQs (7 structured/hybrid excluded: `data, hybrid`). *(all-50-CQ reference: RAG 90.9 vs OKF Wiki 90.1, Δ -0.8)*
+> Document-only scope: 43/50 CQs (7 structured/hybrid excluded: `data, hybrid`). *(all-50-CQ reference: RAG 88.5 vs OKF Wiki 89.3, Δ +0.8)*
 
 | Metric | RAG | OKF Wiki | Δ |
 |---|---:|---:|---:|
-| Average score (of 100) | 95.2 | 100.0 | +4.8 |
-| PASS | 39/43 | 43/43 | +4 |
-| OKF Wiki wins · ties · losses | | 4 · 39 · 0 | |
+| Average score (of 100) | 92.6 | 99.5 | +6.9 |
+| PASS | 36/43 | 43/43 | +7 |
+| OKF Wiki wins · ties · losses | | 7 · 36 · 0 | |
 
 **Stage 2 — OKF Wiki vs Graph**
 
@@ -246,9 +246,9 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 | Metric | OKF Wiki | Graph | Δ |
 |---|---:|---:|---:|
-| Average score (of 100) | 90.1 | 99.8 | +9.7 |
+| Average score (of 100) | 89.3 | 98.9 | +9.7 |
 | PASS | 43/50 | 50/50 | +7 |
-| Graph wins · ties · losses | | 7 · 43 · 0 | |
+| Graph wins · ties · losses | | 7 · 40 · 3 | |
 
 **Final — RAG vs OKF Wiki vs Graph**
 
@@ -256,24 +256,24 @@ PASS ≥ 85.0 · PARTIAL ≥ 60.0 · a difference within 5.0 points is a tie
 
 | System | Average score (of 100) | PASS | PARTIAL | FAIL | Avg latency (s) |
 |---|---:|---:|---:|---:|---:|
-| RAG | 90.9 | 42/50 | 1 | 7 | 26.2 |
-| OKF Wiki | 90.1 | 43/50 | 0 | 7 | 26.3 |
-| Graph | 99.8 | 50/50 | 0 | 0 | 36.7 |
+| RAG | 88.5 | 39/50 | 2 | 9 | 18.4 |
+| OKF Wiki | 89.3 | 43/50 | 0 | 7 | 11.3 |
+| Graph | 98.9 | 50/50 | 0 | 0 | 15.6 |
 
 **Average by CQ type**
 
 | Type | CQs | RAG | OKF Wiki | Graph | Top average |
 |---|---:|---:|---:|---:|---|
-| `alias` (doc) | 4 | 87.5 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `calc` (doc) | 7 | 93.4 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `compare` (doc) | 4 | 99.0 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
-| `current` (doc) | 8 | 92.5 | 100.0 | 99.5 | OKF Wiki |
-| `data` (structured) | 3 | 100.0 | 25.0 | 100.0 | RAG = Graph (tie) |
-| `exception` (doc) | 5 | 91.0 | 100.0 | 99.4 | OKF Wiki |
+| `alias` (doc) | 4 | 95.5 | 99.2 | 99.8 | Graph |
+| `calc` (doc) | 7 | 93.4 | 100.0 | 99.9 | OKF Wiki |
+| `compare` (doc) | 4 | 90.2 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
+| `current` (doc) | 8 | 92.5 | 97.9 | 95.0 | OKF Wiki |
+| `data` (structured) | 3 | 100.0 | 25.3 | 100.0 | RAG = Graph (tie) |
+| `exception` (doc) | 5 | 80.8 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
 | `history` (doc) | 4 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
-| `hybrid` (structured) | 4 | 37.2 | 32.5 | 99.8 | Graph |
-| `lookup` (doc) | 6 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
-| `temporal` (doc) | 5 | 100.0 | 100.0 | 100.0 | RAG = OKF Wiki = Graph (tie) |
+| `hybrid` (structured) | 4 | 35.5 | 27.0 | 98.5 | Graph |
+| `lookup` (doc) | 6 | 100.0 | 99.8 | 99.0 | RAG |
+| `temporal` (doc) | 5 | 88.4 | 100.0 | 100.0 | OKF Wiki = Graph (tie) |
 <!-- GOAL296_RESULTS:ko:END -->
 
 Per-question answers, judge summaries and deductions for both packs are in the Studio (**RAG vs Wiki vs Graph › Field-scale benchmark**). This is one synthetic estate, one answer model and one judge — treat it as a worked example of the method, and run the comparison on your own sources and CQs before deciding.
@@ -300,7 +300,8 @@ Browser / CLI / Your Code
   └─ Open Starter (this repository: UI · orchestration order · CLI · workspace schema)
        ├─ Platform Core MCP v1.13.0 ─ aos_core_* (stateless prompts · rules · W1–W9 gates · CG)  ← Protected
        │                            └ data plane storage_* · bigquery_* · spanner_* · iam_* · drive_* (caller token only)
-       └─ Vertex AI Gemini (default: gemini-4-argon, location global, billed to caller's project)
+       └─ Vertex AI Gemini (build · grading: gemini-4-argon · agent answers: gemini-4-hydrogen, thinkingLevel LOW ·
+          location global, billed to caller's project)
   All outputs & data stay in your GCP project (GCS workspace · BigQuery staging · Spanner Graph)
 ```
 
@@ -423,7 +424,8 @@ data/ · config/ · notebooks/(12 offline walkthroughs, EN + KO) · tests/ · DE
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `GCP_PROJECT_ID` · `BQ_LOCATION` · `GCS_WIKI_BUCKET` | — · `asia-northeast3` · — | Default GCP target resources (Step 2 defaults) |
-| `VERTEX_GEMINI_MODEL` · `VERTEX_LOCATION` | `gemini-4-argon` · `global` | Gemini model and Vertex AI location |
+| `VERTEX_GEMINI_MODEL` · `VERTEX_LOCATION` | `gemini-4-argon` · `global` | Build · extraction · grading model and Vertex AI location |
+| `VERTEX_ANSWER_MODEL` · `VERTEX_ANSWER_THINKING_LEVEL` | `gemini-4-hydrogen` · `LOW` | Agent-answer model (Wiki · Graph · Hybrid · RAG agents) and its thinkingLevel. The level is always sent explicitly — when omitted the model thinks at `HIGH` (about 3× slower); `MINIMAL` is not supported |
 | `CORE_MCP_URL` | `https://aos-builder-core-mcp-dasz7pvvua-du.a.run.app/mcp` | Platform Core MCP endpoint (cannot be overridden by requests) |
 | `STARTER_WRITE_PROJECTS` | `GCP_PROJECT_ID` | Projects the demo identity may write to (`*` = any; ignored for user tokens) |
 | `STARTER_IMPERSONATE_ALLOW` | (empty = disabled) | Allowed SA glob pattern for server-side SA delegation |

@@ -20,7 +20,7 @@ from src.aos import spanner_graph as SG
 from src.aos.sources import parse_gs
 from src.aos.ws import (McpLog, WsError, error_text, get_json, now_iso, prefix, put_json, read_calls, save, t)
 from src.config import APP_VERSION, GITHUB_URL
-from src.gcp_client import call_core_mcp, call_vertex_gemini, runtime_settings, token_principal
+from src.gcp_client import answer_settings, call_core_mcp, call_vertex_gemini, runtime_settings, token_principal
 
 PRESETS = [
     {"id": "telecom", "sample": True, "question_type": "W3",
@@ -375,6 +375,10 @@ import json, os, sys, urllib.request
 
 CORE_MCP_URL = "__CORE__"
 WS = __WS__
+# Agent answers use their own model and an explicit thinking level (without it gemini-4-hydrogen thinks at its slow
+# default; MINIMAL is not supported). Build / grading keep WS["model"].
+ANSWER_MODEL = os.environ.get("VERTEX_ANSWER_MODEL") or WS["answer_model"]
+ANSWER_THINKING_LEVEL = (os.environ.get("VERTEX_ANSWER_THINKING_LEVEL") or WS["answer_thinking_level"]).upper()
 
 
 def mcp(tool, args, timeout=300):
@@ -403,7 +407,8 @@ def main():
     obs = []
     for step in range(6):
         r = mcp("aos_core_agent_step", {"agent": agent, "question": question, "lang": WS["lang"], "context": ctx, "observations": obs,
-                                           "project": WS["project"], "model": WS["model"], "location": WS["vertex_location"]})
+                                           "project": WS["project"], "model": ANSWER_MODEL, "thinking_level": ANSWER_THINKING_LEVEL,
+                                           "location": WS["vertex_location"]})
         if r.get("status") != "SUCCESS":
             sys.exit(f"agent_step failed: {r}")
         obs += r.get("calcs") or []
@@ -434,6 +439,7 @@ if __name__ == "__main__":
 def export_bundle(ws: Dict[str, Any], lang: str) -> bytes:
     env = ws["env"]
     core = runtime_settings()["core_mcp_url"]
+    a_model, a_level = answer_settings(env)
     pf = prefix(ws["ws_id"])
     calls = read_calls(env["bucket"], ws["ws_id"])
     ws_pub = {k: v for k, v in ws.items()}
@@ -441,6 +447,7 @@ def export_bundle(ws: Dict[str, Any], lang: str) -> bytes:
     imp = f" --impersonate {sa_hint}" if sa_hint else ""
     dotenv = "\n".join([f"GCP_PROJECT_ID={env['project']}", f"BQ_LOCATION={env['region']}", f"BQ_DATASET_ID={env['dataset']}",
                         f"GCS_WIKI_BUCKET={env['bucket']}", f"VERTEX_GEMINI_MODEL={env['model']}", f"VERTEX_LOCATION={env['vertex_location']}",
+                        f"VERTEX_ANSWER_MODEL={a_model}", f"VERTEX_ANSWER_THINKING_LEVEL={a_level}",
                         f"CORE_MCP_URL={core}", f"STARTER_WRITE_PROJECTS={env['project']}", ""])
     run_build = "\n".join(["#!/usr/bin/env bash", "set -euo pipefail",
                            f"# {t(lang, '깃헙 저장소 루트에서 실행', 'run from the GitHub repository root')}: git clone {GITHUB_URL}",
@@ -457,7 +464,8 @@ def export_bundle(ws: Dict[str, Any], lang: str) -> bytes:
                                            "description": "Agentic Ontology Platform Core MCP — data-plane tools with your token + aos_core_* method tools"}}}
     standalone = STANDALONE.replace("__CORE__", core).replace("__WS__", json.dumps(
         {"bucket": env["bucket"], "prefix": pf, "project": env["project"], "dataset": env["dataset"], "region": env["region"],
-         "model": env["model"], "vertex_location": env["vertex_location"], "lang": ws.get("lang", "ko")}, ensure_ascii=False))
+         "model": env["model"], "answer_model": a_model, "answer_thinking_level": a_level,
+         "vertex_location": env["vertex_location"], "lang": ws.get("lang", "ko")}, ensure_ascii=False))
     tools = sorted({c["tool"] for c in calls})
     readme = README_KO if lang != "en" else README_EN
     readme = readme.format(ws=ws["ws_id"], title=ws["scenario"].get("title") or ws["ws_id"], project=env["project"], dataset=env["dataset"],

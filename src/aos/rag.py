@@ -29,9 +29,11 @@ from typing import Any, Callable, Dict, List, Optional
 from src import identity
 from src.aos import agent as agent_mod
 from src.aos.ws import McpLog, error_text, get_json, now_iso, prefix, put_json, t
+from src.gcp_client import answer_settings
 
 Emit = Callable[[Dict[str, Any]], None]
 SYSTEMS = ("rag", "wiki", "graph")
+JUDGE_THINKING_LEVEL = "MEDIUM"  # aos_core_eval_rubric_judge default (the judge call does not pass a level)
 MAX_TABLE_ROWS = 5000
 _REGION_RX = re.compile(r"^[a-z]+-[a-z]+[0-9]{1,2}$")
 RAG_FALLBACK_REGION = "asia-northeast3"
@@ -139,8 +141,10 @@ def stage_rag(ws: Dict[str, Any], log: McpLog, emit: Emit, parsed: Dict[str, Any
 # ================================================================================================ the three systems
 def run_rag(ws: Dict[str, Any], question: str, cfg: Dict[str, Any], log: McpLog) -> Dict[str, Any]:
     env = ws["env"]
+    a_model, a_level = answer_settings(env)  # same answer model + explicit thinking level as the Wiki / Graph agents
     r = log.call("aos_core_rag_answer", {"corpus": cfg["corpus"], "project": env["project"], "query": question, "lang": ws.get("lang", "ko"),
-                                            "model": env["model"], "llm_location": env["vertex_location"], "return_evidence_text": True,
+                                            "model": a_model, "thinking_level": a_level, "llm_location": env["vertex_location"],
+                                            "return_evidence_text": True,
                                             **{k: v for k, v in (cfg.get("retrieve") or {}).items() if v is not None}}, timeout_s=240)
     if r.get("status") != "SUCCESS":
         return {"answer": "", "evidence": "", "error": error_text(r)[:300], "sources": []}
@@ -188,7 +192,8 @@ def stage_compare(ws: Dict[str, Any], log: McpLog, emit: Emit, cq_ids: Optional[
         raise RuntimeError(t(lang, f"아직 만들지 않은 방식이 있습니다: {', '.join(missing)} — rag / wiki / graph 단계를 먼저 실행하세요",
                              f"not built yet: {', '.join(missing)} — run the rag / wiki / graph stages first"))
     graph_agent = "hybrid" if ctx["pages"] else "graph"
-    common = {"project": env["project"], "model": env["model"], "llm_location": env["vertex_location"], "lang": lang}
+    common = {"project": env["project"], "model": env["model"], "llm_location": env["vertex_location"], "lang": lang}  # judge = build model
+    a_model, a_level = answer_settings(env)
 
     def one(job: Dict[str, Any]) -> Dict[str, Any]:
         cq, system = job["cq"], job["system"]
@@ -224,7 +229,9 @@ def stage_compare(ws: Dict[str, Any], log: McpLog, emit: Emit, cq_ids: Optional[
         rows = list(ex.map(identity.carry(one), jobs))
     by_sys = {sname: [r for r in rows if r["system"] == sname] for sname in want}
     out: Dict[str, Any] = {"at": now_iso(), "ws_id": ws["ws_id"], "lang": lang, "systems_run": want, "graph_agent": graph_agent, "ms": _ms(s),
-                           "method": {"answer_model": env["model"], "judge": "aos_core_eval_rubric_judge (100 points, system-blind)",
+                           "method": {"answer_model": a_model, "answer_thinking_level": a_level,
+                                      "judge": "aos_core_eval_rubric_judge (100 points, system-blind)",
+                                      "judge_model": common["model"], "judge_thinking_level": JUDGE_THINKING_LEVEL,
                                       "rag": {k: cfg.get(k) for k in ("embedding_model", "decompose", "import", "retrieve", "stats", "location")}},
                            "cqs": [{"id": c.get("id"), "type": c.get("type") or "all", "question": c["question"],
                                     "reference_answer": c.get("reference_answer", ""), "key_facts": c.get("key_facts") or []} for c in cqs],
@@ -232,7 +239,7 @@ def stage_compare(ws: Dict[str, Any], log: McpLog, emit: Emit, cq_ids: Optional[
     summary: Dict[str, Any] = {sname: {"avg": round(sum(r["score"] for r in rs) / max(1, len(rs)), 1), "pass": sum(1 for r in rs if r["verdict"] == "PASS"),
                                        "count": len(rs)} for sname, rs in by_sys.items()}
     if all(sname in by_sys for sname in SYSTEMS):
-        cmp_ = log.call("aos_core_eval_compare", {"systems": {sname: {"agent_model": env["model"],
+        cmp_ = log.call("aos_core_eval_compare", {"systems": {sname: {"agent_model": a_model, "agent_thinking_level": a_level,
                                                                          "results": [{"id": r["id"], "score": r["score"], "type": r["type"], "latency_sec": r["latency_sec"],
                                                                                       "error": bool(r["error"])} for r in rs]} for sname, rs in by_sys.items()},
                                                     "cqs": [{"id": c["id"], "type": c["type"], "question": c["question"]} for c in out["cqs"]]}, timeout_s=60)
